@@ -9,6 +9,7 @@
 namespace foonathan { namespace memory
 {
     /// \brief Base class that generates default implementations for the more repetitive functions.
+    template <class Derived>
     class raw_allocator_base
     {
     public:
@@ -19,6 +20,20 @@ namespace foonathan { namespace memory
         
         raw_allocator_base& operator=(const raw_allocator_base &) = delete;
         raw_allocator_base& operator=(raw_allocator_base &&) = default;
+        
+        /// @{
+        /// \brief Array allocation forwards to node allocation.
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        {
+            return static_cast<Derived*>(this)->allocate_node(count * size, alignment);
+        }
+        
+        void deallocate_array(void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) noexcept
+        {
+            static_cast<Derived*>(this)->deallocate_node(ptr, count * size, alignment);
+        }
+        /// @}
         
         /// @{
         /// \brief Returns maximum value.

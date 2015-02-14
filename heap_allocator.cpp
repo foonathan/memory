@@ -26,20 +26,9 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
     assert(false);
 }
 
-void* heap_allocator::allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
-{
-    return allocate_node(count * size, alignment);
-}
-
 void heap_allocator::deallocate_node(void *ptr,
                                      std::size_t size, std::size_t) noexcept
 {
     std::free(ptr);
     detail::on_heap_alloc(false, ptr, size);
-}
-
-void heap_allocator::deallocate_array(void *ptr, std::size_t count,
-                                      std::size_t size, std::size_t alignment) noexcept
-{
-    deallocate_node(ptr, count * size, alignment);
 }

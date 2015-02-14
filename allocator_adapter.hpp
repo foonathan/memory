@@ -22,12 +22,7 @@ namespace foonathan { namespace memory
         protected:
             ~allocator_storage() = default;
             
-            RawAllocator& get_allocator() noexcept
-            {
-                return *alloc_;
-            }
-            
-            const RawAllocator& get_allocator() const noexcept
+            RawAllocator& get_allocator() const noexcept
             {
                 return *alloc_;
             }
@@ -88,12 +83,6 @@ namespace foonathan { namespace memory
                               std::size_t size, std::size_t alignment) noexcept
         {
             get_allocator().deallocate_array(array, count, size, alignment);
-        }
-
-        auto get_allocator() noexcept
-        -> decltype(this->storage::get_allocator())
-        {
-            return storage::get_allocator();
         }
         
         auto get_allocator() const noexcept
@@ -187,12 +176,6 @@ namespace foonathan { namespace memory
             return this->max_array_size() / sizeof(value_type);
         }
 
-        auto get_impl_allocator() noexcept
-        -> decltype(this->get_allocator())
-        {
-            return this->get_allocator();
-        }
-        
         auto get_impl_allocator() const noexcept
         -> decltype(this->get_allocator())
         {
