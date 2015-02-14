@@ -6,50 +6,122 @@
 
 #include <limits>
 #include <new>
+#include <utility>
 
 namespace foonathan { namespace memory
 {
+    namespace detail
+    {
+        template <class RawAllocator, bool Stateful>
+        class allocator_storage
+        {
+        public:
+            allocator_storage(RawAllocator &allocator) noexcept
+            : alloc_(&allocator) {}
+            
+        protected:
+            ~allocator_storage() = default;
+            
+            RawAllocator& get_allocator() noexcept
+            {
+                return *alloc_;
+            }
+            
+            const RawAllocator& get_allocator() const noexcept
+            {
+                return *alloc_;
+            }
+            
+        private:
+            RawAllocator *alloc_;
+        };
+        
+        template <class RawAllocator>
+        class allocator_storage<RawAllocator, false>
+        {
+        public:
+            allocator_storage() noexcept = default;
+            allocator_storage(const RawAllocator&) noexcept {}
+            
+        protected:
+            ~allocator_storage() = default;
+            
+            RawAllocator get_allocator() const noexcept
+            {
+                return {};
+            }
+        };
+    } // namespace detail
+    
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator.
     ///
     /// All allocation requests are forwarded to the stored allocator.
     /// \ingroup memory
     template <class RawAllocator>
     class raw_allocator_adapter
+    : detail::allocator_storage<RawAllocator, RawAllocator::is_stateful::value>
     {
+        using storage = detail::allocator_storage<RawAllocator, RawAllocator::is_stateful::value>;
     public:
         using raw_allocator = RawAllocator;
+        using is_stateful = typename raw_allocator::is_stateful;
 
-        raw_allocator_adapter(raw_allocator &alloc) noexcept
-        : alloc_(&alloc) {}
+        using storage::storage;
 
-        void* allocate(std::size_t size, std::size_t alignment)
+        void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            return alloc_->allocate(size, alignment);
+            return get_allocator().allocate_node(size, alignment);
+        }
+        
+        void* allocate_array(std::size_t count,
+                             std::size_t size, std::size_t alignment)
+        {
+            return get_allocator().allocate_array(count, size, alignment);
         }
 
-        void deallocate(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
         {
-            alloc_->deallocate(ptr, size, alignment);
+            get_allocator().deallocate_node(ptr, size, alignment);
+        }
+        
+        void deallocate_array(void *array, std::size_t count,
+                              std::size_t size, std::size_t alignment) noexcept
+        {
+            get_allocator().deallocate_array(array, count, size, alignment);
         }
 
-        raw_allocator& get_allocator() const noexcept
+        auto get_allocator() noexcept
+        -> decltype(this->storage::get_allocator())
         {
-            return *alloc_;
+            return storage::get_allocator();
         }
-
-    private:
-        raw_allocator *alloc_;
+        
+        auto get_allocator() const noexcept
+        -> decltype(this->storage::get_allocator())
+        {
+            return storage::get_allocator();
+        }
+        
+        std::size_t max_node_size() const noexcept
+        {
+            return get_allocator().max_node_size();
+        }
+        
+        std::size_t max_array_size() const noexcept
+        {
+            return get_allocator().max_array_size();
+        }
     };
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     ///
-    /// Be careful, allocators are freely copied or not copied in most library implementations.
-    /// And furthermore, the standard requires that a copy of an allocator can deallocate all memory allocated with it. <br>
-    /// Because of this, the stored object is a \ref raw_allocator_adapter
-    /// and you are only allowed to interchange containers that are referencing to the same allocator!
+    /// It uses a \ref raw_allocator_adapter to store the allocator to allow copy constructing.<br>
+    /// The underlying allocator is never moved, only the pointer to it.<br>
+    /// It does not propagate on assignment, only on swap, to ensure that the allocator always stays with its memory.
     /// \ingroup memory
     template <typename T, class RawAllocator>
     class raw_allocator_allocator
+    : raw_allocator_adapter<RawAllocator>
     {
     public:
         //=== typedefs ===//
@@ -60,6 +132,8 @@ namespace foonathan { namespace memory
         using const_reference = const T&;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
+        
+        using propagate_on_container_swap = std::true_type;
 
         template <typename U>
         struct rebind {using other = raw_allocator_allocator<U, RawAllocator>;};
@@ -67,23 +141,30 @@ namespace foonathan { namespace memory
         using impl_allocator = RawAllocator;
 
         //=== constructor ===//
-        raw_allocator_allocator(impl_allocator &alloc) noexcept
-        : alloc_(alloc) {}
+        raw_allocator_allocator() = default;
+        using raw_allocator_adapter<RawAllocator>::raw_allocator_adapter;
 
         template <typename U>
         raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator> &alloc) noexcept
-        : alloc_(alloc.get_impl_allocator()) {}
+        : raw_allocator_adapter<RawAllocator>(alloc.get_impl_allocator()) {}
 
         //=== allocation/deallocation ===//
         pointer allocate(size_type n, void * = nullptr)
         {
-            auto mem = alloc_.allocate(n * sizeof(value_type), alignof(value_type));
+            void *mem = nullptr;
+            if (n == 1)
+                mem = this->allocate_node(sizeof(value_type), alignof(value_type));
+            else
+                mem = this->allocate_array(n, sizeof(value_type), alignof(value_type));
             return static_cast<pointer>(mem);
         }
 
         void deallocate(pointer p, size_type n) noexcept
         {
-            alloc_.deallocate(p, n * sizeof(value_type), alignof(value_type));
+            if (n == 1)
+                this->deallocate_node(p, sizeof(value_type), alignof(value_type));
+            else
+                this->deallocate_array(p, n, sizeof(value_type), alignof(value_type));
         }
 
         //=== construction/destruction ===//
@@ -103,16 +184,20 @@ namespace foonathan { namespace memory
         //=== getter ===//
         size_type max_size() const noexcept
         {
-            return std::numeric_limits<size_type>::max();
+            return this->max_array_size() / sizeof(value_type);
         }
 
-        impl_allocator& get_impl_allocator() const noexcept
+        auto get_impl_allocator() noexcept
+        -> decltype(this->get_allocator())
         {
-            return alloc_.get_allocator();
+            return this->get_allocator();
         }
-
-    private:
-        raw_allocator_adapter<impl_allocator> alloc_;
+        
+        auto get_impl_allocator() const noexcept
+        -> decltype(this->get_allocator())
+        {
+            return this->get_allocator();
+        }
     };
 
     template <typename T, typename U, class Impl>
