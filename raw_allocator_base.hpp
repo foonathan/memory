@@ -4,6 +4,7 @@
 /// \file
 /// \brief Utility base class generating functions.
 
+#include <cassert>
 #include <limits>
 
 namespace foonathan { namespace memory
@@ -25,6 +26,7 @@ namespace foonathan { namespace memory
         /// \brief Array allocation forwards to node allocation.
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
         {
+            assert(count * size <= max_array_size() && "invalid array length");
             return static_cast<Derived*>(this)->allocate_node(count * size, alignment);
         }
         

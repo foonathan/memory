@@ -2,7 +2,7 @@
 #define FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
 
 /// \file
-/// \brief Stack allocators.
+/// \brief A stack allocator.
 
 #include <cassert>
 #include <cstdint>
@@ -18,6 +18,7 @@ namespace foonathan { namespace memory
     ///
     /// Allows fast memory allocations but deallocation is only possible via markers.
     /// All memory after a marker is then freed, too.<br>
+    /// It is no \ref concept::RawAllocator, use adapters for it.<br>
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
@@ -97,6 +98,12 @@ namespace foonathan { namespace memory
             return list_.next_block_size();
         }
         
+        /// \brief Returns the \ref impl_allocator.
+        impl_allocator& get_impl_allocator() noexcept
+        {
+            return list_.get_allocator();
+        }
+        
     private:
         std::size_t align_offset(std::size_t alignment) const noexcept
         {
@@ -129,13 +136,14 @@ namespace foonathan { namespace memory
         stack_allocator(memory_stack<ImplRawAllocator> &stack) noexcept
         : stack_(&stack) {}
         
-        /// \brief Allocation function forwards to the stack for array and node.
+        /// \brief Allocation function forward to the stack for array and node.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
+            assert(size <= max_node_size() && "invalid node size");
             return stack_->allocate(size, alignment);
         }
         
-        /// \brief Deallocation function does nothing, use unwinding on the stack to free memory.
+        /// \brief Deallocation functions do nothing, use unwinding on the stack to free memory.
         void deallocate_node(void *, std::size_t, std::size_t) noexcept {}
         
         /// @{
