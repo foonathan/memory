@@ -7,8 +7,9 @@ else()
     project(foonathan_memory)
 endif()
 
-set(header  detail/free_list.hpp
-            detail/memory_block.hpp
+set(header
+            detail/block_list.hpp
+            detail/free_list.hpp
             allocator_adapter.hpp
             heap_allocator.hpp
             new_allocator.hpp
@@ -20,7 +21,9 @@ set(header  detail/free_list.hpp
             std_allocator_base.hpp
             tracking.hpp
     CACHE INTERNAL "")
-set(src detail/free_list.cpp
+set(src
+        detail/block_list.cpp
+        detail/free_list.cpp
         heap_allocator.cpp
         new_allocator.cpp
  #       pool_collection.cpp
