@@ -11,6 +11,7 @@
 #include "detail/align.hpp"
 #include "detail/block_list.hpp"
 #include "detail/free_list.hpp"
+#include "allocator_traits.hpp"
 #include "heap_allocator.hpp"
 #include "raw_allocator_base.hpp"
 
@@ -32,7 +33,7 @@ namespace foonathan { namespace memory
     /// There are two types: one that is faster, but does not support arrays,
     /// one that is slightly slower but does.
     /// Use the template parameter to select it.<br>
-    /// It is no \ref concept::RawAllocator, use adapters for it.<br>
+    /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
@@ -161,77 +162,64 @@ namespace foonathan { namespace memory
         detail::free_memory_list free_list_;
         std::size_t capacity_;
     };
-    
-    /// \brief Allocator interface for the \ref memory_pool.
+
+    /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool.
+    /// \detail This allows passing a pool directly as allocator to container types.
     /// \ingroup memory
-    template <typename NodeOrArray, class ImplRawAllocator = heap_allocator>
-    class pool_allocator
+    template <typename NodeOrArray, class ImplRawAllocator>
+    class allocator_traits<memory_pool<NodeOrArray, ImplRawAllocator>>
     {
     public:
-        using pool_type = memory_pool<NodeOrArray, ImplRawAllocator>;
+        using allocator_state = memory_pool<NodeOrArray, ImplRawAllocator>;
         using is_stateful = std::true_type;
-        
-        /// \brief Construct it giving a reference to the \ref memory_pool it uses.
-        pool_allocator(pool_type &pool) noexcept
-        : pool_(&pool) {}
         
         /// @{
         /// \brief Allocation functions forward to the pool allocation functions.
         /// \detail Size and alignment of the nodes are ignored, since the pool handles it.
-        void* allocate_node(std::size_t size, std::size_t)
+        static void* allocate_node(allocator_state &state,
+                                std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size() && "invalid node size");
-            return pool_->allocate_node();
+            assert(size <= max_node_size(state) && "invalid node size");
+            assert(alignment <= std::min(size, alignof(std::max_align_t)) && "invalid alignment");
+            return state.allocate_node();
         }
-        
-        void* allocate_array(std::size_t count, std::size_t size, std::size_t)
+
+        static void* allocate_array(allocator_state &state, std::size_t count,
+                             std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size() && "invalid node size");
-            assert(count * size <= max_array_size() && "invalid array size");
-            return pool_->allocate_array(count);
+            assert(size <= max_node_size(state) && "invalid node size");
+            assert(alignment <= std::min(size, alignof(std::max_align_t)) && "invalid alignment");
+            assert(count * size <= max_array_size(state) && "invalid array size");
+            return state.allocate_array(count);
         }
         /// @}
-        
+
         /// @{
         /// \brief Deallocation functions forward to the pool deallocation functions.
-        void deallocate_node(void *ptr, std::size_t, std::size_t) noexcept
+        static void deallocate_node(allocator_state &state,
+                    void *node, std::size_t, std::size_t) noexcept
         {
-            pool_->deallocate_node(ptr);
+            state.deallocate_node(node);
         }
-        
-        void deallocate_array(void *ptr, std::size_t count, std::size_t, std::size_t) noexcept
+
+        static void deallocate_array(allocator_state &state,
+                    void *array, std::size_t count, std::size_t, std::size_t) noexcept
         {
-            pool_->deallocate_array(ptr, count);
+            state.deallocate_array(array, count);
         }
         /// @}
-        
+
         /// \brief Maximum size of a node is the pool's node size.
-        std::size_t max_node_size() const noexcept
+        static std::size_t max_node_size(const allocator_state &state)
         {
-            return pool_->node_size();
+            return state.node_size();
         }
-        
+
         /// \brief Maximum size of an array is the capacity in the next block of the pool.
-        std::size_t max_array_size() const noexcept
+        static std::size_t max_array_size(const allocator_state &state)
         {
-            return pool_->next_capacity();
+            return state.next_capacity();
         }
-        
-        /// @{
-        /// \brief Returns a reference to the \ref memory_pool it uses.
-        pool_type& get_memory() noexcept
-        {
-            return *pool_;
-        }
-        
-        const pool_type& get_memory() const noexcept
-        {
-            return *pool_;
-        }
-        /// @}
-        
-    private:
-        pool_type *pool_;
     };
 }} // namespace foonathan::memory
 

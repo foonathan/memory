@@ -12,6 +12,7 @@ set(header
             detail/block_list.hpp
             detail/free_list.hpp
             allocator_adapter.hpp
+            allocator_traits.hpp
             heap_allocator.hpp
             new_allocator.hpp
             pool_allocator.hpp

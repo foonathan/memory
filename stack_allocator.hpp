@@ -10,6 +10,7 @@
 
 #include "detail/align.hpp"
 #include "detail/block_list.hpp"
+#include "allocator_traits.hpp"
 #include "heap_allocator.hpp"
 #include "raw_allocator_base.hpp"
 
@@ -19,7 +20,7 @@ namespace foonathan { namespace memory
     ///
     /// Allows fast memory allocations but deallocation is only possible via markers.
     /// All memory after a marker is then freed, too.<br>
-    /// It is no \ref concept::RawAllocator, use adapters for it.<br>
+    /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
@@ -122,56 +123,52 @@ namespace foonathan { namespace memory
         char *cur_, *cur_end_;
     };
     
-    /// \brief Allocator interface for the \ref memory_stack.
+    /// \brief Specialization of the \ref allocator_traits for a \ref memory_state.
+    /// \detail This allows passing a state directly as allocator to container types.
     /// \ingroup memory
-    template <class ImplRawAllocator = heap_allocator>
-    class stack_allocator : public raw_allocator_base<stack_allocator<ImplRawAllocator>>
+    template <class ImplRawAllocator>
+    class allocator_traits<memory_stack<ImplRawAllocator>>
     {
     public:
+        using allocator_state = memory_stack<ImplRawAllocator>;
         using is_stateful = std::true_type;
         
-        /// \brief Construct it giving a reference to the \ref memory_stack it uses.
-        stack_allocator(memory_stack<ImplRawAllocator> &stack) noexcept
-        : stack_(&stack) {}
-        
+        /// @{
         /// \brief Allocation function forward to the stack for array and node.
-        void* allocate_node(std::size_t size, std::size_t alignment)
+        static void* allocate_node(allocator_state &state, std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size() && "invalid node size");
-            return stack_->allocate(size, alignment);
+            assert(size <= max_node_size(state) && "invalid node size");
+            return state.allocate(size, alignment);
         }
         
+        static void* allocate_array(allocator_state &state, std::size_t count,
+                                std::size_t size, std::size_t alignment)
+        {
+            return allocate_node(state, count * size, alignment);
+        }
+        /// @}
+        
+        /// @{
         /// \brief Deallocation functions do nothing, use unwinding on the stack to free memory.
-        void deallocate_node(void *, std::size_t, std::size_t) noexcept {}
+        static void deallocate_node(const allocator_state &,
+                    void *, std::size_t, std::size_t) noexcept {}
+        
+        static void deallocate_array(const allocator_state &,
+                    void *, std::size_t, std::size_t, std::size_t) noexcept {}
+        /// @}
         
         /// @{
         /// \brief The maximum size is the equivalent of the \ref next_capacity().
-        std::size_t max_node_size() const noexcept
+        static std::size_t max_node_size(const allocator_state &state) noexcept
         {
-            return stack_->next_capacity();
+            return state.next_capacity();
         }
         
-        std::size_t max_array_size() const noexcept
+        static std::size_t max_array_size(const allocator_state &state) noexcept
         {
-            return stack_->next_capacity();
-        }
-        /// @}
-        
-        /// @{
-        /// \brief Returns a reference to the \ref memory_stack it uses.
-        memory_stack<ImplRawAllocator>& get_memory() noexcept
-        {
-            return *stack_;
-        }
-        
-        const memory_stack<ImplRawAllocator>& get_memory() const noexcept
-        {
-            return *stack_;
+            return state.next_capacity();
         }
         /// @}
-        
-    private:
-        memory_stack<ImplRawAllocator> *stack_;
     };
 }} // namespace foonathan::memory
 
