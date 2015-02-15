@@ -128,7 +128,9 @@ namespace foonathan { namespace memory
     ///
     /// It uses a \ref raw_allocator_adapter to store the allocator to allow copy constructing.<br>
     /// The underlying allocator is never moved, only the pointer to it.<br>
-    /// It does not propagate on assignment, only on swap, to ensure that the allocator always stays with its memory.
+    /// \c propagate_on_container_swap is \c true to ensure that the allocator stays with its memory.
+    /// \c propagate_on_container_move_assignment is \c true to allow fast move operations.
+    /// \c propagate_on_container_copy_assignment is also \c true for consistency.
     /// \ingroup memory
     template <typename T, class RawAllocator>
     class raw_allocator_allocator
@@ -145,6 +147,8 @@ namespace foonathan { namespace memory
         using difference_type = std::ptrdiff_t;
         
         using propagate_on_container_swap = std::true_type;
+        using propagate_on_container_copy_assignment = std::true_type;
+        using propagate_on_container_move_assignment = std::true_type;
 
         template <typename U>
         struct rebind {using other = raw_allocator_allocator<U, RawAllocator>;};
@@ -207,13 +211,30 @@ namespace foonathan { namespace memory
         {
             return this->get_allocator();
         }
+        
+    private:
+        template <typename U> // stateful
+        bool equal_to(std::true_type, const raw_allocator_allocator<U, RawAllocator> &other) const noexcept
+        {
+            return &get_impl_allocator() == &other.get_impl_allocator();
+        }
+        
+        template <typename U> // non=stateful
+        bool equal_to(std::false_type, const raw_allocator_allocator<U, RawAllocator> &) const noexcept
+        {
+            return true;
+        }
+        
+        template <typename T1, typename T2, class Impl>
+        friend bool operator==(const raw_allocator_allocator<T1, Impl> &lhs,
+                    const raw_allocator_allocator<T2, Impl> &rhs) noexcept;
     };
 
     template <typename T, typename U, class Impl>
     bool operator==(const raw_allocator_allocator<T, Impl> &lhs,
                     const raw_allocator_allocator<U, Impl> &rhs) noexcept
     {
-        return &lhs.get_impl_allocator() == &rhs.get_impl_allocator();
+        return lhs.equal_to(typename allocator_traits<Impl>::is_stateful{}, rhs);
     }
 
     template <typename T, typename U, class Impl>
