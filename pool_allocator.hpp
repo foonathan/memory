@@ -188,7 +188,7 @@ namespace foonathan { namespace memory
                              std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
-            assert(alignment <= std::min(size, alignof(std::max_align_t)) && "invalid alignment");
+            assert(alignment <= max_alignment(state) && "invalid alignment");
             assert(count * size <= max_array_size(state) && "invalid array size");
             return state.allocate_array(count);
         }
@@ -210,15 +210,21 @@ namespace foonathan { namespace memory
         /// @}
 
         /// \brief Maximum size of a node is the pool's node size.
-        static std::size_t max_node_size(const allocator_state &state)
+        static std::size_t max_node_size(const allocator_state &state) noexcept
         {
             return state.node_size();
         }
 
         /// \brief Maximum size of an array is the capacity in the next block of the pool.
-        static std::size_t max_array_size(const allocator_state &state)
+        static std::size_t max_array_size(const allocator_state &state) noexcept
         {
             return state.next_capacity();
+        }
+        
+        /// \brief Maximum alignment is \c std::min(node_size(), alignof(std::max_align_t).
+        static std::size_t max_alignment(const allocator_state &state) noexcept
+        {
+            return std::min(state.node_size(), alignof(std::max_align_t));
         }
     };
 }} // namespace foonathan::memory

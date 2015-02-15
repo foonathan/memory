@@ -5,6 +5,7 @@
 /// \brief Utility base class generating functions.
 
 #include <cassert>
+#include <cstddef>
 #include <limits>
 
 namespace foonathan { namespace memory
@@ -49,6 +50,12 @@ namespace foonathan { namespace memory
             return std::numeric_limits<std::size_t>::max();
         }
         /// @}
+        
+        /// \brief Returns \c alignof(std::max_align_t).
+        std::size_t max_alignment() const noexcept
+        {
+            return alignof(std::max_align_t);
+        }
         
     protected:
         ~raw_allocator_base() noexcept = default;    

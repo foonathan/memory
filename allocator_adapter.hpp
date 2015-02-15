@@ -109,6 +109,11 @@ namespace foonathan { namespace memory
         {
             return Traits::max_array_size(get_allocator());
         }
+        
+        std::size_t max_alignment() const noexcept
+        {
+            return Traits::max_alignment(get_allocator());
+        }
     };
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.

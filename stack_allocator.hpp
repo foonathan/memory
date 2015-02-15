@@ -25,7 +25,7 @@ namespace foonathan { namespace memory
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
     template <class RawAllocator = heap_allocator>
-    class memory_stack : RawAllocator
+    class memory_stack
     {
     public:
         /// \brief The implementation allocator.
@@ -169,6 +169,12 @@ namespace foonathan { namespace memory
             return state.next_capacity();
         }
         /// @}
+        
+        /// \brief There is no maximum alignment (except indirectly through \ref next_capacity()).
+        static std::size_t max_alignment(const allocator_state &) noexcept
+        {
+            return 0;
+        }
     };
 }} // namespace foonathan::memory
 
