@@ -29,7 +29,7 @@ void foonathan::memory::detail::on_heap_alloc(bool allocation, void *ptr, std::s
     t(allocation, ptr, size);
 }
 
-void foonathan::memory::detail::on_allocator_growth(const char *name, void *ptr, std::size_t size)
+void foonathan::memory::detail::on_allocator_growth(const char *name, void *ptr, std::size_t size) noexcept
 {
     allocator_growth_tracker t = growth_tracker;
     t(name, ptr, size);

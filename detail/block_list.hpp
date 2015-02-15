@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <utility>
 
+#include "../tracking.hpp"
+
 namespace foonathan { namespace memory
 {
     namespace detail
@@ -65,6 +67,7 @@ namespace foonathan { namespace memory
         template <class RawAllocator>
         class block_list : RawAllocator 
         {
+            static constexpr auto growth_factor = 2u;
         public:        
             // gives it an initial block size
             // the blocks get large and large the more are needed
@@ -85,9 +88,11 @@ namespace foonathan { namespace memory
             }
         
             // allocates a new block and returns it and its size
-            block_info allocate()
+            // name is used for the growth tracker
+            block_info allocate(const char *name)
             {
-                static constexpr auto growth_factor = 2u;
+                if (!list_.empty())
+                    detail::on_allocator_growth(name, this, cur_block_size_ / growth_factor);
                 auto memory = get_allocator().
                     allocate_node(cur_block_size_, alignof(std::max_align_t));
                 auto size = cur_block_size_ - list_.push(memory, cur_block_size_);

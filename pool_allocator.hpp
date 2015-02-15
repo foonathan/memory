@@ -148,7 +148,7 @@ namespace foonathan { namespace memory
     private:
         void allocate_block()
         {
-            auto mem = block_list_.allocate();
+            auto mem = block_list_.allocate("foonathan::memory::memory_pool");
             auto offset = detail::align_offset(mem.memory, alignof(std::max_align_t));
             mem.memory = static_cast<char*>(mem.memory) + offset;
             if (pool_type::value)
@@ -170,13 +170,13 @@ namespace foonathan { namespace memory
     class allocator_traits<memory_pool<NodeOrArray, ImplRawAllocator>>
     {
     public:
-        using allocator_state = memory_pool<NodeOrArray, ImplRawAllocator>;
+        using allocator_type = memory_pool<NodeOrArray, ImplRawAllocator>;
         using is_stateful = std::true_type;
         
         /// @{
         /// \brief Allocation functions forward to the pool allocation functions.
         /// \detail Size and alignment of the nodes are ignored, since the pool handles it.
-        static void* allocate_node(allocator_state &state,
+        static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
@@ -184,7 +184,7 @@ namespace foonathan { namespace memory
             return state.allocate_node();
         }
 
-        static void* allocate_array(allocator_state &state, std::size_t count,
+        static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
@@ -196,13 +196,13 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \brief Deallocation functions forward to the pool deallocation functions.
-        static void deallocate_node(allocator_state &state,
+        static void deallocate_node(allocator_type &state,
                     void *node, std::size_t, std::size_t) noexcept
         {
             state.deallocate_node(node);
         }
 
-        static void deallocate_array(allocator_state &state,
+        static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t, std::size_t) noexcept
         {
             state.deallocate_array(array, count);
@@ -210,19 +210,19 @@ namespace foonathan { namespace memory
         /// @}
 
         /// \brief Maximum size of a node is the pool's node size.
-        static std::size_t max_node_size(const allocator_state &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state) noexcept
         {
             return state.node_size();
         }
 
         /// \brief Maximum size of an array is the capacity in the next block of the pool.
-        static std::size_t max_array_size(const allocator_state &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state) noexcept
         {
             return state.next_capacity();
         }
         
         /// \brief Maximum alignment is \c std::min(node_size(), alignof(std::max_align_t).
-        static std::size_t max_alignment(const allocator_state &state) noexcept
+        static std::size_t max_alignment(const allocator_type &state) noexcept
         {
             return std::min(state.node_size(), alignof(std::max_align_t));
         }

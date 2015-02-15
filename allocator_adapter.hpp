@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "allocator_traits.hpp"
+#include "tracking.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -51,21 +52,20 @@ namespace foonathan { namespace memory
     } // namespace detail
     
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator.
-    ///
-    /// All allocation requests are forwarded to the stored allocator via the \ref allocator_traits.
+    /// \detail It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
+    /// It is copy- and moveable.
     /// \ingroup memory
     template <class RawAllocator, class Traits = allocator_traits<RawAllocator>>
     class raw_allocator_adapter
-    : detail::allocator_storage<typename Traits::allocator_state,
-                            Traits::is_stateful::value>
+    : detail::allocator_storage<RawAllocator, Traits::is_stateful::value>
     {
-        using storage = detail::allocator_storage<typename Traits::allocator_state,
+        using storage = detail::allocator_storage<RawAllocator,
                             Traits::is_stateful::value>;
     public:
         using raw_allocator = RawAllocator;
         using is_stateful = typename Traits::is_stateful;
 
-        /// \brief Creates it giving it the \ref allocator_state.
+        /// \brief Creates it giving it the \ref allocator_type.
         /// \detail For non-stateful allocators, there exists a default-constructor and a version taking const-ref.
         /// For stateful allocators it takes a non-const reference.<br>
         /// Only stateful allocators are stored, non-stateful default-constructed on the fly.
@@ -73,27 +73,32 @@ namespace foonathan { namespace memory
 
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            return Traits::allocate_node(get_allocator(), size, alignment);
+            auto&& alloc = get_allocator();
+            return Traits::allocate_node(alloc, size, alignment);
         }
         
         void* allocate_array(std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            return Traits::allocate_array(get_allocator(), count, size, alignment);
+            auto&& alloc = get_allocator();
+            return Traits::allocate_array(alloc, count, size, alignment);
         }
 
         void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
         {
-            Traits::deallocate_node(get_allocator(), ptr, size, alignment);
+            auto&& alloc = get_allocator();
+            Traits::deallocate_node(alloc, ptr, size, alignment);
         }
         
         void deallocate_array(void *array, std::size_t count,
                               std::size_t size, std::size_t alignment) noexcept
         {
-            Traits::deallocate_array(get_allocator(), array, count, size, alignment);
+            auto&& alloc = get_allocator();
+            Traits::deallocate_array(alloc, array, count, size, alignment);
         }
         
-        /// \brief Returns the \ref allocator_state.
+        /// \brief Returns the \ref allocator_type.
+        /// \detail It is a reference for stateful allocators and a temporary for non-stateful.
         auto get_allocator() const noexcept
         -> decltype(this->storage::get_allocator())
         {
@@ -102,17 +107,20 @@ namespace foonathan { namespace memory
         
         std::size_t max_node_size() const noexcept
         {
-            return Traits::max_node_size(get_allocator());
+            auto&& alloc = get_allocator();
+            return Traits::max_node_size(alloc);
         }
         
         std::size_t max_array_size() const noexcept
         {
-            return Traits::max_array_size(get_allocator());
+            auto&& alloc = get_allocator();
+            return Traits::max_array_size(alloc);
         }
         
         std::size_t max_alignment() const noexcept
         {
-            return Traits::max_alignment(get_allocator());
+            auto&& alloc = get_allocator();
+            return Traits::max_alignment(alloc);
         }
     };
 
@@ -145,7 +153,11 @@ namespace foonathan { namespace memory
 
         //=== constructor ===//
         raw_allocator_allocator() = default;
+        
         using raw_allocator_adapter<RawAllocator>::raw_allocator_adapter;
+        
+        raw_allocator_allocator(const raw_allocator_adapter<RawAllocator> &alloc) noexcept
+        : raw_allocator_adapter<RawAllocator>(alloc) {}
 
         template <typename U>
         raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator> &alloc) noexcept

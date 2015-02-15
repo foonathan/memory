@@ -50,7 +50,7 @@ namespace foonathan { namespace memory
             {
                 allocate_block();
                 offset = align_offset(alignment);
-                assert(offset + size <= capacity() && "block size too small");
+                assert(offset + size <= capacity() && "block size still too small");
             }
             // now we have sufficient size
             cur_ += offset; // align
@@ -114,7 +114,7 @@ namespace foonathan { namespace memory
         
         void allocate_block()
         {
-            auto block = list_.allocate();
+            auto block = list_.allocate("foonathan::memory::memory_stack");
             cur_ = static_cast<char*>(block.memory);
             cur_end_ = cur_ + block.size;
         }
@@ -130,18 +130,18 @@ namespace foonathan { namespace memory
     class allocator_traits<memory_stack<ImplRawAllocator>>
     {
     public:
-        using allocator_state = memory_stack<ImplRawAllocator>;
+        using allocator_type = memory_stack<ImplRawAllocator>;
         using is_stateful = std::true_type;
         
         /// @{
         /// \brief Allocation function forward to the stack for array and node.
-        static void* allocate_node(allocator_state &state, std::size_t size, std::size_t alignment)
+        static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
             return state.allocate(size, alignment);
         }
         
-        static void* allocate_array(allocator_state &state, std::size_t count,
+        static void* allocate_array(allocator_type &state, std::size_t count,
                                 std::size_t size, std::size_t alignment)
         {
             return allocate_node(state, count * size, alignment);
@@ -150,28 +150,28 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Deallocation functions do nothing, use unwinding on the stack to free memory.
-        static void deallocate_node(const allocator_state &,
+        static void deallocate_node(const allocator_type &,
                     void *, std::size_t, std::size_t) noexcept {}
         
-        static void deallocate_array(const allocator_state &,
+        static void deallocate_array(const allocator_type &,
                     void *, std::size_t, std::size_t, std::size_t) noexcept {}
         /// @}
         
         /// @{
         /// \brief The maximum size is the equivalent of the \ref next_capacity().
-        static std::size_t max_node_size(const allocator_state &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state) noexcept
         {
             return state.next_capacity();
         }
         
-        static std::size_t max_array_size(const allocator_state &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state) noexcept
         {
             return state.next_capacity();
         }
         /// @}
         
         /// \brief There is no maximum alignment (except indirectly through \ref next_capacity()).
-        static std::size_t max_alignment(const allocator_state &) noexcept
+        static std::size_t max_alignment(const allocator_type &) noexcept
         {
             return 0;
         }
