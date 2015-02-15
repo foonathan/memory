@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "detail/align.hpp"
 #include "detail/block_list.hpp"
 #include "heap_allocator.hpp"
 #include "raw_allocator_base.hpp"
@@ -107,10 +108,7 @@ namespace foonathan { namespace memory
     private:
         std::size_t align_offset(std::size_t alignment) const noexcept
         {
-            auto address = reinterpret_cast<std::uintptr_t>(cur_);
-            auto misaligned = address & (alignment - 1);
-            // misaligned != 0 ? (alignment - misaligned) : 0
-            return misaligned * (alignment - misaligned);
+            return detail::align_offset(cur_, alignment);
         }
         
         void allocate_block()

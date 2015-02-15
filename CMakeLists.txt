@@ -8,12 +8,12 @@ else()
 endif()
 
 set(header
+            detail/align.hpp
             detail/block_list.hpp
             detail/free_list.hpp
             allocator_adapter.hpp
             heap_allocator.hpp
             new_allocator.hpp
-            pool.hpp
             pool_allocator.hpp
             pool_collection.hpp
             raw_allocator_base.hpp

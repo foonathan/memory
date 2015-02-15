@@ -1,5 +1,6 @@
 #include "free_list.hpp"
 
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <utility>
@@ -18,9 +19,9 @@ namespace
     // pre: mem, el_size > sizeof(mem), size >= el_size
     void* build_list(void* &mem, std::size_t el_size, std::size_t size) noexcept
     {
-        auto ptr = static_cast<char*>(mem),
-             end = static_cast<char*>(mem) + size - el_size;
-        for (; ptr != end; ptr += el_size)
+        auto no_blocks = size / el_size;
+        auto ptr = static_cast<char*>(mem);
+        for (std::size_t i = 0u; i != no_blocks - 1; ++i, ptr += el_size)
             next(ptr) = ptr + el_size;
         return ptr;
     }
@@ -59,13 +60,21 @@ namespace
             else
                 return false;
         }
+        // next(cur) is the last element of the array
+        cur = next(cur);
         return true;
     }
 }
 
+free_memory_list::free_memory_list(std::size_t el_size) noexcept
+: first_(nullptr), el_size_(el_size)
+{
+    assert(el_size >= min_element_size && "element size too small");
+}
+
 free_memory_list::free_memory_list(std::size_t el_size,
                                    void *mem, std::size_t size) noexcept
-: first_(nullptr), el_size_(el_size)
+: free_memory_list(el_size)
 {
     insert(mem, size);
 }
@@ -114,7 +123,9 @@ void* free_memory_list::allocate(std::size_t n) noexcept
         auto start = cur;
         if (check_n(cur, n, el_size_))
         {
-            first_ = next(start);
+            // found n continuos nodes
+            // cur is the last element, next(cur) is the next free node
+            first_ = next(cur);
             return start;
         }
     }

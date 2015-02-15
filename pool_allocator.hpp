@@ -4,161 +4,235 @@
 /// \file
 /// \brief A pool allocator.
 
-#include <cmath>
-#include "pool.hpp"
-#include "std_allocator_base.hpp"
+#include <cassert>
+#include <memory>
+#include <type_traits>
+
+#include "detail/align.hpp"
+#include "detail/block_list.hpp"
+#include "detail/free_list.hpp"
+#include "heap_allocator.hpp"
+#include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \cond impl
-    namespace impl
+    /// @{
+    /// \brief Tag types defining whether or not a pool supports arrays.
+    /// \detail An \c array_pool supports both node and arrays.
+    /// \ingroup memory
+    struct node_pool : std::false_type {};
+    struct array_pool : std::true_type {};    
+    /// @}
+    
+    /// \brief A memory pool.
+    ///
+    /// It manages nodes of fixed size.
+    /// Allocating and deallocating such a node is really fast,
+    /// but each has the given size.<br>
+    /// There are two types: one that is faster, but does not support arrays,
+    /// one that is slightly slower but does.
+    /// Use the template parameter to select it.<br>
+    /// It is no \ref concept::RawAllocator, use adapters for it.<br>
+    /// It allocates big blocks from an implementation allocator.
+    /// If their size is sufficient, allocations are fast.
+    /// \ingroup memory
+    template <typename NodeOrArray, class RawAllocator = heap_allocator>
+    class memory_pool
     {
-        template <class Impl>
-        void* pool_allocate(std::true_type, memory_pool<Impl> &pool, std::size_t size)
+        static_assert(std::is_same<NodeOrArray, node_pool>::value ||
+                    std::is_same<NodeOrArray, array_pool>::value,
+                    "invalid tag type");
+    public:
+        using impl_allocator = RawAllocator;
+        
+        /// \brief The type of the pool (\ref node_pool or \ref array_pool).
+        // implementation node: pool_type::value is true for arrays
+        using pool_type = NodeOrArray;
+        
+        /// \brief The minimum node size due to implementation reasons.
+        static constexpr auto min_node_size = detail::free_memory_list::min_element_size;
+        
+        /// \brief Gives it the size of the nodes inside the pool and start block size.
+        /// \detail The first memory block is allocated, the block size can change.
+        memory_pool(std::size_t node_size, std::size_t block_size,
+                    impl_allocator allocator = impl_allocator())
+        : block_list_(block_size, std::move(allocator)),
+          free_list_(node_size)
         {
-            auto n = std::ceil(float(size) / pool.element_size());
-            return pool.allocate_array_ordered(n);
+            allocate_block();
         }
-
-        template <class Impl>
-        void* pool_allocate(std::false_type, memory_pool<Impl> &pool, std::size_t size)
+        
+        /// \brief Allocates a single node from the pool.
+        /// \detail It is aligned for \c std::min(node_size(), alignof(std::max_align_t).
+        void* allocate_node()
         {
-           assert(size <= pool.element_size() && "requested size for non-array bigger than pool allocators element size");
-            return pool.allocate();
+            if (free_list_.empty())
+                allocate_block();
+            capacity_ -= node_size();
+            return free_list_.allocate();
         }
-
-        template <class Impl>
-        void pool_deallocate(std::true_type, memory_pool<Impl> &pool,
-                             void *ptr, std::size_t size) noexcept
+        
+        /// \brief Allocates an array from the pool.
+        /// \detail Returns \c n subsequent nodes.<br>
+        /// If not \ref array_pool, may fail, throwing \c std::bad_alloc.
+        void* allocate_array(std::size_t n)
         {
-            auto n = std::ceil(float(size) / pool.element_size());
-            pool.deallocate_array_ordered(ptr, n);
-        }
-
-        template <class Impl>
-        void pool_deallocate(std::false_type, memory_pool<Impl> &pool,
-                             void *ptr, std::size_t) noexcept
-        {
-            pool.deallocate(ptr);
-        }
-
-        template <bool AllocatesArray, class ImplRawAllocator>
-        class pool_allocator_base
-        {
-        public:
-            using allocates_array = std::integral_constant<bool, AllocatesArray>;
-            using impl_allocator = ImplRawAllocator;
-            using pool = memory_pool<impl_allocator>;
-
-            explicit pool_allocator_base(pool &p) noexcept
-            : pool_(&p) {}
-
-            //=== getter ===//
-            /// \brief Returns the underlying pool.
-            pool& get_pool() const noexcept
+            void *mem = nullptr;
+            if (free_list_.empty())
             {
-                return *pool_;
+                allocate_block();
+                mem = free_list_.allocate(n);
             }
-
-        protected:
-            ~pool_allocator_base() noexcept = default;
-
-        private:
-            pool *pool_;
-        };
-    } // namespace impl
-    /// \endcond
-
-    /// \brief A \ref concept::RawAllocator using a \ref memory_pool.
-    ///
-    /// It holds a reference to the memory pool. <br>
-    /// As a pool allocator can only allocate a fixed element size,
-    /// there is a problem with rebinding when using a \ref raw_allocator_allocator.
-    /// You need to check your stdlib-implementation to find out the actual element size
-    /// that will be allocated (e.g. the size of a \c std::list-node).<br>
-    /// Some containers allocate arrays (e.g. \c std::deque implementations),
-    /// in this case, the allocator needs to behave differently - set the \c AllocatesArray parameter accordingly.
-    /// The block size of the \c memory pool must be big enough to hold the allocated array size.
-    /// Because of this, you may ran into problems when using big \c std::vectors,
-    /// then you might choose a different allocator.
-    /// \ingroup memory
-    template <bool AllocatesArray = false,
-              class ImplRawAllocator = heap_allocator>
-    class pool_raw_allocator : public detail::pool_allocator_base<AllocatesArray,
-                                        ImplRawAllocator>
-    {
-        using pool_alloc = detail::pool_allocator_base<AllocatesArray, ImplRawAllocator>;
-    public:
-        using stateful =  std::true_type;
-
-        using pool_alloc::pool_allocator_base;
-        pool_raw_allocator(const pool_raw_allocator&) = delete;
-        pool_raw_allocator(pool_raw_allocator&&) = default;
-
-        //=== allocation/deallocation ===//
-        void* allocate(std::size_t size, std::size_t)
-        {
-            return detail::pool_allocate(typename pool_alloc::allocates_array(), this->get_pool(), size);
+            else
+            {
+                mem = free_list_.allocate(n);
+                if (!mem)
+                {
+                    allocate_block();
+                    mem = free_list_.allocate(n);
+                }
+            }
+            if (!pool_type::value && !mem)
+                throw std::bad_alloc();
+            assert(mem);
+            capacity_ -= n * node_size();
+            return mem;
         }
-
-        void deallocate(void *ptr, std::size_t size, std::size_t) noexcept
+        
+        /// \brief Deallocates a single node from the pool.
+        void deallocate_node(void *ptr) noexcept
         {
-            detail::pool_deallocate(typename pool_alloc::allocates_array(), this->get_pool(), ptr, size);
+            capacity_ += node_size();
+            if (pool_type::value)
+                free_list_.deallocate_ordered(ptr);
+            else
+                free_list_.deallocate(ptr);
         }
+        
+        /// \brief Deallocates an array of nodes from the pool.
+        void deallocate_array(void *ptr, std::size_t n) noexcept
+        {
+            capacity_ += node_size();
+            if (pool_type::value)
+                free_list_.deallocate_ordered(ptr, n);
+            else
+                free_list_.deallocate(ptr, n);
+        }
+        
+        /// \brief Returns the size of each node in the pool.
+        std::size_t node_size() const noexcept
+        {
+            return free_list_.element_size();
+        }
+        
+        /// \brief Returns the capacity remaining in the current block.
+        /// \detail This is the pure byte size, divide it by \ref node_size() to get the number of bytes.
+        std::size_t capacity() const noexcept
+        {
+            return capacity_;
+        }
+        
+        /// \brief Returns the size of the memory block available after the capacity() is exhausted.
+        std::size_t next_capacity() const noexcept
+        {
+            return block_list_.next_block_size();
+        }
+        
+        /// \brief Returns the \ref impl_allocator.
+        impl_allocator& get_impl_allocator() noexcept
+        {
+            return block_list_.get_allocator();
+        }
+        
+    private:
+        void allocate_block()
+        {
+            auto mem = block_list_.allocate();
+            auto offset = detail::align_offset(mem.memory, alignof(std::max_align_t));
+            mem.memory = static_cast<char*>(mem.memory) + offset;
+            if (pool_type::value)
+                free_list_.insert_ordered(mem.memory, mem.size);
+            else
+                free_list_.insert(mem.memory, mem.size);
+            capacity_ = mem.size;
+        }
+    
+        detail::block_list<impl_allocator> block_list_;
+        detail::free_memory_list free_list_;
+        std::size_t capacity_;
     };
-
-    /// \brief An \c Allocator using a \ref memory_pool.
-    ///
-    /// It is simple a more efficient wrapper for \ref pool_raw_allocator than \ref raw_allocator_allocator.
+    
+    /// \brief Allocator interface for the \ref memory_pool.
     /// \ingroup memory
-    template <typename T,
-              bool AllocatesArray = false,
-              class ImplRawAllocator = heap_allocator>
-    class pool_allocator : public detail::pool_allocator_base<AllocatesArray,
-                                                            ImplRawAllocator>,
-                           public std_allocator_base<pool_allocator<T, AllocatesArray,
-                                                                    ImplRawAllocator>,
-                                                     T>
+    template <typename NodeOrArray, class ImplRawAllocator = heap_allocator>
+    class pool_allocator
     {
-        using std_alloc = std_allocator_base<pool_allocator<T, AllocatesArray,
-                                                                    ImplRawAllocator>, T>;
-        using pool_alloc = detail::pool_allocator_base<AllocatesArray, ImplRawAllocator>;
-
     public:
-        template <typename U>
-        struct rebind
+        using pool_type = memory_pool<NodeOrArray, ImplRawAllocator>;
+        using is_stateful = std::true_type;
+        
+        /// \brief Construct it giving a reference to the \ref memory_pool it uses.
+        pool_allocator(pool_type &pool) noexcept
+        : pool_(&pool) {}
+        
+        /// @{
+        /// \brief Allocation functions forward to the pool allocation functions.
+        /// \detail Size and alignment of the nodes are ignored, since the pool handles it.
+        void* allocate_node(std::size_t size, std::size_t)
         {
-            using other = pool_allocator<U, AllocatesArray, ImplRawAllocator>;
-        };
-
-        using pool_alloc::pool_allocator_base;
-
-        template <typename U>
-        pool_allocator(const pool_allocator<U, AllocatesArray, ImplRawAllocator> &other) noexcept
-        : pool_alloc(other.get_pool()) {}
-
-        //=== allocation/deallocation ===//
-        typename std_alloc::pointer allocate(typename std_alloc::size_type n)
-        {
-            assert(AllocatesArray || n == 1 && "you said you did not want to allocate arrays");
-            n *= sizeof(T);
-            auto mem = detail::pool_allocate(typename pool_alloc::allocates_array(), this->get_pool(), n);
-            return static_cast<T*>(mem);
+            assert(size <= max_node_size() && "invalid node size");
+            return pool_->allocate_node();
         }
-
-        void deallocate(typename std_alloc::pointer ptr, typename std_alloc::size_type n)  noexcept
+        
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t)
         {
-            n *= sizeof(T);
-            detail::pool_deallocate(typename pool_alloc::allocates_array(), this->get_pool(), ptr, n);
+            assert(size <= max_node_size() && "invalid node size");
+            assert(count * size <= max_array_size() && "invalid array size");
+            return pool_->allocate_array(count);
         }
+        /// @}
+        
+        /// @{
+        /// \brief Deallocation functions forward to the pool deallocation functions.
+        void deallocate_node(void *ptr, std::size_t, std::size_t) noexcept
+        {
+            pool_->deallocate_node(ptr);
+        }
+        
+        void deallocate_array(void *ptr, std::size_t count, std::size_t, std::size_t) noexcept
+        {
+            pool_->deallocate_array(ptr, count);
+        }
+        /// @}
+        
+        /// \brief Maximum size of a node is the pool's node size.
+        std::size_t max_node_size() const noexcept
+        {
+            return pool_->node_size();
+        }
+        
+        /// \brief Maximum size of an array is the capacity in the next block of the pool.
+        std::size_t max_array_size() const noexcept
+        {
+            return pool_->next_capacity();
+        }
+        
+        /// @{
+        /// \brief Returns a reference to the \ref memory_pool it uses.
+        pool_type& get_memory() noexcept
+        {
+            return *pool_;
+        }
+        
+        const pool_type& get_memory() const noexcept
+        {
+            return *pool_;
+        }
+        /// @}
+        
+    private:
+        pool_type *pool_;
     };
-
-    template <typename T, bool Arr, class Impl, typename U>
-    bool operator==(const pool_allocator<T, Arr, Impl> &lhs,
-                    const pool_allocator<U, Arr, Impl> &rhs) noexcept
-    {
-        return &lhs.get_pool() == &rhs.get_pool();
-    }
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
