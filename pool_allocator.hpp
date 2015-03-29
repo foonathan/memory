@@ -136,7 +136,7 @@ namespace foonathan { namespace memory
     private:
         void allocate_block()
         {
-            auto mem = block_list_.allocate("foonathan::memory::memory_pool");
+            auto mem = block_list_.allocate();
             auto offset = detail::align_offset(mem.memory, alignof(std::max_align_t));
             mem.memory = static_cast<char*>(mem.memory) + offset;
             if (pool_type::value)

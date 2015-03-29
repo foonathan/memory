@@ -60,7 +60,7 @@ namespace foonathan { namespace memory
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
         : block_list_(block_size, std::move(alloc)),
-          stack_(block_list_.allocate("foonathan::memory::memory_pool_collection")),
+          stack_(block_list_.allocate()),
           pools_(stack_, max_node_size)
         {}
         
@@ -173,7 +173,7 @@ namespace foonathan { namespace memory
                 // insert rest
                 if (stack_.end() - stack_.top() != 0u)
                     (pool.*insert)(stack_.top(), stack_.end() - stack_.top());
-                stack_ = detail::fixed_memory_stack(block_list_.allocate("foonathan::memory::memory_pool_collection"));
+                stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity, alignof(std::max_align_t));
                 assert(mem);

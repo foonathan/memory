@@ -111,7 +111,7 @@ namespace foonathan { namespace memory
     private:        
         void allocate_block()
         {
-            auto block = list_.allocate("foonathan::memory::memory_stack");
+            auto block = list_.allocate();
             stack_ = detail::fixed_memory_stack(block.memory, block.size);
         }
     

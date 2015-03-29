@@ -9,52 +9,86 @@
 #include "allocator_traits.hpp"
 
 namespace foonathan { namespace memory
-{
-    /// \brief The heap allocation tracker.
-    /// \detail This function gets called when an heap (de-)allocation is made.
-    /// It can be used to log the (slower) heap allocations.
-    /// A heap allocation is an allocation via \ref heap_allocator or \ref new_allocator.<br>
-    /// The default behavior is doing nothing. <br>
-    /// \param allocation is \c true if it is an allocation, false if deallocation.
-    /// \param ptr is the memory pointer being allocated/deallocated.
-    /// \param size is the size of the memory block or \c 0 if not available.
-    /// \note This function must not throw exceptions!
-    /// \ingroup memory
-    using heap_allocation_tracker = void(*)(bool allocation, void *ptr, std::size_t size);
+{    
+    namespace detail
+    {
+        template <class Tracker, class ImplRawAllocator>
+        class tracked_impl_allocator : ImplRawAllocator
+        {
+            using traits = allocator_traits<ImplRawAllocator>;
+        public:
+            using raw_allocator = ImplRawAllocator;
+            using tracker = Tracker;  
 
-    /// \brief Exchanges the \ref heap_allocation_tracker.
-    /// \detail This function is thread safe.
-    /// \ingroup memory
-    heap_allocation_tracker set_heap_allocation_tracker(heap_allocation_tracker t) noexcept;
+            using is_stateful = std::true_type;
+            
+            tracked_impl_allocator(tracker &t, raw_allocator allocator = {})
+            : t_(&t),
+              raw_allocator(std::move(allocator)) {}
+            
+            void* allocate_node(std::size_t size, std::size_t alignment)
+            {
+                auto mem = traits::allocate_node(*this, size, alignment);
+                t_->on_allocator_growth(mem, size);
+                return mem;
+            }
+            
+            void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+            {
+                auto mem = traits::allocate_array(*this, count, size, alignment);
+                t_->on_allocator_growth(mem, size * count);
+                return mem;
+            }
+            
+            void deallocate_node(void *ptr,
+                                  std::size_t size, std::size_t alignment) noexcept
+            {
+                traits::deallocate_node(*this, ptr, size, alignment);
+                t_->on_allocator_shrinking(ptr, size);
+            }
+            
+            void deallocate_array(void *ptr, std::size_t count,
+                                  std::size_t size, std::size_t alignment) noexcept
+            {
+                traits::deallocate_array(*this, ptr, count, size, alignment);
+                t_->on_allocator_shrinking(ptr, size * count);
+            }
 
-    /// \brief Called when an allocator needs to expand itself after initial allocations.
-    /// \detail Some allocators (e.g. \ref memory_stack, \ref memory_pool) consists of a list of big memory blocks.
-    /// When they are exhausted, new ones are allocated. <br>
-    /// Use this function to monitor growth. It must not throw an exception however.<br>
-    /// The default function does nothing.
-    /// \param name is a string describing the type of allocator (e.g. "foonathan::memory::stack_allocator).
-    /// Its lifetime is the same as the allocator.
-    /// \param ptr is the address of the allocator or submember.
-    /// It can only be used to distinguish multiple allocators when logging.
-    /// \param size is the old block size of the allocator (which seems not to be sufficient).
-    /// \ingroup memory
-    using allocator_growth_tracker = void(*)(const char *name, void *ptr, std::size_t size);
-
-    /// \brief Exchanges the \ref allocator_growth_tracker.
-    /// \detail This function is thread safe.
-    /// \ingroup memory
-    allocator_growth_tracker set_allocator_growth_tracker(allocator_growth_tracker t) noexcept;
+            std::size_t max_node_size() const noexcept
+            {
+                return traits::max_node_size(*this);
+            }
+            
+            std::size_t max_array_size() const noexcept
+            {
+                return traits::max_array_size(*this);
+            }
+            
+            std::size_t max_alignment() const noexcept
+            {
+                return traits::max_alignment(*this);
+            }
+           
+        private:
+            Tracker *t_;
+        };
+    } // namespace detail
 
     /// \brief A wrapper around an \ref concept::RawAllocator that allows logging.
     /// \detail The \c Tracker must provide the following, \c noexcept functions:
     /// * \c on_node_allocation(void *memory, std::size_t size, std::size_t alignment)
     /// * \c on_node_deallocation(void *memory, std::size_t size, std::size_t alignment)
     /// * \c on_array_allocation(void *memory, std::size_t count, std::size_t size, std::size_t alignment)
-    /// * \c on_array_deallocation(void *memory, std::size_t count, std::size_t size, std::size_t alignment) 
-    /// The \c RawAllocator functions are called via the \ref allocator_traits.
+    /// * \c on_array_deallocation(void *memory, std::size_t count, std::size_t size, std::size_t alignment)
+    /// <br>If you use a deeply tracked allocator via the appropriate \ref make_tracked_allocator() overload,
+    /// the \c Tracker must also provide the following two, \c noexcept functions:
+    /// * \c on_allocator_growth(void *memory, std::size_t total_size)
+    /// * \c on_allocator_shrinking(void *memory, std::size_t total_size)
+    /// <br>They are called on the allocation/deallocation functions of the implementation allocator.
+    /// <br>The \c RawAllocator functions are called via the \ref allocator_traits.
     /// \ingroup memory
-    template <class RawAllocator, class Tracker>
-    class tracked_allocator : RawAllocator, Tracker
+    template <class Tracker, class RawAllocator>
+    class tracked_allocator : Tracker, RawAllocator
     {
         using traits = allocator_traits<RawAllocator>;
     public:
@@ -65,13 +99,11 @@ namespace foonathan { namespace memory
         using is_stateful = std::integral_constant<bool,
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
         
-        tracked_allocator(raw_allocator allocator = {},
-                            tracker t = {})
-        : raw_allocator(std::move(allocator)),
-          tracker(std::move(t)) {}
+        explicit tracked_allocator(tracker t = {}, raw_allocator allocator = {})
+        : tracker(std::move(t)), raw_allocator(std::move(allocator)) {}
         
         /// @{
-        /// \brief (De-)Allocation functions call the appropriate tracker function, too.
+        /// \brief (De-)Allocation functions call the appropriate tracker function.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             auto mem = traits::allocate_node(get_allocator(), size, alignment);
@@ -144,15 +176,44 @@ namespace foonathan { namespace memory
             return *this;
         }
         /// @}
+      
+    // my g++ has an issue with the friend declaration, this constructor must be public for now
+    //private:
+        template <class ImplRawAllocator, typename ... Args>
+        tracked_allocator(tracker t, ImplRawAllocator impl,
+                        Args&&... args)
+        : tracker(std::move(t)),
+          raw_allocator(std::forward<Args>(args)...,
+                detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, std::move(impl)))
+        {}
+        
+        template <template <class> class A, class T, class I, class ... Args>
+        friend tracked_allocator<T, A<detail::tracked_impl_allocator<T, I>>> make_tracked_allocator(T t, I impl, Args&&... args);
     };
-
-    /// \cond impl
-    namespace detail
+    
+    /// \brief Creates a \ref tracked_allocator.
+    /// \relates tracked_allocator
+    template <class Tracker, class RawAllocator>
+    auto make_tracked_allocator(Tracker t, RawAllocator alloc)
+    -> tracked_allocator<Tracker, RawAllocator>
     {
-        void on_heap_alloc(bool allocation, void *ptr, std::size_t size) noexcept;
-        void on_allocator_growth(const char *name, void *ptr, std::size_t size) noexcept;
-    } // namespace detail
-    /// \endcond
+        return tracked_allocator<Tracker, RawAllocator>(std::move(t), std::move(alloc));
+    }
+    
+    /// \brief Creates a deeply tracked \ref tracked_allocator.
+    /// \detail It also tracks allocator growth, that is, when allocators with implementation allocator (e.g. memory_stack),
+    /// run out of memory blocks and need to allocate new, slow memory.<br>
+    /// It is detected by wrapping the implementation allocator into an adapter and calling the appropriate tracker functions
+    /// on allocation/deallocation of the implementation allocator.<br>
+    /// The \c RawAllocator must take as single template argument an implementation allocator,
+    /// \c args are passed to its constructor followed by the implementation allocator.
+    /// \relates tracked_allocator
+    template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
+    auto make_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
+    -> tracked_allocator<Tracker, RawAllocator<detail::tracked_impl_allocator<Tracker, ImplRawAllocator>>>
+    {
+        return {std::move(t), std::move(impl), std::forward<Args&&>(args)...};
+    }
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_TRACKING_HPP_INCLUDED

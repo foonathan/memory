@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <utility>
 
-#include "../tracking.hpp"
-
 namespace foonathan { namespace memory
 {
     namespace detail
@@ -92,13 +90,10 @@ namespace foonathan { namespace memory
         
             // allocates a new block and returns it and its size
             // name is used for the growth tracker
-            block_info allocate(const char *name)
+            block_info allocate()
             {
                 if (free_.empty())
                 {
-                    // need to allocate a new block
-                    if (!used_.empty()) // don't call tracker on initial allocation
-                        detail::on_allocator_growth(name, this, cur_block_size_ / growth_factor);
                     auto memory = get_allocator().
                         allocate_node(cur_block_size_, alignof(std::max_align_t));
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
