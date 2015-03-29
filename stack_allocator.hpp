@@ -8,8 +8,8 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "detail/align.hpp"
 #include "detail/block_list.hpp"
+#include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
 #include "heap_allocator.hpp"
 #include "raw_allocator_base.hpp"
@@ -45,35 +45,30 @@ namespace foonathan { namespace memory
         /// The new block must be big enough for the requested memory.
         void* allocate(std::size_t size, std::size_t alignment)
         {
-            auto offset = align_offset(alignment);
-            if (offset + size > capacity())
+            auto mem = stack_.allocate(size, alignment);
+            if (!mem)
             {
                 allocate_block();
-                offset = align_offset(alignment);
-                assert(offset + size <= capacity() && "block size still too small");
+                mem = stack_.allocate(size, alignment);
+                assert(mem && "block size still too small");
             }
-            // now we have sufficient size
-            cur_ += offset; // align
-            auto memory = cur_;
-            cur_ += size; // bump
-            return memory;
+            return mem;
         }
         
         /// \brief Marker type for unwinding.
         class marker
         {
             std::size_t index;
-            // store both and cur_end to replicate state easily
-            char *cur, *cur_end;
+            detail::fixed_memory_stack stack;
             
-            marker(std::size_t i, char *cur, char *cur_end) noexcept
-            : index(i), cur(cur), cur_end(cur_end) {}
+            marker(std::size_t i, detail::fixed_memory_stack stack) noexcept
+            : index(i), stack(stack) {}
         };
         
         /// \brief Returns a marker to the current top of the stack.
         marker top() const noexcept
         {
-            return {list_.size() - 1, cur_, cur_end_};
+            return {list_.size() - 1, stack_};
         }
         
         /// \brief Unwinds the stack to a certain marker.
@@ -84,20 +79,27 @@ namespace foonathan { namespace memory
             auto diff = list_.size() - m.index - 1;
             for (auto i = 0u; i != diff; ++i)
                 list_.deallocate();
-            cur_     = m.cur_;
-            cur_end_ = m.cur_end_;
+            stack_ = m.stack;
         }
         
         /// \brief Returns the capacity remaining in the current block.
         std::size_t capacity() const noexcept
         {
-            return cur_end_ - cur_;
+            return stack_.end() - stack_.top();
         }
         
-        /// \brief Returns the size of the memory block available after the capacity() is exhausted.
+        /// \brief Returns the size of the next memory block.
+        /// \detail This is the new capacity after \ref capacity() is exhausted.<br>
+        /// This is also the maximum array size.
         std::size_t next_capacity() const noexcept
         {
             return list_.next_block_size();
+        }
+        
+        /// \brief Frees all unused memory blocks.
+        void shrink_to_fit() noexcept
+        {
+            list_.shrink_to_fit();
         }
         
         /// \brief Returns the \ref impl_allocator.
@@ -106,21 +108,15 @@ namespace foonathan { namespace memory
             return list_.get_allocator();
         }
         
-    private:
-        std::size_t align_offset(std::size_t alignment) const noexcept
-        {
-            return detail::align_offset(cur_, alignment);
-        }
-        
+    private:        
         void allocate_block()
         {
             auto block = list_.allocate("foonathan::memory::memory_stack");
-            cur_ = static_cast<char*>(block.memory);
-            cur_end_ = cur_ + block.size;
+            stack_ = detail::fixed_memory_stack(block.memory, block.size);
         }
     
         detail::block_list<impl_allocator> list_;
-        char *cur_, *cur_end_;
+        detail::fixed_memory_stack stack_;
     };
     
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_state.

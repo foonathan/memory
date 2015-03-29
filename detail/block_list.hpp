@@ -20,16 +20,16 @@ namespace foonathan { namespace memory
             : memory(memory), size(size) {}
         };
         
-        // implementation for block_list to get rid of template
+        // simple intrusive list managing memory blocks
+        // does not deallocate blocks
         class block_list_impl
         {
         public:        
             block_list_impl() noexcept = default;
             block_list_impl(block_list_impl &&other) noexcept
-            : head_(other.head_), size_(other.size_)
+            : head_(other.head_)
             {
                 other.head_ = nullptr;
-                other.size_ = 0u;
             }
             ~block_list_impl() noexcept = default;
             
@@ -37,18 +37,19 @@ namespace foonathan { namespace memory
             {
                 head_ = other.head_;
                 other.head_ = nullptr;
-                size_ = other.size_;
-                other.size_ = 0u;
             }
             
             // inserts a new memory block, returns the size needed for the implementation
             std::size_t push(void* &memory, std::size_t size) noexcept;
-            block_info pop() noexcept;
             
-            std::size_t size() const noexcept
-            {
-                return size_;
-            }
+            // inserts the top memory block of another list, pops it from the other one
+            // returns the memory block
+            // its size is the usable memory size
+            block_info push(block_list_impl &other) noexcept;
+            
+            // pops the memory block at the top
+            // its size is the original size passed to push
+            block_info pop() noexcept;
             
             bool empty() const noexcept
             {
@@ -58,7 +59,6 @@ namespace foonathan { namespace memory
         private:
             struct node;
             node *head_ = nullptr;
-            std::size_t size_ = 0u;
         };
         
         // manages a collection of memory blocks
@@ -69,7 +69,7 @@ namespace foonathan { namespace memory
         {
             static constexpr auto growth_factor = 2u;
         public:        
-            // gives it an initial block size
+            // gives it an initial block size and allocates it
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
                     RawAllocator allocator)
@@ -77,7 +77,7 @@ namespace foonathan { namespace memory
             block_list(block_list &&) = default;
             ~block_list() noexcept
             {
-                clear();
+                shrink_to_fit();
             }
             
             block_list& operator=(block_list &&) = default;
@@ -91,28 +91,37 @@ namespace foonathan { namespace memory
             // name is used for the growth tracker
             block_info allocate(const char *name)
             {
-                if (!list_.empty())
-                    detail::on_allocator_growth(name, this, cur_block_size_ / growth_factor);
-                auto memory = get_allocator().
-                    allocate_node(cur_block_size_, alignof(std::max_align_t));
-                auto size = cur_block_size_ - list_.push(memory, cur_block_size_);
-                cur_block_size_ *= growth_factor;
-                return {memory, size};
+                if (free_.empty())
+                {
+                    // need to allocate a new block
+                    if (!used_.empty()) // don't call tracker on initial allocation
+                        detail::on_allocator_growth(name, this, cur_block_size_ / growth_factor);
+                    auto memory = get_allocator().
+                        allocate_node(cur_block_size_, alignof(std::max_align_t));
+                    auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
+                    cur_block_size_ *= growth_factor;
+                    return {memory, size};
+                }
+                // already block cached in free list
+                return used_.push(free_);
             }
             
             // deallocates the last allocate block
+            // does not free memory, caches the block for future use
             void deallocate() noexcept
             {
-                auto block = list_.pop();
-                get_allocator().
-                    deallocate_node(block.memory, block.size, alignof(std::max_align_t));
+                free_.push(used_);
             }
             
-            // deallocates all blocks
-            void clear() noexcept
+            // deallocates all unused cached blocks
+            void shrink_to_fit() noexcept
             {
-                while (!list_.empty())
-                    deallocate();
+                while (!free_.empty())
+                {
+                    auto block = free_.pop();
+                    get_allocator().
+                        deallocate_node(block.memory, block.size, alignof(std::max_align_t));
+                }
             }
             
             // returns the next block size
@@ -122,7 +131,7 @@ namespace foonathan { namespace memory
             }
             
         private:
-            block_list_impl list_;
+            block_list_impl used_, free_;
             std::size_t cur_block_size_;
         };
     } // namespace detail

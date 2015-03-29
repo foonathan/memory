@@ -20,15 +20,23 @@ std::size_t block_list_impl::push(void* &memory, std::size_t size) noexcept
     auto ptr = ::new(memory) node(head_, size);
     head_ = ptr;
     memory = static_cast<char*>(memory) + sizeof(node);
-    ++size_;
     return sizeof(node);
+}
+
+block_info block_list_impl::push(block_list_impl &other) noexcept
+{
+    assert(other.head_ && "stack underflow");
+    auto top = other.head_;
+    other.head_ = top->prev;
+    top->prev = head_;
+    head_ = top;
+    return {top, top->size - sizeof(node)};
 }
 
 block_info block_list_impl::pop() noexcept
 {
-    assert(size_ != 0 && "stack underflow");
+    assert(head_ && "stack underflow");
     auto top = head_;
     head_ = top->prev;
-    --size_;
     return {top, top->size};
 }
