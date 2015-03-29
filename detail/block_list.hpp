@@ -25,6 +25,9 @@ namespace foonathan { namespace memory
         class block_list_impl
         {
         public:        
+            // the size needed for the implementation
+            static std::size_t impl_offset();
+            
             block_list_impl() noexcept = default;
             block_list_impl(block_list_impl &&other) noexcept
             : head_(other.head_)
@@ -127,7 +130,7 @@ namespace foonathan { namespace memory
             // returns the next block size
             std::size_t next_block_size() const noexcept
             {
-                return cur_block_size_;
+                return cur_block_size_ - block_list_impl::impl_offset();
             }
             
         private:

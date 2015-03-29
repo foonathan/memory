@@ -1,0 +1,15 @@
+#ifndef FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED
+#define FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED
+
+namespace foonathan { namespace memory
+{
+	/// @{
+    /// \brief Tag types defining whether or not a pool supports arrays.
+    /// \detail An \c array_pool supports both node and arrays.
+    /// \ingroup memory
+    struct node_pool : std::false_type {};
+    struct array_pool : std::true_type {};    
+    /// @}
+}} // namespace foonathan::memory
+
+#endif // FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED

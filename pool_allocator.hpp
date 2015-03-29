@@ -13,18 +13,10 @@
 #include "detail/free_list.hpp"
 #include "allocator_traits.hpp"
 #include "heap_allocator.hpp"
-#include "raw_allocator_base.hpp"
+#include "pool_type.hpp"
 
 namespace foonathan { namespace memory
-{
-    /// @{
-    /// \brief Tag types defining whether or not a pool supports arrays.
-    /// \detail An \c array_pool supports both node and arrays.
-    /// \ingroup memory
-    struct node_pool : std::false_type {};
-    struct array_pool : std::true_type {};    
-    /// @}
-    
+{    
     /// \brief A memory pool.
     ///
     /// It manages nodes of fixed size.
@@ -32,7 +24,7 @@ namespace foonathan { namespace memory
     /// but each has the given size.<br>
     /// There are two types: one that is faster, but does not support arrays,
     /// one that is slightly slower but does.
-    /// Use the template parameter to select it.<br>
+    /// Use the \ref node_pool or \ref array_pool type to select it.<br>
     /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
@@ -69,7 +61,6 @@ namespace foonathan { namespace memory
         {
             if (free_list_.empty())
                 allocate_block();
-            capacity_ -= node_size();
             return free_list_.allocate();
         }
         
@@ -93,17 +84,13 @@ namespace foonathan { namespace memory
                     mem = free_list_.allocate(n);
                 }
             }
-            if (!pool_type::value && !mem)
-                throw std::bad_alloc();
-            assert(mem);
-            capacity_ -= n * node_size();
+            assert(mem && "invalid array size");
             return mem;
         }
         
         /// \brief Deallocates a single node from the pool.
         void deallocate_node(void *ptr) noexcept
         {
-            capacity_ += node_size();
             if (pool_type::value)
                 free_list_.deallocate_ordered(ptr);
             else
@@ -113,7 +100,6 @@ namespace foonathan { namespace memory
         /// \brief Deallocates an array of nodes from the pool.
         void deallocate_array(void *ptr, std::size_t n) noexcept
         {
-            capacity_ += node_size();
             if (pool_type::value)
                 free_list_.deallocate_ordered(ptr, n);
             else
@@ -130,10 +116,12 @@ namespace foonathan { namespace memory
         /// \detail This is the pure byte size, divide it by \ref node_size() to get the number of bytes.
         std::size_t capacity() const noexcept
         {
-            return capacity_;
+            return free_list_.capacity();
         }
         
-        /// \brief Returns the size of the memory block available after the capacity() is exhausted.
+        /// \brief Returns the size of the next memory block.
+        /// \detail This is the new capacity after \ref capacity() is exhausted.<br>
+        /// This is also the maximum array size.
         std::size_t next_capacity() const noexcept
         {
             return block_list_.next_block_size();

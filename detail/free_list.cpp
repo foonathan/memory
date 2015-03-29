@@ -67,7 +67,7 @@ namespace
 }
 
 free_memory_list::free_memory_list(std::size_t el_size) noexcept
-: first_(nullptr), el_size_(el_size)
+: first_(nullptr), el_size_(el_size), capacity_(0u)
 {
     assert(el_size >= min_element_size && "element size too small");
 }
@@ -81,6 +81,7 @@ free_memory_list::free_memory_list(std::size_t el_size,
 
 void free_memory_list::insert(void *mem, std::size_t size) noexcept
 {
+    capacity_ += size;
     auto last = build_list(mem, el_size_, size);
     next(last) = first_;
     first_ = static_cast<char*>(mem);
@@ -88,6 +89,7 @@ void free_memory_list::insert(void *mem, std::size_t size) noexcept
 
 void free_memory_list::insert_ordered(void *mem, std::size_t size) noexcept
 {
+    capacity_ += size;
     if (empty())
         return insert(mem, size);
 
@@ -111,6 +113,7 @@ void free_memory_list::insert_between(void *pre, void *after,
 
 void* free_memory_list::allocate() noexcept
 {
+    capacity_ -= el_size_;
     auto block = first_;
     first_ = next(first_);
     return block;
@@ -118,6 +121,7 @@ void* free_memory_list::allocate() noexcept
 
 void* free_memory_list::allocate(std::size_t n) noexcept
 {
+    capacity_ -= n * el_size_;
     for(auto cur = first_; cur; cur = next(cur))
     {
         auto start = cur;
@@ -134,12 +138,14 @@ void* free_memory_list::allocate(std::size_t n) noexcept
 
 void free_memory_list::deallocate(void *ptr) noexcept
 {
+    capacity_ += el_size_;
     next(ptr) = first_;
     first_ = static_cast<char*>(ptr);
 }
 
 void free_memory_list::deallocate_ordered(void *ptr) noexcept
 {
+    capacity_ += el_size_;
     auto pos = find_position(first_, ptr);
     insert_between(pos.first, pos.second, ptr, el_size_);
 }

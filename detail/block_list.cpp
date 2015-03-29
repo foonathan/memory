@@ -15,6 +15,11 @@ struct block_list_impl::node
     : prev(prev), size(size) {}
 };
 
+std::size_t block_list_impl::impl_offset()
+{
+    return sizeof(node);
+}
+
 std::size_t block_list_impl::push(void* &memory, std::size_t size) noexcept
 {
     auto ptr = ::new(memory) node(head_, size);
