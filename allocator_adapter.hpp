@@ -123,6 +123,15 @@ namespace foonathan { namespace memory
             return Traits::max_alignment(alloc);
         }
     };
+    
+    /// \brief Creates a \ref raw_allocator_adapter.
+    /// \relates raw_allocator_adapter
+    template <class RawAllocator>
+    auto make_adapter(RawAllocator &&allocator) noexcept
+    -> raw_allocator_adapter<typename std::decay<RawAllocator>::type> 
+    {
+        return {std::forward<RawAllocator>(allocator)};
+    }
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     ///
@@ -230,6 +239,15 @@ namespace foonathan { namespace memory
                     const raw_allocator_allocator<T2, Impl> &rhs) noexcept;
     };
 
+    /// \brief Makes an \ref raw_allocator_allocator.
+    /// \relates raw_allocator_allocator
+    template <typename T, class RawAllocator>
+    auto make_std_allocator(RawAllocator &&allocator) noexcept
+    -> raw_allocator_allocator<T, typename std::decay<RawAllocator>::type>
+    {
+        return {std::forward<RawAllocator>(allocator)};
+    }
+    
     template <typename T, typename U, class Impl>
     bool operator==(const raw_allocator_allocator<T, Impl> &lhs,
                     const raw_allocator_allocator<U, Impl> &rhs) noexcept
