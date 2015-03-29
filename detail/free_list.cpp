@@ -50,6 +50,8 @@ namespace
     bool check_n(char* &cur, std::size_t n, std::size_t el_size) noexcept
     {
         --n; // we already have one (cur)
+        if (n == 0u)
+            return true;
         for (; cur; cur += el_size)
         {
             if (next(cur) == cur + el_size)
@@ -66,11 +68,12 @@ namespace
     }
 }
 
+constexpr std::size_t free_memory_list::min_element_size;
+constexpr std::size_t free_memory_list::min_element_alignment;
+
 free_memory_list::free_memory_list(std::size_t el_size) noexcept
-: first_(nullptr), el_size_(el_size), capacity_(0u)
-{
-    assert(el_size >= min_element_size && "element size too small");
-}
+: first_(nullptr), el_size_(std::max(min_element_size, el_size)), capacity_(0u)
+{}
 
 free_memory_list::free_memory_list(std::size_t el_size,
                                    void *mem, std::size_t size) noexcept

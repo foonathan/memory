@@ -1,3 +1,7 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
 
@@ -178,7 +182,10 @@ namespace foonathan { namespace memory
             assert(size <= max_node_size(state) && "invalid node size");
             assert(alignment <= max_alignment(state) && "invalid alignment");
             assert(count * size <= max_array_size(state) && "invalid array size");
-            return state.allocate_array(count);
+            if (size == max_node_size(state))
+                return state.allocate_array(count);
+            auto ratio = max_node_size(state) / size;
+            return state.allocate_array(count / ratio + 1);
         }
         /// @}
 
@@ -191,9 +198,15 @@ namespace foonathan { namespace memory
         }
 
         static void deallocate_array(allocator_type &state,
-                    void *array, std::size_t count, std::size_t, std::size_t) noexcept
+                    void *array, std::size_t count, std::size_t size, std::size_t) noexcept
         {
-            state.deallocate_array(array, count);
+            if (size == max_node_size(state))
+                state.deallocate_array(array, count);
+            else
+            {
+                auto ratio = max_node_size(state) / size;
+                state.deallocate_array(array, count / ratio + 1);
+            }
         }
         /// @}
 
