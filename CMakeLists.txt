@@ -1,55 +1,46 @@
 if (BIICODE)
     include(${CMAKE_HOME_DIRECTORY}/biicode.cmake)
     include(biicode/cmake/tools)
-    INIT_BIICODE_BLOCK()
 else()
     cmake_minimum_required(VERSION 3.0)
     project(foonathan_memory)
 endif()
 
-set(header
+if (BIICODE)
+    ADD_BIICODE_TARGETS()
+    set(targets ${BII_BLOCK_TARGETS} CACHE INTERNAL "")
+    
+    ACTIVATE_CPP11()
+else()        
+    set(src
             detail/align.hpp
+            detail/block_list.cpp
             detail/block_list.hpp
+            detail/free_list.cpp
             detail/free_list.hpp
+            detail/memory_stack.hpp
             allocator_adapter.hpp
             allocator_traits.hpp
+            heap_allocator.cpp
             heap_allocator.hpp
+            new_allocator.cpp
             new_allocator.hpp
             pool_allocator.hpp
+            pool_collection.cpp
             pool_collection.hpp
+            pool_type.hpp
             raw_allocator_base.hpp
+            smart_ptr.hpp
             stack_allocator.hpp
             std_allocator_base.hpp
             tracking.hpp
     CACHE INTERNAL "")
-set(src
-        detail/block_list.cpp
-        detail/free_list.cpp
-        heap_allocator.cpp
-        new_allocator.cpp
- #       pool_collection.cpp
-        tracking.cpp
-    CACHE INTERNAL "")
-
-if (BIICODE)
-    set(BII_LIB_SRC ${src} ${header}) # force generation of library target, otherwise it will be INTERFACE only
-    ADD_BIICODE_TARGETS()
-    set(lib_target ${BII_LIB_TARGET} CACHE INTERNAL "")
-    set(targets ${BII_BLOCK_TARGETS} CACHE INTERNAL "")
-else()        
-    add_library(foonathan_memory ${src} ${header})
-    add_executable(memory ${src} ${header} example/main.cpp)
     
-    set(lib_target foonathan_memory CACHE INTERNAL "")
-    set(targets ${lib_target} memory CACHE INTERNAL "")
+    add_library(foonathan_memory ${src})
+    add_executable(foonathan_memory_example ${src} example/main.cpp)
+    
+    set(targets foonathan_memory foonathan_memory_example CACHE INTERNAL "")
+    
+    set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
+    set_target_properties(${targets} PROPERTIES CXX_STANDARD_REQUIRED ON)
 endif()
-
-set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
-set_target_properties(${targets} PROPERTIES CXX_STANDARD_REQUIRED ON)
-
-foreach(target ${targets})
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-    if (BIICODE)
-        ACTIVATE_CPP11(${target})
-    endif()
-endforeach()
