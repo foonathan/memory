@@ -1,23 +1,22 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #include "heap_allocator.hpp"
 
 #include <cassert>
 #include <cstdlib>
 #include <new>
 
-#include "tracking.hpp"
-
 using namespace foonathan::memory;
 
-void* heap_allocator::allocate(std::size_t size, std::size_t)
+void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
     while (true)
     {
         auto mem = std::malloc(size);
         if (mem)
-        {
-            detail::on_heap_alloc(true, mem, size);
             return mem;
-        }
         auto handler = std::get_new_handler();
         if (!handler)
             throw std::bad_alloc();
@@ -26,9 +25,8 @@ void* heap_allocator::allocate(std::size_t size, std::size_t)
     assert(false);
 }
 
-void heap_allocator::deallocate(void *ptr,
-                                std::size_t size, std::size_t) noexcept
+void heap_allocator::deallocate_node(void *ptr,
+                                     std::size_t size, std::size_t) noexcept
 {
     std::free(ptr);
-    detail::on_heap_alloc(false, ptr, size);
 }
