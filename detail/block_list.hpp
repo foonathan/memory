@@ -96,10 +96,12 @@ namespace foonathan { namespace memory
                 {
                     auto memory = get_allocator().
                         allocate_node(cur_block_size_, alignof(std::max_align_t));
+                    ++size_;
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
                     cur_block_size_ *= growth_factor;
                     return {memory, size};
                 }
+                ++size_;
                 // already block cached in free list
                 return used_.push(free_);
             }
@@ -108,6 +110,7 @@ namespace foonathan { namespace memory
             // does not free memory, caches the block for future use
             void deallocate() noexcept
             {
+                --size_;
                 free_.push(used_);
             }
             
@@ -128,9 +131,14 @@ namespace foonathan { namespace memory
                 return cur_block_size_ - block_list_impl::impl_offset();
             }
             
+            std::size_t size() const noexcept
+            {
+                return size_;
+            }
+            
         private:
             block_list_impl used_, free_;
-            std::size_t cur_block_size_;
+            std::size_t size_, cur_block_size_;
         };
     } // namespace detail
 }} // namespace foonathan::memory

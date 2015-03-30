@@ -67,6 +67,8 @@ namespace foonathan { namespace memory
             
             marker(std::size_t i, detail::fixed_memory_stack stack) noexcept
             : index(i), stack(stack) {}
+            
+            friend memory_stack;
         };
         
         /// \brief Returns a marker to the current top of the stack.
