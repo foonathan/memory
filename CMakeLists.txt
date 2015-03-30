@@ -37,9 +37,10 @@ else()
     CACHE INTERNAL "")
     
     add_library(foonathan_memory ${src})
-    add_executable(foonathan_memory_example ${src} example/main.cpp)
+    add_executable(foonathan_memory_example_allocator ${src} example/allocator.cpp)
+    add_executable(foonathan_memory_example_smart_ptr ${src} example/smart_ptr.cpp)
     
-    set(targets foonathan_memory foonathan_memory_example CACHE INTERNAL "")
+    set(targets foonathan_memory foonathan_memory_example_allocator foonathan_memory_example_smart_ptr CACHE INTERNAL "")
     
     set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
     set_target_properties(${targets} PROPERTIES CXX_STANDARD_REQUIRED ON)
