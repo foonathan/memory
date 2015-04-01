@@ -20,10 +20,10 @@ namespace
         return *static_cast<memory_stack<>*>(static_cast<void*>(&temporary_stack));
     }
     
-    memory_stack<>& might_construct_stack()
+    memory_stack<>& might_construct_stack(std::size_t size)
     {
         if (nifty_counter++ == 0u)
-            ::new(static_cast<void*>(&temporary_stack)) memory_stack<>(4096u);
+            ::new(static_cast<void*>(&temporary_stack)) memory_stack<>(size);
         return get_stack();
     }
 }
@@ -55,8 +55,8 @@ void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
     return get_stack().allocate(size, alignment);
 }
 
-temporary_allocator::temporary_allocator() noexcept
-: marker_(get_stack().top()), unwind_(true) {}
+temporary_allocator::temporary_allocator(std::size_t size) noexcept
+: marker_(might_construct_stack(size).top()), unwind_(true) {}
 
 std::size_t allocator_traits<temporary_allocator>::max_node_size(const allocator_type &) noexcept
 {

@@ -28,20 +28,22 @@ namespace foonathan { namespace memory
         void* allocate(std::size_t size, std::size_t alignment);
         
     private:
-        temporary_allocator() noexcept;
+        temporary_allocator(std::size_t size) noexcept;
         
         memory_stack<>::marker marker_;
         bool unwind_;
         
-        friend temporary_allocator make_temporary_allocator() noexcept;
+        friend temporary_allocator make_temporary_allocator(std::size_t size) noexcept;
     };
     
     /// \brief Creates a new \ref temporary_allocator.
-    /// \detail This is the only way to create to avoid accidental creation not on the stack.
+    /// \detail This is the only way to create to avoid accidental creation not on the stack.<br>
+    /// The internal stack allocator will only be created in a thread if there is at least one call to this function.
+    /// If it is the call that actually creates it, the stack has the initial size passed to it.
     /// \relates temporary_allocator
-    inline temporary_allocator make_temporary_allocator() noexcept
+    inline temporary_allocator make_temporary_allocator(std::size_t size = 4096u) noexcept
     {
-        return {};
+        return {size};
     }
     
     /// \brief Specialization of the \ref allocator_traits for \ref temporary_allocator.
