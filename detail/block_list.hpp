@@ -38,6 +38,7 @@ namespace foonathan { namespace memory
             {
                 head_ = other.head_;
                 other.head_ = nullptr;
+                return *this;
             }
             
             // inserts a new memory block, returns the size needed for the implementation
