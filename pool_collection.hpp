@@ -191,7 +191,7 @@ namespace foonathan { namespace memory
         detail::free_list_array pools_;
     };
     
-    // \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
+    /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
     /// \detail This allows passing a pool directly as allocator to container types.
     /// \ingroup memory
     template <class RawAllocator>

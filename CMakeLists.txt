@@ -33,6 +33,8 @@ else()
             smart_ptr.hpp
             stack_allocator.hpp
             std_allocator_base.hpp
+            temporary_allocator.cpp
+            temporary_allocator.hpp
             tracking.hpp
     CACHE INTERNAL "")
     

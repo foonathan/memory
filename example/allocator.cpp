@@ -12,7 +12,7 @@
 
 using namespace foonathan;
 
-// uses a RawAllocator or a class that has specialized the raw_allocator_traits
+// uses a RawAllocator or a class that has specialized the allocator_traits
 template <class RawAllocator>
 void use_allocator(RawAllocator &alloc)
 {

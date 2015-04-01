@@ -125,7 +125,7 @@ namespace foonathan { namespace memory
         detail::fixed_memory_stack stack_;
     };
     
-    /// \brief Specialization of the \ref allocator_traits for a \ref memory_state.
+    /// \brief Specialization of the \ref allocator_traits for a \ref memory_stack.
     /// \detail This allows passing a state directly as allocator to container types.
     /// \ingroup memory
     template <class ImplRawAllocator>
@@ -175,7 +175,7 @@ namespace foonathan { namespace memory
         /// \brief There is no maximum alignment (except indirectly through \ref next_capacity()).
         static std::size_t max_alignment(const allocator_type &) noexcept
         {
-            return 0;
+            return std::size_t(-1);
         }
     };
 }} // namespace foonathan::memory
