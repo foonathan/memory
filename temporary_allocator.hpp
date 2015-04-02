@@ -9,7 +9,16 @@
 #include "stack_allocator.hpp"
 
 namespace foonathan { namespace memory
-{    
+{
+    namespace detail
+    {
+    	static struct temporary_allocator_dtor_t
+        {
+            temporary_allocator_dtor_t() noexcept;
+            ~temporary_allocator_dtor_t() noexcept;
+        } temporary_allocator_dtor;
+    } // namespace detail
+    
 	/// \brief A memory allocator for temporary allocations.
     /// \detail It is similar to \c alloca() but portable.
     /// It uses a \c thread_local \ref memory_stack<> for the allocation.<br>
@@ -40,6 +49,7 @@ namespace foonathan { namespace memory
     /// \detail This is the only way to create to avoid accidental creation not on the stack.<br>
     /// The internal stack allocator will only be created in a thread if there is at least one call to this function.
     /// If it is the call that actually creates it, the stack has the initial size passed to it.
+    /// The stack will be destroyed when the current thread ends, so there is - no growth needed - only one heap allocation per thread.
     /// \relates temporary_allocator
     inline temporary_allocator make_temporary_allocator(std::size_t size = 4096u) noexcept
     {

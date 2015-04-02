@@ -9,11 +9,11 @@
 using namespace foonathan::memory;
 
 namespace
-{
-    thread_local std::size_t nifty_counter = 0u;
-    
+{    
     using storage_type = typename std::aligned_storage<sizeof(memory_stack<>), alignof(memory_stack<>)>::type;
     thread_local storage_type temporary_stack;
+    thread_local bool is_created = false;
+    thread_local std::size_t nifty_counter = 0u; // for destructor call
     
     memory_stack<>& get_stack() noexcept
     {
@@ -22,9 +22,26 @@ namespace
     
     memory_stack<>& might_construct_stack(std::size_t size)
     {
-        if (nifty_counter++ == 0u)
+        if (!is_created)
+        {
             ::new(static_cast<void*>(&temporary_stack)) memory_stack<>(size);
+            is_created = true;
+        }
         return get_stack();
+    }
+}
+
+detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() noexcept
+{
+    ++nifty_counter;
+}
+
+detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() noexcept
+{
+    if (--nifty_counter == 0u)
+    {
+        get_stack().~memory_stack<>();
+        // at this point the current thread is over, so boolean not necessary
     }
 }
 
@@ -38,8 +55,6 @@ temporary_allocator::~temporary_allocator() noexcept
 {
     if (unwind_)
         get_stack().unwind(marker_);
-    if (--nifty_counter == 0u)
-        get_stack().~memory_stack<>();
 }
 
 temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other) noexcept
