@@ -12,10 +12,13 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
-    	static struct temporary_allocator_dtor_t
+    	static class temporary_allocator_dtor_t
         {
+        public:
             temporary_allocator_dtor_t() noexcept;
             ~temporary_allocator_dtor_t() noexcept;
+        private:
+            static thread_local std::size_t nifty_counter_;
         } temporary_allocator_dtor;
     } // namespace detail
     
@@ -26,7 +29,17 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     class temporary_allocator
     {
-    public:        
+    public:
+        /// \brief The type of the growth tracker.
+        /// \detail It gets called when the internal \ref memory_stack<> needs to grow.
+        /// It gets the size of the new block that will be allocated.
+        /// If this function doesn't return, growth is prevented but the allocator unusable.<br>
+        /// Each thread has its own internal stack and thus own tracker.
+        using growth_tracker = void(*)(std::size_t size);
+        
+        /// \brief Exchanges the \ref growth_tracker.
+        static growth_tracker set_growth_tracker(growth_tracker t) noexcept;
+  
         temporary_allocator(temporary_allocator &&other) noexcept;
         ~temporary_allocator() noexcept;
         
