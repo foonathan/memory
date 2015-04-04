@@ -20,6 +20,24 @@
 
 namespace foonathan { namespace memory
 {    
+    template <class Impl>
+    class memory_stack;
+    
+    namespace detail
+    {
+    	class stack_marker
+        {
+            std::size_t index;
+            detail::fixed_memory_stack stack;
+            
+            stack_marker(std::size_t i, detail::fixed_memory_stack stack) noexcept
+            : index(i), stack(stack) {}
+            
+            template <class Impl>
+            friend class memory::memory_stack;
+        };
+    } // namespace detail
+    
     /// \brief A memory stack.
     ///
     /// Allows fast memory allocations but deallocation is only possible via markers.
@@ -60,16 +78,7 @@ namespace foonathan { namespace memory
         }
         
         /// \brief Marker type for unwinding.
-        class marker
-        {
-            std::size_t index;
-            detail::fixed_memory_stack stack;
-            
-            marker(std::size_t i, detail::fixed_memory_stack stack) noexcept
-            : index(i), stack(stack) {}
-            
-            friend memory_stack;
-        };
+        using marker = detail::stack_marker;
         
         /// \brief Returns a marker to the current top of the stack.
         marker top() const noexcept
@@ -125,7 +134,7 @@ namespace foonathan { namespace memory
         detail::fixed_memory_stack stack_;
     };
     
-    /// \brief Specialization of the \ref allocator_traits for a \ref memory_state.
+    /// \brief Specialization of the \ref allocator_traits for a \ref memory_stack.
     /// \detail This allows passing a state directly as allocator to container types.
     /// \ingroup memory
     template <class ImplRawAllocator>
@@ -175,7 +184,7 @@ namespace foonathan { namespace memory
         /// \brief There is no maximum alignment (except indirectly through \ref next_capacity()).
         static std::size_t max_alignment(const allocator_type &) noexcept
         {
-            return 0;
+            return std::size_t(-1);
         }
     };
 }} // namespace foonathan::memory
