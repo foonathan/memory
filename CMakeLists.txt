@@ -6,8 +6,11 @@ else()
     project(foonathan_memory)
 endif()
 
+set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
+    "the default implementation allocator for higher-level ones")
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
-	           "${CMAKE_CURRENT_BINARY_DIR}/foonathan/memory/config.hpp")
+	           "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 if (BIICODE)
     ADD_BIICODE_TARGETS()
@@ -24,7 +27,7 @@ else()
             detail/memory_stack.hpp
             allocator_adapter.hpp
             allocator_traits.hpp
-            ${CMAKE_CURRENT_BINARY_DIR}/foonathan/memory/config.hpp
+            config.hpp
             heap_allocator.cpp
             heap_allocator.hpp
             new_allocator.cpp
@@ -59,5 +62,4 @@ endif()
 
 foreach(target ${targets})
     target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/foonathan/memory)
 endforeach()

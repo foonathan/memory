@@ -15,7 +15,7 @@
 #include "detail/free_list.hpp"
 #include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
-#include "heap_allocator.hpp"
+#include "config.hpp"
 #include "pool_type.hpp"
 
 namespace foonathan { namespace memory
@@ -52,7 +52,7 @@ namespace foonathan { namespace memory
     /// \detail This allows allocating of nodes of various sizes.<br>
     /// Otherwise behaves the same as \ref memory_pool.
     /// \ingroup memory
-    template <class RawAllocator = heap_allocator>
+    template <class RawAllocator = default_allocator>
     class memory_pool_collection
     { 
     public:

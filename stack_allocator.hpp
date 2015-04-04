@@ -15,7 +15,7 @@
 #include "detail/block_list.hpp"
 #include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
-#include "heap_allocator.hpp"
+#include "config.hpp"
 #include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
@@ -46,7 +46,7 @@ namespace foonathan { namespace memory
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
-    template <class RawAllocator = heap_allocator>
+    template <class RawAllocator = default_allocator>
     class memory_stack
     {
     public:
