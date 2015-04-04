@@ -6,6 +6,9 @@ else()
     project(foonathan_memory)
 endif()
 
+set(version_major 0 CACHE INTERNAL "")
+set(version_minor 2 CACHE INTERNAL "")
+
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 
