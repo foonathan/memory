@@ -16,7 +16,7 @@
 #include "detail/block_list.hpp"
 #include "detail/free_list.hpp"
 #include "allocator_traits.hpp"
-#include "heap_allocator.hpp"
+#include "default_allocator.hpp"
 #include "pool_type.hpp"
 
 namespace foonathan { namespace memory
@@ -33,7 +33,7 @@ namespace foonathan { namespace memory
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
-    template <typename NodeOrArray, class RawAllocator = heap_allocator>
+    template <typename NodeOrArray, class RawAllocator = default_allocator>
     class memory_pool
     {
         static_assert(std::is_same<NodeOrArray, node_pool>::value ||

@@ -1,0 +1,15 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+//=== version ===//
+/// \brief Major version.
+#define FOONATHAN_MEMORY_VERSION_MAJOR ${version_major}
+
+/// \brief Minor version.
+#define FOONATHAN_MEMORY_VERSION_MINOR ${version_minor}
+
+/// \brief Total version number.
+#define FOONATHAN_MEMORY_VERSION (${version_major} * 100 + ${version_minor})
+
+#define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
