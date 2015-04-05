@@ -29,6 +29,11 @@ namespace
         
         using stack_type = memory_stack<impl_allocator>;
     
+        bool is_created() const noexcept
+        {
+            return is_created_;
+        }
+    
         stack_type& get() noexcept
         {
             assert(is_created_);
@@ -79,7 +84,7 @@ detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() noexcept
 
 detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() noexcept
 {
-    if (--nifty_counter_ == 0u)
+    if (--nifty_counter_ == 0u && temporary_stack.is_created())
     {
         using stack_t = decltype(temporary_stack)::stack_type;
         temporary_stack.get().~stack_t();
