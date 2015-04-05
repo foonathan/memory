@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "default_allocator.hpp"
 #include "raw_allocator_base.hpp"
 
 using namespace foonathan::memory;
@@ -22,7 +23,7 @@ namespace
             
             void deallocate_node(void *memory, std::size_t size, std::size_t alignment)
             {
-                heap_allocator().deallocate_node(memory, size, alignment);
+                default_allocator().deallocate_node(memory, size, alignment);
             }
         };
         
@@ -67,7 +68,7 @@ namespace
             temporary_stack.tracker_(size);
         else
             temporary_stack.first_call_ = false;
-        return heap_allocator().allocate_node(size, alignment);
+        return default_allocator().allocate_node(size, alignment);
     }
 }
 
