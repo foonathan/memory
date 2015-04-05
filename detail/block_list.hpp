@@ -80,6 +80,12 @@ namespace foonathan { namespace memory
             ~block_list() noexcept
             {
                 shrink_to_fit();
+                while (!used_.empty())
+                {
+                    auto block = used_.pop();
+                    get_allocator().
+                        deallocate_node(block.memory, block.size, alignof(std::max_align_t));
+                }
             }
             
             block_list& operator=(block_list &&) = default;
