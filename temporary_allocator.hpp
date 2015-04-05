@@ -46,13 +46,16 @@ namespace foonathan { namespace memory
         temporary_allocator& operator=(temporary_allocator &&other) noexcept;
     
         /// \brief Allocates temporary memory of given size and alignment.
-        /// \detail It will be deallocated when the allocator goes out of scope.
+        /// \detail It will be deallocated when the allocator goes out of scope.<br>
+        /// For that reason, allocation must be made from the most recent created allocator.
         void* allocate(std::size_t size, std::size_t alignment);
         
     private:
         temporary_allocator(std::size_t size) noexcept;
         
+        static thread_local const temporary_allocator *top_;
         memory_stack<>::marker marker_;
+        const temporary_allocator *prev_;
         bool unwind_;
         
         friend temporary_allocator make_temporary_allocator(std::size_t size) noexcept;

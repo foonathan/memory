@@ -94,15 +94,17 @@ temporary_allocator::growth_tracker temporary_allocator::set_growth_tracker(grow
 }
 
 temporary_allocator::temporary_allocator(temporary_allocator &&other) noexcept
-: marker_(other.marker_), unwind_(true)
+: marker_(other.marker_), prev_(top_), unwind_(true)
 {
     other.unwind_ = false;
+    top_ = this;
 }
 
 temporary_allocator::~temporary_allocator() noexcept
 {
     if (unwind_)
         temporary_stack.get().unwind(marker_);
+    top_ = prev_;
 }
 
 temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other) noexcept
@@ -115,11 +117,17 @@ temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other)
 
 void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
 {
+    assert(top_ == this && "must allocate from top temporary allocator");
     return temporary_stack.get().allocate(size, alignment);
 }
 
 temporary_allocator::temporary_allocator(std::size_t size) noexcept
-: marker_(temporary_stack.create(size).top()), unwind_(true) {}
+: marker_(temporary_stack.create(size).top()), prev_(nullptr), unwind_(true)
+{
+    top_ = this;
+}
+
+thread_local const temporary_allocator* temporary_allocator::top_ = nullptr;
 
 std::size_t allocator_traits<temporary_allocator>::max_node_size(const allocator_type &) noexcept
 {
