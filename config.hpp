@@ -7,9 +7,6 @@
 #ifndef FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 #define FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 
-#include "heap_allocator.hpp"
-#include "new_allocator.hpp"
-
 #include "config_impl.hpp"
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

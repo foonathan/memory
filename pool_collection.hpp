@@ -15,7 +15,7 @@
 #include "detail/free_list.hpp"
 #include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
-#include "config.hpp"
+#include "default_allocator.hpp"
 #include "pool_type.hpp"
 
 namespace foonathan { namespace memory

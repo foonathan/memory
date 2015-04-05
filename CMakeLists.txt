@@ -31,6 +31,7 @@ else()
             allocator_adapter.hpp
             allocator_traits.hpp
             config.hpp
+            default_allocator.hpp
             heap_allocator.cpp
             heap_allocator.hpp
             new_allocator.cpp

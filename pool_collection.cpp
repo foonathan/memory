@@ -15,7 +15,7 @@ using namespace detail;
 namespace
 {
     template <typename Integral>
-    constexpr bool is_power_of_two(Integral no) noexcept
+    bool is_power_of_two(Integral no) noexcept
     {
         return no && (no & (no - 1)) == 0;
     }
@@ -26,17 +26,17 @@ namespace
     // we have a builtin to count leading zeros, use it
     // subtract one if power of two, otherwise 0
     // multiple overloads to support each size of std::size_t
-    constexpr std::size_t ilog2(unsigned int no) noexcept
+    std::size_t ilog2(unsigned int no) noexcept
     {
         return sizeof(no) * CHAR_BIT - __builtin_clz(no) - is_power_of_two(no);
     }
     
-    constexpr std::size_t ilog2(unsigned long no) noexcept
+    std::size_t ilog2(unsigned long no) noexcept
     {
         return sizeof(no) * CHAR_BIT - __builtin_clzl(no) - is_power_of_two(no);
     }
     
-    constexpr std::size_t ilog2(unsigned long long no) noexcept
+    std::size_t ilog2(unsigned long long no) noexcept
     {
         return sizeof(no) * CHAR_BIT - __builtin_clzll(no) - is_power_of_two(no);
     }

@@ -15,7 +15,7 @@
 #include "detail/block_list.hpp"
 #include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
-#include "config.hpp"
+#include "default_allocator.hpp"
 #include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
