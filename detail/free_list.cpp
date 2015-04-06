@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <functional>
 #include <utility>
 
@@ -11,9 +12,17 @@ using namespace detail;
 namespace
 {
     // pre: ptr
-    char*& next(void* ptr) noexcept
+    char* get_next(void* ptr) noexcept
     {
-        return *static_cast<char**>(ptr);
+        char* result = nullptr;
+        std::memcpy(&result, ptr, sizeof(char*));
+        return result;
+    }
+    
+    // pre: ptr
+    void set_next(void *ptr, char *next) noexcept
+    {
+        std::memcpy(ptr, &next, sizeof(char*));
     }
 
     // pre: mem, el_size > sizeof(mem), size >= el_size
@@ -22,7 +31,7 @@ namespace
         auto no_blocks = size / el_size;
         auto ptr = static_cast<char*>(mem);
         for (std::size_t i = 0u; i != no_blocks - 1; ++i, ptr += el_size)
-            next(ptr) = ptr + el_size;
+            set_next(ptr, ptr + el_size);
         return ptr;
     }
 
@@ -34,13 +43,13 @@ namespace
         if (greater(prev, static_cast<char*>(mem)))
             return std::make_pair(nullptr, list);
 
-        auto ptr = next(prev);
+        auto ptr = get_next(prev);
         while (ptr)
         {
             if (greater(ptr, static_cast<char*>(mem)))
                 break;
             prev = ptr;
-            ptr = next(ptr);
+            ptr = get_next(ptr);
         }
 
         return std::make_pair(prev, ptr);
@@ -54,7 +63,7 @@ namespace
             return true;
         for (; cur; cur += el_size)
         {
-            if (next(cur) == cur + el_size)
+            if (get_next(cur) == cur + el_size)
             {
                 if (--n == 0)
                     break;
@@ -62,8 +71,8 @@ namespace
             else
                 return false;
         }
-        // next(cur) is the last element of the array
-        cur = next(cur);
+        // get_next(cur) is the last element of the array
+        cur = get_next(cur);
         return true;
     }
 }
@@ -86,7 +95,7 @@ void free_memory_list::insert(void *mem, std::size_t size) noexcept
 {
     capacity_ += size;
     auto last = build_list(mem, el_size_, size);
-    next(last) = first_;
+    set_next(last, first_);
     first_ = static_cast<char*>(mem);
 }
 
@@ -107,32 +116,32 @@ void free_memory_list::insert_between(void *pre, void *after,
     auto last = build_list(mem, el_size_, size);
 
     if (pre)
-        next(pre) = static_cast<char*>(mem);
+        set_next(pre, static_cast<char*>(mem));
     else
         first_ = static_cast<char*>(mem);
 
-    next(last) = static_cast<char*>(after);
+    set_next(last, static_cast<char*>(after));
 }
 
 void* free_memory_list::allocate() noexcept
 {
     capacity_ -= el_size_;
     auto block = first_;
-    first_ = next(first_);
+    first_ = get_next(first_);
     return block;
 }
 
 void* free_memory_list::allocate(std::size_t n) noexcept
 {
     capacity_ -= n * el_size_;
-    for(auto cur = first_; cur; cur = next(cur))
+    for(auto cur = first_; cur; cur = get_next(cur))
     {
         auto start = cur;
         if (check_n(cur, n, el_size_))
         {
             // found n continuos nodes
             // cur is the last element, next(cur) is the next free node
-            first_ = next(cur);
+            first_ = get_next(cur);
             return start;
         }
     }
@@ -142,7 +151,7 @@ void* free_memory_list::allocate(std::size_t n) noexcept
 void free_memory_list::deallocate(void *ptr) noexcept
 {
     capacity_ += el_size_;
-    next(ptr) = first_;
+    set_next(ptr, first_);
     first_ = static_cast<char*>(ptr);
 }
 
