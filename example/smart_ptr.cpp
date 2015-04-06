@@ -17,7 +17,7 @@ void func(const std::shared_ptr<int> &ptr)
 
 int main()
 {
-    // create a memory stack initially 4KB big
+    // create a memory stack initially 4KiB big
     memory::memory_stack<> stack(4096);
     
     // create a shared pointer

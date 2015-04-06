@@ -73,20 +73,14 @@ namespace foonathan { namespace memory
         /// If not \ref array_pool, may fail, throwing \c std::bad_alloc.
         void* allocate_array(std::size_t n)
         {
-            void *mem = nullptr;
-            if (free_list_.empty())
+            auto empty = free_list_.empty();
+            if (empty)
+                allocate_block();
+            auto mem = free_list_.allocate(n);
+            if (!mem && !empty) // only one allocate_block() call
             {
                 allocate_block();
                 mem = free_list_.allocate(n);
-            }
-            else
-            {
-                mem = free_list_.allocate(n);
-                if (!mem)
-                {
-                    allocate_block();
-                    mem = free_list_.allocate(n);
-                }
             }
             assert(mem && "invalid array size");
             return mem;
@@ -182,10 +176,9 @@ namespace foonathan { namespace memory
             assert(size <= max_node_size(state) && "invalid node size");
             assert(alignment <= max_alignment(state) && "invalid alignment");
             assert(count * size <= max_array_size(state) && "invalid array size");
-            if (size == max_node_size(state))
-                return state.allocate_array(count);
-            auto ratio = max_node_size(state) / size;
-            return state.allocate_array(count / ratio + 1);
+            auto n = detail::free_memory_list::calc_block_count
+                            (max_node_size(state), count, size);
+            return state.allocate_array(n);
         }
         /// @}
 
@@ -200,13 +193,9 @@ namespace foonathan { namespace memory
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) noexcept
         {
-            if (size == max_node_size(state))
-                state.deallocate_array(array, count);
-            else
-            {
-                auto ratio = max_node_size(state) / size;
-                state.deallocate_array(array, count / ratio + 1);
-            }
+            auto n = detail::free_memory_list::calc_block_count
+                            (max_node_size(state), count, size);
+            state.deallocate_array(array, n);
         }
         /// @}
 

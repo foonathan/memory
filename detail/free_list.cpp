@@ -55,7 +55,7 @@ namespace
         return std::make_pair(prev, ptr);
     }
 
-    // pre: beg
+    // pre: cur
     bool check_n(char* &cur, std::size_t n, std::size_t el_size) noexcept
     {
         --n; // we already have one (cur)
@@ -160,4 +160,13 @@ void free_memory_list::deallocate_ordered(void *ptr) noexcept
     capacity_ += el_size_;
     auto pos = find_position(first_, ptr);
     insert_between(pos.first, pos.second, ptr, el_size_);
+}
+
+std::size_t free_memory_list::calc_block_count(std::size_t pool_element_size,
+                                std::size_t count, std::size_t node_size) noexcept
+{
+    assert(node_size <= pool_element_size);
+    auto ratio = pool_element_size / node_size;
+    auto rest = count % ratio;
+    return count / ratio + (rest ? 1 : 0);
 }

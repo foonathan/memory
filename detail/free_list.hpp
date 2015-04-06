@@ -73,6 +73,11 @@ namespace foonathan { namespace memory
             {
                 return !first_;
             }
+            
+            // calculates required block count for an array of smaller elements
+            // pre: node_size <= pool_element_size
+            static std::size_t calc_block_count(std::size_t pool_element_size,
+                                std::size_t count, std::size_t node_size) noexcept;
 
         private:
             void insert_between(void *pre, void *after,
