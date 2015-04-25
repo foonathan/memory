@@ -5,15 +5,22 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_SMALL_FREE_LIST_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_SMALL_FREE_LIST_HPP_INCLUDED
 
-#include <cassert>
 #include <cstddef>
-#include <limits>
 
 namespace foonathan { namespace memory
 {
 	namespace detail
     {
+        // a chunk in the free list
+        struct chunk
+        {
+            chunk *next = this, *prev = this;
+            unsigned char first_node = 0u, capacity = 0u, no_nodes = 0u;
+        };
+        
         // the same as free_memory_list but optimized for small node sizes
+        // it is slower and does not support arrays
+        // but has very small overhead
     	class small_free_memory_list
         {
         public:
@@ -61,84 +68,16 @@ namespace foonathan { namespace memory
             
             bool empty() const noexcept
             {
-                return dummy_chunk_.next->empty();
+                return capacity_ == 0u;
             }
                  
         private:
-            struct chunk
-            {
-                using size_type = unsigned char;
-                static constexpr auto max_nodes = std::numeric_limits<size_type>::max();
-                
-                chunk *next, *prev;
-                size_type first_node, no_nodes;
-                
-                // creates the dummy chunk for the chunk list
-                chunk() noexcept
-                : next(this), prev(this), first_node(0), no_nodes(0) {}
-                
-                // initializes the small free list
-                // assumes memory_offset + count_nodes * node_size memory beginning with this
-                // the node_size must always stay the same
-                // does not make it part of the chunk list
-                chunk(size_type node_size, size_type count_nodes = max_nodes) noexcept
-                : first_node(0), no_nodes(count_nodes)
-                {
-                    assert(node_size >= sizeof(size_type));
-                    auto p = list_memory();
-                    for (size_type i = 0; i != count_nodes; p += node_size)
-                        *p = ++i;
-                }
-                
-                size_type* list_memory() noexcept
-                {
-                    void* this_mem = this;
-                    return static_cast<size_type*>(this_mem) + memory_offset;
-                }
-                
-                const size_type* list_memory() const noexcept
-                {
-                    const void* this_mem = this;
-                    return static_cast<const size_type*>(this_mem) + memory_offset;
-                }
-                
-                // whether or not this chunk is empty
-                bool empty() const noexcept
-                {
-                    return no_nodes == 0u;
-                }
-                
-                // allocates memory of given node size
-                void* allocate(std::size_t node_size) noexcept
-                {
-                    auto memory = list_memory() + first_node * node_size;
-                    first_node = *memory;
-                    --no_nodes;
-                    return memory;
-                }
-                
-                // whether or not a given memory block is from this chunk
-                bool from_chunk(void *memory, std::size_t node_size) const noexcept
-                {
-                    // comparision should be allowed, since the pointer points into memory from a memory block list
-                    return list_memory() <= memory && memory < list_memory() + node_size * max_nodes;  
-                }
-                
-                // deallocates memory of given node size
-                void deallocate(void *memory, std::size_t node_size) noexcept
-                {
-                    auto node_mem = static_cast<size_type*>(memory);
-                    *node_mem = first_node;
-                    first_node = (node_mem - list_memory()) / node_size;
-                    ++no_nodes;
-                }
-            };
-            static constexpr auto alignment_div = sizeof(chunk) / alignof(std::max_align_t);
-            static constexpr auto alignment_mod = sizeof(chunk) % alignof(std::max_align_t);
-            static constexpr auto memory_offset = alignment_mod == 0u ? sizeof(chunk)
-                                                : (alignment_div + 1) * alignof(std::max_align_t);
+            // dummy_chunk_ is head/tail for used chunk list
             chunk dummy_chunk_;
-            chunk *alloc_chunk_, *dealloc_chunk_;
+            // alloc_chunk_ points to the chunk used for allocation
+            // dealloc_chunk_ points to the chunk last used for deallocation
+            // unused_chunk_ points to the head of a seperate list consisting of unused chunks
+            chunk *alloc_chunk_, *dealloc_chunk_, *unused_chunk_;
             std::size_t node_size_, capacity_;
         };
     } // namespace detail

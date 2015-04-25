@@ -73,6 +73,7 @@ namespace foonathan { namespace memory
         {
             if (free_list_.empty())
                 allocate_block();
+            assert(!free_list_.empty());
             return free_list_.allocate();
         }
         
