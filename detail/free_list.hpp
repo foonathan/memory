@@ -1,3 +1,7 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED
 
@@ -48,22 +52,22 @@ namespace foonathan { namespace memory
             void deallocate(void *ptr) noexcept;
             void deallocate(void *ptr, std::size_t n) noexcept
             {
-                insert(ptr, n * element_size());
+                insert(ptr, n * node_size());
             }
 
             void deallocate_ordered(void *ptr) noexcept;
             void deallocate_ordered(void *ptr, std::size_t n) noexcept
             {
-                insert_ordered(ptr, n * element_size());
+                insert_ordered(ptr, n * node_size());
             }
 
             //=== getter ===//
-            std::size_t element_size() const noexcept
+            std::size_t node_size() const noexcept
             {
                 return el_size_;
             }
             
-            // number of bytes, not elements
+            // number of nodes remaining
             std::size_t capacity() const noexcept
             {
                 return capacity_;

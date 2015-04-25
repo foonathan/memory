@@ -88,7 +88,7 @@ namespace foonathan { namespace memory
             if (pool.empty())
                 reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert_ordered);
             auto n = detail::free_memory_list::calc_block_count
-                            (pool.element_size(), count, node_size);
+                            (pool.node_size(), count, node_size);
             return pool.allocate(n);
         }
         
@@ -103,7 +103,7 @@ namespace foonathan { namespace memory
         {
             auto& pool = pools_.get_array(node_size);
             auto n = detail::free_memory_list::calc_block_count
-                            (pool.element_size(), count, node_size);
+                            (pool.node_size(), count, node_size);
             pool.deallocate_ordered(memory, n);
         }
         /// @}
@@ -132,7 +132,7 @@ namespace foonathan { namespace memory
         
         /// @{ 
         /// \brief Returns the capacity available in the node/array pool for a given node size.
-        /// \detail This is the amount of memory available inside the given pool.<br>
+        /// \detail This is the amount of nodes available inside the given pool.<br>
         /// Use the \ref node_pool or \ref array_pool parameter to check it.
         std::size_t pool_capacity(node_pool, std::size_t node_size) const noexcept
         {
@@ -175,7 +175,6 @@ namespace foonathan { namespace memory
         void reserve_impl(detail::free_memory_list &pool, std::size_t capacity,
                         void (detail::free_memory_list::*insert)(void*, std::size_t))
         {
-            // alignment guaranteed
             auto mem = stack_.allocate(capacity, alignof(std::max_align_t));
             if (!mem)
             {

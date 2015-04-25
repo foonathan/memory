@@ -1,3 +1,7 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #include "free_list.hpp"
 
 #include <cassert>
@@ -93,7 +97,7 @@ free_memory_list::free_memory_list(std::size_t el_size,
 
 void free_memory_list::insert(void *mem, std::size_t size) noexcept
 {
-    capacity_ += size;
+    capacity_ += size / el_size_;
     auto last = build_list(mem, el_size_, size);
     set_next(last, first_);
     first_ = static_cast<char*>(mem);
@@ -101,7 +105,7 @@ void free_memory_list::insert(void *mem, std::size_t size) noexcept
 
 void free_memory_list::insert_ordered(void *mem, std::size_t size) noexcept
 {
-    capacity_ += size;
+    capacity_ += size / el_size_;
     if (empty())
         return insert(mem, size);
 
@@ -125,7 +129,7 @@ void free_memory_list::insert_between(void *pre, void *after,
 
 void* free_memory_list::allocate() noexcept
 {
-    capacity_ -= el_size_;
+    --capacity_;
     auto block = first_;
     first_ = get_next(first_);
     return block;
@@ -133,7 +137,7 @@ void* free_memory_list::allocate() noexcept
 
 void* free_memory_list::allocate(std::size_t n) noexcept
 {
-    capacity_ -= n * el_size_;
+    capacity_ -= n;
     for(auto cur = first_; cur; cur = get_next(cur))
     {
         auto start = cur;
@@ -150,14 +154,14 @@ void* free_memory_list::allocate(std::size_t n) noexcept
 
 void free_memory_list::deallocate(void *ptr) noexcept
 {
-    capacity_ += el_size_;
+    ++capacity_;
     set_next(ptr, first_);
     first_ = static_cast<char*>(ptr);
 }
 
 void free_memory_list::deallocate_ordered(void *ptr) noexcept
 {
-    capacity_ += el_size_;
+    ++capacity_;
     auto pos = find_position(first_, ptr);
     insert_between(pos.first, pos.second, ptr, el_size_);
 }

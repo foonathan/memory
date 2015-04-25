@@ -35,9 +35,11 @@ In addition, the *RawAllocator* support alignment requirement. The memory can be
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment);
         
         // Deallocates memory for a node. Must not throw.
+        // Precondition: node must come from allocate_node with the same parameters and must not be null.
         void deallocate_node(void *node, std::size_t size, std::size_t alignment) noexcept;
         
         // Deallocates memory for an array of nodes. Must not throw.
+        // Precondition: array must come from allocate_array with the same paramters and must not be null.
         void deallocate_array(void *array, std::size_t count, std::size_t size, std::size_t alignment) noexcept;
         
         // Returns the maximum size of a node, inclusive. Should not throw.

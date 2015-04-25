@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED
 #define FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED
 
+#include <type_traits>
+
 namespace foonathan { namespace memory
 {
 	/// @{
@@ -14,6 +16,31 @@ namespace foonathan { namespace memory
     struct node_pool : std::false_type {};
     struct array_pool : std::true_type {};    
     /// @}
+    
+    /// \brief Tag type indicating a pool for small objects.
+    /// \detail A small node pool does not support arrays.
+    /// \ingroup memory
+    struct small_node_pool : std::false_type {};
+    
+    namespace detail
+    {
+        class free_memory_list;
+        class small_free_memory_list;
+        
+    	// either calls insert or insert_ordered
+        void insert(node_pool, free_memory_list &free_list,
+                    void *ptr, std::size_t size) noexcept;
+        void insert(array_pool, free_memory_list &free_list,
+                    void *ptr, std::size_t size) noexcept;
+        void insert(small_node_pool, small_free_memory_list &free_list,
+                    void *ptr, std::size_t size) noexcept;
+                    
+        // either calls deallocate or deallocate ordered
+        void deallocate(node_pool, free_memory_list &free_list, void *node) noexcept;
+        void deallocate(array_pool, free_memory_list &free_list, void *node) noexcept;
+        void deallocate(array_pool, free_memory_list &free_list, void *node, std::size_t n) noexcept;
+        void deallocate(small_node_pool, small_free_memory_list &free_list, void *node) noexcept;
+    } // namespace detail
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_POOL_TYPE_HPP_INCLUDED
