@@ -23,6 +23,10 @@
 
 namespace foonathan { namespace memory
 {
+    /// @{
+    /// \brief Aliases for STL containers using a \c RawAllocator.
+    /// \detail It is just a shorthand to pass a \c RawAllocator to a container.
+    /// \ingroup memory
 #define FOONATHAN_MEMORY_IMPL_CONTAINER1(Name) \
     template <typename T, class RawAllocator> \
     using Name = std::Name<T, raw_allocator_allocator<T, RawAllocator>>;
@@ -71,6 +75,36 @@ namespace foonathan { namespace memory
     FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(queue)
     FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(priority_queue)
 #undef FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER
+    /// @}
+
+    /// @{
+    /// \brief Convienience function to create a container adapter.
+    /// \detail Creates this function and passes it the underlying container with certain allocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator,
+            class Container = deque<T, RawAllocator>>
+    std::stack<T, Container> make_stack(RawAllocator &allocator)
+    {
+        return std::stack<T, Container>{Container(allocator)};
+    }
+    
+    template <typename T, class RawAllocator,
+            class Container = deque<T, RawAllocator>>
+    std::queue<T, Container> make_queue(RawAllocator &allocator)
+    {
+        return std::queue<T, Container>{Container(allocator)};
+    }
+    
+    template <typename T, class RawAllocator,
+            class Container = deque<T, RawAllocator>,
+            class Compare = std::less<T>>
+    std::priority_queue<T, Container, Compare>
+        make_priority_queue(RawAllocator &allocator, Compare comp = {})
+    {
+        return std::priority_queue<T, Container, Compare>
+                {std::move(comp), Container(allocator)};
+    }
+    /// @}
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_CONTAINER_HPP_INCLUDED
