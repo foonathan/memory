@@ -29,6 +29,17 @@ namespace foonathan { namespace memory
         thread_safe_allocator(raw_allocator &&alloc = {})
         : raw_allocator(std::move(alloc)) {}
         
+        thread_safe_allocator(thread_safe_allocator &&other)
+        : raw_allocator(std::move(other)) {}
+        
+        ~thread_safe_allocator() noexcept = default;
+        
+        thread_safe_allocator& operator=(thread_safe_allocator &&other)
+        {
+            raw_allocator::operator=(std::move(other));
+            return *this;
+        }
+        
         /// @{
         /// \brief (De-)Allocation functions lock the mutex, perform the call and unlocks it.
         void* allocate_node(std::size_t size, std::size_t alignment)
@@ -107,6 +118,24 @@ namespace foonathan { namespace memory
         
         mutable mutex mutex_;
     };
+    
+    /// @{
+    /// \brief Creates a \ref thread_safe_allocator.
+    /// \relates thread_safe_allocator
+    template <class RawAllocator>
+    auto make_thread_safe_allocator(RawAllocator &&allocator)
+    -> thread_safe_allocator<typename std::decay<RawAllocator>::type>
+    {
+        return std::forward<RawAllocator>(allocator);
+    }
+    
+    template <class Mutex, class RawAllocator>
+    auto make_thread_safe_allocator(RawAllocator &&allocator)
+    -> thread_safe_allocator<typename std::decay<RawAllocator>::type, Mutex>
+    {
+        return std::forward<RawAllocator>(allocator);
+    }
+    /// @}
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_THREADING_HPP_INCLUDED
