@@ -17,6 +17,7 @@ In addition, the *RawAllocator* support alignment requirement. The memory can be
     public:
         // Whether or not the allocator is stateful.
         // Non-stateful allocators don't need to be stored and can be default constructed on the fly.
+        // The result of the getter function is always the same.
         using is_stateful = std::true_type/std::false_type;
          
         // The allocator is required to be moveable

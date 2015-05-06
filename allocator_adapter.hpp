@@ -109,19 +109,19 @@ namespace foonathan { namespace memory
             return storage::get_allocator();
         }
         
-        std::size_t max_node_size() const noexcept
+        std::size_t max_node_size() const
         {
             auto&& alloc = get_allocator();
             return Traits::max_node_size(alloc);
         }
         
-        std::size_t max_array_size() const noexcept
+        std::size_t max_array_size() const
         {
             auto&& alloc = get_allocator();
             return Traits::max_array_size(alloc);
         }
         
-        std::size_t max_alignment() const noexcept
+        std::size_t max_alignment() const
         {
             auto&& alloc = get_allocator();
             return Traits::max_alignment(alloc);
