@@ -16,14 +16,53 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
-        // dummy lock type that does not lock anything
-        struct dummy_lock
+        // dummy mutex that does not lock anything
+        struct dummy_mutex
         {
-            template <typename T>
-            dummy_lock(const T &) noexcept {}
+            void lock() noexcept {}
+            void unlock() noexcept {}
+        };
+        
+        // selects a mutex for an Allocator
+        template <class RawAllocator, class Mutex>
+        using mutex_for = typename std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
+                                                    Mutex, dummy_mutex>::type;
+        
+        // storage for mutexes to use EBO
+        template <class Mutex>
+        class mutex_storage
+        {
+        public:
+            void lock() const
+            {
+                mutex_.lock();
+            }
+            
+            void unlock() const noexcept
+            {
+                mutex_.unlock();
+            }
+            
+        protected:
+            mutex_storage() noexcept = default;
+            ~mutex_storage() noexcept = default;
+        private:
+            mutable Mutex mutex_;
+        };
+        
+        template <>
+        class mutex_storage<dummy_mutex>
+        {
+        public:
+            void lock() const noexcept {}
+            void unlock() const noexcept {}
+        protected:
+            mutex_storage() noexcept = default;
+            ~mutex_storage() noexcept = default;
         };
         
         // non changeable pointer to an Allocator that keeps a lock
+        // I don't think EBO is necessary here...
     	template <class Alloc, class Mutex>
         class locked_allocator
         {
@@ -52,10 +91,14 @@ namespace foonathan { namespace memory
     
 	/// \brief An allocator adapter that uses a mutex for synchronizing.
     /// \detail It locks the mutex for each function called.
+    /// It will not look anything if the allocator is stateless.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = std::mutex>
-    class thread_safe_allocator : RawAllocator
+    class thread_safe_allocator : RawAllocator,
+                                  detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>
     {
+        using traits = allocator_traits<RawAllocator>;
+        using actual_mutex = detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>;
     public:
         using raw_allocator = RawAllocator;
         using mutex = Mutex;
@@ -76,57 +119,49 @@ namespace foonathan { namespace memory
             return *this;
         }
         
-        /// @{
-        /// \brief (De-)Allocation functions lock the mutex, perform the call and unlocks it.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            std::lock_guard<mutex> lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             return traits::allocate_node(get_allocator(), size, alignment);
         }
         
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
         {
-            std::lock_guard<mutex> lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             return traits::allocate_array(get_allocator(), count, size, alignment);
         }
         
         void deallocate_node(void *ptr,
                               std::size_t size, std::size_t alignment) noexcept
         {
-            std::lock_guard<mutex> lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
         
         void deallocate_array(void *ptr, std::size_t count,
                               std::size_t size, std::size_t alignment) noexcept
         {
-            std::lock_guard<mutex> lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
         }
-        /// @}
-        
-        /// @{
-        /// \brief Getter functions only lock the mutex if the underlying allocator contains state.
-        /// \detail If there is no state, there return value is always the same,
-        /// so no locking is necessary.
+
         std::size_t max_node_size() const
         {
-            may_lock lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             return traits::max_node_size(get_allocator());
         }
         
         std::size_t max_array_size() const
         {
-            may_lock lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             return traits::max_array_size(get_allocator());
         }
         
         std::size_t max_alignment() const
         {
-            may_lock lock(mutex_);
+            std::lock_guard<actual_mutex> lock(*this);
             return traits::max_alignment(get_allocator());
         }
-        /// @}
         
         /// @{
         /// \brief Returns a reference to the allocator.
@@ -147,23 +182,16 @@ namespace foonathan { namespace memory
         /// \detail It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        detail::locked_allocator<raw_allocator, mutex> lock() noexcept
+        detail::locked_allocator<raw_allocator, actual_mutex> lock() noexcept
         {
-            return {*this, mutex_};
+            return {*this, *this};
         }
         
-        detail::locked_allocator<const raw_allocator, mutex> lock() const noexcept
+        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const noexcept
         {
-            return {*this, mutex_};
+            return {*this, *this};
         }
         /// @}
-        
-    private:    
-        using traits = allocator_traits<RawAllocator>;
-        using may_lock = typename std::conditional<traits::is_stateful::value,
-                            std::lock_guard<mutex>, detail::dummy_lock>::type;
-        
-        mutable mutex mutex_;
     };
     
     /// @{
