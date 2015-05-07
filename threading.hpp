@@ -11,28 +11,51 @@
 #include <mutex>
 
 #include "allocator_traits.hpp"
+#include "config.hpp"
 
 namespace foonathan { namespace memory
 {
-    namespace detail
+    /// \brief A dummy mutex class that does not lock anything.
+    /// \detail It serves the \c Mutex concept. Use it to disable locking for adapters.
+    /// \ingroup memory
+    struct dummy_mutex
     {
-        // dummy mutex that does not lock anything
-        struct dummy_mutex
-        {
-            void lock() noexcept {}
-            void unlock() noexcept {}
-        };
-        
+        void lock() noexcept {}
+        bool try_lock() noexcept {return true;}
+        void unlock() noexcept {}
+    };
+    
+    /// \brief The default mutex used by \ref raw_allocator_adapter.
+    /// \detail It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER is \c true, \ref dummy_mutex otherwise.
+    /// \ingroup memory
+#if FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
+    using default_mutex = std::mutex;
+#else
+    using default_mutex = dummy_mutex;
+#endif
+    
+    namespace detail
+    {        
         // selects a mutex for an Allocator
+        // stateless allocators don't need locking
         template <class RawAllocator, class Mutex>
         using mutex_for = typename std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
                                                     Mutex, dummy_mutex>::type;
         
         // storage for mutexes to use EBO
+        // it provides const lock/unlock function, inherit from it
         template <class Mutex>
         class mutex_storage
         {
         public:
+            mutex_storage() noexcept = default;
+            mutex_storage(const mutex_storage &) noexcept {}
+            
+            mutex_storage& operator=(const mutex_storage &) noexcept
+            {
+                return *this;
+            }
+            
             void lock() const
             {
                 mutex_.lock();
@@ -44,8 +67,7 @@ namespace foonathan { namespace memory
             }
             
         protected:
-            mutex_storage() noexcept = default;
-            ~mutex_storage() noexcept = default;
+            ~mutex_storage() noexcept = default;            
         private:
             mutable Mutex mutex_;
         };
@@ -54,10 +76,11 @@ namespace foonathan { namespace memory
         class mutex_storage<dummy_mutex>
         {
         public:
+            mutex_storage() noexcept = default;
+        
             void lock() const noexcept {}
             void unlock() const noexcept {}
         protected:
-            mutex_storage() noexcept = default;
             ~mutex_storage() noexcept = default;
         };
         
@@ -98,7 +121,7 @@ namespace foonathan { namespace memory
                                   detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>
     {
         using traits = allocator_traits<RawAllocator>;
-        using actual_mutex = detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>;
+        using actual_mutex = const detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>;
     public:
         using raw_allocator = RawAllocator;
         using mutex = Mutex;
@@ -107,17 +130,6 @@ namespace foonathan { namespace memory
         
         thread_safe_allocator(raw_allocator &&alloc = {})
         : raw_allocator(std::move(alloc)) {}
-        
-        thread_safe_allocator(thread_safe_allocator &&other)
-        : raw_allocator(std::move(other)) {}
-        
-        ~thread_safe_allocator() noexcept = default;
-        
-        thread_safe_allocator& operator=(thread_safe_allocator &&other)
-        {
-            raw_allocator::operator=(std::move(other));
-            return *this;
-        }
         
         void* allocate_node(std::size_t size, std::size_t alignment)
         {

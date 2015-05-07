@@ -12,4 +12,10 @@
 /// \brief Total version number.
 #define FOONATHAN_MEMORY_VERSION (${version_major} * 100 + ${version_minor})
 
+//=== options ===//
 #define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
+
+/// \brief Whether or not the \ref raw_allocator_adapter is threadsafe by default.
+/// \detail This is \c true by default,change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER.
+#cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
+

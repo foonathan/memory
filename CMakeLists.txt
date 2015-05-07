@@ -11,15 +11,15 @@ set(version_minor 2 CACHE INTERNAL "")
 
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
+option(FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER "whether or not raw_allocator_adapter is thread safe by default" ON)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
 	           "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 if (BIICODE)
     ADD_BIICODE_TARGETS()
-    set(targets ${BII_BLOCK_TARGETS} CACHE INTERNAL "")
-    
     ACTIVATE_CPP11()
+    target_include_directories(${BII_BLOCK_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 else()        
     set(src
             detail/align.hpp
@@ -61,9 +61,8 @@ else()
         CACHE INTERNAL "")
     
     set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
-    set_target_properties(${targets} PROPERTIES CXX_STANDARD_REQUIRED ON)
+    
+    foreach(target ${targets})
+        target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    endforeach()
 endif()
-
-foreach(target ${targets})
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-endforeach()
