@@ -139,17 +139,17 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Forwards to the allocator.
-        std::size_t max_node_size() const noexcept
+        std::size_t max_node_size() const
         {
             return traits::max_node_size(get_allocator());
         }
         
-        std::size_t max_array_size() const noexcept
+        std::size_t max_array_size() const
         {
             return traits::max_array_size(get_allocator());
         }
         
-        std::size_t max_alignment() const noexcept
+        std::size_t max_alignment() const
         {
             return traits::max_alignment(get_allocator());
         }

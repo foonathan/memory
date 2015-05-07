@@ -16,7 +16,7 @@ namespace foonathan { namespace memory
     /// It must be one of the low-level, statelesss allocators.<br>
     /// You can change it via the CMake variable \c FOONATHAN_MEMORY_DEFAULT_ALLOCATOR,
     /// but it must be one of the following: \ref heap_allocator, \ref new_allocator.
-    /// The default is \ref heap_allocator and \c heap_allocator.hpp.
+    /// The default is \ref heap_allocator.
     /// \ingroup memory
     using default_allocator = FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR;
 }} // namespace foonathan::memory

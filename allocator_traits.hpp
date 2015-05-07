@@ -49,17 +49,17 @@ namespace foonathan { namespace memory
             state.deallocate_array(array, count, size, alignment);
         }
 
-        static std::size_t max_node_size(const allocator_type &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state)
         {
             return state.max_node_size();
         }
 
-        static std::size_t max_array_size(const allocator_type &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state)
         {
             return state.max_array_size();
         }
         
-        static std::size_t max_alignment(const allocator_type &state) noexcept
+        static std::size_t max_alignment(const allocator_type &state)
         {
             return state.max_alignment();
         }
