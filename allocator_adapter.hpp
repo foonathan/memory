@@ -83,6 +83,15 @@ namespace foonathan { namespace memory
         /// @}
     };
     
+    /// \brief Creates an \ref allocator_adapter.
+    /// \relates allocator_adapter
+    template <class RawAllocator>
+    auto make_allocator_adapter(RawAllocator &&allocator) noexcept
+    -> allocator_adapter<typename std::decay<RawAllocator>::type> 
+    {
+        return {std::forward<RawAllocator>(allocator)};
+    }
+    
     namespace detail
     {
         // stores a pointer to an allocator
