@@ -64,7 +64,7 @@ void use_allocator(RawAllocator &alloc)
 int main()
 {
     std::clog << std::unitbuf;
-    // a memory pool that supports arrays, each node is 32 bytes big, initially 4KB long
+    // a memory pool that supports arrays, each node is 32 bytes big, initially 4KiB long
     memory::memory_pool<memory::array_pool> pool(32, 4096);
     {
         // allocate one such node

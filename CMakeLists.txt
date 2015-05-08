@@ -28,6 +28,8 @@ else()
             detail/free_list.cpp
             detail/free_list.hpp
             detail/memory_stack.hpp
+            detail/small_free_list.cpp
+            detail/small_free_list.hpp
             allocator_adapter.hpp
             allocator_traits.hpp
             config.hpp
@@ -40,6 +42,7 @@ else()
             pool_collection.cpp
             pool_collection.hpp
             pool_type.hpp
+            pool_type.cpp
             raw_allocator_base.hpp
             smart_ptr.hpp
             stack_allocator.hpp
