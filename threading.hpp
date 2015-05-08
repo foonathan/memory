@@ -25,7 +25,7 @@ namespace foonathan { namespace memory
         void unlock() noexcept {}
     };
     
-    /// \brief The default mutex used by \ref raw_allocator_adapter.
+    /// \brief The default mutex used by \ref allocator_reference.
     /// \detail It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER is \c true, \ref dummy_mutex otherwise.
     /// \ingroup memory
 #if FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER

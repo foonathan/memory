@@ -58,17 +58,17 @@ namespace foonathan { namespace memory
                 t_->on_allocator_shrinking(ptr, size * count);
             }
 
-            std::size_t max_node_size() const noexcept
+            std::size_t max_node_size() const
             {
                 return traits::max_node_size(*this);
             }
             
-            std::size_t max_array_size() const noexcept
+            std::size_t max_array_size() const
             {
                 return traits::max_array_size(*this);
             }
             
-            std::size_t max_alignment() const noexcept
+            std::size_t max_alignment() const
             {
                 return traits::max_alignment(*this);
             }
@@ -103,7 +103,7 @@ namespace foonathan { namespace memory
         using is_stateful = std::integral_constant<bool,
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
         
-        explicit tracked_allocator(tracker t = {}, raw_allocator allocator = {})
+        explicit tracked_allocator(tracker t = {}, raw_allocator&& allocator = {})
         : tracker(std::move(t)), raw_allocator(std::move(allocator)) {}
         
         /// @{
@@ -198,14 +198,14 @@ namespace foonathan { namespace memory
     /// \brief Creates a \ref tracked_allocator.
     /// \relates tracked_allocator
     template <class Tracker, class RawAllocator>
-    auto make_tracked_allocator(Tracker t, RawAllocator alloc)
-    -> tracked_allocator<Tracker, RawAllocator>
+    auto make_tracked_allocator(Tracker t, RawAllocator &&alloc)
+    -> tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>
     {
-        return tracked_allocator<Tracker, RawAllocator>(std::move(t), std::move(alloc));
+        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{std::move(t), std::forward<RawAllocator>(alloc)};
     }
     
     /// \brief Creates a deeply tracked \ref tracked_allocator.
-    /// \detail It also tracks allocator growth, that is, when allocators with implementation allocator (e.g. memory_stack),
+    /// \detail It also tracks allocator growth, that is, when allocators with implementation allocator (e.g. \ref memory_stack),
     /// run out of memory blocks and need to allocate new, slow memory.<br>
     /// It is detected by wrapping the implementation allocator into an adapter and calling the appropriate tracker functions
     /// on allocation/deallocation of the implementation allocator.<br>

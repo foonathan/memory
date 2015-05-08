@@ -30,6 +30,7 @@ else()
             detail/memory_stack.hpp
             detail/small_free_list.cpp
             detail/small_free_list.hpp
+            aligned_allocator.hpp
             allocator_adapter.hpp
             allocator_traits.hpp
             config.hpp
@@ -49,6 +50,7 @@ else()
             std_allocator_base.hpp
             temporary_allocator.cpp
             temporary_allocator.hpp
+            threading.hpp
             tracking.hpp
     CACHE INTERNAL "")
     
