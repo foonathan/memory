@@ -19,6 +19,70 @@
 
 namespace foonathan { namespace memory
 {
+    /// \brief Wraps any class that has specialized the \ref allocator_traits and gives it the proper interface.
+    /// \detail It just forwards all function to the traits and makes it easier to use them.
+    /// \ingroup memory
+    template <class RawAllocator>
+    class allocator_adapter : RawAllocator
+    {
+        using traits = allocator_traits<RawAllocator>;
+    public:
+        using raw_allocator = RawAllocator;        
+        using is_stateful = typename traits::is_stateful;
+        
+        allocator_adapter(raw_allocator &&alloc = {})
+        : raw_allocator(std::move(alloc)) {}
+        
+        void* allocate_node(std::size_t size, std::size_t alignment)
+        {
+            return traits::allocate_node(get_allocator(), size, alignment);
+        }
+        
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        {
+            return traits::allocate_array(get_allocator(), count, size, alignment);
+        }
+        
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        {
+            traits::deallocate_node(get_allocator(), ptr, size, alignment);
+        }
+        
+        void deallocate_array(void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) noexcept
+        {
+            traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
+        }
+
+        std::size_t max_node_size() const
+        {
+            return traits::max_node_size(get_allocator());
+        }
+        
+        std::size_t max_array_size() const
+        {
+            return traits::max_array_size(get_allocator());
+        }
+        
+        std::size_t max_alignment() const
+        {
+            return traits::max_alignment(get_allocator());
+        }
+        
+        /// @{
+        /// \brief Returns a reference to the actual allocator.
+        raw_allocator& get_allocator() noexcept
+        {
+            return *this;
+        }
+        
+        const raw_allocator& get_allocator() const noexcept
+        {
+            return *this;
+        }
+        /// @}
+    };
+    
     namespace detail
     {
         // stores a pointer to an allocator
