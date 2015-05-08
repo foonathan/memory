@@ -86,11 +86,16 @@ void small_free_memory_list::insert(void *memory, std::size_t size) noexcept
         mem += chunk_unit;
     }
     auto remaining = size % chunk_unit - chunk_memory_offset;
-    auto c = create_chunk(mem, node_size_, remaining / node_size_);
-    c->next = nullptr;
-    c->prev = unused_chunk_;
-    unused_chunk_ = c;
-    capacity_ += no_chunks * chunk_max_nodes + remaining / node_size_;
+    if (remaining > node_size_)
+    {
+        auto c = create_chunk(mem, node_size_, remaining / node_size_);
+        c->next = nullptr;
+        c->prev = unused_chunk_;
+        unused_chunk_ = c;
+    }
+    auto inserted_memory = no_chunks * chunk_max_nodes + remaining / node_size_;
+    assert(inserted_memory > 0u && "too small memory size");
+    capacity_ += inserted_memory;
 }
 
 void* small_free_memory_list::allocate() noexcept
@@ -139,7 +144,7 @@ void small_free_memory_list::deallocate(void *node) noexcept
 bool small_free_memory_list::find_chunk(std::size_t n) noexcept
 {
     assert(capacity_ >= n && n <= chunk_max_nodes);
-    if (alloc_chunk_->capacity == n)
+    if (alloc_chunk_->capacity >= n)
         return true;
     else if (unused_chunk_)
     {
