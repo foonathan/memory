@@ -1,0 +1,124 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef FOONATHAN_MEMORY_ALIGNED_ALLOCATOR_HPP_INCLUDED
+#define FOONATHAN_MEMORY_ALIGNED_ALLOCATOR_HPP_INCLUDED
+
+/// \file
+/// \brief An allocator ensuring a certain alignment
+
+#include <algorithm>
+#include <cassert>
+
+#include "allocator_traits.hpp"
+
+namespace foonathan { namespace memory
+{
+	/// \brief A \c RawAllocator adapter that ensures a minimum alignment.
+    /// \detail It changes the alignment requirements passed to the allocation function if necessary
+    /// and forwards to the wrapped allocator.
+    /// \ingroup memory
+    template <class RawAllocator>
+    class aligned_allocator : RawAllocator
+    {
+        using traits = allocator_traits<RawAllocator>;
+    public:
+        using raw_allocator = RawAllocator;
+        using is_stateful = std::true_type;
+    
+        /// \brief Creates it passing it the minimum alignment requirement.
+        /// \detail It must be less than the maximum supported alignment.
+        explicit aligned_allocator(std::size_t min_alignment, raw_allocator &&alloc = {})
+        : raw_allocator(std::move(alloc)), min_alignment_(min_alignment)
+        {
+            assert(min_alignment_ <= max_alignment());
+        }
+        
+        /// @{
+        /// \brief (De-)Allocation functions ensure the given minimum alignemnt.
+        /// \detail If the alignment requirement is higher, it is unchanged.
+        void* allocate_node(std::size_t size, std::size_t alignment)
+        {
+            alignment = std::max(min_alignment_, alignment);
+            return traits::allocate_node(get_allocator(), size, alignment);
+        }
+        
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        {
+            alignment = std::min(min_alignment_, alignment);
+            return traits::allocate_array(get_allocator(), count, size, alignment);
+        }
+        
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        {
+            alignment = std::max(min_alignment_, alignment);
+            traits::deallocate_node(get_allocator(), ptr, size, alignment);
+        }
+        
+        void deallocate_array(void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) noexcept
+        {
+            alignment = std::max(min_alignment_, alignment);
+            traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
+        }
+        /// @}
+
+        std::size_t max_node_size() const
+        {
+            return traits::max_node_size(get_allocator());
+        }
+        
+        std::size_t max_array_size() const
+        {
+            return traits::max_array_size(get_allocator());
+        }
+        
+        std::size_t max_alignment() const
+        {
+            return traits::max_alignment(get_allocator());
+        }
+        
+        /// @{
+        /// \brief Returns a reference to the actual allocator.
+        raw_allocator& get_allocator() noexcept
+        {
+            return *this;
+        }
+        
+        const raw_allocator& get_allocator() const noexcept
+        {
+            return *this;
+        }
+        /// @}
+        
+        /// @{
+        /// \brief Get/set the minimum alignment.
+        std::size_t min_alignment() const noexcept
+        {
+            return min_alignment_;
+        }
+        
+        void set_min_alignment(std::size_t min_alignment)
+        {
+            assert(min_alignment <= max_alignment());
+            min_alignment_ = min_alignment;
+        }
+        /// @}
+        
+    private:
+        std::size_t min_alignment_;
+    };
+    
+    /// \brief Creates an \ref aligned_allocator.
+    /// \relates aligned_allocator
+    template <class RawAllocator>
+    auto make_aligned_allocator(std::size_t min_alignment, RawAllocator &&allocator) noexcept
+    -> aligned_allocator<typename std::decay<RawAllocator>::type> 
+    {
+        return aligned_allocator<typename std::decay<RawAllocator>::type>
+                {min_alignment, std::forward<RawAllocator>(allocator)};
+    }
+}} // namespace foonathan::memory
+
+#endif // FOONATHAN_MEMORY_ALIGNED_ALLOCATOR_HPP_INCLUDED
