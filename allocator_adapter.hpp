@@ -21,16 +21,16 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
-        // stores a reference to an allocator
+        // stores a pointer to an allocator
         template <class RawAllocator, bool Stateful>
-        class allocator_storage
+        class allocator_reference_impl
         {
         public:
-            allocator_storage(RawAllocator &allocator) noexcept
+            allocator_reference_impl(RawAllocator &allocator) noexcept
             : alloc_(&allocator) {}
             
         protected:
-            ~allocator_storage() = default;
+            ~allocator_reference_impl() = default;
             
             RawAllocator& get_allocator() const noexcept
             {
@@ -44,14 +44,14 @@ namespace foonathan { namespace memory
         // doesn't store anything for stateless allocators
         // construct an instance on the fly
         template <class RawAllocator>
-        class allocator_storage<RawAllocator, false>
+        class allocator_reference_impl<RawAllocator, false>
         {
         public:
-            allocator_storage() noexcept = default;
-            allocator_storage(const RawAllocator&) noexcept {}
+            allocator_reference_impl() noexcept = default;
+            allocator_reference_impl(const RawAllocator&) noexcept {}
             
         protected:
-            ~allocator_storage() = default;
+            ~allocator_reference_impl() = default;
             
             RawAllocator get_allocator() const noexcept
             {
@@ -67,12 +67,12 @@ namespace foonathan { namespace memory
     /// they are just created as needed on the fly.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = default_mutex>
-    class raw_allocator_adapter
-    : detail::allocator_storage<RawAllocator, allocator_traits<RawAllocator>::is_stateful::value>,
+    class allocator_reference
+    : detail::allocator_reference_impl<RawAllocator, allocator_traits<RawAllocator>::is_stateful::value>,
       detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>
     {
         using traits = allocator_traits<RawAllocator>;
-        using storage = detail::allocator_storage<RawAllocator, traits::is_stateful::value>;
+        using storage = detail::allocator_reference_impl<RawAllocator, traits::is_stateful::value>;
         using actual_mutex = const detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>;
     public:
         using raw_allocator = RawAllocator;
@@ -140,7 +140,7 @@ namespace foonathan { namespace memory
         /// @}
         
         /// @{
-        /// \brief Returns a pointer to the allocator while keeping it locked.
+        /// \brief Returns a reference to the allocator while keeping it locked.
         /// \detail It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
@@ -166,18 +166,18 @@ namespace foonathan { namespace memory
     };
     
     /// @{
-    /// \brief Creates a \ref raw_allocator_adapter.
-    /// \relates raw_allocator_adapter
+    /// \brief Creates a \ref allocator_reference.
+    /// \relates allocator_reference
     template <class RawAllocator>
-    auto make_adapter(RawAllocator &&allocator) noexcept
-    -> raw_allocator_adapter<typename std::decay<RawAllocator>::type> 
+    auto make_allocator_reference(RawAllocator &&allocator) noexcept
+    -> allocator_reference<typename std::decay<RawAllocator>::type> 
     {
         return {std::forward<RawAllocator>(allocator)};
     }
     
     template <class Mutex, class RawAllocator>
-    auto make_adapter(RawAllocator &&allocator) noexcept
-    -> raw_allocator_adapter<typename std::decay<RawAllocator>::type, Mutex> 
+    auto make_allocator_reference(RawAllocator &&allocator) noexcept
+    -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex> 
     {
         return {std::forward<RawAllocator>(allocator)};
     }
@@ -185,7 +185,7 @@ namespace foonathan { namespace memory
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     ///
-    /// It uses a \ref raw_allocator_adapter to store the allocator to allow copy constructing.<br>
+    /// It uses a \ref allocator_reference to store the allocator to allow copy constructing.<br>
     /// The underlying allocator is never moved, only the pointer to it.<br>
     /// \c propagate_on_container_swap is \c true to ensure that the allocator stays with its memory.
     /// \c propagate_on_container_move_assignment is \c true to allow fast move operations.
@@ -193,7 +193,7 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator>
     class raw_allocator_allocator
-    : raw_allocator_adapter<RawAllocator>
+    : allocator_reference<RawAllocator>
     {
     public:
         //=== typedefs ===//
@@ -217,14 +217,14 @@ namespace foonathan { namespace memory
         //=== constructor ===//
         raw_allocator_allocator() = default;
         
-        using raw_allocator_adapter<RawAllocator>::raw_allocator_adapter;
+        using allocator_reference<RawAllocator>::allocator_reference;
         
-        raw_allocator_allocator(const raw_allocator_adapter<RawAllocator> &alloc) noexcept
-        : raw_allocator_adapter<RawAllocator>(alloc) {}
+        raw_allocator_allocator(const allocator_reference<RawAllocator> &alloc) noexcept
+        : allocator_reference<RawAllocator>(alloc) {}
 
         template <typename U>
         raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator> &alloc) noexcept
-        : raw_allocator_adapter<RawAllocator>(alloc.get_impl_allocator()) {}
+        : allocator_reference<RawAllocator>(alloc.get_impl_allocator()) {}
 
         //=== allocation/deallocation ===//
         pointer allocate(size_type n, void * = nullptr)

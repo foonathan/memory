@@ -15,18 +15,18 @@
 namespace foonathan { namespace memory
 {
 	/// \brief A deleter class that calls the appropriate deallocate function.
-    /// \detail It stores an \ref raw_allocator_adapter. It does not call any destrucotrs.
+    /// \detail It stores an \ref allocator_reference. It does not call any destrucotrs.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator : raw_allocator_adapter<RawAllocator>
+    class raw_allocator_deallocator : allocator_reference<RawAllocator>
     {
     public:
         using raw_allocator = RawAllocator;
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deallocator(raw_allocator_adapter<raw_allocator> alloc) noexcept
-        : raw_allocator_adapter<RawAllocator>(std::move(alloc)) {}
+        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc) noexcept
+        : allocator_reference<RawAllocator>(std::move(alloc)) {}
         
         /// \brief Deallocates the memory via the stored allocator.
         /// \detail It calls \ref allocator_traits::deallocate_node, but no destructors.
@@ -37,25 +37,25 @@ namespace foonathan { namespace memory
         
         /// \brief Returns a reference to the stored allocator.
         auto get_allocator() const noexcept
-        -> decltype(this->raw_allocator_adapter<raw_allocator>::get_allocator())
+        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
         {
-            return this->raw_allocator_adapter<raw_allocator>::get_allocator();
+            return this->allocator_reference<raw_allocator>::get_allocator();
         }
     };
     
     /// \brief Specialization of \ref raw_allocator_deallocator for arrays.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator<Type[], RawAllocator> : raw_allocator_adapter<RawAllocator>
+    class raw_allocator_deallocator<Type[], RawAllocator> : allocator_reference<RawAllocator>
     {
     public:
         using raw_allocator = RawAllocator;
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        raw_allocator_deallocator(raw_allocator_adapter<raw_allocator> alloc,
+        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc,
                             std::size_t size) noexcept
-        : raw_allocator_adapter<RawAllocator>(std::move(alloc)),
+        : allocator_reference<RawAllocator>(std::move(alloc)),
           size_(size) {}
         
         /// \brief Deallocates the memory via the stored allocator.
@@ -67,9 +67,9 @@ namespace foonathan { namespace memory
         
         /// \brief Returns a reference to the stored allocator.
         auto get_allocator() const noexcept
-        -> decltype(this->raw_allocator_adapter<raw_allocator>::get_allocator())
+        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
         {
-            return this->raw_allocator_adapter<raw_allocator>::get_allocator();
+            return this->allocator_reference<raw_allocator>::get_allocator();
         }
         
         /// \brief Returns the array size.
@@ -83,18 +83,18 @@ namespace foonathan { namespace memory
     };
     
     /// \brief A deleter class that calls the appropriate destructors and deallocate function.
-    /// \detail It stores an \ref raw_allocator_adapter. It calls destructors.
+    /// \detail It stores an \ref allocator_reference. It calls destructors.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deleter : raw_allocator_adapter<RawAllocator>
+    class raw_allocator_deleter : allocator_reference<RawAllocator>
     {
     public:
         using raw_allocator = RawAllocator;
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deleter(raw_allocator_adapter<raw_allocator> alloc) noexcept
-        : raw_allocator_adapter<RawAllocator>(std::move(alloc)) {}
+        raw_allocator_deleter(allocator_reference<raw_allocator> alloc) noexcept
+        : allocator_reference<RawAllocator>(std::move(alloc)) {}
         
         /// \brief Deallocates the memory via the stored allocator.
         /// \detail It calls the destructor and \ref allocator_traits::deallocate_node.
@@ -106,25 +106,25 @@ namespace foonathan { namespace memory
         
         /// \brief Returns a reference to the stored allocator.
         auto get_allocator() const noexcept
-        -> decltype(this->raw_allocator_adapter<raw_allocator>::get_allocator())
+        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
         {
-            return this->raw_allocator_adapter<raw_allocator>::get_allocator();
+            return this->allocator_reference<raw_allocator>::get_allocator();
         }
     };
     
     /// \brief Specialization of \ref raw_allocator_deleter for arrays.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deleter<Type[], RawAllocator> : raw_allocator_adapter<RawAllocator>
+    class raw_allocator_deleter<Type[], RawAllocator> : allocator_reference<RawAllocator>
     {
     public:
         using raw_allocator = RawAllocator;
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        raw_allocator_deleter(raw_allocator_adapter<raw_allocator> alloc,
+        raw_allocator_deleter(allocator_reference<raw_allocator> alloc,
                             std::size_t size) noexcept
-        : raw_allocator_adapter<RawAllocator>(std::move(alloc)),
+        : allocator_reference<RawAllocator>(std::move(alloc)),
           size_(size) {}
         
         /// \brief Deallocates the memory via the stored allocator.
@@ -138,9 +138,9 @@ namespace foonathan { namespace memory
         
         /// \brief Returns a reference to the stored allocator.
         auto get_allocator() const noexcept
-        -> decltype(this->raw_allocator_adapter<raw_allocator>::get_allocator())
+        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
         {
-            return this->raw_allocator_adapter<raw_allocator>::get_allocator();
+            return this->allocator_reference<raw_allocator>::get_allocator();
         }
         
         /// \brief Returns the array size.
@@ -156,7 +156,7 @@ namespace foonathan { namespace memory
     namespace detail
     {
     	template <typename T, class RawAllocator, typename ... Args>
-        auto allocate_unique(raw_allocator_adapter<RawAllocator> alloc, Args&&... args)
+        auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
         -> std::unique_ptr<T, raw_allocator_deleter<T, RawAllocator>>
         {
             using raw_ptr = std::unique_ptr<T, raw_allocator_deallocator<T, RawAllocator>>;
@@ -195,7 +195,7 @@ namespace foonathan { namespace memory
         }
         
         template <typename T, class RawAllocator>
-        auto allocate_array_unique(std::size_t size, raw_allocator_adapter<RawAllocator> alloc)
+        auto allocate_array_unique(std::size_t size, allocator_reference<RawAllocator> alloc)
         -> std::unique_ptr<T[], raw_allocator_deleter<T[], RawAllocator>>
         {
             using raw_ptr = std::unique_ptr<T[], raw_allocator_deallocator<T[], RawAllocator>>;
@@ -220,7 +220,7 @@ namespace foonathan { namespace memory
         std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
     >::type
     {
-        return detail::allocate_unique<T>(make_adapter(std::forward<RawAllocator>(alloc)),
+        return detail::allocate_unique<T>(make_allocator_reference(std::forward<RawAllocator>(alloc)),
                                         std::forward<Args>(args)...);
     }
     
@@ -235,7 +235,7 @@ namespace foonathan { namespace memory
     >::type
     {
         return detail::allocate_array_unique<typename std::remove_extent<T>::type>
-                    (size, make_adapter(std::forward<RawAllocator>(alloc)));
+                    (size, make_allocator_reference(std::forward<RawAllocator>(alloc)));
     }
     
     /// \brief Creates an object wrapped in a \c std::shared_ptr using a \ref concept::RawAllocator.
