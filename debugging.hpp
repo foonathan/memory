@@ -9,12 +9,13 @@
 /// \brief Methods for debugging errors.
 
 #include <cstring>
+#include <type_traits>
 
 #include "config.hpp"
 
 namespace foonathan { namespace memory
 {
-	/// \brief Magic values used to mark certain memory blocks in debug mode.
+    /// \brief Magic values used to mark certain memory blocks in debug mode.
     /// \ingroup memory
     enum class debug_magic : unsigned char
     {
@@ -29,11 +30,15 @@ namespace foonathan { namespace memory
     namespace detail
     {
     #if FOONATHAN_MEMORY_DEBUG_FILL
-    	inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
+        using debug_fill_enabled = std::true_type;
+    
+        inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
         {
             std::memset(memory, static_cast<int>(m), size);
         }
     #else
+        using debug_fill_enabled = std::false_type;
+        
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}

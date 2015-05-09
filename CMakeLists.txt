@@ -44,7 +44,7 @@ option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_referenc
 option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ON)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
-	           "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
+               "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 if (BIICODE)
     ADD_BIICODE_TARGETS()
@@ -57,6 +57,7 @@ else()
             detail/block_list.hpp
             detail/free_list.cpp
             detail/free_list.hpp
+            detail/memory_stack.cpp
             detail/memory_stack.hpp
             detail/small_free_list.cpp
             detail/small_free_list.hpp
@@ -64,6 +65,8 @@ else()
             allocator_adapter.hpp
             allocator_traits.hpp
             config.hpp
+            container.hpp
+            debugging.hpp
             default_allocator.hpp
             heap_allocator.cpp
             heap_allocator.hpp

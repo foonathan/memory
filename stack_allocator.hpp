@@ -91,29 +91,7 @@ namespace foonathan { namespace memory
         /// Any access blocks are freed.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            std::size_t diff = list_.size() - m.index - 1;
-            if (diff > 0u)
-            {
-                auto block = list_.top();
-                // mark used part of top block as freed
-                std::size_t fill_count = stack_.top() - static_cast<char*>(block.memory);
-                detail::debug_fill(block.memory, fill_count, debug_magic::freed_memory);
-                list_.deallocate();
-                for (std::size_t i = 1; i != diff; ++i)
-                {
-                    auto block = list_.top();
-                    // mark all other blocks as fully freed, since fully used
-                    detail::debug_fill(block.memory, block.size, debug_magic::freed_memory);
-                    list_.deallocate();
-                }
-                // mark remaining in new top block as freed
-                detail::debug_fill(m.stack.top(), std::size_t(m.stack.end() - m.stack.top()),
-                                debug_magic::freed_memory);
-            }
-            else
-                // mark used part of top block as freed
-                detail::debug_fill(m.stack.top(), std::size_t(stack_.top() - m.stack.top()),
-                                debug_magic::freed_memory);
+            free_blocks(m, detail::debug_fill_enabled{});
             stack_ = m.stack;
         }
         
@@ -148,6 +126,41 @@ namespace foonathan { namespace memory
         {
             auto block = list_.allocate();
             stack_ = detail::fixed_memory_stack(block.memory, block.size);
+        }
+        
+        void free_blocks(const marker &m, std::true_type) FOONATHAN_NOEXCEPT
+        {
+            std::size_t no = list_.size() - m.index - 1;
+            if (no > 0u) // need to free blocks
+            {
+                // free top block and mark used part as freed
+                auto block = list_.top();
+                std::size_t fill_count = stack_.top() - static_cast<char*>(block.memory);
+                detail::debug_fill(block.memory, fill_count, debug_magic::freed_memory);
+                list_.deallocate();
+                
+                for (std::size_t i = 1; i != no; ++i)
+                {
+                    // mark all other blocks as fully freed, since fully used
+                    auto block = list_.top();
+                    detail::debug_fill(block.memory, block.size, debug_magic::freed_memory);
+                    list_.deallocate();
+                }
+                // mark remaining space in new top block as freed
+                detail::debug_fill(m.stack.top(), std::size_t(m.stack.end() - m.stack.top()),
+                                debug_magic::freed_memory);
+            }
+            else
+                // only mark used part of top block as freed
+                detail::debug_fill(m.stack.top(), std::size_t(stack_.top() - m.stack.top()),
+                                debug_magic::freed_memory);
+        }
+        
+        void free_blocks(const marker &m, std::false_type) FOONATHAN_NOEXCEPT
+        {
+            std::size_t no = list_.size() - m.index - 1;
+            for (std::size_t i = 1; i != no; ++i)
+                list_.deallocate();
         }
     
         detail::block_list<impl_allocator> list_;
