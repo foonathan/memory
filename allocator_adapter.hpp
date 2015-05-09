@@ -20,7 +20,7 @@
 namespace foonathan { namespace memory
 {
     /// \brief Wraps any class that has specialized the \ref allocator_traits and gives it the proper interface.
-    /// \detail It just forwards all function to the traits and makes it easier to use them.
+    /// \details It just forwards all function to the traits and makes it easier to use them.
     /// \ingroup memory
     template <class RawAllocator>
     class allocator_adapter : RawAllocator
@@ -43,13 +43,13 @@ namespace foonathan { namespace memory
             return traits::allocate_array(get_allocator(), count, size, alignment);
         }
         
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
         
         void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
         }
@@ -71,12 +71,12 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the actual allocator.
-        raw_allocator& get_allocator() noexcept
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         
-        const raw_allocator& get_allocator() const noexcept
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -86,7 +86,7 @@ namespace foonathan { namespace memory
     /// \brief Creates an \ref allocator_adapter.
     /// \relates allocator_adapter
     template <class RawAllocator>
-    auto make_allocator_adapter(RawAllocator &&allocator) noexcept
+    auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_adapter<typename std::decay<RawAllocator>::type> 
     {
         return {std::forward<RawAllocator>(allocator)};
@@ -99,13 +99,17 @@ namespace foonathan { namespace memory
         class allocator_reference_impl
         {
         public:
-            allocator_reference_impl(RawAllocator &allocator) noexcept
+            allocator_reference_impl(RawAllocator &allocator) FOONATHAN_NOEXCEPT
             : alloc_(&allocator) {}
+            allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
+            allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
             
         protected:
             ~allocator_reference_impl() = default;
             
-            RawAllocator& get_allocator() const noexcept
+            using reference_type = RawAllocator&;
+            
+            reference_type get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return *alloc_;
             }
@@ -120,13 +124,17 @@ namespace foonathan { namespace memory
         class allocator_reference_impl<RawAllocator, false>
         {
         public:
-            allocator_reference_impl() noexcept = default;
-            allocator_reference_impl(const RawAllocator&) noexcept {}
+            allocator_reference_impl() FOONATHAN_NOEXCEPT = default;
+            allocator_reference_impl(const RawAllocator&) FOONATHAN_NOEXCEPT {}
+            allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
+            allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
             
         protected:
             ~allocator_reference_impl() = default;
             
-            RawAllocator get_allocator() const noexcept
+            using reference_type = RawAllocator;
+            
+            reference_type get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return {};
             }
@@ -134,7 +142,7 @@ namespace foonathan { namespace memory
     } // namespace detail
     
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
-    /// \detail It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
+    /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
     /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
     /// For stateless allocators there is no locking or storing overhead whatsover,
     /// they are just created as needed on the fly.
@@ -152,11 +160,17 @@ namespace foonathan { namespace memory
         using mutex = Mutex;
         
         using is_stateful = typename traits::is_stateful;
-
+        
+        /// @{
         /// \brief Creates it giving it the \ref allocator_type.
-        /// \detail For non-stateful allocators, there exists a default-constructor and a version taking const-ref.
+        /// \details For non-stateful allocators, there exists a default-constructor and a version taking const-ref.
         /// For stateful allocators it takes a non-const reference.
-        using storage::storage;
+        allocator_reference(const raw_allocator &alloc = {}) FOONATHAN_NOEXCEPT
+        : storage(alloc) {}
+        
+        allocator_reference(raw_allocator &alloc) FOONATHAN_NOEXCEPT
+        : storage(alloc) {}
+        /// @}
         
         /// @{
         /// \brief All concept functions lock the mutex and call the function on the referenced allocator.
@@ -175,7 +189,7 @@ namespace foonathan { namespace memory
             return traits::allocate_array(alloc, count, size, alignment);
         }
 
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
@@ -183,7 +197,7 @@ namespace foonathan { namespace memory
         }
         
         void deallocate_array(void *array, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
@@ -214,25 +228,25 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the allocator while keeping it locked.
-        /// \detail It returns a proxy object that holds the lock.
+        /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        detail::locked_allocator<raw_allocator, actual_mutex> lock() noexcept
+        detail::locked_allocator<raw_allocator, actual_mutex> lock() FOONATHAN_NOEXCEPT
         {
             return {*this, *this};
         }
         
-        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const noexcept
+        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
         {
             return {*this, *this};
         }
         /// @}
         
         /// \brief Returns the \ref raw_allocator.
-        /// \detail It is a reference for stateful allocators and a temporary for non-stateful.
+        /// \details It is a reference for stateful allocators and a temporary for non-stateful.
         /// \note This function does not perform any locking and is thus not thread safe.
-        auto get_allocator() const noexcept
-        -> decltype(this->storage::get_allocator())
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> typename storage::reference_type
         {
             return storage::get_allocator();
         }
@@ -242,14 +256,14 @@ namespace foonathan { namespace memory
     /// \brief Creates a \ref allocator_reference.
     /// \relates allocator_reference
     template <class RawAllocator>
-    auto make_allocator_reference(RawAllocator &&allocator) noexcept
+    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_reference<typename std::decay<RawAllocator>::type> 
     {
         return {std::forward<RawAllocator>(allocator)};
     }
     
     template <class Mutex, class RawAllocator>
-    auto make_allocator_reference(RawAllocator &&allocator) noexcept
+    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex> 
     {
         return {std::forward<RawAllocator>(allocator)};
@@ -287,16 +301,18 @@ namespace foonathan { namespace memory
 
         using impl_allocator = RawAllocator;
 
-        //=== constructor ===//
-        raw_allocator_allocator() = default;
+        //=== constructor ===//        
+        raw_allocator_allocator(const impl_allocator &alloc = {}) FOONATHAN_NOEXCEPT
+        : allocator_reference<RawAllocator>(alloc) {}
         
-        using allocator_reference<RawAllocator>::allocator_reference;
+        raw_allocator_allocator(impl_allocator &alloc) FOONATHAN_NOEXCEPT
+        : allocator_reference<RawAllocator>(alloc) {}
         
-        raw_allocator_allocator(const allocator_reference<RawAllocator> &alloc) noexcept
+        raw_allocator_allocator(const allocator_reference<RawAllocator> &alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(alloc) {}
 
         template <typename U>
-        raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator> &alloc) noexcept
+        raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator> &alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(alloc.get_impl_allocator()) {}
 
         //=== allocation/deallocation ===//
@@ -304,18 +320,18 @@ namespace foonathan { namespace memory
         {
             void *mem = nullptr;
             if (n == 1)
-                mem = this->allocate_node(sizeof(value_type), alignof(value_type));
+                mem = this->allocate_node(sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
             else
-                mem = this->allocate_array(n, sizeof(value_type), alignof(value_type));
+                mem = this->allocate_array(n, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
             return static_cast<pointer>(mem);
         }
 
-        void deallocate(pointer p, size_type n) noexcept
+        void deallocate(pointer p, size_type n) FOONATHAN_NOEXCEPT
         {
             if (n == 1)
-                this->deallocate_node(p, sizeof(value_type), alignof(value_type));
+                this->deallocate_node(p, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
             else
-                this->deallocate_array(p, n, sizeof(value_type), alignof(value_type));
+                this->deallocate_array(p, n, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
 
         //=== construction/destruction ===//
@@ -327,45 +343,45 @@ namespace foonathan { namespace memory
         }
 
         template <typename U>
-        void destroy(U *p) noexcept
+        void destroy(U *p) FOONATHAN_NOEXCEPT
         {
             p->~U();
         }
 
         //=== getter ===//
-        size_type max_size() const noexcept
+        size_type max_size() const FOONATHAN_NOEXCEPT
         {
             return this->max_array_size() / sizeof(value_type);
         }
 
-        auto get_impl_allocator() const noexcept
-        -> decltype(this->get_allocator())
+        auto get_impl_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<allocator_reference<impl_allocator>>().get_allocator())
         {
             return this->get_allocator();
         }
         
     private:
         template <typename U> // stateful
-        bool equal_to(std::true_type, const raw_allocator_allocator<U, RawAllocator> &other) const noexcept
+        bool equal_to(std::true_type, const raw_allocator_allocator<U, RawAllocator> &other) const FOONATHAN_NOEXCEPT
         {
             return &get_impl_allocator() == &other.get_impl_allocator();
         }
         
         template <typename U> // non=stateful
-        bool equal_to(std::false_type, const raw_allocator_allocator<U, RawAllocator> &) const noexcept
+        bool equal_to(std::false_type, const raw_allocator_allocator<U, RawAllocator> &) const FOONATHAN_NOEXCEPT
         {
             return true;
         }
         
         template <typename T1, typename T2, class Impl>
         friend bool operator==(const raw_allocator_allocator<T1, Impl> &lhs,
-                    const raw_allocator_allocator<T2, Impl> &rhs) noexcept;
+                    const raw_allocator_allocator<T2, Impl> &rhs) FOONATHAN_NOEXCEPT;
     };
 
     /// \brief Makes an \ref raw_allocator_allocator.
     /// \relates raw_allocator_allocator
     template <typename T, class RawAllocator>
-    auto make_std_allocator(RawAllocator &&allocator) noexcept
+    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> raw_allocator_allocator<T, typename std::decay<RawAllocator>::type>
     {
         return {std::forward<RawAllocator>(allocator)};
@@ -373,14 +389,14 @@ namespace foonathan { namespace memory
     
     template <typename T, typename U, class Impl>
     bool operator==(const raw_allocator_allocator<T, Impl> &lhs,
-                    const raw_allocator_allocator<U, Impl> &rhs) noexcept
+                    const raw_allocator_allocator<U, Impl> &rhs) FOONATHAN_NOEXCEPT
     {
         return lhs.equal_to(typename allocator_traits<Impl>::is_stateful{}, rhs);
     }
 
     template <typename T, typename U, class Impl>
     bool operator!=(const raw_allocator_allocator<T, Impl> &lhs,
-                    const raw_allocator_allocator<U, Impl> &rhs) noexcept
+                    const raw_allocator_allocator<U, Impl> &rhs) FOONATHAN_NOEXCEPT
     {
         return !(lhs == rhs);
     }

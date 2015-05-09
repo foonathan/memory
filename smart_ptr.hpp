@@ -15,7 +15,7 @@
 namespace foonathan { namespace memory
 {
 	/// \brief A deleter class that calls the appropriate deallocate function.
-    /// \detail It stores an \ref allocator_reference. It does not call any destrucotrs.
+    /// \details It stores an \ref allocator_reference. It does not call any destrucotrs.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
     class raw_allocator_deallocator : allocator_reference<RawAllocator>
@@ -25,19 +25,19 @@ namespace foonathan { namespace memory
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc) noexcept
+        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(std::move(alloc)) {}
         
         /// \brief Deallocates the memory via the stored allocator.
-        /// \detail It calls \ref allocator_traits::deallocate_node, but no destructors.
-        void operator()(value_type *pointer) noexcept
+        /// \details It calls \ref allocator_traits::deallocate_node, but no destructors.
+        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
-            this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
+            this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
         
         /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const noexcept
-        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
         {
             return this->allocator_reference<raw_allocator>::get_allocator();
         }
@@ -54,26 +54,26 @@ namespace foonathan { namespace memory
         
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
         raw_allocator_deallocator(allocator_reference<raw_allocator> alloc,
-                            std::size_t size) noexcept
+                            std::size_t size) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(std::move(alloc)),
           size_(size) {}
         
         /// \brief Deallocates the memory via the stored allocator.
-        /// \detail It calls \ref allocator_traits::deallocate_array, but no destructors.
-        void operator()(value_type *pointer) noexcept
+        /// \details It calls \ref allocator_traits::deallocate_array, but no destructors.
+        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
-            this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
+            this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
         
         /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const noexcept
-        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
         {
             return this->allocator_reference<raw_allocator>::get_allocator();
         }
         
         /// \brief Returns the array size.
-        std::size_t array_size() const noexcept
+        std::size_t array_size() const FOONATHAN_NOEXCEPT
         {
             return size_;
         }
@@ -83,7 +83,7 @@ namespace foonathan { namespace memory
     };
     
     /// \brief A deleter class that calls the appropriate destructors and deallocate function.
-    /// \detail It stores an \ref allocator_reference. It calls destructors.
+    /// \details It stores an \ref allocator_reference. It calls destructors.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
     class raw_allocator_deleter : allocator_reference<RawAllocator>
@@ -93,20 +93,20 @@ namespace foonathan { namespace memory
         using value_type = Type;
         
         /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deleter(allocator_reference<raw_allocator> alloc) noexcept
+        raw_allocator_deleter(allocator_reference<raw_allocator> alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(std::move(alloc)) {}
         
         /// \brief Deallocates the memory via the stored allocator.
-        /// \detail It calls the destructor and \ref allocator_traits::deallocate_node.
-        void operator()(value_type *pointer) noexcept
+        /// \details It calls the destructor and \ref allocator_traits::deallocate_node.
+        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             pointer->~value_type();
-            this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
+            this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
         
         /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const noexcept
-        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
         {
             return this->allocator_reference<raw_allocator>::get_allocator();
         }
@@ -123,28 +123,28 @@ namespace foonathan { namespace memory
         
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
         raw_allocator_deleter(allocator_reference<raw_allocator> alloc,
-                            std::size_t size) noexcept
+                            std::size_t size) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(std::move(alloc)),
           size_(size) {}
         
         /// \brief Deallocates the memory via the stored allocator.
-        /// \detail It calls the destructors and \ref allocator_traits::deallocate_array.
-        void operator()(value_type *pointer) noexcept
+        /// \details It calls the destructors and \ref allocator_traits::deallocate_array.
+        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             for (auto cur = pointer; cur != pointer + size_; ++cur)
                 cur->~value_type();
-            this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
+            this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
         
         /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const noexcept
-        -> decltype(this->allocator_reference<raw_allocator>::get_allocator())
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
         {
             return this->allocator_reference<raw_allocator>::get_allocator();
         }
         
         /// \brief Returns the array size.
-        std::size_t array_size() const noexcept
+        std::size_t array_size() const FOONATHAN_NOEXCEPT
         {
             return size_;
         }
@@ -161,7 +161,7 @@ namespace foonathan { namespace memory
         {
             using raw_ptr = std::unique_ptr<T, raw_allocator_deallocator<T, RawAllocator>>;
             
-            auto memory = alloc.allocate_node(sizeof(T), alignof(T));
+            auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc});
             // call constructor
@@ -200,10 +200,10 @@ namespace foonathan { namespace memory
         {
             using raw_ptr = std::unique_ptr<T[], raw_allocator_deallocator<T[], RawAllocator>>;
             
-            auto memory = alloc.allocate_array(size, sizeof(T), alignof(T));
+            auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc, size});
-            construct(std::integral_constant<bool, noexcept(T())>{},
+            construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT(T())>{},
                     result.get(), result.get() + size);
             // pass ownership to return value using a deleter that calls destructor
             return {result.release(), {alloc, size}};

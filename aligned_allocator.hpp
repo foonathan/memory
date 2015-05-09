@@ -16,7 +16,7 @@
 namespace foonathan { namespace memory
 {
 	/// \brief A \c RawAllocator adapter that ensures a minimum alignment.
-    /// \detail It changes the alignment requirements passed to the allocation function if necessary
+    /// \details It changes the alignment requirements passed to the allocation function if necessary
     /// and forwards to the wrapped allocator.
     /// \ingroup memory
     template <class RawAllocator>
@@ -28,7 +28,7 @@ namespace foonathan { namespace memory
         using is_stateful = std::true_type;
     
         /// \brief Creates it passing it the minimum alignment requirement.
-        /// \detail It must be less than the maximum supported alignment.
+        /// \details It must be less than the maximum supported alignment.
         explicit aligned_allocator(std::size_t min_alignment, raw_allocator &&alloc = {})
         : raw_allocator(std::move(alloc)), min_alignment_(min_alignment)
         {
@@ -37,7 +37,7 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief (De-)Allocation functions ensure the given minimum alignemnt.
-        /// \detail If the alignment requirement is higher, it is unchanged.
+        /// \details If the alignment requirement is higher, it is unchanged.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             alignment = std::max(min_alignment_, alignment);
@@ -50,14 +50,14 @@ namespace foonathan { namespace memory
             return traits::allocate_array(get_allocator(), count, size, alignment);
         }
         
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             alignment = std::max(min_alignment_, alignment);
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
         
         void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             alignment = std::max(min_alignment_, alignment);
             traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
@@ -81,12 +81,12 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the actual allocator.
-        raw_allocator& get_allocator() noexcept
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         
-        const raw_allocator& get_allocator() const noexcept
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -94,7 +94,7 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Get/set the minimum alignment.
-        std::size_t min_alignment() const noexcept
+        std::size_t min_alignment() const FOONATHAN_NOEXCEPT
         {
             return min_alignment_;
         }
@@ -113,7 +113,7 @@ namespace foonathan { namespace memory
     /// \brief Creates an \ref aligned_allocator.
     /// \relates aligned_allocator
     template <class RawAllocator>
-    auto make_aligned_allocator(std::size_t min_alignment, RawAllocator &&allocator) noexcept
+    auto make_aligned_allocator(std::size_t min_alignment, RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> aligned_allocator<typename std::decay<RawAllocator>::type> 
     {
         return aligned_allocator<typename std::decay<RawAllocator>::type>

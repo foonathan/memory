@@ -4,6 +4,7 @@
 
 #include "free_list.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstring>
@@ -16,7 +17,7 @@ using namespace detail;
 namespace
 {
     // pre: ptr
-    char* get_next(void* ptr) noexcept
+    char* get_next(void* ptr) FOONATHAN_NOEXCEPT
     {
         char* result = nullptr;
         std::memcpy(&result, ptr, sizeof(char*));
@@ -24,13 +25,13 @@ namespace
     }
     
     // pre: ptr
-    void set_next(void *ptr, char *next) noexcept
+    void set_next(void *ptr, char *next) FOONATHAN_NOEXCEPT
     {
         std::memcpy(ptr, &next, sizeof(char*));
     }
 
     // pre: mem, el_size > sizeof(mem), size >= el_size
-    void* build_list(void* &mem, std::size_t el_size, std::size_t size) noexcept
+    void* build_list(void* &mem, std::size_t el_size, std::size_t size) FOONATHAN_NOEXCEPT
     {
         auto no_blocks = size / el_size;
         auto ptr = static_cast<char*>(mem);
@@ -40,7 +41,7 @@ namespace
     }
 
     // pre: list, mem
-    std::pair<void*, void*> find_position(void *list, void *mem) noexcept
+    std::pair<void*, void*> find_position(void *list, void *mem) FOONATHAN_NOEXCEPT
     {
         auto greater = std::greater<char*>();
         auto prev = static_cast<char*>(list);
@@ -60,7 +61,7 @@ namespace
     }
 
     // pre: cur
-    bool check_n(char* &cur, std::size_t n, std::size_t el_size) noexcept
+    bool check_n(char* &cur, std::size_t n, std::size_t el_size) FOONATHAN_NOEXCEPT
     {
         --n; // we already have one (cur)
         if (n == 0u)
@@ -81,21 +82,21 @@ namespace
     }
 }
 
-constexpr std::size_t free_memory_list::min_element_size;
-constexpr std::size_t free_memory_list::min_element_alignment;
+FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
+FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
 
-free_memory_list::free_memory_list(std::size_t el_size) noexcept
+free_memory_list::free_memory_list(std::size_t el_size) FOONATHAN_NOEXCEPT
 : first_(nullptr), el_size_(std::max(min_element_size, el_size)), capacity_(0u)
 {}
 
 free_memory_list::free_memory_list(std::size_t el_size,
-                                   void *mem, std::size_t size) noexcept
+                                   void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 : free_memory_list(el_size)
 {
     insert(mem, size);
 }
 
-void free_memory_list::insert(void *mem, std::size_t size) noexcept
+void free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     capacity_ += size / el_size_;
     auto last = build_list(mem, el_size_, size);
@@ -103,7 +104,7 @@ void free_memory_list::insert(void *mem, std::size_t size) noexcept
     first_ = static_cast<char*>(mem);
 }
 
-void free_memory_list::insert_ordered(void *mem, std::size_t size) noexcept
+void free_memory_list::insert_ordered(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     capacity_ += size / el_size_;
     if (empty())
@@ -115,7 +116,7 @@ void free_memory_list::insert_ordered(void *mem, std::size_t size) noexcept
 }
 
 void free_memory_list::insert_between(void *pre, void *after,
-                                      void *mem, std::size_t size) noexcept
+                                      void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     auto last = build_list(mem, el_size_, size);
 
@@ -127,7 +128,7 @@ void free_memory_list::insert_between(void *pre, void *after,
     set_next(last, static_cast<char*>(after));
 }
 
-void* free_memory_list::allocate() noexcept
+void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
     --capacity_;
     auto block = first_;
@@ -135,7 +136,7 @@ void* free_memory_list::allocate() noexcept
     return block;
 }
 
-void* free_memory_list::allocate(std::size_t n) noexcept
+void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
 {
     capacity_ -= n;
     for(auto cur = first_; cur; cur = get_next(cur))
@@ -152,14 +153,14 @@ void* free_memory_list::allocate(std::size_t n) noexcept
     return nullptr;
 }
 
-void free_memory_list::deallocate(void *ptr) noexcept
+void free_memory_list::deallocate(void *ptr) FOONATHAN_NOEXCEPT
 {
     ++capacity_;
     set_next(ptr, first_);
     first_ = static_cast<char*>(ptr);
 }
 
-void free_memory_list::deallocate_ordered(void *ptr) noexcept
+void free_memory_list::deallocate_ordered(void *ptr) FOONATHAN_NOEXCEPT
 {
     ++capacity_;
     auto pos = find_position(first_, ptr);
@@ -167,7 +168,7 @@ void free_memory_list::deallocate_ordered(void *ptr) noexcept
 }
 
 std::size_t free_memory_list::calc_block_count(std::size_t pool_element_size,
-                                std::size_t count, std::size_t node_size) noexcept
+                                std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     assert(node_size <= pool_element_size);
     auto ratio = pool_element_size / node_size;

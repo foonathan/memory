@@ -12,6 +12,8 @@
 #include <cstddef>
 #include <limits>
 
+#include "detail/align.hpp"
+
 namespace foonathan { namespace memory
 {
     /// \brief Base class that generates default implementations for the more repetitive functions.
@@ -19,13 +21,9 @@ namespace foonathan { namespace memory
     class raw_allocator_base
     {
     public:
-        raw_allocator_base() = default;
-        
-        raw_allocator_base(const raw_allocator_base&) = delete;
-        raw_allocator_base(raw_allocator_base&&) = default;
-        
-        raw_allocator_base& operator=(const raw_allocator_base &) = delete;
-        raw_allocator_base& operator=(raw_allocator_base &&) = default;
+        raw_allocator_base() FOONATHAN_NOEXCEPT {}
+        raw_allocator_base(raw_allocator_base&&) FOONATHAN_NOEXCEPT {}
+        raw_allocator_base& operator=(raw_allocator_base &&) FOONATHAN_NOEXCEPT {return *this;}
         
         /// @{
         /// \brief Array allocation forwards to node allocation.
@@ -36,7 +34,7 @@ namespace foonathan { namespace memory
         }
         
         void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             static_cast<Derived*>(this)->deallocate_node(ptr, count * size, alignment);
         }
@@ -44,25 +42,25 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns maximum value.
-        std::size_t max_node_size() const noexcept
+        std::size_t max_node_size() const FOONATHAN_NOEXCEPT
         {
             return std::numeric_limits<std::size_t>::max();
         }
         
-        std::size_t max_array_size() const noexcept
+        std::size_t max_array_size() const FOONATHAN_NOEXCEPT
         {
             return std::numeric_limits<std::size_t>::max();
         }
         /// @}
         
         /// \brief Returns \c alignof(std::max_align_t).
-        std::size_t max_alignment() const noexcept
+        std::size_t max_alignment() const FOONATHAN_NOEXCEPT
         {
-            return alignof(std::max_align_t);
+            return detail::max_alignment;
         }
         
     protected:
-        ~raw_allocator_base() noexcept = default;    
+        ~raw_allocator_base() FOONATHAN_NOEXCEPT = default;    
     };
 }} // namespace foonathan::memory
 

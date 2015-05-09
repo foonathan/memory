@@ -45,14 +45,14 @@ namespace foonathan { namespace memory
             }
             
             void deallocate_node(void *ptr,
-                                  std::size_t size, std::size_t alignment) noexcept
+                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
                 traits::deallocate_node(*this, ptr, size, alignment);
                 t_->on_allocator_shrinking(ptr, size);
             }
             
             void deallocate_array(void *ptr, std::size_t count,
-                                  std::size_t size, std::size_t alignment) noexcept
+                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
                 traits::deallocate_array(*this, ptr, count, size, alignment);
                 t_->on_allocator_shrinking(ptr, size * count);
@@ -79,13 +79,13 @@ namespace foonathan { namespace memory
     } // namespace detail
 
     /// \brief A wrapper around an \ref concept::RawAllocator that allows logging.
-    /// \detail The \c Tracker must provide the following, \c noexcept functions:
+    /// \details The \c Tracker must provide the following, \c FOONATHAN_NOEXCEPT functions:
     /// * \c on_node_allocation(void *memory, std::size_t size, std::size_t alignment)
     /// * \c on_node_deallocation(void *memory, std::size_t size, std::size_t alignment)
     /// * \c on_array_allocation(void *memory, std::size_t count, std::size_t size, std::size_t alignment)
     /// * \c on_array_deallocation(void *memory, std::size_t count, std::size_t size, std::size_t alignment)
     /// <br>If you use a deeply tracked allocator via the appropriate \ref make_tracked_allocator() overload,
-    /// the \c Tracker must also provide the following two, \c noexcept functions:
+    /// the \c Tracker must also provide the following two, \c FOONATHAN_NOEXCEPT functions:
     /// * \c on_allocator_growth(void *memory, std::size_t total_size)
     /// * \c on_allocator_shrinking(void *memory, std::size_t total_size)
     /// <br>They are called on the allocation/deallocation functions of the implementation allocator.
@@ -123,14 +123,14 @@ namespace foonathan { namespace memory
         }
         
         void deallocate_node(void *ptr,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             this->on_node_deallocation(ptr, size, alignment);
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
         
         void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             this->on_array_deallocation(ptr, count, size, alignment);
             traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
@@ -157,12 +157,12 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the allocator.
-        raw_allocator& get_allocator() noexcept
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         
-        const raw_allocator& get_allocator() const noexcept
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -170,12 +170,12 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the tracker.
-        tracker& get_tracker() noexcept
+        tracker& get_tracker() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         
-        const tracker& get_tracker() const noexcept
+        const tracker& get_tracker() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -205,7 +205,7 @@ namespace foonathan { namespace memory
     }
     
     /// \brief Creates a deeply tracked \ref tracked_allocator.
-    /// \detail It also tracks allocator growth, that is, when allocators with implementation allocator (e.g. \ref memory_stack),
+    /// \details It also tracks allocator growth, that is, when allocators with implementation allocator (e.g. \ref memory_stack),
     /// run out of memory blocks and need to allocate new, slow memory.<br>
     /// It is detected by wrapping the implementation allocator into an adapter and calling the appropriate tracker functions
     /// on allocation/deallocation of the implementation allocator.<br>

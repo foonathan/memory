@@ -15,7 +15,7 @@ using namespace detail;
 namespace
 {
     template <typename Integral>
-    bool is_power_of_two(Integral no) noexcept
+    bool is_power_of_two(Integral no) FOONATHAN_NOEXCEPT
     {
         return no && (no & (no - 1)) == 0;
     }
@@ -26,30 +26,30 @@ namespace
     // we have a builtin to count leading zeros, use it
     // subtract one if power of two, otherwise 0
     // multiple overloads to support each size of std::size_t
-    std::size_t ilog2(unsigned int no) noexcept
+    std::size_t ilog2(unsigned int no) FOONATHAN_NOEXCEPT
     {
-        return sizeof(no) * CHAR_BIT - __builtin_clz(no) - is_power_of_two(no);
+        return sizeof(no) * CHAR_BIT - unsigned(__builtin_clz(no)) - unsigned(is_power_of_two(no));
     }
     
-    std::size_t ilog2(unsigned long no) noexcept
+    std::size_t ilog2(unsigned long no) FOONATHAN_NOEXCEPT
     {
-        return sizeof(no) * CHAR_BIT - __builtin_clzl(no) - is_power_of_two(no);
+        return sizeof(no) * CHAR_BIT - unsigned(__builtin_clzl(no)) - unsigned(is_power_of_two(no));
     }
     
-    std::size_t ilog2(unsigned long long no) noexcept
+    std::size_t ilog2(unsigned long long no) FOONATHAN_NOEXCEPT
     {
-        return sizeof(no) * CHAR_BIT - __builtin_clzll(no) - is_power_of_two(no);
+        return sizeof(no) * CHAR_BIT - unsigned(__builtin_clzll(no)) - unsigned(is_power_of_two(no));
     }
 #elif FLT_RADIX == 2
     // floating points exponent are for base 2, use ilogb to get the exponent
     // subtract one if power of two, otherwise zero
-    std::size_t ilog2(std::size_t no) noexcept
+    std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
     {
-        return std::ilogb(no) - is_power_of_two(no);
+        return std::ilogb(no) - unsigned(is_power_of_two(no));
     }
 #else
     // just ceil log2
-    std::size_t ilog2(std::size_t no) noexcept
+    std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
     {
         std::ceil(std::log2(no));
     }
@@ -59,30 +59,27 @@ namespace
     const auto min_node_size_log = ilog2(free_memory_list::min_element_size);
 }
 
-static_assert(std::is_trivially_destructible<free_memory_list>::value,
-            "free_list_array currently does not call any destructors");
-
 free_list_array::free_list_array(fixed_memory_stack &stack,
-                            std::size_t max_node_size) noexcept
+                            std::size_t max_node_size) FOONATHAN_NOEXCEPT
 {
     assert(max_node_size >= free_memory_list::min_element_size && "too small max_node_size");
     auto no_pools = ilog2(max_node_size) - min_node_size_log + 1;
     auto pools_size = no_pools * sizeof(free_memory_list);
     
     nodes_ = static_cast<free_memory_list*>(stack.allocate(pools_size,
-                                                        alignof(free_memory_list)));
+                                                        FOONATHAN_ALIGNOF(free_memory_list)));
     arrays_ = static_cast<free_memory_list*>(stack.allocate(pools_size,
-                                                        alignof(free_memory_list)));
+                                                        FOONATHAN_ALIGNOF(free_memory_list)));
     assert(nodes_ && arrays_ && "insufficient memory block size");
     for (std::size_t i = 0u; i != no_pools; ++i)
     {
-        auto el_size = 1 << (i + min_node_size_log);
+        std::size_t el_size = 1u << (i + min_node_size_log);
         ::new(static_cast<void*>(nodes_ + i)) free_memory_list(el_size);
         ::new(static_cast<void*>(arrays_ + i)) free_memory_list(el_size);
     }
 }
 
-free_memory_list& free_list_array::get_node(std::size_t node_size) noexcept
+free_memory_list& free_list_array::get_node(std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -90,7 +87,7 @@ free_memory_list& free_list_array::get_node(std::size_t node_size) noexcept
     return nodes_[i - min_node_size_log];
 }
 
-const free_memory_list& free_list_array::get_node(std::size_t node_size) const noexcept
+const free_memory_list& free_list_array::get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -98,7 +95,7 @@ const free_memory_list& free_list_array::get_node(std::size_t node_size) const n
     return nodes_[i - min_node_size_log];
 }
 
-free_memory_list& free_list_array::get_array(std::size_t node_size) noexcept
+free_memory_list& free_list_array::get_array(std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -106,7 +103,7 @@ free_memory_list& free_list_array::get_array(std::size_t node_size) noexcept
     return arrays_[i - min_node_size_log];
 }
 
-const free_memory_list& free_list_array::get_array(std::size_t node_size) const noexcept
+const free_memory_list& free_list_array::get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -114,7 +111,7 @@ const free_memory_list& free_list_array::get_array(std::size_t node_size) const 
     return arrays_[i];
 }
 
-std::size_t free_list_array::max_node_size() const noexcept
+std::size_t free_list_array::max_node_size() const FOONATHAN_NOEXCEPT
 {
     return 1 << (size() + min_node_size_log);
 }

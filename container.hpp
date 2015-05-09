@@ -25,7 +25,7 @@ namespace foonathan { namespace memory
 {
     /// @{
     /// \brief Aliases for STL containers using a \c RawAllocator.
-    /// \detail It is just a shorthand to pass a \c RawAllocator to a container.
+    /// \details It is just a shorthand to pass a \c RawAllocator to a container.
     /// \ingroup memory
 #define FOONATHAN_MEMORY_IMPL_CONTAINER1(Name) \
     template <typename T, class RawAllocator> \
@@ -79,7 +79,7 @@ namespace foonathan { namespace memory
 
     /// @{
     /// \brief Convienience function to create a container adapter.
-    /// \detail Creates this function and passes it the underlying container with certain allocator.
+    /// \details Creates this function and passes it the underlying container with certain allocator.
     /// \ingroup memory
     template <typename T, class RawAllocator,
             class Container = deque<T, RawAllocator>>

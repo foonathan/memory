@@ -8,42 +8,44 @@
 #include <limits>
 #include <new>
 
+#include "align.hpp"
+
 using namespace foonathan::memory;
 using namespace detail;
 
 namespace
 {    
-    static constexpr auto alignment_div = sizeof(chunk) / alignof(std::max_align_t);
-    static constexpr auto alignment_mod = sizeof(chunk) % alignof(std::max_align_t);
+    static FOONATHAN_CONSTEXPR auto alignment_div = sizeof(chunk) / detail::max_alignment;
+    static FOONATHAN_CONSTEXPR auto alignment_mod = sizeof(chunk) % detail::max_alignment;
     // offset from chunk to actual list
-    static constexpr auto chunk_memory_offset = alignment_mod == 0u ? sizeof(chunk)
-                                        : (alignment_div + 1) * alignof(std::max_align_t);
+    static FOONATHAN_CONSTEXPR auto chunk_memory_offset = alignment_mod == 0u ? sizeof(chunk)
+                                        : (alignment_div + 1) * detail::max_alignment;
     // maximum nodes per chunk                                    
-    static constexpr auto chunk_max_nodes = std::numeric_limits<unsigned char>::max();
+    static FOONATHAN_CONSTEXPR auto chunk_max_nodes = std::numeric_limits<unsigned char>::max();
     
     // returns the memory of the actual free list of a chunk
-    unsigned char* list_memory(void *c) noexcept
+    unsigned char* list_memory(void *c) FOONATHAN_NOEXCEPT
     {
         return static_cast<unsigned char*>(c) + chunk_memory_offset;
     }
     
     // creates a chunk at mem
     // mem must have at least the size chunk_memory_offset + no_nodes * node_size
-    chunk* create_chunk(void *mem, unsigned char node_size, unsigned char no_nodes) noexcept
+    chunk* create_chunk(void *mem, std::size_t node_size, unsigned char no_nodes) FOONATHAN_NOEXCEPT
     {
         auto c = ::new(mem) chunk;
         c->first_node = 0;
         c->no_nodes = no_nodes;
         c->capacity = no_nodes;
         auto p = list_memory(c);
-        for (auto i = 0u; i != no_nodes; p += node_size)
+        for (unsigned char i = 0u; i != no_nodes; p += node_size)
             *p = ++i;
         return c;
     }
     
     // inserts a chunk into the chunk list
     // pushs it at the back of the list
-    void insert_chunk(chunk &list, chunk *c) noexcept
+    void insert_chunk(chunk &list, chunk *c) FOONATHAN_NOEXCEPT
     {
         c->prev = list.prev;
         c->next = &list;
@@ -53,7 +55,7 @@ namespace
     }
     
     // whether or not a pointer can be from a certain chunk
-    bool from_chunk(chunk *c, std::size_t node_size, void *mem) noexcept
+    bool from_chunk(chunk *c, std::size_t node_size, void *mem) FOONATHAN_NOEXCEPT
     {
         // comparision not strictly legal, but works
         return list_memory(c) <= mem
@@ -61,18 +63,21 @@ namespace
     }
 }
 
-small_free_memory_list::small_free_memory_list(std::size_t node_size) noexcept
+FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_size;
+FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_alignment;
+
+small_free_memory_list::small_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
 : alloc_chunk_(&dummy_chunk_), dealloc_chunk_(&dummy_chunk_), unused_chunk_(nullptr),
   node_size_(node_size), capacity_(0u) {}
   
  small_free_memory_list::small_free_memory_list(std::size_t node_size,
-                                    void *mem, std::size_t size) noexcept
+                                    void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 : small_free_memory_list(node_size)
 {
     insert(mem, size);
 }
 
-void small_free_memory_list::insert(void *memory, std::size_t size) noexcept
+void small_free_memory_list::insert(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
 {
     auto chunk_unit = chunk_memory_offset + node_size_ * chunk_max_nodes;
     auto no_chunks = size / chunk_unit;
@@ -88,7 +93,7 @@ void small_free_memory_list::insert(void *memory, std::size_t size) noexcept
     auto remaining = size % chunk_unit - chunk_memory_offset;
     if (remaining > node_size_)
     {
-        auto c = create_chunk(mem, node_size_, remaining / node_size_);
+        auto c = create_chunk(mem, node_size_, static_cast<unsigned char>(remaining / node_size_));
         c->next = nullptr;
         c->prev = unused_chunk_;
         unused_chunk_ = c;
@@ -98,7 +103,7 @@ void small_free_memory_list::insert(void *memory, std::size_t size) noexcept
     capacity_ += inserted_memory;
 }
 
-void* small_free_memory_list::allocate() noexcept
+void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
     if (alloc_chunk_->capacity == 0u)
         find_chunk(1);
@@ -110,7 +115,7 @@ void* small_free_memory_list::allocate() noexcept
     return memory;
 }
 
-void small_free_memory_list::deallocate(void *node) noexcept
+void small_free_memory_list::deallocate(void *node) FOONATHAN_NOEXCEPT
 {
     if (!from_chunk(dealloc_chunk_, node_size_, node))
     {
@@ -134,14 +139,14 @@ void small_free_memory_list::deallocate(void *node) noexcept
     assert(from_chunk(dealloc_chunk_, node_size_, node));
     auto node_mem = static_cast<unsigned char*>(node);
     *node_mem = dealloc_chunk_->first_node;
-    auto offset = node_mem - list_memory(dealloc_chunk_);
-    assert(offset % node_size_ == 0u);
-    dealloc_chunk_->first_node = offset / node_size_;
+    auto offset = static_cast<std::size_t>(node_mem - list_memory(dealloc_chunk_));
+    assert(offset % node_size_ == 0);
+    dealloc_chunk_->first_node = static_cast<unsigned char>(offset / node_size_);
     ++dealloc_chunk_->capacity;
     ++capacity_;
 }
 
-bool small_free_memory_list::find_chunk(std::size_t n) noexcept
+bool small_free_memory_list::find_chunk(std::size_t n) FOONATHAN_NOEXCEPT
 {
     assert(capacity_ >= n && n <= chunk_max_nodes);
     if (alloc_chunk_->capacity >= n)

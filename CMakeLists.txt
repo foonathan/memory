@@ -6,6 +6,35 @@ else()
     project(foonathan_memory)
 endif()
 
+include(CheckCXXSourceCompiles)
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG(-std=c++11 cpp11_flag)
+if (cpp11_flag)
+    set(CMAKE_REQUIRED_FLAGS "-std=c++11")
+else()
+    CHECK_CXX_COMPILER_FLAG(-std=c++0x cpp0x_flag)
+    if (cpp0x_flag)
+        set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
+    endif(cpp0x_flag)
+endif(cpp11_flag)
+
+CHECK_CXX_SOURCE_COMPILES("int main() {int i = alignof(int);}" comp_alignof)
+CHECK_CXX_SOURCE_COMPILES("#include <cstddef>
+                          using namespace std;
+                          int main() {max_align_t val;}" comp_max_align)
+CHECK_CXX_SOURCE_COMPILES("#include <new>
+                          int main() {auto handler = std::get_new_handler();}" comp_new_handler)
+CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() {}" comp_thread_local)
+CHECK_CXX_SOURCE_COMPILES("constexpr auto foo = 1; int main(){}" comp_constexpr)
+CHECK_CXX_SOURCE_COMPILES("void foo() noexcept {} int main(){}" comp_noexcept)
+
+option(FOONATHAN_IMPL_HAS_ALIGNOF "whether or not alignof is available" ${comp_alignof})
+option(FOONATHAN_IMPL_HAS_MAX_ALIGN "whether or not std::max_align_t is available" ${comp_max_align})
+option(FOONATHAN_IMPL_HAS_GET_NEW_HANDLER "whether or not std::get_new_handler() is available" ${comp_new_handler})
+option(FOONATHAN_IMPL_HAS_THREAD_LOCAL "whether or not thread_local is available" ${comp_thread_local})
+option(FOONATHAN_IMPL_HAS_CONSTEXPR "whether or not constexpr is available" ${comp_constexpr})
+option(FOONATHAN_IMPL_HAS_NOEXCEPT "whether or not noexcept is available" ${comp_noexcept})
+
 set(version_major 0 CACHE INTERNAL "")
 set(version_minor 2 CACHE INTERNAL "")
 
@@ -55,9 +84,13 @@ else()
     CACHE INTERNAL "")
     
     add_library(foonathan_memory ${src})
-    add_executable(foonathan_memory_example_allocator ${src} example/allocator.cpp)
-    add_executable(foonathan_memory_example_smart_ptr ${src} example/smart_ptr.cpp)
-    add_executable(foonathan_memory_example_temporary ${src} example/temporary.cpp)
+    add_executable(foonathan_memory_example_allocator example/allocator.cpp)
+    add_executable(foonathan_memory_example_smart_ptr example/smart_ptr.cpp)
+    add_executable(foonathan_memory_example_temporary example/temporary.cpp)
+    
+    target_link_libraries(foonathan_memory_example_allocator PUBLIC foonathan_memory)
+    target_link_libraries(foonathan_memory_example_smart_ptr PUBLIC foonathan_memory)
+    target_link_libraries(foonathan_memory_example_temporary PUBLIC foonathan_memory)
     
     set(targets foonathan_memory
                 foonathan_memory_example_allocator

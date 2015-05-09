@@ -29,7 +29,7 @@ namespace foonathan { namespace memory
         void* allocate_node(std::size_t size, std::size_t alignment);
 
         /// \brief Deallocates raw memory.
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) noexcept;
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory
 

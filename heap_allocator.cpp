@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <new>
 
+#include "config.hpp"
+
 using namespace foonathan::memory;
 
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
@@ -17,7 +19,12 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
         auto mem = std::malloc(size);
         if (mem)
             return mem;
+    #if FOONATHAN_IMPL_HAS_GET_NEW_HANDLER
         auto handler = std::get_new_handler();
+    #else
+        auto handler = std::set_new_handler(nullptr);
+        std::set_new_handler(handler);
+    #endif
         if (!handler)
             throw std::bad_alloc();
         handler();
@@ -25,8 +32,7 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
     assert(false);
 }
 
-void heap_allocator::deallocate_node(void *ptr,
-                                     std::size_t size, std::size_t) noexcept
+void heap_allocator::deallocate_node(void *ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
 {
     std::free(ptr);
 }

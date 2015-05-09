@@ -39,12 +39,12 @@ namespace foonathan { namespace memory
         }
 
         template <typename U>
-        void destroy(U *p) noexcept
+        void destroy(U *p) FOONATHAN_NOEXCEPT
         {
             p->~U();
         }
 
-        size_type max_size() const noexcept
+        size_type max_size() const FOONATHAN_NOEXCEPT
         {
             return std::numeric_limits<size_type>::max();
         }
@@ -55,7 +55,7 @@ namespace foonathan { namespace memory
         }
 
     protected:
-        ~std_allocator_base() noexcept = default;
+        ~std_allocator_base() FOONATHAN_NOEXCEPT = default;
     };
 }} // namespace foonathan::memory
 

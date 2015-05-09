@@ -2,6 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
+#include <cstddef>
+
 //=== version ===//
 /// \brief Major version.
 #define FOONATHAN_MEMORY_VERSION_MAJOR ${version_major}
@@ -19,3 +21,48 @@
 /// \detail This is \c true by default,change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER.
 #cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
 
+//=== compatibility ===//
+#cmakedefine01 FOONATHAN_IMPL_HAS_ALIGNOF
+#cmakedefine01 FOONATHAN_IMPL_HAS_MAX_ALIGN
+#cmakedefine01 FOONATHAN_IMPL_HAS_GET_NEW_HANDLER
+#cmakedefine01 FOONATHAN_IMPL_HAS_THREAD_LOCAL
+#cmakedefine01 FOONATHAN_IMPL_HAS_NOEXCEPT
+#cmakedefine01 FOONATHAN_IMPL_HAS_CONSTEXPR
+
+#ifndef FOONATHAN_ALIGNOF
+    #if FOONATHAN_IMPL_HAS_ALIGNOF
+        #define FOONATHAN_ALIGNOF(x) alignof(x)
+    #elif !FOONATHAN_IMPL_HAS_ALIGNOF && defined _MSC_VER
+        #define FOONATHAN_ALIGNOF(x) __alignof(x)
+    #else
+        #error "no alignof replacement available"
+    #endif
+#endif
+
+#ifndef FOONATHAN_THREAD_LOCAL
+    #if FOONATHAN_IMPL_HAS_THREAD_LOCAL
+        #define FOONATHAN_THREAD_LOCAL thread_local
+    #elif !FOONATHAN_IMPL_HAS_THREAD_LOCAL && defined __GNUC__
+        #define FOONATHAN_THREAD_LOCAL __thread
+    #elif !FOONATHAN_IMPL_HAS_THREAD_LOCAL && defined _MSC_VER
+        #define FOONATHAN_THREAD_LOCAL __declspec(thread)
+    #else
+        #error "no thread_local replacement available"
+    #endif
+#endif
+
+#ifndef FOONATHAN_NOEXCEPT
+    #if FOONATHAN_IMPL_HAS_NOEXCEPT
+        #define FOONATHAN_NOEXCEPT noexcept
+    #else
+        #define FOONATHAN_NOEXCEPT
+    #endif
+#endif
+
+#ifndef FOONATHAN_CONSTEXPR
+    #if FOONATHAN_IMPL_HAS_CONSTEXPR
+        #define FOONATHAN_CONSTEXPR constexpr
+    #else
+        #define FOONATHAN_CONSTEXPR const
+    #endif
+#endif

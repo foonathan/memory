@@ -25,7 +25,7 @@ int main()
     
     // directly allocate memory
     // it will be freed when alloc goes out of scope
-    std::cout << "Allocated: " << alloc.allocate(sizeof(int), alignof(int)) << '\n';
+    std::cout << "Allocated: " << alloc.allocate(sizeof(int), FOONATHAN_ALIGNOF(int)) << '\n';
     
     // create temporary array of 5 elements
     auto array = memory::raw_allocate_unique<int[]>(alloc, 5);

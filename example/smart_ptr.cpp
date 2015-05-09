@@ -27,7 +27,7 @@ int main()
     
     // create marker for stack unwinding
     auto m = stack.top();
-    for (auto i = 0u; i != 10; ++i)
+    for (auto i = 0; i != 10; ++i)
     {
         // free all memory from previous iteration
         stack.unwind(m);

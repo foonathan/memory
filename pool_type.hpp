@@ -7,18 +7,20 @@
 
 #include <type_traits>
 
+#include "config.hpp"
+
 namespace foonathan { namespace memory
 {
 	/// @{
     /// \brief Tag types defining whether or not a pool supports arrays.
-    /// \detail An \c array_pool supports both node and arrays.
+    /// \details An \c array_pool supports both node and arrays.
     /// \ingroup memory
     struct node_pool : std::false_type {};
     struct array_pool : std::true_type {};    
     /// @}
     
     /// \brief Tag type indicating a pool for small objects.
-    /// \detail A small node pool does not support arrays.
+    /// \details A small node pool does not support arrays.
     /// \ingroup memory
     struct small_node_pool : std::false_type {};
     
@@ -29,17 +31,17 @@ namespace foonathan { namespace memory
         
     	// either calls insert or insert_ordered
         void insert(node_pool, free_memory_list &free_list,
-                    void *ptr, std::size_t size) noexcept;
+                    void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
         void insert(array_pool, free_memory_list &free_list,
-                    void *ptr, std::size_t size) noexcept;
+                    void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
         void insert(small_node_pool, small_free_memory_list &free_list,
-                    void *ptr, std::size_t size) noexcept;
+                    void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
                     
         // either calls deallocate or deallocate ordered
-        void deallocate(node_pool, free_memory_list &free_list, void *node) noexcept;
-        void deallocate(array_pool, free_memory_list &free_list, void *node) noexcept;
-        void deallocate(array_pool, free_memory_list &free_list, void *node, std::size_t n) noexcept;
-        void deallocate(small_node_pool, small_free_memory_list &free_list, void *node) noexcept;
+        void deallocate(node_pool, free_memory_list &free_list, void *node) FOONATHAN_NOEXCEPT;
+        void deallocate(array_pool, free_memory_list &free_list, void *node) FOONATHAN_NOEXCEPT;
+        void deallocate(array_pool, free_memory_list &free_list, void *node, std::size_t n) FOONATHAN_NOEXCEPT;
+        void deallocate(small_node_pool, small_free_memory_list &free_list, void *node) FOONATHAN_NOEXCEPT;
     } // namespace detail
 }} // namespace foonathan::memory
 

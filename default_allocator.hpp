@@ -12,7 +12,7 @@
 namespace foonathan { namespace memory
 {
 	/// \brief The default allocator as implementation for the higher-level ones.
-    /// \detail The higher-level allocator (\ref memory_stack, \ref memory_pool) use this allocator as default.
+    /// \details The higher-level allocator (\ref memory_stack, \ref memory_pool) use this allocator as default.
     /// It must be one of the low-level, statelesss allocators.<br>
     /// You can change it via the CMake variable \c FOONATHAN_MEMORY_DEFAULT_ALLOCATOR,
     /// but it must be one of the following: \ref heap_allocator, \ref new_allocator.

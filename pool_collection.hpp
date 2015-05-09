@@ -26,21 +26,21 @@ namespace foonathan { namespace memory
         {
         public:
             free_list_array(fixed_memory_stack &stack,
-                        std::size_t max_node_size) noexcept;          
+                        std::size_t max_node_size) FOONATHAN_NOEXCEPT;          
             
-            free_memory_list& get_node(std::size_t node_size) noexcept;
-            const free_memory_list& get_node(std::size_t node_size) const noexcept;
+            free_memory_list& get_node(std::size_t node_size) FOONATHAN_NOEXCEPT;
+            const free_memory_list& get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT;
             
-            free_memory_list& get_array(std::size_t node_size) noexcept;
-            const free_memory_list& get_array(std::size_t node_size) const noexcept;
+            free_memory_list& get_array(std::size_t node_size) FOONATHAN_NOEXCEPT;
+            const free_memory_list& get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT;
             
             // no of pools
-            std::size_t size() const noexcept
+            std::size_t size() const FOONATHAN_NOEXCEPT
             {
-                return arrays_ - nodes_;
+                return std::size_t(arrays_ - nodes_);
             }
             
-            std::size_t max_node_size() const noexcept;
+            std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
             
         private:
             free_memory_list *nodes_, *arrays_;
@@ -49,7 +49,7 @@ namespace foonathan { namespace memory
     } // namespace detail
     
     /// \brief Manages multiple memory pools, each with a fixed size.
-    /// \detail This allows allocating of nodes of various sizes.<br>
+    /// \details This allows allocating of nodes of various sizes.<br>
     /// Otherwise behaves the same as \ref memory_pool.
     /// \ingroup memory
     template <class RawAllocator = default_allocator>
@@ -59,7 +59,7 @@ namespace foonathan { namespace memory
         using impl_allocator = RawAllocator;
         
         /// \brief Creates a new pool collection with given max node size the memory block size.
-        /// \detail It can handle node sizes up to a given size.<br>
+        /// \details It can handle node sizes up to a given size.<br>
         /// The first memory block is allocated, the block size can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
@@ -69,7 +69,7 @@ namespace foonathan { namespace memory
         {}
         
         /// \brief Allocates a node of given size.
-        /// \detail It selects the smallest node pool with sufficient size,
+        /// \details It selects the smallest node pool with sufficient size,
         /// the size must be smaller than the maximum node size.
         void* allocate_node(std::size_t node_size)
         {
@@ -80,7 +80,7 @@ namespace foonathan { namespace memory
         }
         
         /// \brief Allocates an array of given node size and number of elements.
-        /// \detail It selects the smallest node pool with sufficient size,
+        /// \details It selects the smallest node pool with sufficient size,
         /// the size must be smaller than the maximum node size.
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
@@ -94,12 +94,12 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Deallocates the memory into the appropriate pool.
-        void deallocate_node(void *memory, std::size_t node_size) noexcept
+        void deallocate_node(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             pools_.get_node(node_size).deallocate(memory);
         }
         
-        void deallocate_array(void *memory, std::size_t count, std::size_t node_size) noexcept
+        void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             auto& pool = pools_.get_array(node_size);
             auto n = detail::free_memory_list::calc_block_count
@@ -110,7 +110,7 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Reserves memory for the node/array pool for a given node size.
-        /// \detail Use the \ref node_pool or \ref array_pool parameter to check it.
+        /// \details Use the \ref node_pool or \ref array_pool parameter to check it.
         void reserve(node_pool, std::size_t node_size, std::size_t capacity)
         {
             auto& pool = pools_.get_node(node_size);
@@ -125,49 +125,49 @@ namespace foonathan { namespace memory
         /// @}
         
         /// \brief Returns the maximum node size for which there is a pool.
-        std::size_t max_node_size() const noexcept
+        std::size_t max_node_size() const FOONATHAN_NOEXCEPT
         {
             return pools_.max_node_size();
         }
         
         /// @{ 
         /// \brief Returns the capacity available in the node/array pool for a given node size.
-        /// \detail This is the amount of nodes available inside the given pool.<br>
+        /// \details This is the amount of nodes available inside the given pool.<br>
         /// Use the \ref node_pool or \ref array_pool parameter to check it.
-        std::size_t pool_capacity(node_pool, std::size_t node_size) const noexcept
+        std::size_t pool_capacity(node_pool, std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             return pools_.get_node(node_size).capacity();
         }
         
-        std::size_t pool_capacity(array_pool, std::size_t node_size) const noexcept
+        std::size_t pool_capacity(array_pool, std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             return pools_.get_array(node_size).capacity();
         }
         /// @}
         
         /// \brief Returns the capacity available outside the pools.
-        /// \detail This is the amount of memory that can be given to the pools after they are exhausted.
-        std::size_t capacity() const noexcept
+        /// \details This is the amount of memory that can be given to the pools after they are exhausted.
+        std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return stack_.end() - stack_.top();
         }
         
         /// \brief Returns the size of the next memory block.
-        /// \detail This is the new capacity after \ref capacity() is exhausted.<br>
+        /// \details This is the new capacity after \ref capacity() is exhausted.<br>
         /// This is also the maximum array size.
-        std::size_t next_capacity() const noexcept
+        std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return block_list_.next_block_size();
         }
         
         /// \brief Returns the \ref impl_allocator.
-        impl_allocator& get_impl_allocator() noexcept
+        impl_allocator& get_impl_allocator() FOONATHAN_NOEXCEPT
         {
             return block_list_.get_allocator();
         }
         
     private:
-        std::size_t def_capacity() const noexcept
+        std::size_t def_capacity() const FOONATHAN_NOEXCEPT
         {
             return block_list_.next_block_size() / (pools_.size() * 2);
         }
@@ -175,7 +175,7 @@ namespace foonathan { namespace memory
         void reserve_impl(detail::free_memory_list &pool, std::size_t capacity,
                         void (detail::free_memory_list::*insert)(void*, std::size_t))
         {
-            auto mem = stack_.allocate(capacity, alignof(std::max_align_t));
+            auto mem = stack_.allocate(capacity,  detail::max_alignment);
             if (!mem)
             {
                 // insert rest
@@ -183,7 +183,7 @@ namespace foonathan { namespace memory
                     (pool.*insert)(stack_.top(), stack_.end() - stack_.top());
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
-                mem = stack_.allocate(capacity, alignof(std::max_align_t));
+                mem = stack_.allocate(capacity,  detail::max_alignment);
                 assert(mem);
             }
             // insert new
@@ -196,7 +196,7 @@ namespace foonathan { namespace memory
     };
     
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
-    /// \detail This allows passing a pool directly as allocator to container types.
+    /// \details This allows passing a pool directly as allocator to container types.
     /// \ingroup memory
     template <class RawAllocator>
     class allocator_traits<memory_pool_collection<RawAllocator>>
@@ -209,7 +209,7 @@ namespace foonathan { namespace memory
                                 std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
-            assert(alignment <= alignof(std::max_align_t) && "invalid alignment");
+            assert(alignment <=  detail::max_alignment && "invalid alignment");
             return state.allocate_node(size);
         }
         
@@ -217,39 +217,39 @@ namespace foonathan { namespace memory
                              std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
-            assert(alignment <= alignof(std::max_align_t) && "invalid alignment");
+            assert(alignment <=  detail::max_alignment && "invalid alignment");
             assert(count * size <= max_array_size(state) && "invalid array count");
             return state.allocate_array(count, size);
         }
         
         static void deallocate_node(allocator_type &state,
-                    void *node, std::size_t size, std::size_t) noexcept
+                    void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             state.deallocate_node(node, size);
         }
         
         static void deallocate_array(allocator_type &state,
-                    void *array, std::size_t count, std::size_t size, std::size_t) noexcept
+                    void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             state.deallocate_array(array, count, size);
         }
         
         /// \brief Maximum size of a node is the maximum pool collections node size.
-        static std::size_t max_node_size(const allocator_type &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return state.max_node_size();
         }
 
         /// \brief Maximum size of an array is the capacity in the next block of the pool.
-        static std::size_t max_array_size(const allocator_type &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return state.next_capacity();
         }
         
         /// \brief Maximum alignment is alignof(std::max_align_t).
-        static std::size_t max_alignment(const allocator_type &) noexcept
+        static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
-            return alignof(std::max_align_t);
+            return  detail::max_alignment;
         }
     };
 }} // namespace foonathan::portal

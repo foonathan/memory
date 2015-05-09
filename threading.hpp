@@ -16,17 +16,17 @@
 namespace foonathan { namespace memory
 {
     /// \brief A dummy mutex class that does not lock anything.
-    /// \detail It serves the \c Mutex concept. Use it to disable locking for adapters.
+    /// \details It serves the \c Mutex concept. Use it to disable locking for adapters.
     /// \ingroup memory
     struct dummy_mutex
     {
-        void lock() noexcept {}
-        bool try_lock() noexcept {return true;}
-        void unlock() noexcept {}
+        void lock() FOONATHAN_NOEXCEPT {}
+        bool try_lock() FOONATHAN_NOEXCEPT {return true;}
+        void unlock() FOONATHAN_NOEXCEPT {}
     };
     
     /// \brief The default mutex used by \ref allocator_reference.
-    /// \detail It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER is \c true, \ref dummy_mutex otherwise.
+    /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER is \c true, \ref dummy_mutex otherwise.
     /// \ingroup memory
 #if FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
     using default_mutex = std::mutex;
@@ -48,10 +48,10 @@ namespace foonathan { namespace memory
         class mutex_storage
         {
         public:
-            mutex_storage() noexcept = default;
-            mutex_storage(const mutex_storage &) noexcept {}
+            mutex_storage() FOONATHAN_NOEXCEPT = default;
+            mutex_storage(const mutex_storage &) FOONATHAN_NOEXCEPT {}
             
-            mutex_storage& operator=(const mutex_storage &) noexcept
+            mutex_storage& operator=(const mutex_storage &) FOONATHAN_NOEXCEPT
             {
                 return *this;
             }
@@ -61,13 +61,13 @@ namespace foonathan { namespace memory
                 mutex_.lock();
             }
             
-            void unlock() const noexcept
+            void unlock() const FOONATHAN_NOEXCEPT
             {
                 mutex_.unlock();
             }
             
         protected:
-            ~mutex_storage() noexcept = default;            
+            ~mutex_storage() FOONATHAN_NOEXCEPT = default;            
         private:
             mutable Mutex mutex_;
         };
@@ -76,12 +76,12 @@ namespace foonathan { namespace memory
         class mutex_storage<dummy_mutex>
         {
         public:
-            mutex_storage() noexcept = default;
+            mutex_storage() FOONATHAN_NOEXCEPT = default;
         
-            void lock() const noexcept {}
-            void unlock() const noexcept {}
+            void lock() const FOONATHAN_NOEXCEPT {}
+            void unlock() const FOONATHAN_NOEXCEPT {}
         protected:
-            ~mutex_storage() noexcept = default;
+            ~mutex_storage() FOONATHAN_NOEXCEPT = default;
         };
         
         // non changeable pointer to an Allocator that keeps a lock
@@ -90,18 +90,18 @@ namespace foonathan { namespace memory
         class locked_allocator
         {
         public: 
-            locked_allocator(Alloc &alloc, Mutex &m) noexcept
+            locked_allocator(Alloc &alloc, Mutex &m) FOONATHAN_NOEXCEPT
             : lock_(m), alloc_(&alloc) {}
             
-            locked_allocator(locked_allocator &&other) noexcept
+            locked_allocator(locked_allocator &&other) FOONATHAN_NOEXCEPT
             : lock_(std::move(other.lock_)), alloc_(other.alloc_) {}
            
-            Alloc& operator*() const noexcept
+            Alloc& operator*() const FOONATHAN_NOEXCEPT
             {
                 return *alloc_;
             }
             
-            Alloc* operator->() const noexcept
+            Alloc* operator->() const FOONATHAN_NOEXCEPT
             {
                 return alloc_;
             }
@@ -113,7 +113,7 @@ namespace foonathan { namespace memory
     } // namespace detail
     
 	/// \brief An allocator adapter that uses a mutex for synchronizing.
-    /// \detail It locks the mutex for each function called.
+    /// \details It locks the mutex for each function called.
     /// It will not look anything if the allocator is stateless.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = std::mutex>
@@ -144,14 +144,14 @@ namespace foonathan { namespace memory
         }
         
         void deallocate_node(void *ptr,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             std::lock_guard<actual_mutex> lock(*this);
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
         
         void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             std::lock_guard<actual_mutex> lock(*this);
             traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
@@ -177,13 +177,13 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a reference to the allocator.
-        /// \detail It is not synchronized, so race conditions might occur.
-        raw_allocator& get_allocator() noexcept
+        /// \details It is not synchronized, so race conditions might occur.
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         
-        const raw_allocator& get_allocator() const noexcept
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -191,15 +191,15 @@ namespace foonathan { namespace memory
         
         /// @{
         /// \brief Returns a pointer to the allocator while keeping it locked.
-        /// \detail It returns a proxy object that holds the lock.
+        /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        detail::locked_allocator<raw_allocator, actual_mutex> lock() noexcept
+        detail::locked_allocator<raw_allocator, actual_mutex> lock() FOONATHAN_NOEXCEPT
         {
             return {*this, *this};
         }
         
-        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const noexcept
+        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
         {
             return {*this, *this};
         }
