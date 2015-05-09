@@ -12,7 +12,7 @@
 
 using namespace foonathan;
 
-// uses a RawAllocator or a class that has specialized the raw_allocator_traits
+// uses a RawAllocator or a class that has specialized the allocator_traits
 template <class RawAllocator>
 void use_allocator(RawAllocator &alloc)
 {
@@ -24,7 +24,7 @@ void use_allocator(RawAllocator &alloc)
     std::vector<int, std_allocator> a(alloc);
     // add some elements
     std::clog << "vector creation\n";
-    for (auto i = 0u; i != 10u; ++i)
+    for (auto i = 0; i != 10; ++i)
         a.push_back(i);
         
     // remove the third one
@@ -55,7 +55,7 @@ void use_allocator(RawAllocator &alloc)
     
     // insert and erase values
     std::clog << "insert/erase set\n";
-    for (auto i = 0u; i != 10u; ++i)
+    for (auto i = 0; i != 10; ++i)
         set.insert(i);
     set.erase(2);
     set.erase(10);
@@ -64,7 +64,7 @@ void use_allocator(RawAllocator &alloc)
 int main()
 {
     std::clog << std::unitbuf;
-    // a memory pool that supports arrays, each node is 32 bytes big, initially 4KB long
+    // a memory pool that supports arrays, each node is 32 bytes big, initially 4KiB long
     memory::memory_pool<memory::array_pool> pool(32, 4096);
     {
         // allocate one such node
@@ -87,24 +87,24 @@ int main()
     // tracker class that logs internal behavior of the allocator
     struct tracker
     {
-        void on_node_allocation(void *mem, std::size_t size, std::size_t) noexcept
+        void on_node_allocation(void *mem, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " node allocated: ";
             std::clog << mem << " (" << size << ") " << '\n';
         }
         
-        void on_array_allocation(void *mem, std::size_t count, std::size_t size, std::size_t) noexcept
+        void on_array_allocation(void *mem, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " array allocated: ";
             std::clog << mem << " (" << count << " * " << size << ") " << '\n';
         }
         
-        void on_node_deallocation(void *ptr, std::size_t, std::size_t) noexcept
+        void on_node_deallocation(void *ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " node deallocated: " << ptr << " \n";
         }
         
-        void on_array_deallocation(void *ptr, std::size_t, std::size_t, std::size_t) noexcept
+        void on_array_deallocation(void *ptr, std::size_t, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " array deallocated: " << ptr << " \n";
         }

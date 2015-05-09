@@ -1,8 +1,14 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
 #ifndef FOONATHAN_MEMORY_DETAIL_BLOCK_LIST_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_BLOCK_LIST_HPP_INCLUDED
 
 #include <cstddef>
 #include <utility>
+
+#include "align.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -14,8 +20,8 @@ namespace foonathan { namespace memory
             void *memory;
             std::size_t size;
             
-            block_info(void *memory, std::size_t size) noexcept
-            : memory(memory), size(size) {}
+            block_info(void *mem, std::size_t s) FOONATHAN_NOEXCEPT
+            : memory(mem), size(s) {}
         };
         
         // simple intrusive list managing memory blocks
@@ -26,33 +32,34 @@ namespace foonathan { namespace memory
             // the size needed for the implementation
             static std::size_t impl_offset();
             
-            block_list_impl() noexcept = default;
-            block_list_impl(block_list_impl &&other) noexcept
+            block_list_impl() FOONATHAN_NOEXCEPT = default;
+            block_list_impl(block_list_impl &&other) FOONATHAN_NOEXCEPT
             : head_(other.head_)
             {
                 other.head_ = nullptr;
             }
-            ~block_list_impl() noexcept = default;
+            ~block_list_impl() FOONATHAN_NOEXCEPT = default;
             
-            block_list_impl& operator=(block_list_impl &&other) noexcept
+            block_list_impl& operator=(block_list_impl &&other) FOONATHAN_NOEXCEPT
             {
                 head_ = other.head_;
                 other.head_ = nullptr;
+                return *this;
             }
             
             // inserts a new memory block, returns the size needed for the implementation
-            std::size_t push(void* &memory, std::size_t size) noexcept;
+            std::size_t push(void* &memory, std::size_t size) FOONATHAN_NOEXCEPT;
             
             // inserts the top memory block of another list, pops it from the other one
             // returns the memory block
             // its size is the usable memory size
-            block_info push(block_list_impl &other) noexcept;
+            block_info push(block_list_impl &other) FOONATHAN_NOEXCEPT;
             
             // pops the memory block at the top
             // its size is the original size passed to push
-            block_info pop() noexcept;
+            block_info pop() FOONATHAN_NOEXCEPT;
             
-            bool empty() const noexcept
+            bool empty() const FOONATHAN_NOEXCEPT
             {
                 return head_ == nullptr;
             }
@@ -68,22 +75,43 @@ namespace foonathan { namespace memory
         template <class RawAllocator>
         class block_list : RawAllocator 
         {
-            static constexpr auto growth_factor = 2u;
+            static FOONATHAN_CONSTEXPR auto growth_factor = 2u;
         public:        
             // gives it an initial block size and allocates it
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
                     RawAllocator allocator)
             : RawAllocator(std::move(allocator)), cur_block_size_(block_size) {}
-            block_list(block_list &&) = default;
-            ~block_list() noexcept
+            
+            block_list(block_list &&other) FOONATHAN_NOEXCEPT
+            : used_(std::move(other.used_)), free_(std::move(other.free_)),
+              size_(other.size_), cur_block_size_(other.cur_block_size_)
             {
-                shrink_to_fit();
+                other.size_ = other.cur_block_size_ = 0u;
             }
             
-            block_list& operator=(block_list &&) = default;
+            ~block_list() FOONATHAN_NOEXCEPT
+            {
+                shrink_to_fit();
+                while (!used_.empty())
+                {
+                    auto block = used_.pop();
+                    get_allocator().
+                        deallocate_node(block.memory, block.size, detail::max_alignment);
+                }
+            }
             
-            RawAllocator& get_allocator() noexcept
+            block_list& operator=(block_list &&other) FOONATHAN_NOEXCEPT
+            {
+                used_ = std::move(other.used_);
+                free_ = std::move(other.free_);
+                size_ = other.size_;
+                cur_block_size_ = other.cur_block_size_;
+                other.size_ = other.cur_block_size_ = 0u;
+                return *this;
+            }
+            
+            RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
             {
                 return *this;
             }
@@ -95,7 +123,7 @@ namespace foonathan { namespace memory
                 if (free_.empty())
                 {
                     auto memory = get_allocator().
-                        allocate_node(cur_block_size_, alignof(std::max_align_t));
+                        allocate_node(cur_block_size_, detail::max_alignment);
                     ++size_;
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
                     cur_block_size_ *= growth_factor;
@@ -108,30 +136,30 @@ namespace foonathan { namespace memory
             
             // deallocates the last allocate block
             // does not free memory, caches the block for future use
-            void deallocate() noexcept
+            void deallocate() FOONATHAN_NOEXCEPT
             {
                 --size_;
                 free_.push(used_);
             }
             
             // deallocates all unused cached blocks
-            void shrink_to_fit() noexcept
+            void shrink_to_fit() FOONATHAN_NOEXCEPT
             {
                 while (!free_.empty())
                 {
                     auto block = free_.pop();
                     get_allocator().
-                        deallocate_node(block.memory, block.size, alignof(std::max_align_t));
+                        deallocate_node(block.memory, block.size, detail::max_alignment);
                 }
             }
             
             // returns the next block size
-            std::size_t next_block_size() const noexcept
+            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
             {
                 return cur_block_size_ - block_list_impl::impl_offset();
             }
             
-            std::size_t size() const noexcept
+            std::size_t size() const FOONATHAN_NOEXCEPT
             {
                 return size_;
             }

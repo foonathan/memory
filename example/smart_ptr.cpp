@@ -17,7 +17,7 @@ void func(const std::shared_ptr<int> &ptr)
 
 int main()
 {
-    // create a memory stack initially 4KB big
+    // create a memory stack initially 4KiB big
     memory::memory_stack<> stack(4096);
     
     // create a shared pointer
@@ -27,7 +27,7 @@ int main()
     
     // create marker for stack unwinding
     auto m = stack.top();
-    for (auto i = 0u; i != 10; ++i)
+    for (auto i = 0; i != 10; ++i)
     {
         // free all memory from previous iteration
         stack.unwind(m);

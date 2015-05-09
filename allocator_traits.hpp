@@ -12,10 +12,12 @@
 #include <memory>
 #include <type_traits>
 
+#include "detail/align.hpp"
+
 namespace foonathan { namespace memory
 {
     /// \brief Default traits for \ref concept::RawAllocator classes.
-    /// \detail Specialize it for own classes.
+    /// \details Specialize it for own classes.
     /// \ingroup memory
     template <class Allocator>
     class allocator_traits
@@ -38,35 +40,35 @@ namespace foonathan { namespace memory
         }
 
         static void deallocate_node(allocator_type& state,
-                    void *node, std::size_t size, std::size_t alignment) noexcept
+                    void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             state.deallocate_node(node, size, alignment);
         }
 
         static void deallocate_array(allocator_type& state, void *array, std::size_t count,
-                              std::size_t size, std::size_t alignment) noexcept
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             state.deallocate_array(array, count, size, alignment);
         }
 
-        static std::size_t max_node_size(const allocator_type &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state)
         {
             return state.max_node_size();
         }
 
-        static std::size_t max_array_size(const allocator_type &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state)
         {
             return state.max_array_size();
         }
         
-        static std::size_t max_alignment(const allocator_type &state) noexcept
+        static std::size_t max_alignment(const allocator_type &state)
         {
             return state.max_alignment();
         }
     };
     
     /// \brief Provides all traits functions for \c std::allocator types.
-    /// \detail Inherit from it when specializing the \ref allocator_traits for such allocators.<br>
+    /// \details Inherit from it when specializing the \ref allocator_traits for such allocators.<br>
     /// It uses the std::allocator_traits to call the functions.
     /// \ingroup memory
     template <class StdAllocator>
@@ -86,7 +88,7 @@ namespace foonathan { namespace memory
     public:        
         /// @{
         /// \brief Allocation functions forward to \c allocate().
-        /// \detail They request a char-array of sufficient length.<br>
+        /// \details They request a char-array of sufficient length.<br>
         /// Alignment is ignored.
         static void* allocate_node(allocator_type& state,
                                 std::size_t size, std::size_t)
@@ -104,13 +106,13 @@ namespace foonathan { namespace memory
         /// @{
         /// \brief Deallocation functions forward to \c deallocate().
         static void deallocate_node(allocator_type& state,
-                    void *node, std::size_t size, std::size_t) noexcept
+                    void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             std_traits::deallocate(state, static_cast<typename std_traits::pointer>(node), size);
         }
 
         static void deallocate_array(allocator_type& state, void *array, std::size_t count,
-                              std::size_t size, std::size_t) noexcept
+                              std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             std_traits::deallocate(state, static_cast<typename std_traits::pointer>(array), count * size);
         }
@@ -118,21 +120,21 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \brief The maximum size forwards to \c max_size().
-        static std::size_t max_node_size(const allocator_type &state) noexcept
+        static std::size_t max_node_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return std_traits::max_size(state);
         }
 
-        static std::size_t max_array_size(const allocator_type &state) noexcept
+        static std::size_t max_array_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return std_traits::max_size(state);
         }
         /// @}
         
         /// \brief Maximum alignment is \c alignof(std::max_align_t).
-        static std::size_t max_alignment(const allocator_type &) noexcept
+        static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
-            return alignof(std::max_align_t);
+            return  detail::max_alignment;
         }
     };
     
