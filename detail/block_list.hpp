@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "align.hpp"
+#include "../debugging.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -58,6 +59,10 @@ namespace foonathan { namespace memory
             // pops the memory block at the top
             // its size is the original size passed to push
             block_info pop() FOONATHAN_NOEXCEPT;
+            
+            // returns the memory block at the top
+            // its size is the usable memory size
+            block_info top() const FOONATHAN_NOEXCEPT;
             
             bool empty() const FOONATHAN_NOEXCEPT
             {
@@ -118,6 +123,7 @@ namespace foonathan { namespace memory
         
             // allocates a new block and returns it and its size
             // name is used for the growth tracker
+            // debug: mark returned block as internal_memory
             block_info allocate()
             {
                 if (free_.empty())
@@ -127,19 +133,29 @@ namespace foonathan { namespace memory
                     ++size_;
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
                     cur_block_size_ *= growth_factor;
+                    detail::debug_fill(memory, size, debug_magic::internal_memory);
                     return {memory, size};
                 }
                 ++size_;
                 // already block cached in free list
-                return used_.push(free_);
+                auto block = used_.push(free_);
+                detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
+                return block;
             }
             
-            // deallocates the last allocate block
+            // deallocates the last allocated block
             // does not free memory, caches the block for future use
+            // debug: don't mark as freed, it might not be fully used
             void deallocate() FOONATHAN_NOEXCEPT
             {
                 --size_;
                 free_.push(used_);
+            }
+            
+            // the top block, this is the block that was allocated last
+            block_info top() const FOONATHAN_NOEXCEPT
+            {
+                return used_.top();
             }
             
             // deallocates all unused cached blocks

@@ -4,14 +4,19 @@
 
 #include "new_allocator.hpp"
 
+#include "debugging.hpp"
+
 using namespace foonathan::memory;
 
 void* new_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    return ::operator new(size);
+    auto mem = ::operator new(size);
+    detail::debug_fill(mem, size, debug_magic::new_memory);
+    return mem;
 }
 
-void new_allocator::deallocate_node(void* node, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+void new_allocator::deallocate_node(void* node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
+    detail::debug_fill(node, size, debug_magic::freed_memory);
     ::operator delete(node);
 }

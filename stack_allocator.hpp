@@ -91,9 +91,29 @@ namespace foonathan { namespace memory
         /// Any access blocks are freed.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            auto diff = list_.size() - m.index - 1;
-            for (auto i = 0u; i != diff; ++i)
+            std::size_t diff = list_.size() - m.index - 1;
+            if (diff > 0u)
+            {
+                auto block = list_.top();
+                // mark used part of top block as freed
+                std::size_t fill_count = stack_.top() - static_cast<char*>(block.memory);
+                detail::debug_fill(block.memory, fill_count, debug_magic::freed_memory);
                 list_.deallocate();
+                for (std::size_t i = 1; i != diff; ++i)
+                {
+                    auto block = list_.top();
+                    // mark all other blocks as fully freed, since fully used
+                    detail::debug_fill(block.memory, block.size, debug_magic::freed_memory);
+                    list_.deallocate();
+                }
+                // mark remaining in new top block as freed
+                detail::debug_fill(m.stack.top(), std::size_t(m.stack.end() - m.stack.top()),
+                                debug_magic::freed_memory);
+            }
+            else
+                // mark used part of top block as freed
+                detail::debug_fill(m.stack.top(), std::size_t(stack_.top() - m.stack.top()),
+                                debug_magic::freed_memory);
             stack_ = m.stack;
         }
         

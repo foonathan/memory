@@ -11,6 +11,8 @@
 #include <functional>
 #include <utility>
 
+#include "../debugging.hpp"
+
 using namespace foonathan::memory;
 using namespace detail;
 
@@ -133,6 +135,7 @@ void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
     --capacity_;
     auto block = first_;
     first_ = get_next(first_);
+    detail::debug_fill(block, node_size(), debug_magic::new_memory);
     return block;
 }
 
@@ -147,6 +150,7 @@ void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
             // found n continuos nodes
             // cur is the last element, next(cur) is the next free node
             first_ = get_next(cur);
+            detail::debug_fill(start, n * node_size(), debug_magic::new_memory);
             return start;
         }
     }
@@ -155,16 +159,30 @@ void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
 
 void free_memory_list::deallocate(void *ptr) FOONATHAN_NOEXCEPT
 {
+    detail::debug_fill(ptr, node_size(), debug_magic::freed_memory);
     ++capacity_;
     set_next(ptr, first_);
     first_ = static_cast<char*>(ptr);
 }
 
+void free_memory_list::deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
+{
+    detail::debug_fill(ptr, n * node_size(), debug_magic::freed_memory);
+    insert(ptr, n * node_size());
+}
+
 void free_memory_list::deallocate_ordered(void *ptr) FOONATHAN_NOEXCEPT
 {
+    detail::debug_fill(ptr, node_size(), debug_magic::freed_memory);
     ++capacity_;
     auto pos = find_position(first_, ptr);
     insert_between(pos.first, pos.second, ptr, el_size_);
+}
+
+void free_memory_list::deallocate_ordered(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
+{
+    detail::debug_fill(ptr, n * node_size(), debug_magic::freed_memory);
+    insert_ordered(ptr, n * node_size());
 }
 
 std::size_t free_memory_list::calc_block_count(std::size_t pool_element_size,

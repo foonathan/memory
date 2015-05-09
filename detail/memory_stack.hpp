@@ -7,7 +7,6 @@
 
 #include <cstddef>
 
-#include "align.hpp"
 #include "block_list.hpp"
 
 namespace foonathan { namespace memory
@@ -29,16 +28,8 @@ namespace foonathan { namespace memory
             : fixed_memory_stack(nullptr, 0) {}
             
             // allocates memory by advancing the stack, returns nullptr if insufficient
-            void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-            {
-                auto offset = align_offset(cur_, alignment);
-                if (std::ptrdiff_t(offset + size) > end_ - cur_)
-                    return nullptr;
-                cur_ += offset;
-                auto memory = cur_;
-                cur_ += size;
-                return memory;
-            }
+            // debug: mark memory as new_memory
+            void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
             
             // returns the current top
             char* top() const FOONATHAN_NOEXCEPT

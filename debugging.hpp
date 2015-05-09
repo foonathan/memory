@@ -34,6 +34,8 @@ namespace foonathan { namespace memory
             std::memset(memory, static_cast<int>(m), size);
         }
     #else
+        // no need to use a macro, GCC will already completely remove the code on -O1
+        // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
     #endif
     } // namespace detail

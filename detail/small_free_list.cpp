@@ -9,6 +9,7 @@
 #include <new>
 
 #include "align.hpp"
+#include "../debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -112,6 +113,7 @@ void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
     alloc_chunk_->first_node = *memory;
     --alloc_chunk_->capacity;
     --capacity_;
+    detail::debug_fill(memory, node_size(), debug_magic::new_memory);
     return memory;
 }
 
@@ -137,6 +139,7 @@ void small_free_memory_list::deallocate(void *node) FOONATHAN_NOEXCEPT
         }
     }
     assert(from_chunk(dealloc_chunk_, node_size_, node));
+    detail::debug_fill(node, node_size(), debug_magic::freed_memory);
     auto node_mem = static_cast<unsigned char*>(node);
     *node_mem = dealloc_chunk_->first_node;
     auto offset = static_cast<std::size_t>(node_mem - list_memory(dealloc_chunk_));

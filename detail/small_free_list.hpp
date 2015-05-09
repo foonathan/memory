@@ -23,7 +23,8 @@ namespace foonathan { namespace memory
         // the same as free_memory_list but optimized for small node sizes
         // it is slower and does not support arrays
         // but has very small overhead
-        class small_free_memory_list
+        // debug: allocate() and deallocate() mark memory as new and freed, respectively
+    	class small_free_memory_list
         {
         public:
             // minimum element size

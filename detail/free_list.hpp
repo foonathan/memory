@@ -19,6 +19,7 @@ namespace foonathan { namespace memory
         // non ordered is faster, because it does not keep the ist sorted
         // ordered allows arrays because multiple free blocks are stored after each other
         // note: type must be trivially destructible!
+        // debug: allocate() and deallocate() mark memory as new and freed, respectively
         class free_memory_list
         {
         public:
@@ -52,16 +53,10 @@ namespace foonathan { namespace memory
             void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
-            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
-            {
-                insert(ptr, n * node_size());
-            }
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             void deallocate_ordered(void *ptr) FOONATHAN_NOEXCEPT;
-            void deallocate_ordered(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
-            {
-                insert_ordered(ptr, n * node_size());
-            }
+            void deallocate_ordered(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT

@@ -10,6 +10,7 @@
 
 #include <type_traits>
 
+#include "config.hpp"
 #include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
