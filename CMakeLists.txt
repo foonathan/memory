@@ -40,7 +40,8 @@ set(version_minor 2 CACHE INTERNAL "")
 
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
-option(FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER "whether or not raw_allocator_adapter is thread safe by default" ON)
+option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_reference is thread safe by default" ON)
+option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ON)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
 	           "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")

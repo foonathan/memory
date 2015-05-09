@@ -17,9 +17,14 @@
 //=== options ===//
 #define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
 
-/// \brief Whether or not the \ref raw_allocator_adapter is threadsafe by default.
-/// \detail This is \c true by default,change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER.
-#cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
+/// \brief Whether or not the \ref allocator_reference is threadsafe by default.
+/// \details This is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE.
+#cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
+
+/// \brief Whether or not the allocators fill their memory with magic values.
+/// \details This is useful for debugging purposes.<br>
+/// It is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_FILL.
+#cmakedefine01 FOONATHAN_MEMORY_DEBUG_FILL
 
 //=== compatibility ===//
 #cmakedefine01 FOONATHAN_IMPL_HAS_ALIGNOF
