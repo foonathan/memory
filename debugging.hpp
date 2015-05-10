@@ -23,22 +23,24 @@ namespace foonathan { namespace memory
         new_memory = 0xCD,
         /// \brief Marks freed memory - "dead memory".
         freed_memory = 0xDD,
+        /// \brief Marks buffer memory used to ensure proper alignment.
+        alignment_buffer = 0xED,
         /// \brief Marks internal memory used by the allocator - "allocated block".
         internal_memory = 0xAB,
     };
-    
+
     namespace detail
     {
     #if FOONATHAN_MEMORY_DEBUG_FILL
         using debug_fill_enabled = std::true_type;
-    
+
         inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
         {
             std::memset(memory, static_cast<int>(m), size);
         }
     #else
         using debug_fill_enabled = std::false_type;
-        
+
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}

@@ -12,9 +12,11 @@ using namespace detail;
 
 void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
 {
+    std::size_t remaining = end_ - cur_;
     auto offset = align_offset(cur_, alignment);
-    if (std::ptrdiff_t(offset + size) > end_ - cur_)
+    if (offset + size > remaining)
         return nullptr;
+    detail::debug_fill(cur_, offset, debug_magic::alignment_buffer);
     cur_ += offset;
     auto memory = cur_;
     cur_ += size;

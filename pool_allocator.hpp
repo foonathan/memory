@@ -18,6 +18,7 @@
 #include "detail/free_list.hpp"
 #include "detail/small_free_list.hpp"
 #include "allocator_traits.hpp"
+#include "debugging.hpp"
 #include "default_allocator.hpp"
 #include "pool_type.hpp"
 
@@ -144,7 +145,8 @@ namespace foonathan { namespace memory
         void allocate_block()
         {
             auto mem = block_list_.allocate();
-            auto offset = detail::align_offset(mem.memory,  detail::max_alignment);
+            auto offset = detail::align_offset(mem.memory, detail::max_alignment);
+            detail::debug_fill(mem.memory, offset, debug_magic::alignment_buffer);
             detail::insert(pool_type{}, free_list_,
                         static_cast<char*>(mem.memory) + offset, mem.size - offset);
             capacity_ = mem.size - offset;
