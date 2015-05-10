@@ -11,7 +11,7 @@
 
 namespace foonathan { namespace memory
 {
-	/// @{
+    /// @{
     /// \brief Tag types defining whether or not a pool supports arrays.
     /// \details An \c array_pool supports both node and arrays.
     /// \ingroup memory
@@ -29,7 +29,7 @@ namespace foonathan { namespace memory
         class free_memory_list;
         class small_free_memory_list;
         
-    	// either calls insert or insert_ordered
+        // either calls insert or insert_ordered
         void insert(node_pool, free_memory_list &free_list,
                     void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
         void insert(array_pool, free_memory_list &free_list,

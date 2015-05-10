@@ -14,7 +14,7 @@
 
 namespace foonathan { namespace memory
 {
-	/// \brief A deleter class that calls the appropriate deallocate function.
+    /// \brief A deleter class that calls the appropriate deallocate function.
     /// \details It stores an \ref allocator_reference. It does not call any destrucotrs.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
@@ -155,7 +155,7 @@ namespace foonathan { namespace memory
     
     namespace detail
     {
-    	template <typename T, class RawAllocator, typename ... Args>
+        template <typename T, class RawAllocator, typename ... Args>
         auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
         -> std::unique_ptr<T, raw_allocator_deleter<T, RawAllocator>>
         {

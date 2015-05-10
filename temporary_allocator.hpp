@@ -13,7 +13,7 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
-    	static class temporary_allocator_dtor_t
+        static class temporary_allocator_dtor_t
         {
         public:
             temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
@@ -23,7 +23,7 @@ namespace foonathan { namespace memory
         } temporary_allocator_dtor;
     } // namespace detail
     
-	/// \brief A memory allocator for temporary allocations.
+    /// \brief A memory allocator for temporary allocations.
     /// \details It is similar to \c alloca() but portable.
     /// It uses a \c thread_local \ref memory_stack<> for the allocation.<br>
     /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>

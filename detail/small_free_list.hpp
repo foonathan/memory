@@ -11,7 +11,7 @@
 
 namespace foonathan { namespace memory
 {
-	namespace detail
+    namespace detail
     {
         // a chunk in the free list
         struct chunk
@@ -23,7 +23,7 @@ namespace foonathan { namespace memory
         // the same as free_memory_list but optimized for small node sizes
         // it is slower and does not support arrays
         // but has very small overhead
-    	class small_free_memory_list
+        class small_free_memory_list
         {
         public:
             // minimum element size

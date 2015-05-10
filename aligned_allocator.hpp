@@ -15,7 +15,7 @@
 
 namespace foonathan { namespace memory
 {
-	/// \brief A \c RawAllocator adapter that ensures a minimum alignment.
+    /// \brief A \c RawAllocator adapter that ensures a minimum alignment.
     /// \details It changes the alignment requirements passed to the allocation function if necessary
     /// and forwards to the wrapped allocator.
     /// \ingroup memory

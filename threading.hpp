@@ -86,7 +86,7 @@ namespace foonathan { namespace memory
         
         // non changeable pointer to an Allocator that keeps a lock
         // I don't think EBO is necessary here...
-    	template <class Alloc, class Mutex>
+        template <class Alloc, class Mutex>
         class locked_allocator
         {
         public: 
@@ -112,7 +112,7 @@ namespace foonathan { namespace memory
         };
     } // namespace detail
     
-	/// \brief An allocator adapter that uses a mutex for synchronizing.
+    /// \brief An allocator adapter that uses a mutex for synchronizing.
     /// \details It locks the mutex for each function called.
     /// It will not look anything if the allocator is stateless.
     /// \ingroup memory

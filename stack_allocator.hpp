@@ -25,7 +25,7 @@ namespace foonathan { namespace memory
     
     namespace detail
     {
-    	class stack_marker
+        class stack_marker
         {
             std::size_t index;
             detail::fixed_memory_stack stack;

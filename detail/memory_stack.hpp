@@ -12,9 +12,9 @@
 
 namespace foonathan { namespace memory
 {
-	namespace detail
+    namespace detail
     {
-    	// simple memory stack implementation that does not support growing
+        // simple memory stack implementation that does not support growing
         class fixed_memory_stack
         {
         public:
