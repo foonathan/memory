@@ -20,29 +20,29 @@ namespace foonathan { namespace memory
             // gives it a memory block
             fixed_memory_stack(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
             : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
-            
+
             fixed_memory_stack(block_info info) FOONATHAN_NOEXCEPT
             : fixed_memory_stack(info.memory, info.size) {}
-            
+
             fixed_memory_stack() FOONATHAN_NOEXCEPT
             : fixed_memory_stack(nullptr, 0) {}
-            
+
             // allocates memory by advancing the stack, returns nullptr if insufficient
-            // debug: mark memory as new_memory
+            // debug: mark memory as new_memory, put fence in front and back
             void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
-            
+
             // returns the current top
             char* top() const FOONATHAN_NOEXCEPT
             {
                 return cur_;
             }
-            
+
             // returns the end of the stack
             const char* end() const FOONATHAN_NOEXCEPT
             {
                 return end_;
             }
-            
+
         private:
             char *cur_, *end_;
         };

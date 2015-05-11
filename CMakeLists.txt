@@ -42,6 +42,8 @@ set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_reference is thread safe by default" ON)
 option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ON)
+set(FOONATHAN_MEMORY_DEBUG_FENCE 0 CACHE INTEGER
+    "the amount of memory used to help catching overflow errors" )
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
@@ -50,7 +52,7 @@ if (BIICODE)
     ADD_BIICODE_TARGETS()
     ACTIVATE_CPP11()
     target_include_directories(${BII_BLOCK_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
-else()        
+else()
     set(src
             detail/align.hpp
             detail/block_list.cpp
@@ -86,24 +88,24 @@ else()
             threading.hpp
             tracking.hpp
     CACHE INTERNAL "")
-    
+
     add_library(foonathan_memory ${src})
     add_executable(foonathan_memory_example_allocator example/allocator.cpp)
     add_executable(foonathan_memory_example_smart_ptr example/smart_ptr.cpp)
     add_executable(foonathan_memory_example_temporary example/temporary.cpp)
-    
+
     target_link_libraries(foonathan_memory_example_allocator PUBLIC foonathan_memory)
     target_link_libraries(foonathan_memory_example_smart_ptr PUBLIC foonathan_memory)
     target_link_libraries(foonathan_memory_example_temporary PUBLIC foonathan_memory)
-    
+
     set(targets foonathan_memory
                 foonathan_memory_example_allocator
                 foonathan_memory_example_smart_ptr
                 foonathan_memory_example_temporary
         CACHE INTERNAL "")
-    
+
     set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
-    
+
     foreach(target ${targets})
         target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
     endforeach()

@@ -13,13 +13,19 @@ using namespace detail;
 void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
 {
     std::size_t remaining = end_ - cur_;
-    auto offset = align_offset(cur_, alignment);
-    if (offset + size > remaining)
+    std::size_t offset = align_offset(cur_, alignment);
+    std::size_t front_fence = offset > debug_fence_size ? 0u : debug_fence_size - offset;
+    std::size_t back_fence = debug_fence_size;
+    if (offset + front_fence + size + back_fence > remaining)
         return nullptr;
-    detail::debug_fill(cur_, offset, debug_magic::alignment_buffer);
+    debug_fill(cur_, offset, debug_magic::alignment_memory);
     cur_ += offset;
+    debug_fill(cur_, front_fence, debug_magic::fence_memory);
+    cur_ += front_fence;
     auto memory = cur_;
     cur_ += size;
-    detail::debug_fill(memory, size, debug_magic::new_memory);
+    debug_fill(cur_, size, debug_magic::new_memory);
+    cur_ += back_fence;
+    debug_fill(cur_, back_fence, debug_magic::fence_memory);
     return memory;
 }
