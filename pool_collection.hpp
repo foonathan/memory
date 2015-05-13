@@ -78,9 +78,7 @@ namespace foonathan { namespace memory
             auto& pool = pools_.get_node(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert);
-            auto mem = pool.allocate();
-            this->on_allocate(node_size);
-            return mem;
+            return pool.allocate();
         }
 
         /// \brief Allocates an array of given node size and number of elements.
@@ -93,9 +91,7 @@ namespace foonathan { namespace memory
                 reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert_ordered);
             auto n = detail::free_memory_list::calc_block_count
                             (pool.node_size(), count, node_size);
-            auto mem = pool.allocate(n);
-            this->on_allocate(count * node_size);
-            return mem;
+            return pool.allocate(n);
         }
 
         /// @{
@@ -103,7 +99,6 @@ namespace foonathan { namespace memory
         void deallocate_node(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             pools_.get_node(node_size).deallocate(memory);
-            this->on_deallocate(node_size);
         }
 
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
@@ -112,7 +107,6 @@ namespace foonathan { namespace memory
             auto n = detail::free_memory_list::calc_block_count
                             (pool.node_size(), count, node_size);
             pool.deallocate_ordered(memory, n);
-            this->on_deallocate(count * node_size);
         }
         /// @}
 
@@ -205,6 +199,8 @@ namespace foonathan { namespace memory
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
     /// \details This allows passing a pool directly as allocator to container types.
+    /// \note This interface does leak checking, if you allocate through it, you need to deallocate.
+    /// Do not mix the two interfaces, e.g. allocate here and deallocate on the original interface!
     /// \ingroup memory
     template <class RawAllocator>
     class allocator_traits<memory_pool_collection<RawAllocator>>
@@ -218,7 +214,9 @@ namespace foonathan { namespace memory
         {
             assert(size <= max_node_size(state) && "invalid node size");
             assert(alignment <=  detail::max_alignment && "invalid alignment");
-            return state.allocate_node(size);
+            auto mem = state.allocate_node(size);
+            state.on_allocate(size);
+            return mem;
         }
 
         static void* allocate_array(allocator_type &state, std::size_t count,
@@ -227,19 +225,23 @@ namespace foonathan { namespace memory
             assert(size <= max_node_size(state) && "invalid node size");
             assert(alignment <=  detail::max_alignment && "invalid alignment");
             assert(count * size <= max_array_size(state) && "invalid array count");
-            return state.allocate_array(count, size);
+            auto mem = state.allocate_array(count, size);
+            state.on_allocate(count * size);
+            return mem;
         }
 
         static void deallocate_node(allocator_type &state,
                     void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             state.deallocate_node(node, size);
+            state.on_deallocate(size);
         }
 
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             state.deallocate_array(array, count, size);
+            state.on_deallocate(count * size);
         }
 
         /// \brief Maximum size of a node is the maximum pool collections node size.

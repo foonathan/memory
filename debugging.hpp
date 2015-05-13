@@ -38,7 +38,10 @@ namespace foonathan { namespace memory
     /// It gets a descriptive string of the allocator, a pointer to the allocator instance (\c nullptr for stateless)
     /// and the amount of memory leaked.<br>
     /// It must not throw any exceptions since it is called in the cleanup process.<br>
-    /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK is \c true.<br>
+    /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK is \c true.
+    /// Leak checking is only done through the unified \c RawAllocator interface,
+    /// if you use the allocator directly, any leaks are considered on purpose
+    /// since you know the type of the allocator and that a leak might not be bad.<br>
     /// The default handler writes the information to \c stderr and continues execution.
     using leak_handler = void(*)(const char *name, void *allocator, std::size_t amount);
 

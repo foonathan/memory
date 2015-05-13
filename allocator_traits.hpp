@@ -17,16 +17,20 @@
 namespace foonathan { namespace memory
 {
     /// \brief Default traits for \ref concept::RawAllocator classes.
-    /// \details Specialize it for own classes.
+    /// \details It provides the unified interface for all allocators.<br>
+    /// Specialize it for own classes.
+    /// \note Do not mix memory allocated through this interface and directly over the pool,
+    /// since their allocation function might be implemented in a different way,\
+    /// e.g. this interfaces provides leak checking, the other one don't.
     /// \ingroup memory
     template <class Allocator>
     class allocator_traits
     {
     public:
         /// \brief Must be the same as the template parameter.
-        using allocator_type = Allocator;        
+        using allocator_type = Allocator;
         using is_stateful = typename Allocator::is_stateful;
-        
+
         static void* allocate_node(allocator_type& state,
                                 std::size_t size, std::size_t alignment)
         {
@@ -60,13 +64,13 @@ namespace foonathan { namespace memory
         {
             return state.max_array_size();
         }
-        
+
         static std::size_t max_alignment(const allocator_type &state)
         {
             return state.max_alignment();
         }
     };
-    
+
     /// \brief Provides all traits functions for \c std::allocator types.
     /// \details Inherit from it when specializing the \ref allocator_traits for such allocators.<br>
     /// It uses the std::allocator_traits to call the functions.
@@ -78,14 +82,14 @@ namespace foonathan { namespace memory
         /// \brief The state type is the Allocator rebind for \c char.
         using allocator_type = typename std::allocator_traits<StdAllocator>::
                                     template rebind_alloc<char>;
-        
+
         /// \brief Assume it is not stateful when std::is_empty.
         using is_stateful = std::integral_constant<bool, !std::is_empty<allocator_type>::value>;
-        
+
     private:
         using std_traits = std::allocator_traits<allocator_type>;
-        
-    public:        
+
+    public:
         /// @{
         /// \brief Allocation functions forward to \c allocate().
         /// \details They request a char-array of sufficient length.<br>
@@ -130,14 +134,14 @@ namespace foonathan { namespace memory
             return std_traits::max_size(state);
         }
         /// @}
-        
+
         /// \brief Maximum alignment is \c alignof(std::max_align_t).
         static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
             return  detail::max_alignment;
         }
     };
-    
+
     /// \brief Specialization of \ref allocator_traits for \c std::allocator.
     /// \ingroup memory
     // implementation note: std::allocator can have any number of implementation defined, defaulted arguments

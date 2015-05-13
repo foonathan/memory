@@ -77,7 +77,6 @@ namespace foonathan { namespace memory
             if (free_list_.empty())
                 allocate_block();
             assert(!free_list_.empty());
-            this->on_allocate(node_size());
             return free_list_.allocate();
         }
 
@@ -95,7 +94,6 @@ namespace foonathan { namespace memory
         void deallocate_node(void *ptr) FOONATHAN_NOEXCEPT
         {
             detail::deallocate(pool_type{}, free_list_, ptr);
-            this->on_deallocate(node_size());
         }
 
         /// \brief Deallocates an array of nodes from the pool.
@@ -156,14 +154,12 @@ namespace foonathan { namespace memory
                 mem = free_list_.allocate(n, node_size);
             }
             assert(mem && "invalid array size");
-            this->on_allocate(n * node_size);
             return mem;
         }
 
         void deallocate_array(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             free_list_.deallocate_ordered(ptr, n, node_size);
-            this->on_deallocate(n * node_size);
         }
 
         detail::block_list<impl_allocator> block_list_;
@@ -177,6 +173,8 @@ namespace foonathan { namespace memory
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool.
     /// \details This allows passing a pool directly as allocator to container types.
+    /// \note This interface does leak checking, if you allocate through it, you need to deallocate.
+    /// Do not mix the two interfaces, e.g. allocate here and deallocate on the original interface!
     /// \ingroup memory
     template <typename PoolType, class ImplRawAllocator>
     class allocator_traits<memory_pool<PoolType, ImplRawAllocator>>
@@ -193,7 +191,9 @@ namespace foonathan { namespace memory
         {
             assert(size <= max_node_size(state) && "invalid node size");
             assert(alignment <= std::min(size,  detail::max_alignment) && "invalid alignment");
-            return state.allocate_node();
+            auto mem = state.allocate_node();
+            state.on_allocate(size);
+            return mem;
         }
 
         static void* allocate_array(allocator_type &state, std::size_t count,
@@ -209,15 +209,16 @@ namespace foonathan { namespace memory
         /// @{
         /// \brief Deallocation functions forward to the pool deallocation functions.
         static void deallocate_node(allocator_type &state,
-                    void *node, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+                    void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             state.deallocate_node(node);
+            state.on_deallocate(size);
         }
 
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
-            state.deallocate_array(array, count, size);
+            deallocate_array(PoolType{}, state, array, count , size);
         }
         /// @}
 
@@ -250,7 +251,9 @@ namespace foonathan { namespace memory
         static void* allocate_array(std::true_type, allocator_type &state,
                                     std::size_t count, std::size_t size)
         {
-            return state.allocate_array(count, size);
+            auto mem = state.allocate_array(count, size);
+            state.on_allocate(count * size);
+            return mem;
         }
 
         static void deallocate_array(std::false_type, allocator_type &,
@@ -262,7 +265,8 @@ namespace foonathan { namespace memory
         static void deallocate_array(std::true_type, allocator_type &state,
                                 void *array, std::size_t count, std::size_t size)
         {
-            state.free_list_.deallocate_ordered(array, count, size);
+            state.deallocate_array(array, count, size);
+            state.on_deallocate(count * size);
         }
     };
 }} // namespace foonathan::memory
