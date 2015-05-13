@@ -139,7 +139,6 @@ namespace foonathan { namespace memory
             detail::debug_fill(mem.memory, offset, debug_magic::alignment_memory);
             detail::insert(pool_type{}, free_list_,
                         static_cast<char*>(mem.memory) + offset, mem.size - offset);
-            capacity_ = mem.size - offset;
         }
 
         void* allocate_array(std::size_t n, std::size_t node_size)
@@ -159,7 +158,6 @@ namespace foonathan { namespace memory
 
         detail::block_list<impl_allocator> block_list_;
         free_list free_list_;
-        std::size_t capacity_;
 
         friend allocator_traits<memory_pool<PoolType, RawAllocator>>;
     };

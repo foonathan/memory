@@ -17,6 +17,9 @@ namespace foonathan { namespace memory
         class fixed_memory_stack
         {
         public:
+            fixed_memory_stack() FOONATHAN_NOEXCEPT
+            : fixed_memory_stack(nullptr, nullptr) {}
+
             // gives it a memory block
             fixed_memory_stack(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
             : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
@@ -24,8 +27,15 @@ namespace foonathan { namespace memory
             fixed_memory_stack(block_info info) FOONATHAN_NOEXCEPT
             : fixed_memory_stack(info.memory, info.size) {}
 
-            fixed_memory_stack() FOONATHAN_NOEXCEPT
-            : fixed_memory_stack(nullptr, 0) {}
+            // gives it a current and end pointer
+            fixed_memory_stack(char *cur, const char *end) FOONATHAN_NOEXCEPT
+            : cur_(cur), end_(end) {}
+
+            fixed_memory_stack(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT;
+
+            ~fixed_memory_stack() FOONATHAN_NOEXCEPT = default;
+
+            fixed_memory_stack& operator=(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT;
 
             // allocates memory by advancing the stack, returns nullptr if insufficient
             // debug: mark memory as new_memory, put fence in front and back
@@ -44,7 +54,8 @@ namespace foonathan { namespace memory
             }
 
         private:
-            char *cur_, *end_;
+            char *cur_;
+            const char *end_;
         };
     } // namespace detail
 }} // namespace foonathan::memory

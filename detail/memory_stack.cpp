@@ -10,6 +10,22 @@
 using namespace foonathan::memory;
 using namespace detail;
 
+fixed_memory_stack::fixed_memory_stack(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT
+: cur_(other.cur_), end_(other.end_)
+{
+    other.cur_ = nullptr;
+    other.end_ = nullptr;
+}
+
+fixed_memory_stack& fixed_memory_stack::operator=(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT
+{
+    cur_ = other.cur_;
+    end_ = other.end_;
+    other.cur_ = nullptr;
+    other.end_ = nullptr;
+    return *this;
+}
+
 void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
 {
     std::size_t remaining = end_ - cur_;

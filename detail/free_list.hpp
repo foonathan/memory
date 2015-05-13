@@ -36,6 +36,11 @@ namespace foonathan { namespace memory
             free_memory_list(std::size_t el_size,
                              void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
+            free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT;
+            ~free_memory_list() FOONATHAN_NOEXCEPT = default;
+
+            free_memory_list& operator=(free_memory_list &&other) FOONATHAN_NOEXCEPT;
+
             //=== insert/allocation/deallocation ===//
             // inserts a new memory block, by splitting it up and setting the links
             // does not own memory!

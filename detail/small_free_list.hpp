@@ -40,6 +40,12 @@ namespace foonathan { namespace memory
             small_free_memory_list(std::size_t node_size,
                              void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
+            small_free_memory_list(small_free_memory_list &&other) FOONATHAN_NOEXCEPT;
+
+            ~small_free_memory_list() FOONATHAN_NOEXCEPT = default;
+
+            small_free_memory_list& operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT;
+
             //=== insert/alloc/dealloc ===//
             // inserts new memory of given size into the free list
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;

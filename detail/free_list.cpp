@@ -102,6 +102,23 @@ free_memory_list::free_memory_list(std::size_t el_size,
     insert(mem, size);
 }
 
+free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
+: first_(other.first_), node_size_(other.node_size_), capacity_(other.capacity_)
+{
+    other.first_ = nullptr;
+    other.capacity_ = 0;
+}
+
+free_memory_list& free_memory_list::operator=(free_memory_list &&other) FOONATHAN_NOEXCEPT
+{
+    first_ = other.first_;
+    node_size_ = other.node_size_;
+    capacity_ = other.capacity_;
+    other.first_ = nullptr;
+    other.capacity_ = 0u;
+    return *this;
+}
+
 void free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     auto no_blocks = size / node_size_;

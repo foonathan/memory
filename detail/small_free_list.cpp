@@ -78,6 +78,31 @@ small_free_memory_list::small_free_memory_list(std::size_t node_size,
     insert(mem, size);
 }
 
+small_free_memory_list::small_free_memory_list(small_free_memory_list &&other) FOONATHAN_NOEXCEPT
+: dummy_chunk_(other.dummy_chunk_), alloc_chunk_(other.alloc_chunk_),
+  dealloc_chunk_(other.dealloc_chunk_), unused_chunk_(other.unused_chunk_),
+  node_size_(other.node_size_), capacity_(other.capacity_)
+{
+    other.dummy_chunk_ = {};
+    other.alloc_chunk_ = other.dealloc_chunk_ = &dummy_chunk_;
+    other.unused_chunk_ = nullptr;
+    other.capacity_ = 0u;
+}
+
+small_free_memory_list& small_free_memory_list::operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT
+{
+    dummy_chunk_ = other.dummy_chunk_;
+    alloc_chunk_ = other.alloc_chunk_;
+    dealloc_chunk_ = other.dealloc_chunk_;
+    unused_chunk_ = other.unused_chunk_;
+    node_size_ = other.node_size_;
+    capacity_ = other.capacity_;
+    other.alloc_chunk_ = other.dealloc_chunk_ = &dummy_chunk_;
+    other.unused_chunk_ = nullptr;
+    other.capacity_ = 0u;
+    return *this;
+}
+
 void small_free_memory_list::insert(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
 {
     auto chunk_unit = chunk_memory_offset + node_size_ * chunk_max_nodes;
