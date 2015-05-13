@@ -15,6 +15,7 @@
 #include "detail/block_list.hpp"
 #include "detail/memory_stack.hpp"
 #include "allocator_traits.hpp"
+#include "debugging.hpp"
 #include "default_allocator.hpp"
 #include "raw_allocator_base.hpp"
 
@@ -48,7 +49,7 @@ namespace foonathan { namespace memory
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
     template <class RawAllocator = default_allocator>
-    class memory_stack
+    class memory_stack : detail::leak_checker<memory_stack<default_allocator>>
     {
     public:
         /// \brief The implementation allocator.
@@ -58,7 +59,8 @@ namespace foonathan { namespace memory
         /// \details The first memory block is allocated, the block size can change.
         explicit memory_stack(std::size_t block_size,
                         impl_allocator allocator = impl_allocator())
-        : list_(block_size, std::move(allocator))
+        : detail::leak_checker<memory_stack<default_allocator>>("foonathan::memory::memory_stack"),
+          list_(block_size, std::move(allocator))
         {
             allocate_block();
         }
@@ -166,10 +168,14 @@ namespace foonathan { namespace memory
 
         detail::block_list<impl_allocator> list_;
         detail::fixed_memory_stack stack_;
+
+        friend allocator_traits<memory_stack<impl_allocator>>;
     };
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_stack.
     /// \details This allows passing a state directly as allocator to container types.
+    /// \note This interface provides leak checking, if you call their allocate functions, you need to call deallocate.
+    /// Use the direct stack interface to prevent it.
     /// \ingroup memory
     template <class ImplRawAllocator>
     class allocator_traits<memory_stack<ImplRawAllocator>>
@@ -183,23 +189,31 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
             assert(size <= max_node_size(state) && "invalid node size");
+            state.on_allocate(size);
             return state.allocate(size, alignment);
         }
 
         static void* allocate_array(allocator_type &state, std::size_t count,
                                 std::size_t size, std::size_t alignment)
         {
+            state.on_allocate(count * size);
             return allocate_node(state, count * size, alignment);
         }
         /// @}
 
         /// @{
         /// \brief Deallocation functions do nothing, use unwinding on the stack to free memory.
-        static void deallocate_node(const allocator_type &,
-                    void *, std::size_t, std::size_t) FOONATHAN_NOEXCEPT {}
+        static void deallocate_node(allocator_type &state,
+                    void *, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            state.on_deallocate(size);
+        }
 
-        static void deallocate_array(const allocator_type &,
-                    void *, std::size_t, std::size_t, std::size_t) FOONATHAN_NOEXCEPT {}
+        static void deallocate_array(allocator_type &state,
+                    void *, std::size_t count , std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            state.on_deallocate(count * size);
+        }
         /// @}
 
         /// @{

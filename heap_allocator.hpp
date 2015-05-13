@@ -15,6 +15,17 @@
 
 namespace foonathan { namespace memory
 {
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    namespace detail
+    {
+        static struct heap_allocator_leak_checker_initializer_t
+        {
+            heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
+            ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
+        } heap_allocator_leak_checker_initializer;
+    } // namespace detail
+#endif
+
     /// \brief A \ref concept::RawAllocator that allocates memory via std::malloc/free.
     /// \ingroup memory
     class heap_allocator : public raw_allocator_base<heap_allocator>

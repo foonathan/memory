@@ -6,12 +6,15 @@
 
 //=== version ===//
 /// \brief Major version.
+/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION_MAJOR ${version_major}
 
 /// \brief Minor version.
+/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION_MINOR ${version_minor}
 
 /// \brief Total version number.
+/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION (${version_major} * 100 + ${version_minor})
 
 //=== options ===//
@@ -19,11 +22,13 @@
 
 /// \brief Whether or not the \ref allocator_reference is threadsafe by default.
 /// \details This is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE.
+/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
 
 /// \brief Whether or not the allocators fill their memory with magic values.
 /// \details This is useful for debugging purposes.<br>
 /// It is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_FILL.
+/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_FILL
 
 /// \brief The amount of memory used as fence to help catching overflow errors.
@@ -31,7 +36,15 @@
 /// this is useful for debugging purposes.<br>
 /// It is \c 0 by default (disabling it), change it via the CMake variable \c FOONATHAN_MEMORY_DEBUG_FENCE.<br>
 /// It has no effect if \ref FOONATHAN_MEMORY_DEBUG_FILL is disabled.
+/// \ingroup memory
 #define FOONATHAN_MEMORY_DEBUG_FENCE ${FOONATHAN_MEMORY_DEBUG_FENCE}
+
+/// \brief Whether or not leak checking is active.
+/// \details It checks whether at program exit for stateless allocators/in the destructor for stateful
+/// all allocated memory blocks have been released.<br>
+/// It is \c false by default, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_LEAK_CHECK.
+/// \ingroup memory
+#cmakedefine01 FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
 
 //=== compatibility ===//
 #cmakedefine01 FOONATHAN_IMPL_HAS_ALIGNOF

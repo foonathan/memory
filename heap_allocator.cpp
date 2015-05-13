@@ -11,6 +11,26 @@
 
 using namespace foonathan::memory;
 
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+#include <atomic>
+
+namespace
+{
+    std::size_t init_counter = 0u, alloc_counter = 0u;
+}
+
+detail::heap_allocator_leak_checker_initializer_t::heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+{
+    ++init_counter;
+}
+
+detail::heap_allocator_leak_checker_initializer_t::~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+{
+    if (--init_counter == 0u && alloc_counter != 0u)
+        get_leak_handler()("foonathan::memory::heap_allocator", nullptr, alloc_counter);
+}
+#endif
+
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
     void* mem;
@@ -34,6 +54,9 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
     memory += detail::debug_fence_size;
     detail::debug_fill(memory, size, debug_magic::new_memory);
     detail::debug_fill(memory + size, detail::debug_fence_size, debug_magic::fence_memory);
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    alloc_counter += size;
+#endif
     return memory;
 }
 
@@ -42,4 +65,7 @@ void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) F
     detail::debug_fill(ptr, size, debug_magic::freed_memory);
     auto memory = static_cast<char*>(ptr) - detail::debug_fence_size;
     std::free(memory);
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    alloc_counter -= size;
+#endif
 }

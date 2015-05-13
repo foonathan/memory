@@ -32,7 +32,7 @@ namespace foonathan { namespace memory
         /// \details It is only filled, if \ref FOONATHAN_MEMORY_DEBUG_FENCE is set accordingly.
         fence_memory = 0xFD,
     };
-    
+
     /// \brief The leak handler.
     /// \details It will be called when a memory leak is detected.
     /// It gets a descriptive string of the allocator, a pointer to the allocator instance (\c nullptr for stateless)
@@ -41,11 +41,11 @@ namespace foonathan { namespace memory
     /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK is \c true.<br>
     /// The default handler writes the information to \c stderr and continues execution.
     using leak_handler = void(*)(const char *name, void *allocator, std::size_t amount);
-    
+
     /// \brief Exchanges the \ref leak_handler.
     /// \details This function is thread safe.
     leak_handler set_leak_handler(leak_handler h);
-    
+
     /// \brief Returns the current \ref leak_handler.
     leak_handler get_leak_handler();
 
@@ -66,6 +66,70 @@ namespace foonathan { namespace memory
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
+    #endif
+
+    // base class that performs the leak check
+    // only for stateful allocators
+    // it is a template to allow per class storage of the strings
+    // allocators that give different strings need different parameters
+    #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+        template <class RawAllocator>
+        class leak_checker
+        {
+        protected:
+            leak_checker(const char *name) FOONATHAN_NOEXCEPT
+            : allocated_(0)
+            {
+                name_ = name;
+            }
+
+            leak_checker(leak_checker &&other) FOONATHAN_NOEXCEPT
+            : allocated_(other.allocated_)
+            {
+                other.allocated_ = 0u;
+            }
+
+            ~leak_checker() FOONATHAN_NOEXCEPT
+            {
+                if (allocated_ != 0u)
+                    get_leak_handler()(name_, this, allocated_);
+            }
+
+            leak_checker& operator=(leak_checker &&other) FOONATHAN_NOEXCEPT
+            {
+                allocated_ = other.allocated_;
+                other.allocated_ = 0u;
+                return *this;
+            }
+
+            void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
+            {
+                allocated_ += size;
+            }
+
+            void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
+            {
+                allocated_ -= size;
+            }
+
+        private:
+            static const char* name_;
+            std::size_t allocated_;
+        };
+
+        template <class RawAllocator>
+        const char* detail::leak_checker<RawAllocator>::name_ = "";
+    #else
+        template <class RawAllocator>
+        class leak_checker
+        {
+        protected:
+            leak_checker(const char *) FOONATHAN_NOEXCEPT {}
+            ~leak_checker() FOONATHAN_NOEXCEPT = default;
+
+            void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT {}
+            void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT {}
+        };
     #endif
     } // namespace detail
 }} // namespace foonathan::memory

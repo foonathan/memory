@@ -44,6 +44,7 @@ option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_referenc
 option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ON)
 set(FOONATHAN_MEMORY_DEBUG_FENCE 0 CACHE INTEGER
     "the amount of memory used to help catching overflow errors" )
+option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK "whether or not leak checking is active" OFF)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
@@ -68,6 +69,7 @@ else()
             allocator_traits.hpp
             config.hpp
             container.hpp
+            debugging.cpp
             debugging.hpp
             default_allocator.hpp
             heap_allocator.cpp

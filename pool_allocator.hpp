@@ -39,7 +39,7 @@ namespace foonathan { namespace memory
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
     template <typename PoolType, class RawAllocator = default_allocator>
-    class memory_pool
+    class memory_pool : detail::leak_checker<memory_pool<node_pool, default_allocator>>
     {
         static_assert(std::is_same<PoolType, node_pool>::value ||
                     std::is_same<PoolType, array_pool>::value ||
@@ -63,7 +63,8 @@ namespace foonathan { namespace memory
         /// \details The first memory block is allocated, the block size can change.
         memory_pool(std::size_t node_size, std::size_t block_size,
                     impl_allocator allocator = impl_allocator())
-        : block_list_(block_size, std::move(allocator)),
+        : detail::leak_checker<memory_pool<node_pool, default_allocator>>("foonathan::memory::memory_pool"),
+          block_list_(block_size, std::move(allocator)),
           free_list_(node_size)
         {
             allocate_block();
@@ -76,6 +77,7 @@ namespace foonathan { namespace memory
             if (free_list_.empty())
                 allocate_block();
             assert(!free_list_.empty());
+            this->on_allocate(node_size());
             return free_list_.allocate();
         }
 
@@ -86,13 +88,14 @@ namespace foonathan { namespace memory
         {
             static_assert(std::is_same<pool_type, array_pool>::value,
                         "does not support array allocations");
-            return allocate_array(n, free_list_.node_size());
+            return allocate_array(n, node_size());
         }
 
         /// \brief Deallocates a single node from the pool.
         void deallocate_node(void *ptr) FOONATHAN_NOEXCEPT
         {
             detail::deallocate(pool_type{}, free_list_, ptr);
+            this->on_deallocate(node_size());
         }
 
         /// \brief Deallocates an array of nodes from the pool.
@@ -100,7 +103,7 @@ namespace foonathan { namespace memory
         {
             static_assert(std::is_same<pool_type, array_pool>::value,
                         "does not support array allocations");
-            free_list_.deallocate_ordered(ptr, n);
+            deallocate_array(ptr, n, node_size());
         }
 
         /// \brief Returns the size of each node in the pool.
@@ -153,7 +156,14 @@ namespace foonathan { namespace memory
                 mem = free_list_.allocate(n, node_size);
             }
             assert(mem && "invalid array size");
+            this->on_allocate(n * node_size);
             return mem;
+        }
+
+        void deallocate_array(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
+        {
+            free_list_.deallocate_ordered(ptr, n, node_size);
+            this->on_deallocate(n * node_size);
         }
 
         detail::block_list<impl_allocator> block_list_;
@@ -207,7 +217,7 @@ namespace foonathan { namespace memory
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
-            deallocate_array(PoolType{}, state, array, count, size);
+            state.deallocate_array(array, count, size);
         }
         /// @}
 
