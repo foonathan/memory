@@ -41,11 +41,23 @@ set(version_minor 2 CACHE INTERNAL "")
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_reference is thread safe by default" ON)
-option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ON)
-set(FOONATHAN_MEMORY_DEBUG_FENCE 0 CACHE INTEGER
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    set(fill_check ON CACHE INTERNAL "")
+    set(fence 8 CACHE INTERNAL "")
+elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
+    set(fill_check ON CACHE INTERNAL "")
+    set(fence 0 CACHE INTERNAL "")
+else()
+    set(fill_check OFF CACHE INTERNAL "")
+    set(fence 0 CACHE INTERNAL "")
+endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+
+option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ${fill_check})
+set(FOONATHAN_MEMORY_DEBUG_FENCE ${fence} CACHE INTEGER
     "the amount of memory used to help catching overflow errors" )
-option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK "whether or not leak checking is active" OFF)
-option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK "whether or not pointer checking is active" ON)
+option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK "whether or not leak checking is active" ${fill_check})
+option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK "whether or not pointer checking is active" ${fill_check})
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")

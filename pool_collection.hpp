@@ -89,9 +89,7 @@ namespace foonathan { namespace memory
             auto& pool = pools_.get_array(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert_ordered);
-            auto n = detail::free_memory_list::calc_block_count
-                            (pool.node_size(), count, node_size);
-            return pool.allocate(n);
+            return pool.allocate(count, node_size);
         }
 
         /// @{
@@ -104,9 +102,7 @@ namespace foonathan { namespace memory
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             auto& pool = pools_.get_array(node_size);
-            auto n = detail::free_memory_list::calc_block_count
-                            (pool.node_size(), count, node_size);
-            pool.deallocate_ordered(memory, n);
+            pool.deallocate_ordered(memory, count, node_size);
         }
         /// @}
 

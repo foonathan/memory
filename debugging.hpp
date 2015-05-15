@@ -88,7 +88,7 @@ namespace foonathan { namespace memory
         }
     #else
         using debug_fill_enabled = std::false_type;
-        constexpr std::size_T debug_fence_size = 0u;
+        constexpr std::size_t debug_fence_size = 0u;
 
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
@@ -163,8 +163,7 @@ namespace foonathan { namespace memory
         #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
             if (Cond) {} else {get_invalid_pointer_handler()(Name, Alloc, Ptr);}
     #else
-        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
-            do {(void)(Cond); (void)Name; (void)Alloc; (void)Ptr;} while(false)
+        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr)
     #endif
     } // namespace detail
 }} // namespace foonathan::memory

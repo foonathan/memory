@@ -14,10 +14,37 @@ namespace foonathan { namespace memory
     namespace detail
     {
         // a chunk in the free list
-        struct chunk
+        struct chunk;
+
+        // a list of chunks
+        class chunk_list
         {
-            chunk *next = this, *prev = this;
-            unsigned char first_node = 0u, capacity = 0u, no_nodes = 0u;
+        public:
+            chunk_list() FOONATHAN_NOEXCEPT = default;
+            chunk_list(chunk_list &&other) FOONATHAN_NOEXCEPT;
+            ~chunk_list() FOONATHAN_NOEXCEPT = default;
+
+            chunk_list& operator=(chunk_list &&other) FOONATHAN_NOEXCEPT;
+
+            // inserts a new chunk into the list
+            void insert(chunk *c) FOONATHAN_NOEXCEPT;
+
+            // inserts the next chunk from another list
+            chunk* insert(chunk_list &other) FOONATHAN_NOEXCEPT;
+
+            // returns the next chunk
+            chunk* top() const FOONATHAN_NOEXCEPT
+            {
+                return first_;
+            }
+
+            bool empty() const FOONATHAN_NOEXCEPT
+            {
+                return first_ == nullptr;
+            }
+
+        private:
+            chunk *first_ = nullptr;
         };
 
         // the same as free_memory_list but optimized for small node sizes
@@ -84,12 +111,9 @@ namespace foonathan { namespace memory
             // returns nullptr if no chunk
             chunk* chunk_for(void *memory) const FOONATHAN_NOEXCEPT;
 
-            // dummy_chunk_ is head/tail for used chunk list
-            chunk dummy_chunk_;
-            // alloc_chunk_ points to the chunk used for allocation
-            // dealloc_chunk_ points to the chunk last used for deallocation
-            // unused_chunk_ points to the head of a seperate list consisting of unused chunks
-            chunk *alloc_chunk_, *dealloc_chunk_, *unused_chunk_;
+            chunk_list unused_chunks_, used_chunks_;
+            chunk *alloc_chunk_, *dealloc_chunk_;
+
             std::size_t node_size_, capacity_;
         };
     } // namespace detail
