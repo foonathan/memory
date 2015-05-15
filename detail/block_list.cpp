@@ -39,7 +39,7 @@ block_info block_list_impl::push(block_list_impl &other) FOONATHAN_NOEXCEPT
     other.head_ = top->prev;
     top->prev = head_;
     head_ = top;
-    return {top, top->size - sizeof(node)};
+    return {top + 1, top->size - sizeof(node)};
 }
 
 block_info block_list_impl::pop() FOONATHAN_NOEXCEPT
@@ -48,4 +48,10 @@ block_info block_list_impl::pop() FOONATHAN_NOEXCEPT
     auto top = head_;
     head_ = top->prev;
     return {top, top->size};
+}
+
+block_info block_list_impl::top() const FOONATHAN_NOEXCEPT
+{
+    assert(head_ && "stack underflow");
+    return {head_ + 1, head_->size - sizeof(node)};
 }

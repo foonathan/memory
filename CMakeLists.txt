@@ -40,22 +40,40 @@ set(version_minor 2 CACHE INTERNAL "")
 
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
-option(FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER "whether or not raw_allocator_adapter is thread safe by default" ON)
+option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE "whether or not allocator_reference is thread safe by default" ON)
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    set(fill_check ON CACHE INTERNAL "")
+    set(fence 8 CACHE INTERNAL "")
+elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
+    set(fill_check ON CACHE INTERNAL "")
+    set(fence 0 CACHE INTERNAL "")
+else()
+    set(fill_check OFF CACHE INTERNAL "")
+    set(fence 0 CACHE INTERNAL "")
+endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+
+option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic values for debugging purposes is enabled" ${fill_check})
+set(FOONATHAN_MEMORY_DEBUG_FENCE ${fence} CACHE INTEGER
+    "the amount of memory used to help catching overflow errors" )
+option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK "whether or not leak checking is active" ${fill_check})
+option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK "whether or not pointer checking is active" ${fill_check})
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
-	           "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
+               "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 if (BIICODE)
     ADD_BIICODE_TARGETS()
     ACTIVATE_CPP11()
     target_include_directories(${BII_BLOCK_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
-else()        
+else()
     set(src
             detail/align.hpp
             detail/block_list.cpp
             detail/block_list.hpp
             detail/free_list.cpp
             detail/free_list.hpp
+            detail/memory_stack.cpp
             detail/memory_stack.hpp
             detail/small_free_list.cpp
             detail/small_free_list.hpp
@@ -63,6 +81,9 @@ else()
             allocator_adapter.hpp
             allocator_traits.hpp
             config.hpp
+            container.hpp
+            debugging.cpp
+            debugging.hpp
             default_allocator.hpp
             heap_allocator.cpp
             heap_allocator.hpp
@@ -82,24 +103,24 @@ else()
             threading.hpp
             tracking.hpp
     CACHE INTERNAL "")
-    
+
     add_library(foonathan_memory ${src})
     add_executable(foonathan_memory_example_allocator example/allocator.cpp)
     add_executable(foonathan_memory_example_smart_ptr example/smart_ptr.cpp)
     add_executable(foonathan_memory_example_temporary example/temporary.cpp)
-    
+
     target_link_libraries(foonathan_memory_example_allocator PUBLIC foonathan_memory)
     target_link_libraries(foonathan_memory_example_smart_ptr PUBLIC foonathan_memory)
     target_link_libraries(foonathan_memory_example_temporary PUBLIC foonathan_memory)
-    
+
     set(targets foonathan_memory
                 foonathan_memory_example_allocator
                 foonathan_memory_example_smart_ptr
                 foonathan_memory_example_temporary
         CACHE INTERNAL "")
-    
+
     set_target_properties(${targets} PROPERTIES CXX_STANDARD 11)
-    
+
     foreach(target ${targets})
         target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
     endforeach()

@@ -26,9 +26,9 @@ namespace foonathan { namespace memory
     };
     
     /// \brief The default mutex used by \ref allocator_reference.
-    /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER is \c true, \ref dummy_mutex otherwise.
+    /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true, \ref dummy_mutex otherwise.
     /// \ingroup memory
-#if FOONATHAN_MEMORY_THREAD_SAFE_ADAPTER
+#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
     using default_mutex = std::mutex;
 #else
     using default_mutex = dummy_mutex;

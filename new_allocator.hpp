@@ -10,10 +10,22 @@
 
 #include <type_traits>
 
+#include "config.hpp"
 #include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
 {
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    namespace detail
+    {
+        static struct new_allocator_leak_checker_initializer_t
+        {
+            new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
+            ~new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
+        } new_allocator_leak_checker_initializer;
+    } // namespace detail
+#endif
+
     /// \brief A \ref concept::RawAllocator that allocates memory using \c new.
     ///
     /// It is no singleton but stateless; each instance is the same.
@@ -22,7 +34,7 @@ namespace foonathan { namespace memory
     {
     public:
         using is_stateful = std::false_type;
-        
+
         /// \brief Allocates memory using \c ::operator \c new.
         void* allocate_node(std::size_t size, std::size_t alignment);
 
