@@ -20,7 +20,7 @@ namespace foonathan { namespace memory
     /// \details It provides the unified interface for all allocators.<br>
     /// Specialize it for own classes.
     /// \note Do not mix memory allocated through this interface and directly over the pool,
-    /// since their allocation function might be implemented in a different way,\
+    /// since their allocation function might be implemented in a different way,
     /// e.g. this interfaces provides leak checking, the other one don't.
     /// \ingroup memory
     template <class Allocator>

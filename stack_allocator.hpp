@@ -91,11 +91,32 @@ namespace foonathan { namespace memory
 
         /// \brief Unwinds the stack to a certain marker.
         /// \details It must be less than the previous one.
-        /// Any access blocks are freed.
+        /// Any access blocks are not directly freed but cached.
+        /// Use \ref shrink_to_fit() to actually free them.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            free_blocks(m, detail::debug_fill_enabled{});
-            stack_ = {m.top, m.end};
+            FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.index > list_.size() - 1,
+                            "foonathan::memory::stack_allocator", this, m.top);
+
+            if (std::size_t to_deallocate = (list_.size() - 1) - m.index) // different index
+            {
+                list_.deallocate(stack_.top()); // top block only used up to the top of the stack
+                for (std::size_t i = 1; i != to_deallocate; ++i)
+                    list_.deallocate(); // other blocks fully used
+
+                FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.end != list_.top().end(),
+                            "foonathan::memory::stack_allocator", this, m.top);
+
+                // mark memory from new top to end of the block as freed
+                detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
+                stack_ = {m.top, m.end};
+            }
+            else // same index
+            {
+                FOONATHAN_MEMORY_IMPL_POINTER_CHECK(stack_.top() < m.top,
+                            "foonathan::memory::stack_allocator", this, m.top);
+                stack_.unwind(m.top);
+            }
         }
 
         /// \brief Returns the capacity remaining in the current block.
@@ -129,41 +150,6 @@ namespace foonathan { namespace memory
         {
             auto block = list_.allocate();
             stack_ = detail::fixed_memory_stack(block.memory, block.size);
-        }
-
-        void free_blocks(const marker &m, std::true_type) FOONATHAN_NOEXCEPT
-        {
-            std::size_t no = list_.size() - m.index - 1;
-            if (no > 0u) // need to free blocks
-            {
-                // free top block and mark used part as freed
-                auto block = list_.top();
-                std::size_t fill_count = stack_.top() - static_cast<char*>(block.memory);
-                detail::debug_fill(block.memory, fill_count, debug_magic::freed_memory);
-                list_.deallocate();
-
-                for (std::size_t i = 1; i != no; ++i)
-                {
-                    // mark all other blocks as fully freed, since fully used
-                    auto block = list_.top();
-                    detail::debug_fill(block.memory, block.size, debug_magic::freed_memory);
-                    list_.deallocate();
-                }
-                // mark remaining space in new top block as freed
-                detail::debug_fill(m.top, std::size_t(m.end - m.top),
-                                debug_magic::freed_memory);
-            }
-            else
-                // only mark used part of top block as freed
-                detail::debug_fill(m.top, std::size_t(stack_.top() - m.top),
-                                debug_magic::freed_memory);
-        }
-
-        void free_blocks(const marker &m, std::false_type) FOONATHAN_NOEXCEPT
-        {
-            std::size_t no = list_.size() - m.index - 1;
-            for (std::size_t i = 1; i != no; ++i)
-                list_.deallocate();
         }
 
         detail::block_list<impl_allocator> list_;

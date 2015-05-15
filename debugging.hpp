@@ -43,14 +43,38 @@ namespace foonathan { namespace memory
     /// if you use the allocator directly, any leaks are considered on purpose
     /// since you know the type of the allocator and that a leak might not be bad.<br>
     /// The default handler writes the information to \c stderr and continues execution.
+    /// \ingroup memory
     using leak_handler = void(*)(const char *name, void *allocator, std::size_t amount);
 
     /// \brief Exchanges the \ref leak_handler.
     /// \details This function is thread safe.
+    /// \ingroup memory
     leak_handler set_leak_handler(leak_handler h);
 
     /// \brief Returns the current \ref leak_handler.
+    /// \ingroup memory
     leak_handler get_leak_handler();
+
+    /// \brief The invalid pointer handler.
+    /// \details It will be called when an invalid pointer passed to a deallocate function is detected.
+    /// It gets a descriptive string of the allocator, a pointer to the instance (\c nullptr for stateless)
+    /// and the invalid pointer.<br>
+    /// It must not throw any exceptions since it might be called in the cleanup process.<br>
+    /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is \c true.<br>
+    /// The default handler writes the information to \c stderr and aborts the program.
+    /// \note The instance pointer is just used as identification, it is different for each allocator,
+    /// but may refer to subobjects, don't cast it.
+    /// \ingroup memory
+    using invalid_pointer_handler = void(*)(const char *name, void *allocator, void *ptr);
+
+    /// \brief Exchanges the \ref invalid_pointer_handler.
+    /// \details This function is thread safe.
+    /// \ingroup memory
+    invalid_pointer_handler set_invalid_pointer_handler(invalid_pointer_handler h);
+
+    /// \brief Returns the current \ref invalid_pointer_handler.
+    /// \ingroup memory
+    invalid_pointer_handler get_invalid_pointer_handler();
 
     namespace detail
     {
@@ -133,6 +157,14 @@ namespace foonathan { namespace memory
             void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT {}
             void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT {}
         };
+    #endif
+
+    #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
+            if (Cond) {} else {get_invalid_pointer_handler()(Name, Alloc, Ptr);}
+    #else
+        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
+            do {(void)(Cond); (void)Name; (void)Alloc; (void)Ptr;} while(false)
     #endif
     } // namespace detail
 }} // namespace foonathan::memory

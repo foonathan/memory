@@ -41,6 +41,11 @@ namespace foonathan { namespace memory
             // debug: mark memory as new_memory, put fence in front and back
             void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
+            // unwindws the stack to a certain older position
+            // debug: marks memory from new top to old top as freed
+            // doesn't check for invalid pointer
+            void unwind(char *top) FOONATHAN_NOEXCEPT;
+
             // returns the current top
             char* top() const FOONATHAN_NOEXCEPT
             {

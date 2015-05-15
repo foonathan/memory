@@ -21,6 +21,8 @@ namespace foonathan { namespace memory
         // note: type must be trivially destructible!
         // debug: allocate() and deallocate() mark memory as new and freed, respectively
         // node_size is increased via two times fence size and fence is put in front and after
+        // pointer checking checks for double frees and uses the ordered functions only
+        // since the list needs to be traversed anyway
         class free_memory_list
         {
         public:

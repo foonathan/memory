@@ -42,19 +42,22 @@ namespace
         return ptr;
     }
 
+    // finds the position in the list to insert mem, so that the total list is ordered
+    // debug: checks that mem isn't already in the list
     // pre: list, mem
     std::pair<void*, void*> find_position(void *list, void *mem) FOONATHAN_NOEXCEPT
     {
         auto greater = std::greater<char*>();
-        auto prev = static_cast<char*>(list);
-        if (greater(prev, static_cast<char*>(mem)))
-            return std::make_pair(nullptr, list);
 
-        auto ptr = get_next(prev);
+        auto memory = static_cast<char*>(mem);
+        auto prev = static_cast<char*>(nullptr);
+        auto ptr = static_cast<char*>(list);
         while (ptr)
         {
-            if (greater(ptr, static_cast<char*>(mem)))
+            if (greater(ptr, memory))
                 break;
+            FOONATHAN_MEMORY_IMPL_POINTER_CHECK(ptr != memory,
+                "foonathan::memory::detail::free_memory_list", list, mem);
             prev = ptr;
             ptr = get_next(ptr);
         }
@@ -121,6 +124,10 @@ free_memory_list& free_memory_list::operator=(free_memory_list &&other) FOONATHA
 
 void free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+    if (!empty())
+        return insert_ordered(mem, size);
+#endif
     auto no_blocks = size / node_size_;
     capacity_ += no_blocks;
     auto last = build_list(node_size_, mem, no_blocks);
@@ -195,6 +202,11 @@ void* free_memory_list::allocate(std::size_t n, std::size_t other_node_size) FOO
 
 void free_memory_list::deallocate(void *ptr) FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+    // use ordered version since checks for double free needed
+    // when searching in the last anyway, it can also be optimized
+    deallocate_ordered(ptr);
+#else
     debug_fill(ptr, node_size(), debug_magic::freed_memory);
 
     auto node_ptr = static_cast<char*>(ptr) - debug_fence_size;
@@ -202,11 +214,15 @@ void free_memory_list::deallocate(void *ptr) FOONATHAN_NOEXCEPT
     set_next(node_ptr, first_);
     first_ = node_ptr;
     ++capacity_;
+#endif
 }
 
 void free_memory_list::deallocate(void *ptr, std::size_t n,
                                 std::size_t other_node_size) FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+    deallocate_ordered(ptr, n, other_node_size);
+#else
     auto n_bytes = n * other_node_size;
     debug_fill(ptr, n_bytes, debug_magic::freed_memory);
 
@@ -218,10 +234,13 @@ void free_memory_list::deallocate(void *ptr, std::size_t n,
     set_next(last, first_);
     first_ = node_ptr;
     capacity_ += no_blocks;
+#endif
 }
 
 void free_memory_list::deallocate_ordered(void *ptr) FOONATHAN_NOEXCEPT
 {
+    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(ptr,
+        "foonathan::memory::detail::free_memory_list", first_, ptr);
     debug_fill(ptr, node_size(), debug_magic::freed_memory);
 
     auto node_ptr = static_cast<char*>(ptr) - debug_fence_size;
@@ -234,6 +253,8 @@ void free_memory_list::deallocate_ordered(void *ptr) FOONATHAN_NOEXCEPT
 void free_memory_list::deallocate_ordered(void *ptr, std::size_t n,
                                         std::size_t other_node_size) FOONATHAN_NOEXCEPT
 {
+    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(ptr,
+        "foonathan::memory::detail::free_memory_list", first_, ptr);
     auto n_bytes = n * other_node_size;
     debug_fill(ptr, n_bytes, debug_magic::freed_memory);
 

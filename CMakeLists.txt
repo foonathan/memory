@@ -45,6 +45,7 @@ option(FOONATHAN_MEMORY_DEBUG_FILL "whether or not filling memory with magic val
 set(FOONATHAN_MEMORY_DEBUG_FENCE 0 CACHE INTEGER
     "the amount of memory used to help catching overflow errors" )
 option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK "whether or not leak checking is active" OFF)
+option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK "whether or not pointer checking is active" ON)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")

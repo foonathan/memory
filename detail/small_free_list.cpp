@@ -62,6 +62,20 @@ namespace
         return list_memory(c) <= mem
             && mem < list_memory(c) + node_size * c->no_nodes;
     }
+
+    // whether or not a pointer is in the list of a certain chunk
+    bool chunk_contains(chunk *c, std::size_t node_size, void *pointer) FOONATHAN_NOEXCEPT
+    {
+        auto cur_index = c->first_node;
+        while (cur_index != c->no_nodes)
+        {
+            auto cur_mem = list_memory(c) + cur_index * node_size;
+            if (cur_mem == pointer)
+                return true;
+            cur_index = *cur_mem;
+        }
+        return false;
+    }
 }
 
 FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_size;
@@ -153,29 +167,20 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
     debug_fill(memory, node_size(), debug_magic::freed_memory);
 
     auto node_memory = static_cast<unsigned char*>(memory) - debug_fence_size;
-    if (!from_chunk(dealloc_chunk_, node_size_, node_memory))
-    {
-        auto next = dealloc_chunk_->next, prev = dealloc_chunk_->prev;
-        while (next != dealloc_chunk_ || prev != dealloc_chunk_)
-        {
-            if (from_chunk(next, node_size_, node_memory))
-            {
-                dealloc_chunk_ = next;
-                break;
-            }
-            else if (from_chunk(prev, node_size_, node_memory))
-            {
-                dealloc_chunk_ = prev;
-                break;
-            }
-            next = next->next;
-            prev = prev->prev;
-        }
-    }
-    assert(from_chunk(dealloc_chunk_, node_size_, node_memory));
-    *node_memory = dealloc_chunk_->first_node;
+    dealloc_chunk_ = chunk_for(node_memory);
+
+    // memory was never managed by this list
+    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(dealloc_chunk_,
+        "foonathan::memory::detail::small_free_memory_list", this, memory);
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk_));
-    assert(offset % node_size_ == 0);
+    // memory is not at the right position
+    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(offset % node_size_ == 0,
+        "foonathan::memory::detail::small_free_memory_list", this, memory);
+    // double-free
+    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(!chunk_contains(dealloc_chunk_, node_size_, node_memory),
+        "foonathan::memory::detail::small_free_memory_list", this, memory);
+
+    *node_memory = dealloc_chunk_->first_node;
     dealloc_chunk_->first_node = static_cast<unsigned char>(offset / node_size_);
     ++dealloc_chunk_->capacity;
     ++capacity_;
@@ -201,22 +206,43 @@ bool small_free_memory_list::find_chunk(std::size_t n) FOONATHAN_NOEXCEPT
         return true;
     }
 
-    auto next = dealloc_chunk_->next;
-    auto prev = dealloc_chunk_->prev;
-    while (next != dealloc_chunk_ || prev != dealloc_chunk_)
+    auto forward_iter = dealloc_chunk_, backward_iter = dealloc_chunk_;
+    do
     {
-        if (next->capacity >= n)
+        forward_iter = forward_iter->next;
+        backward_iter = backward_iter->prev;
+
+        if (forward_iter->capacity >= n)
         {
-            alloc_chunk_ = next;
+            alloc_chunk_ = forward_iter;
             return true;
         }
-        else if (prev->capacity >= n)
+        else if (backward_iter->capacity >= n)
         {
-            alloc_chunk_ = prev;
+            alloc_chunk_ = backward_iter;
             return true;
         }
-        next = next->next;
-        prev = prev->prev;
-    }
-    return true;
+    } while (forward_iter != backward_iter);
+    return false;
+}
+
+chunk* small_free_memory_list::chunk_for(void *memory) const FOONATHAN_NOEXCEPT
+{
+    if (from_chunk(dealloc_chunk_, node_size_, memory))
+        return dealloc_chunk_;
+
+    auto forward_iter = dealloc_chunk_, backward_iter = dealloc_chunk_;
+    do
+    {
+        forward_iter = forward_iter->next;
+        backward_iter = backward_iter->prev;
+
+        if (from_chunk(forward_iter, node_size_, memory))
+            return forward_iter;
+        else if (from_chunk(backward_iter, node_size_, memory))
+            return backward_iter;
+    } while (forward_iter != backward_iter);
+    // at this point, both iterators point to the same chunk
+    // this only happens after the entire list has been searched
+    return nullptr;
 }

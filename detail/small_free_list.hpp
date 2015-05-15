@@ -79,6 +79,11 @@ namespace foonathan { namespace memory
             }
 
         private:
+            // finds the chunk from which memory is and returns it
+            // starts at dealloc_chunk_ and goes in both directions
+            // returns nullptr if no chunk
+            chunk* chunk_for(void *memory) const FOONATHAN_NOEXCEPT;
+
             // dummy_chunk_ is head/tail for used chunk list
             chunk dummy_chunk_;
             // alloc_chunk_ points to the chunk used for allocation

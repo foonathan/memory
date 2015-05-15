@@ -45,3 +45,9 @@ void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOON
     debug_fill(cur_, back_fence, debug_magic::fence_memory);
     return memory;
 }
+
+void fixed_memory_stack::unwind(char *top) FOONATHAN_NOEXCEPT
+{
+    debug_fill(top, cur_ - top, debug_magic::freed_memory);
+    cur_ = top;
+}

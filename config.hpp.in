@@ -46,6 +46,12 @@
 /// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
 
+/// \brief Whether or not the validity of the pointers are checked by the dealloction functions.
+/// \details It checks if a pointer was really allocated by the allocator, if possible.<br>
+/// It is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_POINTER_CHECK.
+/// \ingroup memory
+#cmakedefine01 FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+
 //=== compatibility ===//
 #cmakedefine01 FOONATHAN_IMPL_HAS_ALIGNOF
 #cmakedefine01 FOONATHAN_IMPL_HAS_MAX_ALIGN

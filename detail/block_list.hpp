@@ -23,6 +23,16 @@ namespace foonathan { namespace memory
 
             block_info(void *mem, std::size_t s) FOONATHAN_NOEXCEPT
             : memory(mem), size(s) {}
+
+            const char* begin() const FOONATHAN_NOEXCEPT
+            {
+                return static_cast<const char*>(memory);
+            }
+
+            const char* end() const FOONATHAN_NOEXCEPT
+            {
+                return begin() + size;
+            }
         };
 
         // simple intrusive list managing memory blocks
@@ -86,7 +96,7 @@ namespace foonathan { namespace memory
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
                     RawAllocator allocator)
-            : RawAllocator(std::move(allocator)), cur_block_size_(block_size) {}
+            : RawAllocator(std::move(allocator)), size_(0u), cur_block_size_(block_size) {}
 
             block_list(block_list &&other) FOONATHAN_NOEXCEPT
             : used_(std::move(other.used_)), free_(std::move(other.free_)),
@@ -145,11 +155,20 @@ namespace foonathan { namespace memory
 
             // deallocates the last allocated block
             // does not free memory, caches the block for future use
-            // debug: don't mark as freed, it might not be fully used
+            // debug: mark as freed, optionally only up to the pointer specified
             void deallocate() FOONATHAN_NOEXCEPT
             {
                 --size_;
-                free_.push(used_);
+                auto block = free_.push(used_);
+                debug_fill(block.memory, block.size, debug_magic::freed_memory);
+            }
+
+            void deallocate(const char *used_to) FOONATHAN_NOEXCEPT
+            {
+                --size_;
+                auto block = free_.push(used_);
+                debug_fill(block.memory, used_to - static_cast<const char*>(block.memory),
+                            debug_magic::freed_memory);
             }
 
             // the top block, this is the block that was allocated last
