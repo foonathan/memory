@@ -97,10 +97,10 @@ namespace foonathan { namespace memory
             }
 
         private:
-            void insert_between(void *pre, void *after,
+            void insert_between(char *pre, char *after,
                                 void *mem, std::size_t no_blocks) FOONATHAN_NOEXCEPT;
 
-            char *first_;
+            char *first_, *last_, *last_next_;
             std::size_t node_size_, capacity_;
         };
     } // namespace detail
