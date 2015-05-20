@@ -109,7 +109,7 @@ namespace foonathan { namespace memory
             // finds the chunk from which memory is and returns it
             // starts at dealloc_chunk_ and goes in both directions
             // returns nullptr if no chunk
-            chunk* chunk_for(void *memory) const FOONATHAN_NOEXCEPT;
+            chunk* chunk_for(void *memory) FOONATHAN_NOEXCEPT;
 
             chunk_list unused_chunks_, used_chunks_;
             chunk *alloc_chunk_, *dealloc_chunk_;
