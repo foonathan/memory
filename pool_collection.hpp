@@ -29,23 +29,24 @@ namespace foonathan { namespace memory
             free_list_array(fixed_memory_stack &stack,
                         std::size_t max_node_size) FOONATHAN_NOEXCEPT;
 
-            free_memory_list& get_node(std::size_t node_size) FOONATHAN_NOEXCEPT;
-            const free_memory_list& get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT;
+            node_free_memory_list& get_node(std::size_t node_size) FOONATHAN_NOEXCEPT;
+            const node_free_memory_list& get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT;
 
-            free_memory_list& get_array(std::size_t node_size) FOONATHAN_NOEXCEPT;
-            const free_memory_list& get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT;
+            array_free_memory_list& get_array(std::size_t node_size) FOONATHAN_NOEXCEPT;
+            const array_free_memory_list& get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT;
 
             // no of pools
             std::size_t size() const FOONATHAN_NOEXCEPT
             {
-                return std::size_t(arrays_ - nodes_);
+                return no_pools_;
             }
 
             std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
 
         private:
-            free_memory_list *nodes_, *arrays_;
-            // arrays_ - nodes_ == number of memory lists after both pointers
+            node_free_memory_list *nodes_;
+            array_free_memory_list *arrays_;
+            std::size_t no_pools_;
         };
     } // namespace detail
 
@@ -77,7 +78,7 @@ namespace foonathan { namespace memory
         {
             auto& pool = pools_.get_node(node_size);
             if (pool.empty())
-                reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert);
+                reserve_impl(pool, def_capacity());
             return pool.allocate();
         }
 
@@ -88,7 +89,7 @@ namespace foonathan { namespace memory
         {
             auto& pool = pools_.get_array(node_size);
             if (pool.empty())
-                reserve_impl(pool, def_capacity(), &detail::free_memory_list::insert_ordered);
+                reserve_impl(pool, def_capacity());
             return pool.allocate(count, node_size);
         }
 
@@ -102,7 +103,7 @@ namespace foonathan { namespace memory
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             auto& pool = pools_.get_array(node_size);
-            pool.deallocate_ordered(memory, count, node_size);
+            pool.deallocate(memory, count, node_size);
         }
         /// @}
 
@@ -112,13 +113,13 @@ namespace foonathan { namespace memory
         void reserve(node_pool, std::size_t node_size, std::size_t capacity)
         {
             auto& pool = pools_.get_node(node_size);
-            reserve_impl(pool, capacity, &detail::free_memory_list::insert);
+            reserve_impl(pool, capacity);
         }
 
         void reserve(array_pool, std::size_t node_size, std::size_t capacity)
         {
             auto& pool = pools_.get_array(node_size);
-            reserve_impl(pool, capacity, &detail::free_memory_list::insert_ordered);
+            reserve_impl(pool, capacity);
         }
         /// @}
 
@@ -170,22 +171,22 @@ namespace foonathan { namespace memory
             return block_list_.next_block_size() / (pools_.size() * 2);
         }
 
-        void reserve_impl(detail::free_memory_list &pool, std::size_t capacity,
-                        void (detail::free_memory_list::*insert)(void*, std::size_t))
+        template <class Pool>
+        void reserve_impl(Pool &pool, std::size_t capacity)
         {
-            auto mem = stack_.allocate(capacity,  detail::max_alignment);
+            auto mem = stack_.allocate(capacity, detail::max_alignment);
             if (!mem)
             {
                 // insert rest
                 if (stack_.end() - stack_.top() != 0u)
-                    (pool.*insert)(stack_.top(), stack_.end() - stack_.top());
+                    pool.insert(stack_.top(), stack_.end() - stack_.top());
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity,  detail::max_alignment);
                 assert(mem);
             }
             // insert new
-            (pool.*insert)(mem, capacity);
+            pool.insert(mem, capacity);
         }
 
         detail::block_list<RawAllocator> block_list_;

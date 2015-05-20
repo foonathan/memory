@@ -45,10 +45,7 @@ namespace foonathan { namespace memory
                     std::is_same<PoolType, array_pool>::value ||
                     std::is_same<PoolType, small_node_pool>::value,
                     "invalid tag type");
-        using free_list = typename std::conditional<
-                            std::is_same<PoolType, small_node_pool>::value,
-                            detail::small_free_memory_list,
-                            detail::free_memory_list>::type;
+        using free_list = typename PoolType::type;
 
     public:
         using impl_allocator = RawAllocator;
@@ -93,7 +90,7 @@ namespace foonathan { namespace memory
         /// \brief Deallocates a single node from the pool.
         void deallocate_node(void *ptr) FOONATHAN_NOEXCEPT
         {
-            detail::deallocate(pool_type{}, free_list_, ptr);
+            free_list_.deallocate(ptr);
         }
 
         /// \brief Deallocates an array of nodes from the pool.
@@ -138,8 +135,7 @@ namespace foonathan { namespace memory
             auto mem = block_list_.allocate();
             auto offset = detail::align_offset(mem.memory, detail::max_alignment);
             detail::debug_fill(mem.memory, offset, debug_magic::alignment_memory);
-            detail::insert(pool_type{}, free_list_,
-                        static_cast<char*>(mem.memory) + offset, mem.size - offset);
+            free_list_.insert(static_cast<char*>(mem.memory) + offset, mem.size - offset);
         }
 
         void* allocate_array(std::size_t n, std::size_t node_size)
@@ -159,7 +155,7 @@ namespace foonathan { namespace memory
 
         void deallocate_array(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            free_list_.deallocate_ordered(ptr, n, node_size);
+            free_list_.deallocate(ptr, n, node_size);
         }
 
         detail::block_list<impl_allocator> block_list_;

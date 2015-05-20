@@ -89,6 +89,8 @@ chunk_list& chunk_list::operator=(chunk_list &&other) FOONATHAN_NOEXCEPT
 
 void chunk_list::insert(chunk *c) FOONATHAN_NOEXCEPT
 {
+    // insert at the front
+
     if (first_ == nullptr)
     {
         c->next = c;
@@ -97,19 +99,26 @@ void chunk_list::insert(chunk *c) FOONATHAN_NOEXCEPT
     }
     else
     {
-        c->next = first_->next;
-        c->prev = first_;
-        first_->next->prev = c;
-        first_->next = c;
+        c->next = first_;
+        c->prev = first_->prev;
+        first_->prev = c;
+        first_ = c;
     }
 }
 
 chunk* chunk_list::insert(chunk_list &other) FOONATHAN_NOEXCEPT
 {
     assert(!other.empty());
-    auto c = other.top();
-    c->prev->next = c->next;
-    c->next->prev = c->prev;
+    auto c = other.first_;
+    if (other.first_ == other.first_->next)
+        // only element
+        other.first_ = nullptr;
+    else
+    {
+        c->prev->next = c->next;
+        c->next->prev = c->prev;
+        other.first_ = other.first_->next;
+    }
     insert(c);
     return c;
 }
