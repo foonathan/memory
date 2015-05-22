@@ -33,7 +33,7 @@ leak_handler foonathan::memory::get_leak_handler()
 
 namespace
 {
-    void default_invalid_ptr_handler(const char *name, void *allocator, void *ptr) FOONATHAN_NOEXCEPT
+    void default_invalid_ptr_handler(const char *name, const void *allocator, const void *ptr) FOONATHAN_NOEXCEPT
     {
         std::fprintf(stderr, "[foonathan::memory] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
                              name, allocator, ptr);

@@ -65,7 +65,7 @@ namespace foonathan { namespace memory
     /// \note The instance pointer is just used as identification, it is different for each allocator,
     /// but may refer to subobjects, don't cast it.
     /// \ingroup memory
-    using invalid_pointer_handler = void(*)(const char *name, void *allocator, void *ptr);
+    using invalid_pointer_handler = void(*)(const char *name, const void *allocator, const void *ptr);
 
     /// \brief Exchanges the \ref invalid_pointer_handler.
     /// \details This function is thread safe.
@@ -86,6 +86,25 @@ namespace foonathan { namespace memory
         {
             std::memset(memory, static_cast<int>(m), size);
         }
+
+        // fills fence, new and fence
+        // returns after fence
+        inline void* debug_fill_new(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
+        {
+            auto mem = static_cast<char*>(memory);
+            debug_fill(mem, debug_fence_size, debug_magic::fence_memory);
+            mem += debug_fence_size;
+            debug_fill(mem, node_size, debug_magic::new_memory);
+            debug_fill(mem + node_size, debug_fence_size, debug_magic::fence_memory);
+            return mem;
+        }
+
+        // fills free memory and returns memory starting at fence
+        inline char* debug_fill_free(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
+        {
+            debug_fill(memory, node_size, debug_magic::freed_memory);
+            return static_cast<char*>(memory) - debug_fence_size;
+        }
     #else
         using debug_fill_enabled = std::false_type;
         constexpr std::size_t debug_fence_size = 0u;
@@ -93,6 +112,16 @@ namespace foonathan { namespace memory
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
+
+        inline void* debug_fill_new(void *memory, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            return memory;
+        }
+
+        inline char* debug_fill_free(void *memory, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            return static_cast<char*>(memory);
+        }
     #endif
 
     // base class that performs the leak check
@@ -154,8 +183,8 @@ namespace foonathan { namespace memory
             leak_checker(const char *) FOONATHAN_NOEXCEPT {}
             ~leak_checker() FOONATHAN_NOEXCEPT = default;
 
-            void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT {}
-            void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT {}
+            void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
+            void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
         };
     #endif
 

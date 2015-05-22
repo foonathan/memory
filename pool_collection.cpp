@@ -19,7 +19,7 @@ namespace
     {
         return no && (no & (no - 1)) == 0;
     }
-    
+
     // ilog2 is a ceiling implementation of log2 for integers
     // that is: ilog2(4) == 2, ilog2(5) == 3
 #if defined __GNUC__
@@ -30,12 +30,12 @@ namespace
     {
         return sizeof(no) * CHAR_BIT - unsigned(__builtin_clz(no)) - unsigned(is_power_of_two(no));
     }
-    
+
     std::size_t ilog2(unsigned long no) FOONATHAN_NOEXCEPT
     {
         return sizeof(no) * CHAR_BIT - unsigned(__builtin_clzl(no)) - unsigned(is_power_of_two(no));
     }
-    
+
     std::size_t ilog2(unsigned long long no) FOONATHAN_NOEXCEPT
     {
         return sizeof(no) * CHAR_BIT - unsigned(__builtin_clzll(no)) - unsigned(is_power_of_two(no));
@@ -63,23 +63,22 @@ free_list_array::free_list_array(fixed_memory_stack &stack,
                             std::size_t max_node_size) FOONATHAN_NOEXCEPT
 {
     assert(max_node_size >= free_memory_list::min_element_size && "too small max_node_size");
-    auto no_pools = ilog2(max_node_size) - min_node_size_log + 1;
-    auto pools_size = no_pools * sizeof(free_memory_list);
-    
-    nodes_ = static_cast<free_memory_list*>(stack.allocate(pools_size,
-                                                        FOONATHAN_ALIGNOF(free_memory_list)));
-    arrays_ = static_cast<free_memory_list*>(stack.allocate(pools_size,
-                                                        FOONATHAN_ALIGNOF(free_memory_list)));
+    no_pools_ = ilog2(max_node_size) - min_node_size_log + 1;
+
+    nodes_ = static_cast<node_free_memory_list*>(stack.allocate(no_pools_ * sizeof(node_free_memory_list),
+                                                        FOONATHAN_ALIGNOF(node_free_memory_list)));
+    arrays_ = static_cast<array_free_memory_list*>(stack.allocate(no_pools_ * sizeof(array_free_memory_list),
+                                                        FOONATHAN_ALIGNOF(array_free_memory_list)));
     assert(nodes_ && arrays_ && "insufficient memory block size");
-    for (std::size_t i = 0u; i != no_pools; ++i)
+    for (std::size_t i = 0u; i != no_pools_; ++i)
     {
-        std::size_t el_size = 1u << (i + min_node_size_log);
-        ::new(static_cast<void*>(nodes_ + i)) free_memory_list(el_size);
-        ::new(static_cast<void*>(arrays_ + i)) free_memory_list(el_size);
+        std::size_t node_size = 1u << (i + min_node_size_log);
+        ::new(static_cast<void*>(nodes_ + i)) node_free_memory_list(node_size);
+        ::new(static_cast<void*>(arrays_ + i)) array_free_memory_list(node_size);
     }
 }
 
-free_memory_list& free_list_array::get_node(std::size_t node_size) FOONATHAN_NOEXCEPT
+node_free_memory_list& free_list_array::get_node(std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -87,7 +86,7 @@ free_memory_list& free_list_array::get_node(std::size_t node_size) FOONATHAN_NOE
     return nodes_[i - min_node_size_log];
 }
 
-const free_memory_list& free_list_array::get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT
+const node_free_memory_list& free_list_array::get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -95,7 +94,7 @@ const free_memory_list& free_list_array::get_node(std::size_t node_size) const F
     return nodes_[i - min_node_size_log];
 }
 
-free_memory_list& free_list_array::get_array(std::size_t node_size) FOONATHAN_NOEXCEPT
+array_free_memory_list& free_list_array::get_array(std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)
@@ -103,7 +102,7 @@ free_memory_list& free_list_array::get_array(std::size_t node_size) FOONATHAN_NO
     return arrays_[i - min_node_size_log];
 }
 
-const free_memory_list& free_list_array::get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT
+const array_free_memory_list& free_list_array::get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT
 {
     auto i = ilog2(node_size);
     if (i < min_node_size_log)

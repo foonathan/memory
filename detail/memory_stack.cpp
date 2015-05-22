@@ -39,10 +39,10 @@ void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOON
     debug_fill(cur_, front_fence, debug_magic::fence_memory);
     cur_ += front_fence;
     auto memory = cur_;
-    cur_ += size;
     debug_fill(cur_, size, debug_magic::new_memory);
-    cur_ += back_fence;
+    cur_ += size;
     debug_fill(cur_, back_fence, debug_magic::fence_memory);
+    cur_ += back_fence;
     return memory;
 }
 

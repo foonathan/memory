@@ -93,7 +93,6 @@ else()
             pool_collection.cpp
             pool_collection.hpp
             pool_type.hpp
-            pool_type.cpp
             raw_allocator_base.hpp
             smart_ptr.hpp
             stack_allocator.hpp
