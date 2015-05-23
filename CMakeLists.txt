@@ -46,6 +46,7 @@ option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
 
 # build options
 option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" OFF)
+option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" OFF)
 option(FOONATHAN_MEMORY_INCLUDE_PREFIX "whether or not you have to use <foonathan/memory/xxx.hpp>" OFF)
 option(FOONATHAN_MEMORY_NAMESPACE_PREFIX "whether or not everything is in namespace foonathan::memory" OFF)
 
@@ -65,4 +66,7 @@ set(FOONATHAN_MEMORY_VERSION_MINOR 2 CACHE STRING "minor version")
 add_subdirectory(src)
 if(FOONATHAN_MEMORY_BUILD_EXAMPLES)
     add_subdirectory(example)
+endif()
+if(FOONATHAN_MEMORY_BUILD_TESTS)
+    add_subdirectory(test)
 endif()
