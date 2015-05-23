@@ -23,7 +23,7 @@ namespace foonathan { namespace memory
             // misaligned != 0 ? (alignment - misaligned) : 0
             return misaligned * (alignment - misaligned);
         }
-        
+
         // max_align_t is sometimes not in namespace std and sometimes not available at all
         #if FOONATHAN_IMPL_HAS_MAX_ALIGN
             namespace max_align
@@ -31,7 +31,7 @@ namespace foonathan { namespace memory
                 using namespace std;
                 using type = max_align_t;
             }
-            
+
             FOONATHAN_CONSTEXPR auto max_alignment = FOONATHAN_ALIGNOF(max_align::type);
         #else
             // assume long double has maximum alignment

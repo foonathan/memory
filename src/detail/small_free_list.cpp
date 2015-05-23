@@ -2,15 +2,15 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "small_free_list.hpp"
+#include "detail/small_free_list.hpp"
 
 #include <cassert>
 #include <limits>
 #include <new>
 #include <utility>
 
-#include "align.hpp"
-#include "../debugging.hpp"
+#include "detail/align.hpp"
+#include "debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;

@@ -27,27 +27,27 @@ namespace foonathan { namespace memory
     {
         using traits = allocator_traits<RawAllocator>;
     public:
-        using raw_allocator = RawAllocator;        
+        using raw_allocator = RawAllocator;
         using is_stateful = typename traits::is_stateful;
-        
+
         allocator_adapter(raw_allocator &&alloc = {})
         : raw_allocator(std::move(alloc)) {}
-        
+
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             return traits::allocate_node(get_allocator(), size, alignment);
         }
-        
+
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
         {
             return traits::allocate_array(get_allocator(), count, size, alignment);
         }
-        
+
         void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             traits::deallocate_node(get_allocator(), ptr, size, alignment);
         }
-        
+
         void deallocate_array(void *ptr, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
@@ -58,40 +58,40 @@ namespace foonathan { namespace memory
         {
             return traits::max_node_size(get_allocator());
         }
-        
+
         std::size_t max_array_size() const
         {
             return traits::max_array_size(get_allocator());
         }
-        
+
         std::size_t max_alignment() const
         {
             return traits::max_alignment(get_allocator());
         }
-        
+
         /// @{
         /// \brief Returns a reference to the actual allocator.
         raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
-        
+
         const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         /// @}
     };
-    
+
     /// \brief Creates an \ref allocator_adapter.
     /// \relates allocator_adapter
     template <class RawAllocator>
     auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_adapter<typename std::decay<RawAllocator>::type> 
+    -> allocator_adapter<typename std::decay<RawAllocator>::type>
     {
         return {std::forward<RawAllocator>(allocator)};
     }
-    
+
     namespace detail
     {
         // stores a pointer to an allocator
@@ -103,21 +103,21 @@ namespace foonathan { namespace memory
             : alloc_(&allocator) {}
             allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
             allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
-            
+
         protected:
             ~allocator_reference_impl() = default;
-            
+
             using reference_type = RawAllocator&;
-            
+
             reference_type get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return *alloc_;
             }
-            
+
         private:
             RawAllocator *alloc_;
         };
-        
+
         // doesn't store anything for stateless allocators
         // construct an instance on the fly
         template <class RawAllocator>
@@ -128,19 +128,19 @@ namespace foonathan { namespace memory
             allocator_reference_impl(const RawAllocator&) FOONATHAN_NOEXCEPT {}
             allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
             allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
-            
+
         protected:
             ~allocator_reference_impl() = default;
-            
+
             using reference_type = RawAllocator;
-            
+
             reference_type get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return {};
             }
         };
     } // namespace detail
-    
+
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
     /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
     /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
@@ -158,20 +158,20 @@ namespace foonathan { namespace memory
     public:
         using raw_allocator = RawAllocator;
         using mutex = Mutex;
-        
+
         using is_stateful = typename traits::is_stateful;
-        
+
         /// @{
         /// \brief Creates it giving it the \ref allocator_type.
         /// \details For non-stateful allocators, there exists a default-constructor and a version taking const-ref.
         /// For stateful allocators it takes a non-const reference.
         allocator_reference(const raw_allocator &alloc = {}) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
-        
+
         allocator_reference(raw_allocator &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
         /// @}
-        
+
         /// @{
         /// \brief All concept functions lock the mutex and call the function on the referenced allocator.
         void* allocate_node(std::size_t size, std::size_t alignment)
@@ -180,7 +180,7 @@ namespace foonathan { namespace memory
             auto&& alloc = get_allocator();
             return traits::allocate_node(alloc, size, alignment);
         }
-        
+
         void* allocate_array(std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
@@ -195,7 +195,7 @@ namespace foonathan { namespace memory
             auto&& alloc = get_allocator();
             traits::deallocate_node(alloc, ptr, size, alignment);
         }
-        
+
         void deallocate_array(void *array, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
@@ -203,21 +203,21 @@ namespace foonathan { namespace memory
             auto&& alloc = get_allocator();
             traits::deallocate_array(alloc, array, count, size, alignment);
         }
-        
+
         std::size_t max_node_size() const
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
             return traits::max_node_size(alloc);
         }
-        
+
         std::size_t max_array_size() const
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
             return traits::max_array_size(alloc);
         }
-        
+
         std::size_t max_alignment() const
         {
             std::lock_guard<actual_mutex> lock(*this);
@@ -225,7 +225,7 @@ namespace foonathan { namespace memory
             return traits::max_alignment(alloc);
         }
         /// @}
-        
+
         /// @{
         /// \brief Returns a reference to the allocator while keeping it locked.
         /// \details It returns a proxy object that holds the lock.
@@ -235,13 +235,13 @@ namespace foonathan { namespace memory
         {
             return {*this, *this};
         }
-        
+
         detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
         {
             return {*this, *this};
         }
         /// @}
-        
+
         /// \brief Returns the \ref raw_allocator.
         /// \details It is a reference for stateful allocators and a temporary for non-stateful.
         /// \note This function does not perform any locking and is thus not thread safe.
@@ -251,20 +251,20 @@ namespace foonathan { namespace memory
             return storage::get_allocator();
         }
     };
-    
+
     /// @{
     /// \brief Creates a \ref allocator_reference.
     /// \relates allocator_reference
     template <class RawAllocator>
     auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_reference<typename std::decay<RawAllocator>::type> 
+    -> allocator_reference<typename std::decay<RawAllocator>::type>
     {
         return {std::forward<RawAllocator>(allocator)};
     }
-    
+
     template <class Mutex, class RawAllocator>
     auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex> 
+    -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex>
     {
         return {std::forward<RawAllocator>(allocator)};
     }
@@ -291,7 +291,7 @@ namespace foonathan { namespace memory
         using const_reference = const T&;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
-        
+
         using propagate_on_container_swap = std::true_type;
         using propagate_on_container_copy_assignment = std::true_type;
         using propagate_on_container_move_assignment = std::true_type;
@@ -301,13 +301,13 @@ namespace foonathan { namespace memory
 
         using impl_allocator = RawAllocator;
 
-        //=== constructor ===//        
+        //=== constructor ===//
         raw_allocator_allocator(const impl_allocator &alloc = {}) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(alloc) {}
-        
+
         raw_allocator_allocator(impl_allocator &alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(alloc) {}
-        
+
         raw_allocator_allocator(const allocator_reference<RawAllocator> &alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator>(alloc) {}
 
@@ -359,20 +359,20 @@ namespace foonathan { namespace memory
         {
             return this->get_allocator();
         }
-        
+
     private:
         template <typename U> // stateful
         bool equal_to(std::true_type, const raw_allocator_allocator<U, RawAllocator> &other) const FOONATHAN_NOEXCEPT
         {
             return &get_impl_allocator() == &other.get_impl_allocator();
         }
-        
+
         template <typename U> // non=stateful
         bool equal_to(std::false_type, const raw_allocator_allocator<U, RawAllocator> &) const FOONATHAN_NOEXCEPT
         {
             return true;
         }
-        
+
         template <typename T1, typename T2, class Impl>
         friend bool operator==(const raw_allocator_allocator<T1, Impl> &lhs,
                     const raw_allocator_allocator<T2, Impl> &rhs) FOONATHAN_NOEXCEPT;
@@ -386,7 +386,7 @@ namespace foonathan { namespace memory
     {
         return {std::forward<RawAllocator>(allocator)};
     }
-    
+
     template <typename T, typename U, class Impl>
     bool operator==(const raw_allocator_allocator<T, Impl> &lhs,
                     const raw_allocator_allocator<U, Impl> &rhs) FOONATHAN_NOEXCEPT
