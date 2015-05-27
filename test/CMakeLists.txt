@@ -9,7 +9,15 @@ file(DOWNLOAD
     ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
 
 set(tests
-        main.cpp)
+        test_allocator.hpp
+        main.cpp
+        detail/align.cpp
+        detail/block_list.cpp
+        detail/free_list.cpp
+        detail/memory_stack.cpp
+        aligned_allocator.cpp
+        pool_allocator.cpp
+        stack_allocator.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)
@@ -18,4 +26,4 @@ target_include_directories(foonathan_memory_test PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
 enable_testing()
-add_test(test foonathan_memory_test)
+add_test(NAME test COMMAND foonathan_memory_test)

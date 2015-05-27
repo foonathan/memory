@@ -58,14 +58,16 @@ free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
 
 free_memory_list& free_memory_list::operator=(free_memory_list &&other) FOONATHAN_NOEXCEPT
 {
-    first_  = other.first_;
-    node_size_ = other.node_size_;
-    capacity_  = other.capacity_;
-
-    other.first_ = nullptr;
-    other.capacity_ = 0u;
-
+    free_memory_list tmp(std::move(other));
+    swap(*this, tmp);
     return *this;
+}
+
+void foonathan::memory::detail::swap(free_memory_list &a, free_memory_list &b) FOONATHAN_NOEXCEPT
+{
+    std::swap(a.first_, b.first_);
+    std::swap(a.node_size_, b.node_size_);
+    std::swap(a.capacity_, b.capacity_);
 }
 
 void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -235,8 +237,7 @@ void* ordered_free_memory_list::list_impl::erase(std::size_t) FOONATHAN_NOEXCEPT
 }
 
 void* ordered_free_memory_list::list_impl::
-    erase(std::size_t node_size, std::size_t bytes_needed,
-          std::size_t& no_nodes) FOONATHAN_NOEXCEPT
+    erase(std::size_t node_size, std::size_t bytes_needed) FOONATHAN_NOEXCEPT
 {
     assert(!empty());
     if (bytes_needed <= node_size)
@@ -266,7 +267,6 @@ void* ordered_free_memory_list::list_impl::
                 auto end = get_next(cur, prev);
 
                 assert((cur - begin) % node_size == 0u);
-                no_nodes = (cur - begin) / node_size + 1; // add one, can't use end here
 
                 // update next
                 if (begin_prev)
@@ -374,12 +374,17 @@ ordered_free_memory_list::ordered_free_memory_list(
 ordered_free_memory_list &ordered_free_memory_list::operator=(
         ordered_free_memory_list &&other) FOONATHAN_NOEXCEPT
 {
-    list_ = std::move(other.list_);
-    node_size_ = other.node_size_;
-    capacity_ = other.capacity_;
-
-    other.capacity_ = 0u;
+    ordered_free_memory_list tmp(std::move(other));
+    swap(*this, tmp);
     return *this;
+}
+
+void foonathan::memory::detail::swap(ordered_free_memory_list &a, ordered_free_memory_list &b) FOONATHAN_NOEXCEPT
+{
+    using std::swap;
+    swap(a.list_, b.list_);
+    swap(a.node_size_, b.node_size_);
+    swap(a.capacity_, b.capacity_);
 }
 
 void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -403,12 +408,11 @@ void* ordered_free_memory_list::
     allocate(std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     auto bytes_needed = n * node_size + 2 * debug_fence_size;
-
-    std::size_t no_nodes;
-    auto nodes = list_.erase(node_size_, bytes_needed, no_nodes);
+    auto nodes = list_.erase(node_size_, bytes_needed);
     if (!nodes)
         return nullptr;
 
+    auto no_nodes = bytes_needed / node_size_ + (bytes_needed % node_size_ != 0);
     capacity_ -= no_nodes;
     return nodes;
 }

@@ -26,6 +26,8 @@ namespace foonathan { namespace memory
 
             chunk_list& operator=(chunk_list &&other) FOONATHAN_NOEXCEPT;
 
+            friend void swap(chunk_list &a, chunk_list &b) FOONATHAN_NOEXCEPT;
+
             // inserts a new chunk into the list
             void insert(chunk *c) FOONATHAN_NOEXCEPT;
 
@@ -72,6 +74,8 @@ namespace foonathan { namespace memory
             ~small_free_memory_list() FOONATHAN_NOEXCEPT = default;
 
             small_free_memory_list& operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT;
+
+            friend void swap(small_free_memory_list &a, small_free_memory_list &b) FOONATHAN_NOEXCEPT;
 
             //=== insert/alloc/dealloc ===//
             // inserts new memory of given size into the free list

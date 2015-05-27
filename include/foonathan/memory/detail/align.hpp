@@ -20,8 +20,7 @@ namespace foonathan { namespace memory
         {
             auto address = reinterpret_cast<std::uintptr_t>(ptr);
             auto misaligned = address & (alignment - 1);
-            // misaligned != 0 ? (alignment - misaligned) : 0
-            return misaligned * (alignment - misaligned);
+            return misaligned != 0 ? (alignment - misaligned) : 0;
         }
 
         // max_align_t is sometimes not in namespace std and sometimes not available at all

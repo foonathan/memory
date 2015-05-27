@@ -53,9 +53,14 @@ namespace foonathan { namespace memory
 
             block_list_impl& operator=(block_list_impl &&other) FOONATHAN_NOEXCEPT
             {
-                head_ = other.head_;
-                other.head_ = nullptr;
+                block_list_impl tmp(std::move(other));
+                swap(*this, tmp);
                 return *this;
+            }
+
+            friend void swap(block_list_impl &a, block_list_impl &b) FOONATHAN_NOEXCEPT
+            {
+                std::swap(a.head_, b.head_);
             }
 
             // inserts a new memory block, returns the size needed for the implementation
@@ -99,7 +104,8 @@ namespace foonathan { namespace memory
             : RawAllocator(std::move(allocator)), size_(0u), cur_block_size_(block_size) {}
 
             block_list(block_list &&other) FOONATHAN_NOEXCEPT
-            : used_(std::move(other.used_)), free_(std::move(other.free_)),
+            : RawAllocator(std::move(other)),
+              used_(std::move(other.used_)), free_(std::move(other.free_)),
               size_(other.size_), cur_block_size_(other.cur_block_size_)
             {
                 other.size_ = 0u;
@@ -118,11 +124,13 @@ namespace foonathan { namespace memory
 
             block_list& operator=(block_list &&other) FOONATHAN_NOEXCEPT
             {
-                used_ = std::move(other.used_);
-                free_ = std::move(other.free_);
-                size_ = other.size_;
-                cur_block_size_ = other.cur_block_size_;
-                other.size_ = 0u;
+                using std::swap;
+                block_list tmp(std::move(other));
+                swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
+                swap(used_, tmp.used_);
+                swap(free_, tmp.free_);
+                swap(size_, tmp.size_);
+                swap(cur_block_size_, other.cur_block_size_);
                 return *this;
             }
 
