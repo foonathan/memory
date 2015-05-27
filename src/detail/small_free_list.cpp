@@ -56,7 +56,7 @@ namespace
     {
         // comparision not strictly legal, but works
         return list_memory(c) <= mem
-            && mem < list_memory(c) + node_size * (c->no_nodes + 1);
+            && mem < list_memory(c) + node_size * c->no_nodes;
     }
 
     // whether or not a pointer is in the list of a certain chunk

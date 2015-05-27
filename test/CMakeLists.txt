@@ -10,7 +10,7 @@ file(DOWNLOAD
 
 set(tests
         test_allocator.hpp
-        main.cpp
+        test.cpp
         detail/align.cpp
         detail/block_list.cpp
         detail/free_list.cpp
@@ -23,6 +23,11 @@ add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)
 target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}
+                            ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
+
+add_executable(foonathan_memory_profiling profiling.cpp)
+target_link_libraries(foonathan_memory_profiling foonathan_memory)
+target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
 enable_testing()
