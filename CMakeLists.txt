@@ -44,14 +44,21 @@ set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
     "whether or not allocator_reference is thread safe by default" ON)
 
+# whether or not this is project is build directly or as subdirectory
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(is_toplevel 1)
+else()
+    set(is_toplevel 0)
+endif()
+
 # build options
-option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" OFF)
-option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" OFF)
+option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${is_toplevel})
+option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${is_toplevel})
 option(FOONATHAN_MEMORY_INCLUDE_PREFIX "whether or not you have to use <foonathan/memory/xxx.hpp>" OFF)
 option(FOONATHAN_MEMORY_NAMESPACE_PREFIX "whether or not everything is in namespace foonathan::memory" OFF)
 
 # variables to use library in other projects
-if (FOONATHAN_MEMORY_INCLUDE_PREFIX)
+if(FOONATHAN_MEMORY_INCLUDE_PREFIX)
     set(FOONATHAN_MEMORY_INCLUDE_DIR ${FOONATHAN_MEMORY_SOURCE_DIR}/include/ CACHE PATH
          "include directory for library")
 else()
