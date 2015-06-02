@@ -30,40 +30,40 @@ namespace foonathan { namespace memory
 #define FOONATHAN_MEMORY_IMPL_CONTAINER1(Name) \
     template <typename T, class RawAllocator> \
     using Name = std::Name<T, raw_allocator_allocator<T, RawAllocator>>;
-    
+
     FOONATHAN_MEMORY_IMPL_CONTAINER1(vector)
     FOONATHAN_MEMORY_IMPL_CONTAINER1(deque)
     FOONATHAN_MEMORY_IMPL_CONTAINER1(list)
     FOONATHAN_MEMORY_IMPL_CONTAINER1(forward_list)
-    
+
 #undef FOONATHAN_MEMORY_IMPL_CONTAINER1
-    
+
     template <typename T, class RawAllocator>
     using set = std::set<T, std::less<T>, raw_allocator_allocator<T, RawAllocator>>;
-    
+
     template <typename T, class RawAllocator>
     using multiset = std::multiset<T, std::less<T>, raw_allocator_allocator<T, RawAllocator>>;
-    
+
     template <typename Key, typename Value, class RawAllocator>
     using map = std::map<Key, Value, std::less<Key>,
                     raw_allocator_allocator<std::pair<const Key, Value>, RawAllocator>>;
-    
+
     template <typename Key, typename Value, class RawAllocator>
     using multimap = std::multimap<Key, Value, std::less<Key>,
                     raw_allocator_allocator<std::pair<const Key, Value>, RawAllocator>>;
-                    
+
     template <typename T, class RawAllocator>
     using unordered_set = std::unordered_set<T, std::hash<T>, std::equal_to<T>,
                         raw_allocator_allocator<T, RawAllocator>>;
-    
+
     template <typename T, class RawAllocator>
     using unordered_multiset = std::unordered_multiset<T, std::hash<T>, std::equal_to<T>,
                         raw_allocator_allocator<T, RawAllocator>>;
-                        
+
     template <typename Key, typename Value, class RawAllocator>
     using unordered_map = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>,
                         raw_allocator_allocator<std::pair<const Key, Value>, RawAllocator>>;
-    
+
     template <typename Key, typename Value, class RawAllocator>
     using unordered_multimap = std::unordered_multimap<Key, std::hash<Key>, std::equal_to<Key>,
                         raw_allocator_allocator<std::pair<const Key, Value>, RawAllocator>>;
@@ -87,14 +87,14 @@ namespace foonathan { namespace memory
     {
         return std::stack<T, Container>{Container(allocator)};
     }
-    
+
     template <typename T, class RawAllocator,
             class Container = deque<T, RawAllocator>>
     std::queue<T, Container> make_queue(RawAllocator &allocator)
     {
         return std::queue<T, Container>{Container(allocator)};
     }
-    
+
     template <typename T, class RawAllocator,
             class Container = deque<T, RawAllocator>,
             class Compare = std::less<T>>

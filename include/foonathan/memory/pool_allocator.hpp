@@ -120,7 +120,7 @@ namespace foonathan { namespace memory
         /// This is also the maximum array size.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
-            return block_list_.next_block_size() / node_size();
+            return block_list_.next_block_size();
         }
 
         /// \brief Returns the \ref impl_allocator.
@@ -227,7 +227,7 @@ namespace foonathan { namespace memory
         /// \brief Maximum size of an array is the capacity in the next block of the pool.
         static std::size_t max_array_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
-            return state.next_capacity();
+            return state.next_capacity() / state.node_size();
         }
 
         /// \brief Maximum alignment is \c std::min(node_size(), alignof(std::max_align_t).

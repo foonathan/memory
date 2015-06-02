@@ -2,10 +2,10 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "memory_stack.hpp"
+#include "detail/memory_stack.hpp"
 
-#include "align.hpp"
-#include "../debugging.hpp"
+#include "detail/align.hpp"
+#include "debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;

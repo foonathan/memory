@@ -24,7 +24,7 @@ namespace foonathan { namespace memory
         raw_allocator_base() FOONATHAN_NOEXCEPT {}
         raw_allocator_base(raw_allocator_base&&) FOONATHAN_NOEXCEPT {}
         raw_allocator_base& operator=(raw_allocator_base &&) FOONATHAN_NOEXCEPT {return *this;}
-        
+
         /// @{
         /// \brief Array allocation forwards to node allocation.
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
@@ -32,35 +32,35 @@ namespace foonathan { namespace memory
             assert(count * size <= max_array_size() && "invalid array length");
             return static_cast<Derived*>(this)->allocate_node(count * size, alignment);
         }
-        
+
         void deallocate_array(void *ptr, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             static_cast<Derived*>(this)->deallocate_node(ptr, count * size, alignment);
         }
         /// @}
-        
+
         /// @{
         /// \brief Returns maximum value.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT
         {
             return std::numeric_limits<std::size_t>::max();
         }
-        
+
         std::size_t max_array_size() const FOONATHAN_NOEXCEPT
         {
             return std::numeric_limits<std::size_t>::max();
         }
         /// @}
-        
+
         /// \brief Returns \c alignof(std::max_align_t).
         std::size_t max_alignment() const FOONATHAN_NOEXCEPT
         {
             return detail::max_alignment;
         }
-        
+
     protected:
-        ~raw_allocator_base() FOONATHAN_NOEXCEPT = default;    
+        ~raw_allocator_base() FOONATHAN_NOEXCEPT = default;
     };
 }} // namespace foonathan::memory
 

@@ -7,15 +7,15 @@
 //=== version ===//
 /// \brief Major version.
 /// \ingroup memory
-#define FOONATHAN_MEMORY_VERSION_MAJOR ${version_major}
+#define FOONATHAN_MEMORY_VERSION_MAJOR ${FOONATHAN_MEMORY_VERSION_MAJOR}
 
 /// \brief Minor version.
 /// \ingroup memory
-#define FOONATHAN_MEMORY_VERSION_MINOR ${version_minor}
+#define FOONATHAN_MEMORY_VERSION_MINOR ${FOONATHAN_MEMORY_VERSION_MINOR}
 
 /// \brief Total version number.
 /// \ingroup memory
-#define FOONATHAN_MEMORY_VERSION (${version_major} * 100 + ${version_minor})
+#define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
 //=== options ===//
 #define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
@@ -53,18 +53,29 @@
 /// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
 
+/// \brief Whether or not everything is in namespace foonathan::memory.
+/// \details If off, a namespace alias memory is provided that is a shortcut for foonathan::memory.
+/// \note Changing this option breaks \c using \c namespace \c foonathan!
+/// \ingroup memory
+#cmakedefine01 FOONATHAN_MEMORY_NAMESPACE_PREFIX
+
+#if !FOONATHAN_MEMORY_NAMESPACE_PREFIX
+    namespace foonathan { namespace memory {}} // namespace foonathan::memory
+    namespace memory = foonathan::memory;
+#endif
+
 //=== compatibility ===//
-#cmakedefine01 FOONATHAN_IMPL_HAS_ALIGNOF
-#cmakedefine01 FOONATHAN_IMPL_HAS_MAX_ALIGN
-#cmakedefine01 FOONATHAN_IMPL_HAS_GET_NEW_HANDLER
-#cmakedefine01 FOONATHAN_IMPL_HAS_THREAD_LOCAL
-#cmakedefine01 FOONATHAN_IMPL_HAS_NOEXCEPT
-#cmakedefine01 FOONATHAN_IMPL_HAS_CONSTEXPR
+#cmakedefine01 FOONATHAN_HAS_ALIGNOF
+#cmakedefine01 FOONATHAN_HAS_MAX_ALIGN
+#cmakedefine01 FOONATHAN_HAS_GET_NEW_HANDLER
+#cmakedefine01 FOONATHAN_HAS_THREAD_LOCAL
+#cmakedefine01 FOONATHAN_HAS_NOEXCEPT
+#cmakedefine01 FOONATHAN_HAS_CONSTEXPR
 
 #ifndef FOONATHAN_ALIGNOF
-    #if FOONATHAN_IMPL_HAS_ALIGNOF
+#if FOONATHAN_HAS_ALIGNOF
         #define FOONATHAN_ALIGNOF(x) alignof(x)
-    #elif !FOONATHAN_IMPL_HAS_ALIGNOF && defined _MSC_VER
+    #elif !FOONATHAN_HAS_ALIGNOF && defined _MSC_VER
         #define FOONATHAN_ALIGNOF(x) __alignof(x)
     #else
         #error "no alignof replacement available"
@@ -72,11 +83,11 @@
 #endif
 
 #ifndef FOONATHAN_THREAD_LOCAL
-    #if FOONATHAN_IMPL_HAS_THREAD_LOCAL
+#if FOONATHAN_HAS_THREAD_LOCAL
         #define FOONATHAN_THREAD_LOCAL thread_local
-    #elif !FOONATHAN_IMPL_HAS_THREAD_LOCAL && defined __GNUC__
+    #elif !FOONATHAN_HAS_THREAD_LOCAL && defined __GNUC__
         #define FOONATHAN_THREAD_LOCAL __thread
-    #elif !FOONATHAN_IMPL_HAS_THREAD_LOCAL && defined _MSC_VER
+    #elif !FOONATHAN_HAS_THREAD_LOCAL && defined _MSC_VER
         #define FOONATHAN_THREAD_LOCAL __declspec(thread)
     #else
         #error "no thread_local replacement available"
@@ -84,7 +95,7 @@
 #endif
 
 #ifndef FOONATHAN_NOEXCEPT
-    #if FOONATHAN_IMPL_HAS_NOEXCEPT
+#if FOONATHAN_HAS_NOEXCEPT
         #define FOONATHAN_NOEXCEPT noexcept
     #else
         #define FOONATHAN_NOEXCEPT
@@ -92,7 +103,7 @@
 #endif
 
 #ifndef FOONATHAN_CONSTEXPR
-    #if FOONATHAN_IMPL_HAS_CONSTEXPR
+#if FOONATHAN_HAS_CONSTEXPR
         #define FOONATHAN_CONSTEXPR constexpr
     #else
         #define FOONATHAN_CONSTEXPR const

@@ -12,12 +12,12 @@
 using namespace foonathan::memory;
 
 namespace
-{    
+{
     class stack_impl_allocator : public raw_allocator_base<stack_impl_allocator>
     {
     public:
         stack_impl_allocator() FOONATHAN_NOEXCEPT {}
-    
+
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             if (!first_call_)
@@ -26,42 +26,42 @@ namespace
                 first_call_ = false;
             return default_allocator().allocate_node(size, alignment);
         }
-        
+
         void deallocate_node(void *memory, std::size_t size, std::size_t alignment)
         {
             default_allocator().deallocate_node(memory, size, alignment);
         }
-        
+
         static temporary_allocator::growth_tracker set_tracker(temporary_allocator::growth_tracker t)
         {
             auto old = tracker_;
             tracker_ = t;
             return old;
         }
-        
+
     private:
         static void default_tracker(std::size_t) FOONATHAN_NOEXCEPT {}
-        
+
         static FOONATHAN_THREAD_LOCAL temporary_allocator::growth_tracker tracker_;
         static FOONATHAN_THREAD_LOCAL bool first_call_;
     };
-    
+
     FOONATHAN_THREAD_LOCAL temporary_allocator::growth_tracker
         stack_impl_allocator::tracker_ = stack_impl_allocator::default_tracker;
     FOONATHAN_THREAD_LOCAL bool stack_impl_allocator::first_call_ = true;
-    
+
     using stack_type = memory_stack<stack_impl_allocator>;
     using storage_t = std::aligned_storage<sizeof(stack_type), FOONATHAN_ALIGNOF(stack_type)>::type;
     FOONATHAN_THREAD_LOCAL storage_t temporary_stack;
     // whether or not the temporary_stack has been created
     FOONATHAN_THREAD_LOCAL bool is_created = false;
-    
+
     stack_type& get() FOONATHAN_NOEXCEPT
     {
         assert(is_created);
         return *static_cast<stack_type*>(static_cast<void*>(&temporary_stack));
     }
-    
+
     stack_type& create(std::size_t size)
     {
         if (!is_created)

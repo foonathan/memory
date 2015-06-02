@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "block_list.hpp"
+#include "detail/block_list.hpp"
 
 #include <cassert>
 #include <new>
@@ -14,7 +14,7 @@ struct block_list_impl::node
 {
     node *prev;
     std::size_t size;
-    
+
     node(node *p, std::size_t s) FOONATHAN_NOEXCEPT
     : prev(p), size(s) {}
 };

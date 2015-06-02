@@ -2,15 +2,15 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "small_free_list.hpp"
+#include "detail/small_free_list.hpp"
 
 #include <cassert>
 #include <limits>
 #include <new>
 #include <utility>
 
-#include "align.hpp"
-#include "../debugging.hpp"
+#include "detail/align.hpp"
+#include "debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -56,7 +56,7 @@ namespace
     {
         // comparision not strictly legal, but works
         return list_memory(c) <= mem
-            && mem < list_memory(c) + node_size * (c->no_nodes + 1);
+            && mem < list_memory(c) + node_size * c->no_nodes;
     }
 
     // whether or not a pointer is in the list of a certain chunk
@@ -96,9 +96,14 @@ chunk_list::chunk_list(chunk_list &&other) FOONATHAN_NOEXCEPT
 
 chunk_list& chunk_list::operator=(chunk_list &&other) FOONATHAN_NOEXCEPT
 {
-    first_ = other.first_;
-    other.first_ = nullptr;
+    chunk_list tmp(std::move(other));
+    swap(*this, tmp);
     return *this;
+}
+
+void foonathan::memory::detail::swap(chunk_list &a, chunk_list &b) FOONATHAN_NOEXCEPT
+{
+    std::swap(a.first_, b.first_);
 }
 
 void chunk_list::insert(chunk *c) FOONATHAN_NOEXCEPT
@@ -162,13 +167,20 @@ small_free_memory_list::small_free_memory_list(small_free_memory_list &&other) F
 
 small_free_memory_list& small_free_memory_list::operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT
 {
-    unused_chunks_ = std::move(other.unused_chunks_);
-    used_chunks_ = std::move(other.used_chunks_);
-    alloc_chunk_ = other.alloc_chunk_;
-    dealloc_chunk_ = other.dealloc_chunk_;
-    other.alloc_chunk_ = other.dealloc_chunk_ = nullptr;
-    other.capacity_ = 0u;
+    small_free_memory_list tmp(std::move(other));
+    swap(*this, tmp);
     return *this;
+}
+
+void foonathan::memory::detail::swap(small_free_memory_list &a, small_free_memory_list &b) FOONATHAN_NOEXCEPT
+{
+    using std::swap;
+    swap(a.unused_chunks_, b.unused_chunks_);
+    swap(a.used_chunks_, b.used_chunks_);
+    swap(a.alloc_chunk_, b.alloc_chunk_);
+    swap(a.dealloc_chunk_, b.dealloc_chunk_);
+    swap(a.node_size_, b.node_size_);
+    swap(a.capacity_, b.capacity_);
 }
 
 void small_free_memory_list::insert(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
