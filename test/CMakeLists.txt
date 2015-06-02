@@ -6,7 +6,17 @@
 
 file(DOWNLOAD
     https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp
-    ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
+    ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp
+    SHOW_PROGESS
+    STATUS status
+    LOG log)
+
+list(GET status 0 status_code)
+list(GET status 1 status_string)
+if(NOT status_code EQUAL 0)
+    message(FATAL_ERROR "error downloading catch: ${status_string}"
+                        "${log}")
+endif()
 
 set(tests
         test_allocator.hpp
