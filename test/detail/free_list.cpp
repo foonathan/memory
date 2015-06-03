@@ -125,26 +125,26 @@ void use_list_array(ordered_free_memory_list &list)
 {
     // just hoping to catch segfaults
 
-    auto array = list.allocate(3, list.node_size());
+    auto array = list.allocate(3 * list.node_size());
     REQUIRE(array);
-    auto array2 = list.allocate(2, 3);
+    auto array2 = list.allocate(2 * 3);
     REQUIRE(array2);
     auto node = list.allocate();
     REQUIRE(node);
 
-    list.deallocate(array2, 2, 3);
+    list.deallocate(array2, 2 * 3);
     list.deallocate(node);
 
-    array2 = list.allocate(4, 10);
+    array2 = list.allocate(4 * 10);
     REQUIRE(array2);
 
-    list.deallocate(array, 3, list.node_size());
+    list.deallocate(array, 3 * list.node_size());
 
     node = list.allocate();
     REQUIRE(node);
     list.deallocate(node);
 
-    list.deallocate(array2, 4, 10);
+    list.deallocate(array2, 4 * 10);
 }
 
 TEST_CASE("ordered_free_memory_list", "[detail][pool]")

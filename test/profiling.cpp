@@ -227,7 +227,7 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
                      std::initializer_list<std::size_t> array_sizes)
 {
     using namespace foonathan::memory;
-    std::cout << Func::name() << "\n\t\tHeap\tNew\tArray\tStack\n";
+    std::cout << Func::name() << "\n\t\tHeap\tNew\tNode\tArray\tStack\n";
     for (auto count : counts)
         for (auto node_size : node_sizes)
             for (auto array_size : array_sizes)
@@ -236,13 +236,14 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
 
                 heap_allocator heap_alloc;
                 new_allocator new_alloc;
+                auto node_alloc = make_allocator_adapter(memory_pool<node_pool>{node_size, mem_needed});
                 auto array_alloc = make_allocator_adapter(memory_pool<array_pool>{node_size, mem_needed});
                 auto stack_alloc = make_allocator_adapter(memory_stack<>{mem_needed});
 
                 std::cout << count << '*' << std::setw(3) << node_size
                           << '*' << std::setw(3) << array_size<< ": \t";
                 benchmark_array<Func>(count , array_size, node_size,
-                                      heap_alloc, new_alloc, array_alloc, stack_alloc);
+                                      heap_alloc, new_alloc, node_alloc, array_alloc, stack_alloc);
             }
     std::cout << '\n';
 }
@@ -260,12 +261,9 @@ int main()
 {
     using namespace foonathan::memory;
 
-    std::initializer_list<std::size_t> counts = {256, 512, 1024};
-    std::initializer_list <std::size_t> node_sizes = {1, 4, 8, 256};
-
     std::cout << "Node\n\n";
-    benchmark_node<single, bulk, bulk_reversed, butterfly>(counts, node_sizes);
+    benchmark_node<single, bulk, bulk_reversed, butterfly>({256, 512, 1024}, {1, 4, 8, 256});
 
     std::cout << "Array\n\n";
-    benchmark_array<single, bulk, bulk_reversed, butterfly>(counts, node_sizes, {1, 4, 8});
+    benchmark_array<single, bulk, bulk_reversed, butterfly>({256, 512}, {1, 4, 8}, {1, 4, 8});
 }

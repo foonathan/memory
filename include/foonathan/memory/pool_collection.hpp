@@ -90,7 +90,7 @@ namespace foonathan { namespace memory
             auto& pool = pools_.get_array(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
-            return pool.allocate(count, node_size);
+            return pool.allocate(count * node_size);
         }
 
         /// @{
@@ -103,7 +103,7 @@ namespace foonathan { namespace memory
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             auto& pool = pools_.get_array(node_size);
-            pool.deallocate(memory, count, node_size);
+            pool.deallocate(memory, count * node_size);
         }
         /// @}
 

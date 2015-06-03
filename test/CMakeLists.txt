@@ -4,6 +4,11 @@
 
 # builds test
 
+add_executable(foonathan_memory_profiling profiling.cpp)
+target_link_libraries(foonathan_memory_profiling foonathan_memory)
+target_include_directories(foonathan_memory_profiling PRIVATE
+                            ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
+
 file(DOWNLOAD
     https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp
@@ -33,11 +38,6 @@ add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)
 target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}
-                            ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
-
-add_executable(foonathan_memory_profiling profiling.cpp)
-target_link_libraries(foonathan_memory_profiling foonathan_memory)
-target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
 enable_testing()

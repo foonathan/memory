@@ -29,11 +29,7 @@ namespace foonathan { namespace memory
     /// It manages nodes of fixed size.
     /// Allocating and deallocating such a node is really fast,
     /// but each has the given size.<br>
-    /// There different types of pools:
-    /// * \ref node_pool: doesn't support array allocations.
-    /// * \ref array_pool: does support array allocations but slower.
-    /// * \ref small_node_pool: optimized for small objects, low memory overhead, but slower.
-    /// Does not support array allocations.<br>
+    /// See the tag types in \ref pool_type.hpp for details.
     /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
@@ -143,11 +139,11 @@ namespace foonathan { namespace memory
             auto empty = free_list_.empty();
             if (empty)
                 allocate_block();
-            auto mem = free_list_.allocate(n, node_size);
+            auto mem = free_list_.allocate(n * node_size);
             if (!mem && !empty) // only one allocate_block() call
             {
                 allocate_block();
-                mem = free_list_.allocate(n, node_size);
+                mem = free_list_.allocate(n * node_size);
             }
             assert(mem && "invalid array size");
             return mem;
@@ -155,7 +151,7 @@ namespace foonathan { namespace memory
 
         void deallocate_array(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            free_list_.deallocate(ptr, n, node_size);
+            free_list_.deallocate(ptr, n * node_size);
         }
 
         detail::block_list<impl_allocator> block_list_;

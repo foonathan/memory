@@ -49,8 +49,15 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
+            // returns a memory block big enough for n bytes (!, not nodes)
+            // might fail even if capacity is sufficient
+            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
+
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
+
+            // deallocates multiple blocks with n bytes total
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT;
@@ -61,13 +68,11 @@ namespace foonathan { namespace memory
                 return capacity_;
             }
 
-            bool empty() const FOONATHAN_NOEXCEPT
-            {
-                return !first_;
-            }
+            bool empty() const FOONATHAN_NOEXCEPT;
 
         private:
-            char *first_;
+            char *first_, *last_;
+            char *clean_; // area between clean_ and last_ is continous and can be used for arrays
             std::size_t node_size_, capacity_;
         };
 
@@ -106,15 +111,15 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // returns a memory block big enough for n blocks of size node_size
+            // returns a memory block big enough for n bytes (!, not nodes)
             // might fail even if capacity is sufficient
-            void* allocate(std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT;
+            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
 
-            // deallocates multiple blocks
-            void deallocate(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT;
+            // deallocates multiple blocks with n bytes total
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT;
