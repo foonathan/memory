@@ -197,13 +197,16 @@ void ordered_free_memory_list::list_impl::insert(std::size_t node_size,
         set_next_prev(cur, prev, cur + node_size);
         next(cur, prev);
     }
-
     // from last node: prev is old position, next is calculated position after
+    // cur is now the last node
     set_next_prev(cur, prev, pos.after);
 
     if (pos.after)
         // update prev pointer of following node from pos.prev to cur
         change_prev(pos.after, pos.prev, cur);
+    else
+        // update last_ pointer
+        last_ = cur;
 
     // point insert to last inserted node, if not new memory
     if (!new_memory)
@@ -224,6 +227,9 @@ void* ordered_free_memory_list::list_impl::erase(std::size_t) FOONATHAN_NOEXCEPT
     if (new_first)
         // change new_first previous node from first_ to nullptr
         change_prev(new_first, first_, nullptr);
+    else
+        // update last_ pointer, list is now empty
+        last_ = nullptr;
 
     // update insert pointer if needed
     if (insert_ == first_)
@@ -243,16 +249,16 @@ void* ordered_free_memory_list::list_impl::
     if (bytes_needed <= node_size)
         return erase(node_size);
 
-    for (char* cur = first_, *prev = nullptr; cur; next(cur, prev))
+    for (char* cur = last_, *next = nullptr; cur; prev(cur, next))
     {
         // whether or not to update insert because it would be removed
         auto update_insert = cur == insert_;
 
-        auto begin = cur, begin_prev = prev;
+        auto last = cur, end = next;
         auto available = node_size; // we already have node_size bytes available
-        while (get_next(cur, prev) == cur + node_size)
+        while (get_prev(cur, next) == cur - node_size)
         {
-            next(cur, prev);
+            prev(cur, next);
             if (cur == insert_)
                 update_insert = true;
 
@@ -260,18 +266,17 @@ void* ordered_free_memory_list::list_impl::
             if (available >= bytes_needed) // found enough blocks
             {
                 // begin_prev is node before array
-                // begin is first node in array
-                // prev is second last node in array
-                // cur is last node in array
-                // end is one past last node
-                auto end = get_next(cur, prev);
+                // cur is first node in array
+                // last is last node in array
+                // end is one after last node
+                auto begin_prev = get_prev(cur, next);
 
-                assert((cur - begin) % node_size == 0u);
+                assert((last - cur) % node_size == 0u);
 
                 // update next
                 if (begin_prev)
-                    // change next from begin to end
-                    change_next(begin_prev, begin, end);
+                    // change next from cur to end
+                    change_next(begin_prev, cur, end);
                 else
                     // update first_
                     first_ = end;
@@ -279,21 +284,30 @@ void* ordered_free_memory_list::list_impl::
                 // update prev
                 if (end)
                 {
-                    // change end prev from cur to begin_prev
-                    change_prev(end, cur, begin_prev);
+                    // change end prev from last to begin_prev
+                    change_prev(end, last, begin_prev);
 
-                    if (end == insert_)
+                    // update insert position so that it points out of the array
+                    if (end == insert_ || update_insert)
+                    {
                         insert_prev_ = begin_prev;
+                        insert_ = end;
+                    }
                 }
-
-                // update insert
-                if (update_insert)
+                else
                 {
-                    insert_ = end;
-                    insert_prev_ = begin_prev;
+                    // update last_
+                    last_ = begin_prev;
+
+                    // update insert position
+                    if (update_insert)
+                    {
+                        insert_ = begin_prev;
+                        insert_prev_ = begin_prev ? get_prev(begin_prev, end) : nullptr;
+                    }
                 }
 
-                return begin;
+                return cur;
             }
         }
     }
@@ -349,6 +363,12 @@ ordered_free_memory_list::list_impl::pos
 
         return {cur, next};
     }
+}
+
+bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
+{
+    assert(bool(first_) == bool(last_));
+    return !first_;
 }
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
