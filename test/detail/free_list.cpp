@@ -19,7 +19,11 @@ void use_list_node(FreeList &list)
     std::vector<void*> ptrs;
     auto capacity = list.capacity();
     for (std::size_t i = 0u; i != capacity; ++i)
-        ptrs.push_back(list.allocate());
+    {
+        auto ptr = list.allocate();
+        REQUIRE(ptr);
+        ptrs.push_back(ptr);
+    }
     REQUIRE(list.capacity() == 0u);
     REQUIRE(list.empty());
 
@@ -43,6 +47,7 @@ void check_list(FreeList &list, void *memory, std::size_t size)
     old_cap = list.capacity();
 
     auto node = list.allocate();
+    REQUIRE(node);
     REQUIRE(list.capacity() == old_cap - 1);
 
     list.deallocate(node);
@@ -58,6 +63,7 @@ void check_move(FreeList &list)
     list.insert(memory, 1024);
 
     auto ptr = list.allocate();
+    REQUIRE(ptr);
     auto capacity = list.capacity();
 
     auto list2 = std::move(list);
@@ -74,6 +80,7 @@ void check_move(FreeList &list)
     REQUIRE(list.capacity() <= 1024 / list.node_size());
 
     ptr = list.allocate();
+    REQUIRE(ptr);
     list.deallocate(ptr);
 
     ptr = list2.allocate();
@@ -118,21 +125,26 @@ void use_list_array(ordered_free_memory_list &list)
 {
     // just hoping to catch segfaults
 
-    auto array = list.allocate(3, list.node_size());
-    auto array2 = list.allocate(2, 3);
+    auto array = list.allocate(3 * list.node_size());
+    REQUIRE(array);
+    auto array2 = list.allocate(2 * 3);
+    REQUIRE(array2);
     auto node = list.allocate();
+    REQUIRE(node);
 
-    list.deallocate(array2, 2, 3);
+    list.deallocate(array2, 2 * 3);
     list.deallocate(node);
 
-    array2 = list.allocate(4, 10);
+    array2 = list.allocate(4 * 10);
+    REQUIRE(array2);
 
-    list.deallocate(array, 3, list.node_size());
+    list.deallocate(array, 3 * list.node_size());
 
     node = list.allocate();
+    REQUIRE(node);
     list.deallocate(node);
 
-    list.deallocate(array2, 4, 10);
+    list.deallocate(array2, 4 * 10);
 }
 
 TEST_CASE("ordered_free_memory_list", "[detail][pool]")

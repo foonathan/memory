@@ -49,8 +49,15 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
+            // returns a memory block big enough for n bytes (!, not nodes)
+            // might fail even if capacity is sufficient
+            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
+
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
+
+            // deallocates multiple blocks with n bytes total
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT;
@@ -61,13 +68,11 @@ namespace foonathan { namespace memory
                 return capacity_;
             }
 
-            bool empty() const FOONATHAN_NOEXCEPT
-            {
-                return !first_;
-            }
+            bool empty() const FOONATHAN_NOEXCEPT;
 
         private:
-            char *first_;
+            char *first_, *last_;
+            char *clean_; // area between clean_ and last_ is continous and can be used for arrays
             std::size_t node_size_, capacity_;
         };
 
@@ -106,15 +111,15 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // returns a memory block big enough for n blocks of size node_size
+            // returns a memory block big enough for n bytes (!, not nodes)
             // might fail even if capacity is sufficient
-            void* allocate(std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT;
+            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
 
-            // deallocates multiple blocks
-            void deallocate(void *ptr, std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT;
+            // deallocates multiple blocks with n bytes total
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT;
@@ -137,7 +142,8 @@ namespace foonathan { namespace memory
             {
             public:
                 list_impl() FOONATHAN_NOEXCEPT
-                : first_(nullptr), insert_(nullptr), insert_prev_(nullptr) {}
+                : first_(nullptr), last_(nullptr),
+                  insert_(nullptr), insert_prev_(nullptr) {}
 
                 list_impl(std::size_t node_size,
                     void *memory, std::size_t no_nodes) FOONATHAN_NOEXCEPT
@@ -147,10 +153,11 @@ namespace foonathan { namespace memory
                 }
 
                 list_impl(list_impl &&other) FOONATHAN_NOEXCEPT
-                : first_(other.first_),
+                : first_(other.first_), last_(other.last_),
                   insert_(other.insert_), insert_prev_(other.insert_prev_)
                 {
-                    other.first_ = other.insert_ = other.insert_prev_ = nullptr;
+                    other.first_ = other.last_ = nullptr;
+                    other.insert_ = other.insert_prev_ = nullptr;
                 }
 
                 ~list_impl() FOONATHAN_NOEXCEPT = default;
@@ -165,6 +172,7 @@ namespace foonathan { namespace memory
                 friend void swap(list_impl &a, list_impl &b) FOONATHAN_NOEXCEPT
                 {
                     std::swap(a.first_, b.first_);
+                    std::swap(a.last_, b.last_);
                     std::swap(a.insert_, b.insert_);
                     std::swap(a.insert_prev_, b.insert_prev_);
                 }
@@ -179,10 +187,7 @@ namespace foonathan { namespace memory
                 void* erase(std::size_t node_size) FOONATHAN_NOEXCEPT;
                 void* erase(std::size_t node_size, std::size_t bytes_needed) FOONATHAN_NOEXCEPT;
 
-                bool empty() const FOONATHAN_NOEXCEPT
-                {
-                    return !first_;
-                }
+                bool empty() const FOONATHAN_NOEXCEPT;
 
             private:
                 struct pos {char *prev, *after;};
@@ -190,7 +195,7 @@ namespace foonathan { namespace memory
                 // finds the position to insert memory
                 pos find_pos(std::size_t node_size, char* memory) const FOONATHAN_NOEXCEPT;
 
-                char *first_;
+                char *first_, *last_;
                 char *insert_, *insert_prev_; // pointer to last insert position
             } list_;
 
