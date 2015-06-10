@@ -12,8 +12,8 @@
 
 #include "detail/align.hpp"
 #include "detail/block_list.hpp"
-#include "detail/free_list.hpp"
 #include "detail/memory_stack.hpp"
+#include "detail/free_list_array.hpp"
 #include "allocator_traits.hpp"
 #include "debugging.hpp"
 #include "default_allocator.hpp"
@@ -21,51 +21,50 @@
 
 namespace foonathan { namespace memory
 {
-    namespace detail
+    /// @{
+    /// \brief Tag type defining the bucket (i.e. pool) distribution of a \ref memory_pool_collection.
+    /// \details There are two different distribution policies:
+    /// * \ref identity_buckets: there is a bucket for each size.
+    /// * \ref log2_buckets: there is a bucket for each power of two size.
+    /// \ingroup memory
+    struct identity_buckets
     {
-        class free_list_array
-        {
-        public:
-            free_list_array(fixed_memory_stack &stack,
-                        std::size_t max_node_size) FOONATHAN_NOEXCEPT;
+        using type = detail::identity_access_policy;
+    };
 
-            node_free_memory_list& get_node(std::size_t node_size) FOONATHAN_NOEXCEPT;
-            const node_free_memory_list& get_node(std::size_t node_size) const FOONATHAN_NOEXCEPT;
-
-            array_free_memory_list& get_array(std::size_t node_size) FOONATHAN_NOEXCEPT;
-            const array_free_memory_list& get_array(std::size_t node_size) const FOONATHAN_NOEXCEPT;
-
-            // no of pools
-            std::size_t size() const FOONATHAN_NOEXCEPT
-            {
-                return no_pools_;
-            }
-
-            std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
-
-        private:
-            node_free_memory_list *nodes_;
-            array_free_memory_list *arrays_;
-            std::size_t no_pools_;
-        };
-    } // namespace detail
+    struct log2_buckets
+    {
+        using type = detail::log2_access_policy;
+    };
+    /// @}
 
     /// \brief Manages multiple memory pools, each with a fixed size.
-    /// \details This allows allocating of nodes of various sizes.<br>
+    /// \details This allows allocating of nodes of various sizes.
+    /// The pool type can be specified via the tag types in \ref pool_type.hpp.<br>
+    /// The distribution of buckets (i.e. pools) can be specified via the policy tags above.
+    /// They control for which sizes pools are created.<br>
     /// Otherwise behaves the same as \ref memory_pool.
     /// \ingroup memory
-    template <class RawAllocator = default_allocator>
-    class memory_pool_collection : detail::leak_checker<memory_pool_collection<default_allocator>>
+    template <class PoolType, class BucketDistribution,
+            class RawAllocator = default_allocator>
+    class memory_pool_collection
+    : detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>
     {
+        using free_list_array = detail::free_list_array<typename PoolType::type,
+                                                        typename BucketDistribution::type>;
+        using leak_checker =  detail::leak_checker<memory_pool_collection<node_pool,
+                                                identity_buckets, default_allocator>>;
     public:
         using impl_allocator = RawAllocator;
+        using pool_type = PoolType;
+        using bucket_distribution = BucketDistribution;
 
         /// \brief Creates a new pool collection with given max node size the memory block size.
         /// \details It can handle node sizes up to a given size.<br>
         /// The first memory block is allocated, the block size can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
-        : detail::leak_checker<memory_pool_collection<default_allocator>>("foonathan::memory::memory_pool_collection"),
+        : leak_checker("foonathan::memory::memory_pool_collection"),
           block_list_(block_size, std::move(alloc)),
           stack_(block_list_.allocate()),
           pools_(stack_, max_node_size)
@@ -76,7 +75,7 @@ namespace foonathan { namespace memory
         /// the size must be smaller than the maximum node size.
         void* allocate_node(std::size_t node_size)
         {
-            auto& pool = pools_.get_node(node_size);
+            auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
             return pool.allocate();
@@ -87,7 +86,7 @@ namespace foonathan { namespace memory
         /// the size must be smaller than the maximum node size.
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
-            auto& pool = pools_.get_array(node_size);
+            auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
             return pool.allocate(count * node_size);
@@ -97,31 +96,22 @@ namespace foonathan { namespace memory
         /// \brief Deallocates the memory into the appropriate pool.
         void deallocate_node(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            pools_.get_node(node_size).deallocate(memory);
+            pools_.get(node_size).deallocate(memory);
         }
 
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            auto& pool = pools_.get_array(node_size);
+            auto& pool = pools_.get(node_size);
             pool.deallocate(memory, count * node_size);
         }
         /// @}
 
-        /// @{
-        /// \brief Reserves memory for the node/array pool for a given node size.
-        /// \details Use the \ref node_pool or \ref array_pool parameter to check it.
-        void reserve(node_pool, std::size_t node_size, std::size_t capacity)
+        /// \brief Reserves memory for the pool for a given node size.
+        void reserve(std::size_t node_size, std::size_t capacity)
         {
-            auto& pool = pools_.get_node(node_size);
+            auto& pool = pools_.get(node_size);
             reserve_impl(pool, capacity);
         }
-
-        void reserve(array_pool, std::size_t node_size, std::size_t capacity)
-        {
-            auto& pool = pools_.get_array(node_size);
-            reserve_impl(pool, capacity);
-        }
-        /// @}
 
         /// \brief Returns the maximum node size for which there is a pool.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT
@@ -129,20 +119,12 @@ namespace foonathan { namespace memory
             return pools_.max_node_size();
         }
 
-        /// @{
-        /// \brief Returns the capacity available in the node/array pool for a given node size.
-        /// \details This is the amount of nodes available inside the given pool.<br>
-        /// Use the \ref node_pool or \ref array_pool parameter to check it.
-        std::size_t pool_capacity(node_pool, std::size_t node_size) const FOONATHAN_NOEXCEPT
+        /// \brief Returns the capacity available in the pool for a given node size.
+        /// \details This is the amount of nodes available inside the given pool.
+        std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
-            return pools_.get_node(node_size).capacity();
+            return pools_.get(node_size).capacity();
         }
-
-        std::size_t pool_capacity(array_pool, std::size_t node_size) const FOONATHAN_NOEXCEPT
-        {
-            return pools_.get_array(node_size).capacity();
-        }
-        /// @}
 
         /// \brief Returns the capacity available outside the pools.
         /// \details This is the amount of memory that can be given to the pools after they are exhausted.
@@ -168,11 +150,10 @@ namespace foonathan { namespace memory
     private:
         std::size_t def_capacity() const FOONATHAN_NOEXCEPT
         {
-            return block_list_.next_block_size() / (pools_.size() * 2);
+            return block_list_.next_block_size() / pools_.size();
         }
 
-        template <class Pool>
-        void reserve_impl(Pool &pool, std::size_t capacity)
+        void reserve_impl(typename pool_type::type &pool, std::size_t capacity)
         {
             auto mem = stack_.allocate(capacity, detail::max_alignment);
             if (!mem)
@@ -191,19 +172,25 @@ namespace foonathan { namespace memory
 
         detail::block_list<RawAllocator> block_list_;
         detail::fixed_memory_stack stack_;
-        detail::free_list_array pools_;
+        free_list_array pools_;
     };
+
+    /// \brief A bucket allocator.
+    /// \detail It is a typedef \ref memory_pool_collection with \ref identity_buckets.
+    /// \ingroup memory
+    template <class PoolType, class ImplAllocator = default_allocator>
+    using bucket_allocator = memory_pool_collection<PoolType, identity_buckets, ImplAllocator>;
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
     /// \details This allows passing a pool directly as allocator to container types.
     /// \note This interface does leak checking, if you allocate through it, you need to deallocate.
     /// Do not mix the two interfaces, e.g. allocate here and deallocate on the original interface!
     /// \ingroup memory
-    template <class RawAllocator>
-    class allocator_traits<memory_pool_collection<RawAllocator>>
+    template <class Pool, class BucketDist, class RawAllocator>
+    class allocator_traits<memory_pool_collection<Pool, BucketDist, RawAllocator>>
     {
     public:
-        using allocator_type = memory_pool_collection<RawAllocator>;
+        using allocator_type = memory_pool_collection<Pool, BucketDist, RawAllocator>;
         using is_stateful = std::true_type;
 
         static void* allocate_node(allocator_type &state,

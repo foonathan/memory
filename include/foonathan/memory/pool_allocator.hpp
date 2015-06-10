@@ -37,10 +37,6 @@ namespace foonathan { namespace memory
     template <typename PoolType, class RawAllocator = default_allocator>
     class memory_pool : detail::leak_checker<memory_pool<node_pool, default_allocator>>
     {
-        static_assert(std::is_same<PoolType, node_pool>::value ||
-                    std::is_same<PoolType, array_pool>::value ||
-                    std::is_same<PoolType, small_node_pool>::value,
-                    "invalid tag type");
         using free_list = typename PoolType::type;
 
     public:

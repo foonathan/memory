@@ -12,6 +12,7 @@ set(header
         ${header_path}/detail/align.hpp
         ${header_path}/detail/block_list.hpp
         ${header_path}/detail/free_list.hpp
+        ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/memory_stack.hpp
         ${header_path}/detail/small_free_list.hpp
         ${header_path}/aligned_allocator.hpp
@@ -37,12 +38,12 @@ set(header
 set(src
         detail/block_list.cpp
         detail/free_list.cpp
+        detail/free_list_array.cpp
         detail/memory_stack.cpp
         detail/small_free_list.cpp
         debugging.cpp
         heap_allocator.cpp
         new_allocator.cpp
-        pool_collection.cpp
         temporary_allocator.cpp)
 
 if(BIICODE)
