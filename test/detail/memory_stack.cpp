@@ -23,11 +23,11 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
         REQUIRE(stack.end() == memory + 1024);
 
         REQUIRE(stack.allocate(10u, 1u));
-        auto diff = stack.top() - memory;
+        auto diff = std::size_t(stack.top() - memory);
         REQUIRE(diff == 2 * debug_fence_size + 10u);
 
         REQUIRE(stack.allocate(16u, 1u));
-        auto diff2 = stack.top() - memory;
+        auto diff2 = std::size_t(stack.top() - memory);
         REQUIRE(diff2 == 2 * debug_fence_size + 16u + diff);
 
         stack.unwind(memory + diff);

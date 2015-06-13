@@ -28,7 +28,7 @@ std::size_t measure(F func, Args&&... args)
     func(std::forward<Args>(args)...);
     auto duration = std::chrono::duration_cast<unit>
                         (std::chrono::system_clock::now() - start);
-    return duration.count();
+    return std::size_t(duration.count());
 }
 
 struct single

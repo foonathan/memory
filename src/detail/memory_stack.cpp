@@ -28,10 +28,10 @@ fixed_memory_stack& fixed_memory_stack::operator=(fixed_memory_stack &&other) FO
 
 void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
 {
-    std::size_t remaining = end_ - cur_;
-    std::size_t offset = align_offset(cur_, alignment);
-    std::size_t front_fence = offset > debug_fence_size ? 0u : debug_fence_size - offset;
-    std::size_t back_fence = debug_fence_size;
+    auto remaining = std::size_t(end_ - cur_);
+    auto offset = align_offset(cur_, alignment);
+    auto front_fence = offset > debug_fence_size ? 0u : debug_fence_size - offset;
+    auto back_fence = debug_fence_size;
     if (offset + front_fence + size + back_fence > remaining)
         return nullptr;
     debug_fill(cur_, offset, debug_magic::alignment_memory);
@@ -48,6 +48,6 @@ void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOON
 
 void fixed_memory_stack::unwind(char *top) FOONATHAN_NOEXCEPT
 {
-    debug_fill(top, cur_ - top, debug_magic::freed_memory);
+    debug_fill(top, std::size_t(cur_ - top), debug_magic::freed_memory);
     cur_ = top;
 }

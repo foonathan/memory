@@ -5,6 +5,7 @@
 #include "detail/free_list_array.hpp"
 
 #include <cmath>
+#include <cfloat>
 #include <climits>
 #include <cstdint>
 
@@ -42,11 +43,6 @@ namespace
         return sizeof(no) * CHAR_BIT
                 - unsigned(__builtin_clzll(no)) - unsigned(is_power_of_two(no));
     }
-
-    // suppress unused warnings
-    using dummy_u = decltype(ilog2(0u));
-    using dummy_ul = decltype(ilog2(0ul));
-    using dummy_ull = decltype(ilog2(0ull));
 #elif FLT_RADIX == 2
     // floating points exponent are for base 2, use ilogb to get the exponent
     // subtract one if power of two, otherwise zero
@@ -58,7 +54,7 @@ namespace
     // just ceil log2
     std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
     {
-        std::ceil(std::log2(no));
+        return std::ceil(std::log2(no));
     }
 #endif
 }

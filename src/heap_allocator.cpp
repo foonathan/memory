@@ -39,7 +39,7 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
         mem = std::malloc(size + 2 * detail::debug_fence_size);
         if (mem)
             break;
-    #if FOONATHAN_IMPL_HAS_GET_NEW_HANDLER
+    #if FOONATHAN_HAS_GET_NEW_HANDLER
         auto handler = std::get_new_handler();
     #else
         auto handler = std::set_new_handler(nullptr);

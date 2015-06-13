@@ -4,13 +4,11 @@
 
 # root CMakeLists.txt, specifies option and interface library
 
-if (BIICODE)
-    include(biicode/cmake/tools)
+cmake_minimum_required(VERSION 3.1)
 
+if (BIICODE)
     ADD_BII_TARGETS()
-    ACTIVATE_CPP11(INTERFACE ${BII_BLOCK_TARGET})
 else()
-    cmake_minimum_required(VERSION 3.1)
     project(FOONATHAN_MEMORY)
 endif()
 
@@ -66,8 +64,8 @@ else()
           "include directory for library")
 endif()
 
-set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version")
-set(FOONATHAN_MEMORY_VERSION_MINOR 2 CACHE STRING "minor version")
+set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_MINOR 3 CACHE STRING "minor version of memory" FORCE)
 
 # subdirectories
 add_subdirectory(src)

@@ -130,7 +130,7 @@ namespace foonathan { namespace memory
         /// \details This is the amount of memory that can be given to the pools after they are exhausted.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            return stack_.end() - stack_.top();
+            return std::size_t(stack_.end() - stack_.top());
         }
 
         /// \brief Returns the size of the next memory block.
@@ -160,7 +160,7 @@ namespace foonathan { namespace memory
             {
                 // insert rest
                 if (stack_.end() - stack_.top() != 0u)
-                    pool.insert(stack_.top(), stack_.end() - stack_.top());
+                    pool.insert(stack_.top(), std::size_t(stack_.end() - stack_.top()));
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity,  detail::max_alignment);
@@ -176,7 +176,7 @@ namespace foonathan { namespace memory
     };
 
     /// \brief A bucket allocator.
-    /// \detail It is a typedef \ref memory_pool_collection with \ref identity_buckets.
+    /// \details It is a typedef \ref memory_pool_collection with \ref identity_buckets.
     /// \ingroup memory
     template <class PoolType, class ImplAllocator = default_allocator>
     using bucket_allocator = memory_pool_collection<PoolType, identity_buckets, ImplAllocator>;

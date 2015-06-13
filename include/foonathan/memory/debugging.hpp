@@ -26,11 +26,11 @@ namespace foonathan { namespace memory
         /// \brief Marks freed memory - "dead memory".
         freed_memory = 0xDD,
         /// \brief Marks buffer memory used to ensure proper alignment.
-        /// \detail This memory can also serve as \ref fence_memory.
+        /// \details This memory can also serve as \ref fence_memory.
         alignment_memory = 0xED,
         /// \brief Marks buffer memory used to protect against overflow - "fence memory".
         /// \details It is only filled, if \ref FOONATHAN_MEMORY_DEBUG_FENCE is set accordingly.
-        fence_memory = 0xFD,
+        fence_memory = 0xFD
     };
 
     /// \brief The leak handler.
@@ -80,7 +80,7 @@ namespace foonathan { namespace memory
     {
     #if FOONATHAN_MEMORY_DEBUG_FILL
         using debug_fill_enabled = std::true_type;
-        constexpr std::size_t debug_fence_size = FOONATHAN_MEMORY_DEBUG_FENCE;
+        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = FOONATHAN_MEMORY_DEBUG_FENCE;
 
         inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
         {
@@ -107,7 +107,7 @@ namespace foonathan { namespace memory
         }
     #else
         using debug_fill_enabled = std::false_type;
-        constexpr std::size_t debug_fence_size = 0u;
+        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = 0u;
 
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations
@@ -181,7 +181,10 @@ namespace foonathan { namespace memory
         {
         protected:
             leak_checker(const char *) FOONATHAN_NOEXCEPT {}
-            ~leak_checker() FOONATHAN_NOEXCEPT = default;
+            leak_checker(leak_checker &&) FOONATHAN_NOEXCEPT {}
+            ~leak_checker() FOONATHAN_NOEXCEPT {}
+
+            leak_checker& operator=(leak_checker &&) FOONATHAN_NOEXCEPT {return *this;}
 
             void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
             void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}

@@ -175,8 +175,9 @@ namespace foonathan { namespace memory
             {
                 --size_;
                 auto block = free_.push(used_);
-                debug_fill(block.memory, used_to - static_cast<const char*>(block.memory),
-                            debug_magic::freed_memory);
+                debug_fill(block.memory,
+                           std::size_t(used_to - static_cast<const char*>(block.memory)),
+                           debug_magic::freed_memory);
             }
 
             // the top block, this is the block that was allocated last
