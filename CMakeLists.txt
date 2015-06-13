@@ -4,13 +4,11 @@
 
 # root CMakeLists.txt, specifies option and interface library
 
-if (BIICODE)
-    include(biicode/cmake/tools)
+cmake_minimum_required(VERSION 3.1)
 
+if (BIICODE)
     ADD_BII_TARGETS()
-    ACTIVATE_CPP11(INTERFACE ${BII_BLOCK_TARGET})
 else()
-    cmake_minimum_required(VERSION 3.1)
     project(FOONATHAN_MEMORY)
 endif()
 
