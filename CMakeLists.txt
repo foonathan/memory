@@ -64,8 +64,8 @@ else()
           "include directory for library")
 endif()
 
-set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version")
-set(FOONATHAN_MEMORY_VERSION_MINOR 3 CACHE STRING "minor version")
+set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_MINOR 3 CACHE STRING "minor version of memory" FORCE)
 
 # subdirectories
 add_subdirectory(src)
