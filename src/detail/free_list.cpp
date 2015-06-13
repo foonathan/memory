@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstring>
 #include <functional>
 
@@ -216,8 +217,9 @@ namespace
     // xor for pointers
     char* xor_ptr(char *prev, char *next) FOONATHAN_NOEXCEPT
     {
-        auto a = reinterpret_cast<std::uintptr_t>(prev);
-        auto b = reinterpret_cast<std::uintptr_t>(next);
+        using namespace std; // uintptr_t not always in namespace std
+        auto a = reinterpret_cast<uintptr_t>(prev);
+        auto b = reinterpret_cast<uintptr_t>(next);
         auto val = a ^ b;
         return reinterpret_cast<char*>(val);
     }

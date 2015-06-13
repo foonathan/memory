@@ -80,7 +80,7 @@ namespace foonathan { namespace memory
     {
     #if FOONATHAN_MEMORY_DEBUG_FILL
         using debug_fill_enabled = std::true_type;
-        constexpr std::size_t debug_fence_size = FOONATHAN_MEMORY_DEBUG_FENCE;
+        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = FOONATHAN_MEMORY_DEBUG_FENCE;
 
         inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
         {
@@ -107,7 +107,7 @@ namespace foonathan { namespace memory
         }
     #else
         using debug_fill_enabled = std::false_type;
-        constexpr std::size_t debug_fence_size = 0u;
+        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = 0u;
 
         // no need to use a macro, GCC will already completely remove the code on -O1
         // this includes parameter calculations

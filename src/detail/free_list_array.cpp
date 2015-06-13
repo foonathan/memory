@@ -5,6 +5,7 @@
 #include "detail/free_list_array.hpp"
 
 #include <cmath>
+#include <cfloat>
 #include <climits>
 #include <cstdint>
 
@@ -53,7 +54,7 @@ namespace
     // just ceil log2
     std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
     {
-        std::ceil(std::log2(no));
+        return std::ceil(std::log2(no));
     }
 #endif
 }
