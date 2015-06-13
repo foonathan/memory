@@ -6,10 +6,13 @@
 #include <iostream>
 #include <vector>
 
-#include "../smart_ptr.hpp" // raw_allocate_unique
-#include "../temporary_allocator.hpp" // temporary_allocator & co
+#include <memory/smart_ptr.hpp> // raw_allocate_unique
+#include <memory/temporary_allocator.hpp> // temporary_allocator & co
 
-using namespace foonathan;
+// namespace alias for easier access
+// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
+// it is already provided in each header file, so unecessary.
+namespace memory = foonathan::memory;
 
 template <typename RAIter>
 void merge_sort(RAIter begin, RAIter end);
@@ -22,11 +25,11 @@ int main()
     // it is created on the first call to this function where you can optionally specify the stack size
     // it is destroyed when the thread ends
     auto alloc = memory::make_temporary_allocator();
-    
+
     // directly allocate memory
     // it will be freed when alloc goes out of scope
     std::cout << "Allocated: " << alloc.allocate(sizeof(int), FOONATHAN_ALIGNOF(int)) << '\n';
-    
+
     // create temporary array of 5 elements
     auto array = memory::raw_allocate_unique<int[]>(alloc, 5);
     array[0] = 4;
@@ -34,9 +37,9 @@ int main()
     array[2] = 5;
     array[3] = 1;
     array[4] = 3;
-    
+
     merge_sort(array.get(), array.get() + 5);
-    
+
     std::cout << "Sorted: ";
     for (auto i = 0u; i != 5; ++i)
         std::cout << array[i] << ' ';
@@ -50,16 +53,16 @@ void merge_sort(RAIter begin, RAIter end)
     using value_type = typename std::iterator_traits<RAIter>::value_type;
     using vector_t = std::vector<value_type,
                     memory::raw_allocator_allocator<value_type, memory::temporary_allocator>>;
-    
+
     if (end - begin <= 1)
         return;
     auto mid = begin + (end - begin) / 2;
-    
+
     // create the vectors using temporary_allocator for fast memory allocation
     // since the internal stack is already created in main() this does not invovle heap allocation
     auto alloc = memory::make_temporary_allocator();
     vector_t first(begin, mid, alloc), second(mid, end, alloc);
-    
+
     merge_sort(first.begin(), first.end());
     merge_sort(second.begin(), second.end());
     std::merge(first.begin(), first.end(), second.begin(), second.end(), begin);

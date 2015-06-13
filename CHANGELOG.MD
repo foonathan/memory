@@ -1,3 +1,10 @@
+0.3
+---
+* added debugging options such as memory filling and deallocation and leak check
+* improved performance of pool allocators
+* changed complete project structure and CMake
+* many internal changes and bugfixes and automated testing
+
 0.2
 ---
 * added temporary_allocator as portable alloca
