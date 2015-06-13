@@ -122,7 +122,7 @@ namespace foonathan { namespace memory
         /// \brief Returns the capacity remaining in the current block.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            return stack_.end() - stack_.top();
+            return std::size_t(stack_.end() - stack_.top());
         }
 
         /// \brief Returns the size of the next memory block.

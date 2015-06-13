@@ -65,7 +65,6 @@ else()
                             cxx_delegating_constructors
                             cxx_deleted_functions
                             cxx_extended_friend_declarations
-                            cxx_inheriting_constructors
                             cxx_nonstatic_member_init
                             cxx_nullptr
                             cxx_range_for

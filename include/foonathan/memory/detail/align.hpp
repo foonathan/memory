@@ -24,7 +24,7 @@ namespace foonathan { namespace memory
         }
 
         // max_align_t is sometimes not in namespace std and sometimes not available at all
-        #if FOONATHAN_IMPL_HAS_MAX_ALIGN
+        #if FOONATHAN_HAS_MAX_ALIGN
             namespace max_align
             {
                 using namespace std;

@@ -42,11 +42,6 @@ namespace
         return sizeof(no) * CHAR_BIT
                 - unsigned(__builtin_clzll(no)) - unsigned(is_power_of_two(no));
     }
-
-    // suppress unused warnings
-    using dummy_u = decltype(ilog2(0u));
-    using dummy_ul = decltype(ilog2(0ul));
-    using dummy_ull = decltype(ilog2(0ull));
 #elif FLT_RADIX == 2
     // floating points exponent are for base 2, use ilogb to get the exponent
     // subtract one if power of two, otherwise zero

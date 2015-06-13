@@ -42,7 +42,7 @@ namespace foonathan { namespace memory
     public:
         using impl_allocator = RawAllocator;
 
-        /// \brief The type of the pool (\re_tef node_pool, \ref array_pool, \ref small_node_pool).
+        /// \brief The type of the pool (\ref node_pool, \ref array_pool, \ref small_node_pool).
         using pool_type = PoolType;
 
         /// \brief The minimum node size due to implementation reasons.

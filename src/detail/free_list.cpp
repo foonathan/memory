@@ -130,7 +130,7 @@ void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     auto nodes_needed = bytes_needed / node_size_
                         + (bytes_needed % node_size_ != 0);
 
-    auto diff = last_ - clean_ + node_size_; // open range, need to add one element
+    auto diff = std::size_t(last_ - clean_) + node_size_; // open range, need to add one element
     if (diff < nodes_needed * node_size_)
         return nullptr;
 
@@ -372,7 +372,7 @@ void* ordered_free_memory_list::list_impl::
                 // end is one after last node
                 auto begin_prev = get_prev(cur, next);
 
-                assert((last - cur) % node_size == 0u);
+                assert(std::size_t(last - cur) % node_size == 0u);
 
                 // update next
                 if (begin_prev)

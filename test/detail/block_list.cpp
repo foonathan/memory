@@ -38,7 +38,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     SECTION("multiple lists")
     {
         char memory[1024];
-        void* mem = memory;
+        void *mem = memory;
         list.push(mem, 1024);
 
         block_list_impl another_list;
@@ -71,7 +71,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     SECTION("move")
     {
         char memory[1024];
-        void* mem = memory;
+        mem = memory;
         list.push(mem, 1024);
 
         auto another_list = std::move(list);

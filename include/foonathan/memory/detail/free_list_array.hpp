@@ -23,8 +23,9 @@ namespace foonathan { namespace memory
         template <class FreeList, class AccessPolicy>
         class free_list_array
         {
-            static_assert(std::is_trivially_destructible<FreeList>::value,
-                        "free list must be trivially destructible");
+            // not supported on GCC 4.7
+            //static_assert(std::is_trivially_destructible<FreeList>::value,
+            //            "free list must be trivially destructible");
         public:
             // creates sufficient elements to support up to given maximum node size
             // all lists are initially empty
@@ -87,15 +88,15 @@ namespace foonathan { namespace memory
             }
 
         private:
-            static const std::size_t min_size_index
-                    = AccessPolicy::index_from_size(FreeList::min_element_size);
+            static const std::size_t min_size_index;
 
             FreeList *array_;
             std::size_t no_elements_;
         };
 
         template <class FL, class AP>
-        const std::size_t free_list_array<FL, AP>::min_size_index;
+        const std::size_t free_list_array<FL, AP>::min_size_index
+            = AP::index_from_size(FL::min_element_size);
 
         // AccessPolicy that maps size to indices 1:1
         // creates a free list for each size!

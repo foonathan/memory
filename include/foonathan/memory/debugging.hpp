@@ -26,11 +26,11 @@ namespace foonathan { namespace memory
         /// \brief Marks freed memory - "dead memory".
         freed_memory = 0xDD,
         /// \brief Marks buffer memory used to ensure proper alignment.
-        /// \detail This memory can also serve as \ref fence_memory.
+        /// \details This memory can also serve as \ref fence_memory.
         alignment_memory = 0xED,
         /// \brief Marks buffer memory used to protect against overflow - "fence memory".
         /// \details It is only filled, if \ref FOONATHAN_MEMORY_DEBUG_FENCE is set accordingly.
-        fence_memory = 0xFD,
+        fence_memory = 0xFD
     };
 
     /// \brief The leak handler.
@@ -181,7 +181,10 @@ namespace foonathan { namespace memory
         {
         protected:
             leak_checker(const char *) FOONATHAN_NOEXCEPT {}
-            ~leak_checker() FOONATHAN_NOEXCEPT = default;
+            leak_checker(leak_checker &&) FOONATHAN_NOEXCEPT {}
+            ~leak_checker() FOONATHAN_NOEXCEPT {}
+
+            leak_checker& operator=(leak_checker &&) FOONATHAN_NOEXCEPT {return *this;}
 
             void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
             void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
