@@ -47,13 +47,12 @@ using namespace foonathan::memory;
 
 void* new_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto mem = detail::try_allocate(
-                    [](std::size_t size)
-                    {
-                        return ::operator new(size, std::nothrow);
-                    },
-                    size + 2 * detail::debug_fence_size,
-                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::new_allocator", this);
+    auto mem = detail::try_allocate([](std::size_t size)
+                                    {
+                                        return ::operator new(size,
+                                                              std::nothrow);
+                                    }, size + 2 * detail::debug_fence_size,
+                                    {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::new_allocator", this});
     on_alloc(size);
     return detail::debug_fill_new(mem, size);
 }
