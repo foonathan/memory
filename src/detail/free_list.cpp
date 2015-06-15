@@ -443,8 +443,8 @@ ordered_free_memory_list::list_impl::pos
             if (greater(cur, memory))
                 break;
             FOONATHAN_MEMORY_IMPL_POINTER_CHECK(cur != memory,
-                                                "foonathan::memory::detail::ordered_free_memory_list",
-                                                this, memory);
+                FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::ordered_free_memory_list",
+                this, memory);
             next(cur, prev);
         }
 
@@ -459,8 +459,8 @@ ordered_free_memory_list::list_impl::pos
             if (less(cur, memory))
                 break;
             FOONATHAN_MEMORY_IMPL_POINTER_CHECK(cur != memory,
-                                                "foonathan::memory::detail::ordered_free_memory_list",
-                                                this, memory);
+                FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::ordered_free_memory_list",
+                this, memory);
             prev(cur, next);
         }
 

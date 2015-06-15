@@ -59,7 +59,8 @@ namespace foonathan { namespace memory
         /// \details The first memory block is allocated, the block size can change.
         explicit memory_stack(std::size_t block_size,
                         impl_allocator allocator = impl_allocator())
-        : detail::leak_checker<memory_stack<default_allocator>>("foonathan::memory::memory_stack"),
+        : detail::leak_checker<memory_stack<default_allocator>>
+                  (FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_stack"),
           list_(block_size, std::move(allocator))
         {
             allocate_block();
@@ -96,7 +97,7 @@ namespace foonathan { namespace memory
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.index > list_.size() - 1,
-                            "foonathan::memory::stack_allocator", this, m.top);
+                            FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
 
             if (std::size_t to_deallocate = (list_.size() - 1) - m.index) // different index
             {
@@ -105,7 +106,7 @@ namespace foonathan { namespace memory
                     list_.deallocate(); // other blocks fully used
 
                 FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.end != list_.top().end(),
-                            "foonathan::memory::stack_allocator", this, m.top);
+                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
 
                 // mark memory from new top to end of the block as freed
                 detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
@@ -114,7 +115,7 @@ namespace foonathan { namespace memory
             else // same index
             {
                 FOONATHAN_MEMORY_IMPL_POINTER_CHECK(stack_.top() < m.top,
-                            "foonathan::memory::stack_allocator", this, m.top);
+                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
                 stack_.unwind(m.top);
             }
         }

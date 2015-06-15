@@ -39,7 +39,7 @@ namespace foonathan { namespace memory
         /// \details It uses the nothrow version.
         /// In case of \c nullptr, it loops calling \c std::new_handler
         /// as usual but if the handler is \c null,
-        /// it calls \ref out_of_memory_handler prior to throwing \c std::bad_alloc.
+        /// it calls \ref out_of_memory_handler prior to throwing \ref out_of_memory.
         void* allocate_node(std::size_t size, std::size_t alignment);
 
         /// \brief Deallocates memory using \c ::operator \c delete.

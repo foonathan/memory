@@ -64,7 +64,7 @@ namespace foonathan { namespace memory
         /// The first memory block is allocated, the block size can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
-        : leak_checker("foonathan::memory::memory_pool_collection"),
+        : leak_checker(FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_pool_collection"),
           block_list_(block_size, std::move(alloc)),
           stack_(block_list_.allocate()),
           pools_(stack_, max_node_size)

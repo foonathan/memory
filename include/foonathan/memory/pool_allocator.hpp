@@ -18,6 +18,7 @@
 #include "detail/free_list.hpp"
 #include "detail/small_free_list.hpp"
 #include "allocator_traits.hpp"
+#include "config.hpp"
 #include "debugging.hpp"
 #include "default_allocator.hpp"
 #include "pool_type.hpp"
@@ -52,7 +53,8 @@ namespace foonathan { namespace memory
         /// \details The first memory block is allocated, the block size can change.
         memory_pool(std::size_t node_size, std::size_t block_size,
                     impl_allocator allocator = impl_allocator())
-        : detail::leak_checker<memory_pool<node_pool, default_allocator>>("foonathan::memory::memory_pool"),
+        : detail::leak_checker<memory_pool<node_pool, default_allocator>>
+                  (FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_pool"),
           block_list_(block_size, std::move(allocator)),
           free_list_(node_size)
         {

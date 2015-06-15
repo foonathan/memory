@@ -232,14 +232,14 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
 
     // memory was never managed by this list
     FOONATHAN_MEMORY_IMPL_POINTER_CHECK(dealloc_chunk,
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+        FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::small_free_memory_list", this, memory);
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk));
     // memory is not at the right position
     FOONATHAN_MEMORY_IMPL_POINTER_CHECK(offset % node_size_ == 0,
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+        FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::small_free_memory_list", this, memory);
     // double-free
     FOONATHAN_MEMORY_IMPL_POINTER_CHECK(!chunk_contains(dealloc_chunk, node_size_, node_memory),
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+        FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::small_free_memory_list", this, memory);
 
     *node_memory = dealloc_chunk->first_node;
     dealloc_chunk->first_node = static_cast<unsigned char>(offset / node_size_);

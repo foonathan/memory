@@ -28,11 +28,23 @@ namespace foonathan { namespace memory
                             const char *name, void *allocator);
     } // namespace detail
 
+    /// \brief The exception class thrown in case of out of memory condition.
+    /// \details It will be thrown when the \ref out_of_memory_handler returns.
+    /// \ingroup memory
+    class out_of_memory : public std::bad_alloc
+    {
+    public:
+        const char* what() const FOONATHAN_NOEXCEPT override
+        {
+            return "out of memory";
+        }
+    };
+
     /// \brief The out of memory handler.
     /// \details It will be called when a low level allocation function runs out of memory.
     /// It gets a descriptive string of the allocator, a pointer to the allocator instance (\c nullptr for stateless)
     /// and the amount of memory that has been tried to allocate.<br>
-    /// If it returns, an exception of type \c std::bad_alloc will be thrown.<br>
+    /// If it returns, an exception of type \ref out_of_memory_error will be thrown.<br>
     /// The default handler writes the information to \c stderr and continues execution,
     /// leading to to the exception.
     /// \note Unlike \c std::new_handler, this function does not get called in a loop or similar,

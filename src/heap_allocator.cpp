@@ -40,7 +40,7 @@ using namespace foonathan::memory;
         ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
     {
         if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()("foonathan::memory::heap_allocator", nullptr, alloc_counter);
+            get_leak_handler()(FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::heap_allocator", nullptr, alloc_counter);
     }
 #else
     namespace
@@ -53,7 +53,7 @@ using namespace foonathan::memory;
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
     auto memory = detail::try_allocate(std::malloc, size + 2 * detail::debug_fence_size,
-                            "foonathan::memory::heap_allocator", this);
+                            FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::heap_allocator", this);
     on_alloc(size);
     return detail::debug_fill_new(memory, size);
 }

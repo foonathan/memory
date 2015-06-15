@@ -60,8 +60,12 @@
 #cmakedefine01 FOONATHAN_MEMORY_NAMESPACE_PREFIX
 
 #if !FOONATHAN_MEMORY_NAMESPACE_PREFIX
-    namespace foonathan { namespace memory {}} // namespace foonathan::memory
+    namespace foonathan { namespace memory {}}
     namespace memory = foonathan::memory;
+
+    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "memory"
+#else
+    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "foonathan::memory"
 #endif
 
 //=== compatibility ===//

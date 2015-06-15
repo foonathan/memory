@@ -39,7 +39,7 @@ void* foonathan::memory::detail::try_allocate(void* (*alloc_func)(std::size_t), 
         else
         {
             get_out_of_memory_handler()(name, allocator, size);
-            throw std::bad_alloc();
+            throw out_of_memory();
         }
     }
     assert(false);
@@ -52,8 +52,8 @@ namespace
                                         std::size_t amount) FOONATHAN_NOEXCEPT
     {
         std::fprintf(stderr,
-                "[foonathan::memory] Allocator %s (at %p) ran out of memory trying to allocate %zu bytes.\n",
-                name, allocator, amount);
+                "[%s] Allocator %s (at %p) ran out of memory trying to allocate %zu bytes.\n",
+                FOONATHAN_MEMORY_IMPL_LOG_PREFIX, name, allocator, amount);
     }
 
     std::atomic<out_of_memory_handler> out_of_memory_h(default_out_of_memory_handler);

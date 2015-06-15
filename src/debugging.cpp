@@ -14,8 +14,8 @@ namespace
 {
     void default_leak_handler(const char *name, void *allocator, std::size_t amount) FOONATHAN_NOEXCEPT
     {
-        std::fprintf(stderr, "[foonathan::memory] Allocator %s (at %p) leaked %zu bytes.\n",
-                            name, allocator, amount);
+        std::fprintf(stderr, "[%s] Allocator %s (at %p) leaked %zu bytes.\n",
+                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX, name, allocator, amount);
     }
 
     std::atomic<leak_handler> leak_h(default_leak_handler);
@@ -35,8 +35,8 @@ namespace
 {
     void default_invalid_ptr_handler(const char *name, const void *allocator, const void *ptr) FOONATHAN_NOEXCEPT
     {
-        std::fprintf(stderr, "[foonathan::memory] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
-                             name, allocator, ptr);
+        std::fprintf(stderr, "[%s] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
+                             FOONATHAN_MEMORY_IMPL_LOG_PREFIX, name, allocator, ptr);
         std::abort();
     }
 
