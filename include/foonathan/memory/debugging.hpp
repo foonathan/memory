@@ -12,6 +12,7 @@
 #include <type_traits>
 
 #include "config.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -35,8 +36,7 @@ namespace foonathan { namespace memory
 
     /// \brief The leak handler.
     /// \details It will be called when a memory leak is detected.
-    /// It gets a descriptive string of the allocator, a pointer to the allocator instance (\c nullptr for stateless)
-    /// and the amount of memory leaked.<br>
+    /// It gets the \ref allocator_info and the amount of memory leaked.<br>
     /// It must not throw any exceptions since it is called in the cleanup process.<br>
     /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK is \c true.
     /// Leak checking is only done through the unified \c RawAllocator interface,
@@ -44,7 +44,7 @@ namespace foonathan { namespace memory
     /// since you know the type of the allocator and that a leak might not be bad.<br>
     /// The default handler writes the information to \c stderr and continues execution.
     /// \ingroup memory
-    using leak_handler = void(*)(const char *name, void *allocator, std::size_t amount);
+    using leak_handler = void(*)(const allocator_info &info, std::size_t amount);
 
     /// \brief Exchanges the \ref leak_handler.
     /// \details This function is thread safe.
@@ -57,15 +57,14 @@ namespace foonathan { namespace memory
 
     /// \brief The invalid pointer handler.
     /// \details It will be called when an invalid pointer passed to a deallocate function is detected.
-    /// It gets a descriptive string of the allocator, a pointer to the instance (\c nullptr for stateless)
-    /// and the invalid pointer.<br>
+    /// It gets the \ref allocator_info and the invalid pointer.<br>
     /// It must not throw any exceptions since it might be called in the cleanup process.<br>
     /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is \c true.<br>
     /// The default handler writes the information to \c stderr and aborts the program.
     /// \note The instance pointer is just used as identification, it is different for each allocator,
     /// but may refer to subobjects, don't cast it.
     /// \ingroup memory
-    using invalid_pointer_handler = void(*)(const char *name, const void *allocator, const void *ptr);
+    using invalid_pointer_handler = void(*)(const allocator_info &info, const void *ptr);
 
     /// \brief Exchanges the \ref invalid_pointer_handler.
     /// \details This function is thread safe.
@@ -148,7 +147,7 @@ namespace foonathan { namespace memory
             ~leak_checker() FOONATHAN_NOEXCEPT
             {
                 if (allocated_ != 0u)
-                    get_leak_handler()(name_, this, allocated_);
+                    get_leak_handler()({name_, this}, allocated_);
             }
 
             leak_checker& operator=(leak_checker &&other) FOONATHAN_NOEXCEPT
@@ -193,7 +192,7 @@ namespace foonathan { namespace memory
 
     #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
         #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
-            if (Cond) {} else {get_invalid_pointer_handler()(Name, Alloc, Ptr);}
+            if (Cond) {} else {get_invalid_pointer_handler()({Name, Alloc}, Ptr);}
     #else
         #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr)
     #endif

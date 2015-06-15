@@ -40,7 +40,7 @@ using namespace foonathan::memory;
         ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
     {
         if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()(FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::heap_allocator", nullptr, alloc_counter);
+            get_leak_handler()({FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::heap_allocator", nullptr}, alloc_counter);
     }
 #else
     namespace
