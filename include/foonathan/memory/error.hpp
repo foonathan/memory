@@ -30,11 +30,11 @@ namespace foonathan { namespace memory
         /// so it must not be casted to an actual allocator.
         /// It's only purpose is for identifying different allocator objects.<br>
         /// Depending on the context, it might be \c null to represent stateless allocators.
-        void *allocator;
+        const void *allocator;
 
         /// \brief Creates a new allocator info.
         FOONATHAN_CONSTEXPR allocator_info(const char *name,
-                                           void *allocator) FOONATHAN_NOEXCEPT
+                                           const void *allocator) FOONATHAN_NOEXCEPT
         : name(name), allocator(allocator) {}
 
         /// @{
@@ -180,6 +180,14 @@ namespace foonathan { namespace memory
         // if it doesn't exist, the out_of_memory_handler is called and std::bad_alloc thrown afterwards
         void* try_allocate(void* (*alloc_func)(std::size_t size), std::size_t size,
                             const allocator_info& info);
+
+        // checks for a valid size
+        inline void check_allocation_size(std::size_t passed, std::size_t supported,
+                                   const allocator_info &info)
+        {
+            if (passed > supported)
+                throw bad_allocation_size(info, passed, supported);
+        }
     } // namespace detail
 }} // namespace foonathan::memory
 

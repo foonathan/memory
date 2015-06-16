@@ -191,10 +191,13 @@ namespace foonathan { namespace memory
     #endif
 
     #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
-        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr) \
-            if (Cond) {} else {get_invalid_pointer_handler()({Name, Alloc}, Ptr);}
+        inline void check_pointer(bool condition, const allocator_info &info, void *ptr)
+        {
+            if (!condition)
+                get_invalid_pointer_handler()(info, ptr);
+        }
     #else
-        #define FOONATHAN_MEMORY_IMPL_POINTER_CHECK(Cond, Name, Alloc, Ptr)
+        inline void check_pointer(bool, const allocator_info&, void *) FOONATHAN_NOEXCEPT {}
     #endif
     } // namespace detail
 }} // namespace foonathan::memory

@@ -51,6 +51,7 @@ namespace foonathan { namespace memory
     template <class RawAllocator = default_allocator>
     class memory_stack : detail::leak_checker<memory_stack<default_allocator>>
     {
+        using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
         /// \brief The implementation allocator.
         using impl_allocator = RawAllocator;
@@ -59,8 +60,7 @@ namespace foonathan { namespace memory
         /// \details The first memory block is allocated, the block size can change.
         explicit memory_stack(std::size_t block_size,
                         impl_allocator allocator = impl_allocator())
-        : detail::leak_checker<memory_stack<default_allocator>>
-                  (FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_stack"),
+        : leak_checker(info().name),
           list_(block_size, std::move(allocator))
         {
             allocate_block();
@@ -71,12 +71,13 @@ namespace foonathan { namespace memory
         /// The new block must be big enough for the requested memory.
         void* allocate(std::size_t size, std::size_t alignment)
         {
+            detail::check_allocation_size(size, next_capacity(), info());
             auto mem = stack_.allocate(size, alignment);
             if (!mem)
             {
                 allocate_block();
                 mem = stack_.allocate(size, alignment);
-                assert(mem && "block size still too small");
+                assert(mem);
             }
             return mem;
         }
@@ -96,8 +97,7 @@ namespace foonathan { namespace memory
         /// Use \ref shrink_to_fit() to actually free them.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.index > list_.size() - 1,
-                            FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
+            detail::check_pointer(m.index > list_.size() - 1, info(), m.top);
 
             if (std::size_t to_deallocate = (list_.size() - 1) - m.index) // different index
             {
@@ -105,8 +105,7 @@ namespace foonathan { namespace memory
                 for (std::size_t i = 1; i != to_deallocate; ++i)
                     list_.deallocate(); // other blocks fully used
 
-                FOONATHAN_MEMORY_IMPL_POINTER_CHECK(m.end != list_.top().end(),
-                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
+                detail::check_pointer(m.end != list_.top().end(), info(), m.top);
 
                 // mark memory from new top to end of the block as freed
                 detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
@@ -114,8 +113,7 @@ namespace foonathan { namespace memory
             }
             else // same index
             {
-                FOONATHAN_MEMORY_IMPL_POINTER_CHECK(stack_.top() < m.top,
-                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::stack_allocator", this, m.top);
+                detail::check_pointer(stack_.top() < m.top, info(), m.top);
                 stack_.unwind(m.top);
             }
         }
@@ -147,6 +145,11 @@ namespace foonathan { namespace memory
         }
 
     private:
+        allocator_info info() const FOONATHAN_NOEXCEPT
+        {
+            return {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_stack", this};
+        }
+
         void allocate_block()
         {
             auto block = list_.allocate();
@@ -175,21 +178,20 @@ namespace foonathan { namespace memory
         /// \brief Allocation function forward to the stack for array and node.
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size(state) && "invalid node size");
+            auto mem = state.allocate(size, alignment);
             state.on_allocate(size);
-            return state.allocate(size, alignment);
+            return mem;
         }
 
         static void* allocate_array(allocator_type &state, std::size_t count,
                                 std::size_t size, std::size_t alignment)
         {
-            state.on_allocate(count * size);
             return allocate_node(state, count * size, alignment);
         }
         /// @}
 
         /// @{
-        /// \brief Deallocation functions do nothing, use unwinding on the stack to free memory.
+        /// \brief Deallocation functions do nothing besides leak checking, use unwinding on the stack to free memory.
         static void deallocate_node(allocator_type &state,
                     void *, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
@@ -197,9 +199,9 @@ namespace foonathan { namespace memory
         }
 
         static void deallocate_array(allocator_type &state,
-                    void *, std::size_t count , std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                    void *ptr, std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
-            state.on_deallocate(count * size);
+            deallocate_node(state, ptr, count * size, alignment);
         }
         /// @}
 
