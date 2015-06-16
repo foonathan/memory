@@ -186,7 +186,7 @@ namespace foonathan { namespace memory
                                    const allocator_info &info)
         {
             if (passed > supported)
-                throw bad_allocation_size(info, passed, supported);
+                FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
         }
     } // namespace detail
 }} // namespace foonathan::memory

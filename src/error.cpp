@@ -37,7 +37,7 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
         if (handler)
             handler();
         else
-            throw out_of_memory(info, size);
+            FOONATHAN_THROW(out_of_memory(info, size));
     }
     assert(false);
     return nullptr;
