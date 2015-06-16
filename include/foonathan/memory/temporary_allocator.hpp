@@ -87,7 +87,8 @@ namespace foonathan { namespace memory
         /// \brief Allocation function forward to the temporary allocator for array and node.
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size(state) && "invalid node size");
+            detail::check_allocation_size(size, max_node_size(state),
+                {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::temporary_allocator", &state});
             return state.allocate(size, alignment);
         }
 
