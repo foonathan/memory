@@ -10,6 +10,7 @@
 
 #include <limits>
 #include <new>
+#include <type_traits>
 #include <utility>
 
 #include "config.hpp"
@@ -19,161 +20,50 @@
 
 namespace foonathan { namespace memory
 {
-    /// \brief Wraps any class that has specialized the \ref allocator_traits and gives it the proper interface.
-    /// \details It just forwards all function to the traits and makes it easier to use them.
+    /// \brief Stores a raw allocator using a certain storage policy.
+    /// \details Accesses are synchronized via a mutex.<br>
+    /// The storage policy requires a typedef \c raw_allocator actually stored,
+    /// a constructor taking any type that is stored,
+    /// and a \c get_allocator() function for \c const and \c non-const returning the allocator.
     /// \ingroup memory
-    template <class RawAllocator>
-    class allocator_adapter : RawAllocator
+    template <class RawAllocator,
+              class StoragePolicy,
+              class Mutex>
+    class allocator_storage
+    : StoragePolicy,
+      detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
     {
-        using traits = allocator_traits<RawAllocator>;
+        using traits = allocator_traits<typename StoragePolicy::raw_allocator>;
+        using actual_mutex = const detail::mutex_storage<
+                                detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>;
     public:
+        /// \brief The stored allocator type.
         using raw_allocator = RawAllocator;
-        using is_stateful = typename traits::is_stateful;
 
-        allocator_adapter(raw_allocator &&alloc = {})
-        : raw_allocator(std::move(alloc)) {}
+        /// \brief The used storage policy.
+        using storage_policy = StoragePolicy;
 
-        void* allocate_node(std::size_t size, std::size_t alignment)
-        {
-            return traits::allocate_node(get_allocator(), size, alignment);
-        }
-
-        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
-        {
-            return traits::allocate_array(get_allocator(), count, size, alignment);
-        }
-
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            traits::deallocate_node(get_allocator(), ptr, size, alignment);
-        }
-
-        void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
-        }
-
-        std::size_t max_node_size() const
-        {
-            return traits::max_node_size(get_allocator());
-        }
-
-        std::size_t max_array_size() const
-        {
-            return traits::max_array_size(get_allocator());
-        }
-
-        std::size_t max_alignment() const
-        {
-            return traits::max_alignment(get_allocator());
-        }
-
-        /// @{
-        /// \brief Returns a reference to the actual allocator.
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-        /// @}
-    };
-
-    /// \brief Creates an \ref allocator_adapter.
-    /// \relates allocator_adapter
-    template <class RawAllocator>
-    auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_adapter<typename std::decay<RawAllocator>::type>
-    {
-        return {std::forward<RawAllocator>(allocator)};
-    }
-
-    namespace detail
-    {
-        // stores a pointer to an allocator
-        template <class RawAllocator, bool Stateful>
-        class allocator_reference_impl
-        {
-        public:
-            allocator_reference_impl(RawAllocator &allocator) FOONATHAN_NOEXCEPT
-            : alloc_(&allocator) {}
-            allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
-            allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
-
-        protected:
-            ~allocator_reference_impl() = default;
-
-            using reference_type = RawAllocator&;
-
-            reference_type get_allocator() const FOONATHAN_NOEXCEPT
-            {
-                return *alloc_;
-            }
-
-        private:
-            RawAllocator *alloc_;
-        };
-
-        // doesn't store anything for stateless allocators
-        // construct an instance on the fly
-        template <class RawAllocator>
-        class allocator_reference_impl<RawAllocator, false>
-        {
-        public:
-            allocator_reference_impl() FOONATHAN_NOEXCEPT = default;
-            allocator_reference_impl(const RawAllocator&) FOONATHAN_NOEXCEPT {}
-            allocator_reference_impl(const allocator_reference_impl &) FOONATHAN_NOEXCEPT = default;
-            allocator_reference_impl& operator=(const allocator_reference_impl&) FOONATHAN_NOEXCEPT = default;
-
-        protected:
-            ~allocator_reference_impl() = default;
-
-            using reference_type = RawAllocator;
-
-            reference_type get_allocator() const FOONATHAN_NOEXCEPT
-            {
-                return {};
-            }
-        };
-    } // namespace detail
-
-    /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
-    /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
-    /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
-    /// For stateless allocators there is no locking or storing overhead whatsover,
-    /// they are just created as needed on the fly.
-    /// \ingroup memory
-    template <class RawAllocator, class Mutex = default_mutex>
-    class allocator_reference
-    : detail::allocator_reference_impl<RawAllocator, allocator_traits<RawAllocator>::is_stateful::value>,
-      detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>
-    {
-        using traits = allocator_traits<RawAllocator>;
-        using storage = detail::allocator_reference_impl<RawAllocator, traits::is_stateful::value>;
-        using actual_mutex = const detail::mutex_storage<detail::mutex_for<RawAllocator, Mutex>>;
-    public:
-        using raw_allocator = RawAllocator;
+        /// \brief The used mutex.
         using mutex = Mutex;
 
+        /// \brief It is stateful, it the traits say so.
         using is_stateful = typename traits::is_stateful;
 
-        /// @{
-        /// \brief Creates it giving it the \ref allocator_type.
-        /// \details For non-stateful allocators, there exists a default-constructor and a version taking const-ref.
-        /// For stateful allocators it takes a non-const reference.
-        allocator_reference(const raw_allocator &alloc = {}) FOONATHAN_NOEXCEPT
-        : storage(alloc) {}
+        /// \brief Passes it the allocator.
+        /// \details Depending on the policy, it will either be moved
+        /// or only its address taken.<br>
+        /// The constructor is only available if it is valid.
+        template <class Alloc>
+        allocator_storage(Alloc &&alloc,
+            typename std::enable_if<
+            std::is_constructible<storage_policy,
+                                  decltype(std::forward<Alloc>(alloc))
+                                 >::value, void*>::type = nullptr)
+        : storage_policy(std::forward<Alloc>(alloc)) {}
 
-        allocator_reference(raw_allocator &alloc) FOONATHAN_NOEXCEPT
-        : storage(alloc) {}
-        /// @}
-
         /// @{
-        /// \brief All concept functions lock the mutex and call the function on the referenced allocator.
+        /// \brief Forwards the function to the stored allocator.
+        /// \details It uses the \ref allocator_traits to wrap the call.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             std::lock_guard<actual_mutex> lock(*this);
@@ -181,8 +71,7 @@ namespace foonathan { namespace memory
             return traits::allocate_node(alloc, size, alignment);
         }
 
-        void* allocate_array(std::size_t count,
-                             std::size_t size, std::size_t alignment)
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
@@ -196,12 +85,12 @@ namespace foonathan { namespace memory
             traits::deallocate_node(alloc, ptr, size, alignment);
         }
 
-        void deallocate_array(void *array, std::size_t count,
+        void deallocate_array(void *ptr, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             std::lock_guard<actual_mutex> lock(*this);
             auto&& alloc = get_allocator();
-            traits::deallocate_array(alloc, array, count, size, alignment);
+            traits::deallocate_array(alloc, ptr, count, size, alignment);
         }
 
         std::size_t max_node_size() const
@@ -227,30 +116,157 @@ namespace foonathan { namespace memory
         /// @}
 
         /// @{
+        /// \brief Returns the stored allocator.
+        /// \details It is most likely a reference
+        /// but might be a temporary for stateless allocators.
+        /// \note In case of a thread safe policy, this does not lock any mutexes.
+        auto get_allocator() FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<storage_policy>().get_allocator())
+        {
+            return storage_policy::get_allocator();
+        }
+
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> decltype(std::declval<storage_policy>().get_allocator())
+        {
+            return storage_policy::get_allocator();
+        }
+        /// @}
+
+        /// @{
         /// \brief Returns a reference to the allocator while keeping it locked.
         /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
         detail::locked_allocator<raw_allocator, actual_mutex> lock() FOONATHAN_NOEXCEPT
         {
-            return {*this, *this};
+            return {get_allocator(), *this};
         }
 
         detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
         {
-            return {*this, *this};
+            return {get_allocator(), *this};
         }
-        /// @}
+        /// @}.
+    };
 
-        /// \brief Returns the \ref raw_allocator.
-        /// \details It is a reference for stateful allocators and a temporary for non-stateful.
-        /// \note This function does not perform any locking and is thus not thread safe.
+    /// \brief A direct storage policy.
+    /// \details Just stores the allocator directly.
+    /// \ingroup memory
+    template <class RawAllocator>
+    class direct_storage : RawAllocator
+    {
+    public:
+        using raw_allocator = RawAllocator;
+
+        direct_storage(RawAllocator &&allocator)
+        : RawAllocator(std::move(allocator)) {}
+
+        RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+    };
+
+    /// \brief Wraps any class that has specialized the \ref allocator_traits and gives it the proper interface.
+    /// \details It just forwards all function to the traits and makes it easier to use them.<br>
+    /// It is implemented via \ref allocator_storage with the \ref direct_storage policy.
+    /// It does not use a mutex, since there is no need.
+    /// \ingroup memory
+    template <class RawAllocator>
+    using allocator_adapter = allocator_storage<RawAllocator,
+                                                direct_storage<RawAllocator>,
+                                                dummy_mutex>;
+
+    /// \brief Creates an \ref allocator_adapter.
+    /// \relates allocator_adapter
+    template <class RawAllocator>
+    auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> allocator_adapter<typename std::decay<RawAllocator>::type>
+    {
+        return allocator_adapter<typename std::decay<RawAllocator>::type>
+                    (std::forward<RawAllocator>(allocator));
+    }
+
+    namespace detail
+    {
+        // stores a pointer to an allocator
+        template <class RawAllocator, bool Stateful>
+        class reference_storage_impl
+        {
+        protected:
+            reference_storage_impl(RawAllocator &allocator) FOONATHAN_NOEXCEPT
+            : alloc_(&allocator) {}
+
+            using reference_type = RawAllocator&;
+
+            reference_type get_allocator() const FOONATHAN_NOEXCEPT
+            {
+                return *alloc_;
+            }
+
+        private:
+            RawAllocator *alloc_;
+        };
+
+        // doesn't store anything for stateless allocators
+        // construct an instance on the fly
+        template <class RawAllocator>
+        class reference_storage_impl<RawAllocator, false>
+        {
+        protected:
+            reference_storage_impl(const RawAllocator &) FOONATHAN_NOEXCEPT {}
+
+            using reference_type = RawAllocator;
+
+            reference_type get_allocator() const FOONATHAN_NOEXCEPT
+            {
+                return {};
+            }
+        };
+    } // namespace detail
+
+    /// \brief A storage policy storing a reference to an allocator.
+    /// \details For stateless allocators, it is constructed on the fly.
+    /// \ingroup memory
+    template <class RawAllocator, class Mutex = default_mutex>
+    class reference_storage
+    : detail::reference_storage_impl<RawAllocator,
+        allocator_traits<RawAllocator>::is_stateful::value>
+    {
+        using storage = detail::reference_storage_impl<RawAllocator,
+                            allocator_traits<RawAllocator>::is_stateful::value>;
+    public:
+        using raw_allocator = RawAllocator;
+
+        reference_storage(const raw_allocator &alloc = {}) FOONATHAN_NOEXCEPT
+        : storage(alloc) {}
+
+        reference_storage(raw_allocator &alloc) FOONATHAN_NOEXCEPT
+        : storage(alloc) {}
+
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> typename storage::reference_type
         {
             return storage::get_allocator();
         }
     };
+
+    /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
+    /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
+    /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
+    /// For stateless allocators there is no locking or storing overhead whatsover,
+    /// they are just created as needed on the fly.<br>
+    /// It is implemented via \ref allocator_storage with the \ref reference_storage policy.
+    /// \ingroup memory
+    template <class RawAllocator, class Mutex = default_mutex>
+    using allocator_reference = allocator_storage<RawAllocator,
+                                        reference_storage<RawAllocator>, Mutex>;
 
     /// @{
     /// \brief Creates a \ref allocator_reference.
