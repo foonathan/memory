@@ -26,9 +26,7 @@ namespace foonathan { namespace memory
     /// a constructor taking any type that is stored,
     /// and a \c get_allocator() function for \c const and \c non-const returning the allocator.
     /// \ingroup memory
-    template <class RawAllocator,
-              class StoragePolicy,
-              class Mutex>
+    template <class StoragePolicy, class Mutex>
     class allocator_storage
     : StoragePolicy,
       detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
@@ -38,7 +36,7 @@ namespace foonathan { namespace memory
                                 detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>;
     public:
         /// \brief The stored allocator type.
-        using raw_allocator = RawAllocator;
+        using raw_allocator = typename StoragePolicy::raw_allocator;
 
         /// \brief The used storage policy.
         using storage_policy = StoragePolicy;
@@ -127,7 +125,7 @@ namespace foonathan { namespace memory
         }
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(std::declval<storage_policy>().get_allocator())
+        -> decltype(std::declval<const storage_policy>().get_allocator())
         {
             return storage_policy::get_allocator();
         }
@@ -179,8 +177,7 @@ namespace foonathan { namespace memory
     /// It does not use a mutex, since there is no need.
     /// \ingroup memory
     template <class RawAllocator>
-    using allocator_adapter = allocator_storage<RawAllocator,
-                                                direct_storage<RawAllocator>,
+    using allocator_adapter = allocator_storage<direct_storage<RawAllocator>,
                                                 dummy_mutex>;
 
     /// \brief Creates an \ref allocator_adapter.
@@ -189,8 +186,7 @@ namespace foonathan { namespace memory
     auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_adapter<typename std::decay<RawAllocator>::type>
     {
-        return allocator_adapter<typename std::decay<RawAllocator>::type>
-                    (std::forward<RawAllocator>(allocator));
+        return (std::forward<RawAllocator>(allocator));
     }
 
     namespace detail
@@ -265,8 +261,7 @@ namespace foonathan { namespace memory
     /// It is implemented via \ref allocator_storage with the \ref reference_storage policy.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = default_mutex>
-    using allocator_reference = allocator_storage<RawAllocator,
-                                        reference_storage<RawAllocator>, Mutex>;
+    using allocator_reference = allocator_storage<reference_storage<RawAllocator>, Mutex>;
 
     /// @{
     /// \brief Creates a \ref allocator_reference.
@@ -285,6 +280,111 @@ namespace foonathan { namespace memory
         return {std::forward<RawAllocator>(allocator)};
     }
     /// @}
+
+    class any_storage
+    {
+        struct base_allocator
+        {
+            using is_stateful = std::true_type;
+
+            virtual void* allocate_node(std::size_t size, std::size_t alignment) = 0;
+            virtual void* allocate_array(std::size_t count,
+                                        std::size_t size, std::size_t alignment) = 0;
+
+            virtual void deallocate_node(void *node,
+                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+            virtual void deallocate_array(void *array,
+                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+
+            virtual std::size_t max_node_size() const = 0;
+            virtual std::size_t max_array_size() const = 0;
+            virtual std::size_t max_alignment() const = 0;
+        };
+    public:
+        using raw_allocator = base_allocator;
+
+        template <class RawAllocator,
+                typename = typename std::enable_if<
+                    !std::is_same<typename std::decay<RawAllocator>::type,
+                                  any_storage>::value>::type>
+        any_storage(RawAllocator &&alloc)
+        : ptr_(new basic_allocator<typename std::decay<RawAllocator>::type>
+                        (std::move(alloc)))
+        {}
+
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *ptr_;
+        }
+
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        {
+            return *ptr_;
+        }
+
+    private:
+        template <class RawAllocator>
+        class basic_allocator : public base_allocator, RawAllocator
+        {
+            using traits = allocator_traits<RawAllocator>;
+        public:
+            basic_allocator(RawAllocator &&alloc)
+            : RawAllocator(std::move(alloc)) {}
+
+            void* allocate_node(std::size_t size, std::size_t alignment) override
+            {
+                return traits::allocate_node(get(), size, alignment);
+            }
+
+            void* allocate_array(std::size_t count,
+                                 std::size_t size, std::size_t alignment) override
+            {
+                return traits::allocate_array(get(), count, size, alignment);
+            }
+
+            void deallocate_node(void *node,
+                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
+            {
+                traits::deallocate_node(get(), node, size, alignment);
+            }
+
+            void deallocate_array(void *array,
+                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
+            {
+                traits::deallocate_array(get(), array, count, size, alignment);
+            }
+
+            std::size_t max_node_size() const override
+            {
+                return traits::max_node_size(get());
+            }
+
+            std::size_t max_array_size() const override
+            {
+                return traits::max_array_size(get());
+            }
+
+            std::size_t max_alignment() const override
+            {
+                return traits::max_alignment(get());
+            }
+
+        private:
+            RawAllocator& get() FOONATHAN_NOEXCEPT
+            {
+                return *this;
+            }
+
+            const RawAllocator& get() const FOONATHAN_NOEXCEPT
+            {
+                return *this;
+            }
+        };
+
+        std::unique_ptr<base_allocator> ptr_;
+    };
+
+    using any_allocator = allocator_storage<any_storage, dummy_mutex>;
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     ///
