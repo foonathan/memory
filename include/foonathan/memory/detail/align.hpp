@@ -23,6 +23,14 @@ namespace foonathan { namespace memory
             return misaligned != 0 ? (alignment - misaligned) : 0;
         }
 
+        // whether or not the pointer is aligned for given alignment
+        // alignment must be a power of two
+        inline bool is_aligned(void *ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            auto address = reinterpret_cast<std::uintptr_t>(ptr);
+            return address % alignment == 0u;
+        }
+
         // max_align_t is sometimes not in namespace std and sometimes not available at all
         #if FOONATHAN_HAS_MAX_ALIGN
             namespace max_align

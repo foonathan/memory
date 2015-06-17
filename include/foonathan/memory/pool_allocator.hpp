@@ -232,7 +232,7 @@ namespace foonathan { namespace memory
         /// \brief Maximum alignment is \c std::min(node_size(), alignof(std::max_align_t).
         static std::size_t max_alignment(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
-            return std::min(state.node_size(), detail::max_alignment);
+            return state.list_.alignment();
         }
 
     private:

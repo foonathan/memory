@@ -175,8 +175,16 @@ namespace foonathan { namespace memory
             if (!mem)
             {
                 // insert rest
-                if (stack_.end() - stack_.top() != 0u)
-                    pool.insert(stack_.top(), std::size_t(stack_.end() - stack_.top()));
+                if (auto remaining = std::size_t(stack_.end() - stack_.top()))
+                {
+                    auto offset = detail::align_offset(stack_.top(), detail::max_alignment);
+                    if (offset < remaining)
+                    {
+                        detail::debug_fill(stack_.top(), offset,
+                                            debug_magic::alignment_memory);
+                        pool.insert(stack_.top() + offset, remaining - offset);
+                    }
+                }
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity, detail::max_alignment);

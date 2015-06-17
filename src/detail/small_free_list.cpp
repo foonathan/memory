@@ -4,6 +4,7 @@
 
 #include "detail/small_free_list.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <new>
@@ -185,6 +186,7 @@ void foonathan::memory::detail::swap(small_free_memory_list &a, small_free_memor
 
 void small_free_memory_list::insert(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
 {
+    assert(is_aligned(memory, max_alignment));
     auto chunk_unit = chunk_memory_offset + node_size_ * chunk_max_nodes;
     auto no_chunks = size / chunk_unit;
     auto mem = static_cast<char*>(memory);
@@ -250,6 +252,11 @@ std::size_t small_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 {
     // note: node_size_ contains debug fence size, result not
     return node_size_ - 2 * debug_fence_size;
+}
+
+std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return std::min(node_size_, max_alignment);
 }
 
 bool small_free_memory_list::find_chunk(std::size_t n) FOONATHAN_NOEXCEPT
