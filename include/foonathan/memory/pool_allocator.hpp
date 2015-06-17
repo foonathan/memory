@@ -114,7 +114,9 @@ namespace foonathan { namespace memory
         /// This is also the maximum array size.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
-            return block_list_.next_block_size();
+            // subtract max alignment to ensure that it can be aligned properly
+            return block_list_.next_block_size()
+                   - detail::max_alignment;
         }
 
         /// \brief Returns the \ref impl_allocator.
@@ -141,11 +143,15 @@ namespace foonathan { namespace memory
         {
             detail::check_allocation_size(n * node_size, next_capacity(),
                                           info());
+            auto next_cap = next_capacity();
             auto mem = free_list_.empty() ? nullptr
                                           : free_list_.allocate(n * node_size);
             if (!mem)
             {
                 allocate_block();
+                // it must now provide at least the older next capacity
+                // otherwise the array allocation still won't work
+                assert(capacity() >= next_cap);
                 mem = free_list_.allocate(n * node_size);
             }
             assert(mem);
@@ -232,7 +238,7 @@ namespace foonathan { namespace memory
         /// \brief Maximum alignment is \c std::min(node_size(), alignof(std::max_align_t).
         static std::size_t max_alignment(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
-            return state.list_.alignment();
+            return state.free_list_.alignment();
         }
 
     private:
