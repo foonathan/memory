@@ -303,85 +303,119 @@ namespace foonathan { namespace memory
     public:
         using raw_allocator = base_allocator;
 
-        template <class RawAllocator,
-                typename = typename std::enable_if<
-                    !std::is_same<typename std::decay<RawAllocator>::type,
-                                  any_storage>::value>::type>
-        any_storage(RawAllocator &&alloc)
-        : ptr_(new basic_allocator<typename std::decay<RawAllocator>::type>
-                        (std::move(alloc)))
-        {}
+        template <class RawAllocator>
+        any_storage(RawAllocator &alloc) FOONATHAN_NOEXCEPT
+        {
+            static_assert(sizeof(basic_allocator<RawAllocator>)
+                          <= sizeof(basic_allocator<default_instantiation>),
+                    "requires all instantiations to have certain maximum size");
+            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
+        }
+
+        template <class RawAllocator>
+        any_storage(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
+        {
+            static_assert(sizeof(basic_allocator<RawAllocator>)
+                          <= sizeof(basic_allocator<default_instantiation>),
+                          "requires all instantiations to have certain maximum size");
+            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
+        }
 
         raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
-            return *ptr_;
+            auto mem = static_cast<void*>(&storage_);
+            return *static_cast<base_allocator*>(mem);
         }
 
         const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
-            return *ptr_;
+            auto mem = static_cast<const void*>(&storage_);
+            return *static_cast<const base_allocator*>(mem);
         }
 
     private:
         template <class RawAllocator>
-        class basic_allocator : public base_allocator, RawAllocator
+        class basic_allocator
+        : public base_allocator,
+          private detail::reference_storage_impl<RawAllocator,
+                        allocator_traits<RawAllocator>::is_stateful::value>
         {
             using traits = allocator_traits<RawAllocator>;
+            using storage = detail::reference_storage_impl<RawAllocator,
+                    allocator_traits<RawAllocator>::is_stateful::value>;
         public:
-            basic_allocator(RawAllocator &&alloc)
-            : RawAllocator(std::move(alloc)) {}
+            // non stateful
+            basic_allocator(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
+            : storage(alloc) {}
+
+            // stateful
+            basic_allocator(RawAllocator &alloc) FOONATHAN_NOEXCEPT
+            : storage(alloc) {}
 
             void* allocate_node(std::size_t size, std::size_t alignment) override
             {
-                return traits::allocate_node(get(), size, alignment);
+                auto&& alloc = get();
+                return traits::allocate_node(alloc, size, alignment);
             }
 
             void* allocate_array(std::size_t count,
                                  std::size_t size, std::size_t alignment) override
             {
-                return traits::allocate_array(get(), count, size, alignment);
+                auto&& alloc = get();
+                return traits::allocate_array(alloc, count, size, alignment);
             }
 
             void deallocate_node(void *node,
                         std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
             {
-                traits::deallocate_node(get(), node, size, alignment);
+                auto&& alloc = get();
+                traits::deallocate_node(alloc, node, size, alignment);
             }
 
             void deallocate_array(void *array,
                         std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
             {
-                traits::deallocate_array(get(), array, count, size, alignment);
+                auto&& alloc = get();
+                traits::deallocate_array(alloc, array, count, size, alignment);
             }
 
             std::size_t max_node_size() const override
             {
-                return traits::max_node_size(get());
+                auto&& alloc = get();
+                return traits::max_node_size(alloc);
             }
 
             std::size_t max_array_size() const override
             {
-                return traits::max_array_size(get());
+                auto&& alloc = get();
+                return traits::max_array_size(alloc);
             }
 
             std::size_t max_alignment() const override
             {
-                return traits::max_alignment(get());
+                auto&& alloc = get();
+                return traits::max_alignment(alloc);
             }
 
         private:
-            RawAllocator& get() FOONATHAN_NOEXCEPT
+            auto get() const FOONATHAN_NOEXCEPT
+            -> typename storage::reference_type
             {
-                return *this;
-            }
-
-            const RawAllocator& get() const FOONATHAN_NOEXCEPT
-            {
-                return *this;
+                return storage::get_allocator();
             }
         };
 
-        std::unique_ptr<base_allocator> ptr_;
+        // use a stateful instantiation to determine size and alignment
+        struct dummy_allocator
+        {
+            using is_stateful = std::true_type;
+        };
+
+        using default_instantiation = basic_allocator<dummy_allocator>;
+        using storage = typename
+            std::aligned_storage<sizeof(default_instantiation),
+                                 alignof(default_instantiation)>::type;
+        storage storage_;
     };
 
     using any_allocator = allocator_storage<any_storage, dummy_mutex>;
