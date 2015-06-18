@@ -31,7 +31,6 @@ set(header
         ${header_path}/raw_allocator_base.hpp
         ${header_path}/smart_ptr.hpp
         ${header_path}/stack_allocator.hpp
-        ${header_path}/std_allocator_base.hpp
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp)
