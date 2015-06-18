@@ -42,6 +42,7 @@ namespace foonathan { namespace memory
             //=== insert/allocation/deallocation ===//
             // inserts a new memory block, by splitting it up and setting the links
             // does not own memory!
+            // mem must be aligned for alignment()
             // pre: size != 0
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
@@ -69,6 +70,9 @@ namespace foonathan { namespace memory
             }
 
             bool empty() const FOONATHAN_NOEXCEPT;
+
+            // alignment of all nodes
+            std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
             char *first_, *last_;
@@ -104,6 +108,7 @@ namespace foonathan { namespace memory
             //=== insert/allocation/deallocation ===//
             // inserts a new memory block, by splitting it up and setting the links
             // does not own memory!
+            // mem must be aligned for alignment()
             // pre: size != 0
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
@@ -134,6 +139,9 @@ namespace foonathan { namespace memory
             {
                 return list_.empty();
             }
+
+            // alignment of all nodes
+            std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
             // xor linked list storing the free nodes

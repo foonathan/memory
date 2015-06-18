@@ -22,6 +22,7 @@ set(header
         ${header_path}/container.hpp
         ${header_path}/debugging.hpp
         ${header_path}/default_allocator.hpp
+        ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
         ${header_path}/new_allocator.hpp
         ${header_path}/pool_allocator.hpp
@@ -42,6 +43,7 @@ set(src
         detail/memory_stack.cpp
         detail/small_free_list.cpp
         debugging.cpp
+        error.cpp
         heap_allocator.cpp
         new_allocator.cpp
         temporary_allocator.cpp)

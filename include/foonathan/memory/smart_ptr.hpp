@@ -180,6 +180,7 @@ namespace foonathan { namespace memory
         template <typename T, typename ... Args>
         void construct(std::false_type, T *begin, T *end, Args&&... args)
         {
+        #if FOONATHAN_EXCEPTION_SUPPORT
             auto cur = begin;
             try
             {
@@ -192,6 +193,9 @@ namespace foonathan { namespace memory
                     el->~T();
                 throw;
             }
+        #else
+            construct(std::true_type{}, begin, end, std::forward<Args>(args)...);
+        #endif
         }
 
         template <typename T, class RawAllocator>

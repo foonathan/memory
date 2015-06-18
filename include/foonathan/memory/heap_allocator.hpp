@@ -35,9 +35,10 @@ namespace foonathan { namespace memory
 
         //=== allocation/deallocation ===//
         /// \brief Allocates raw memory from the heap.
-        ///
-        /// If it fails, it behaves exactly as \c ::operator \c new
-        /// (calling new handler, throwing exception...).
+        /// \details If it fails, it behaves like \c ::operator \c new
+        /// (retry in loop calling \c std::new_handler, etc.),
+        /// but if the new handler is \c null, it calls the \ref out_of_memory_handler
+        /// prior to throwing \c std::bad_alloc (or in this case \ref out_of_memory).
         void* allocate_node(std::size_t size, std::size_t alignment);
 
         /// \brief Deallocates raw memory.

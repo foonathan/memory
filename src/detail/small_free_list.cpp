@@ -4,6 +4,7 @@
 
 #include "detail/small_free_list.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <new>
@@ -185,6 +186,7 @@ void foonathan::memory::detail::swap(small_free_memory_list &a, small_free_memor
 
 void small_free_memory_list::insert(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
 {
+    assert(is_aligned(memory, max_alignment));
     auto chunk_unit = chunk_memory_offset + node_size_ * chunk_max_nodes;
     auto no_chunks = size / chunk_unit;
     auto mem = static_cast<char*>(memory);
@@ -230,16 +232,15 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
     auto node_memory = static_cast<unsigned char*>(memory) - debug_fence_size;
     auto dealloc_chunk = chunk_for(node_memory);
 
+    auto info = allocator_info(FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::small_free_memory_list", this);
+
     // memory was never managed by this list
-    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(dealloc_chunk,
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+    check_pointer(dealloc_chunk, info, memory);
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk));
     // memory is not at the right position
-    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(offset % node_size_ == 0,
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+    check_pointer(offset % node_size_ == 0, info, memory);
     // double-free
-    FOONATHAN_MEMORY_IMPL_POINTER_CHECK(!chunk_contains(dealloc_chunk, node_size_, node_memory),
-        "foonathan::memory::detail::small_free_memory_list", this, memory);
+    check_pointer(!chunk_contains(dealloc_chunk, node_size_, node_memory), info, memory);
 
     *node_memory = dealloc_chunk->first_node;
     dealloc_chunk->first_node = static_cast<unsigned char>(offset / node_size_);
@@ -251,6 +252,11 @@ std::size_t small_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 {
     // note: node_size_ contains debug fence size, result not
     return node_size_ - 2 * debug_fence_size;
+}
+
+std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return std::min(node_size_, max_alignment);
 }
 
 bool small_free_memory_list::find_chunk(std::size_t n) FOONATHAN_NOEXCEPT

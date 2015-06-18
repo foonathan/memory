@@ -60,8 +60,28 @@
 #cmakedefine01 FOONATHAN_MEMORY_NAMESPACE_PREFIX
 
 #if !FOONATHAN_MEMORY_NAMESPACE_PREFIX
-    namespace foonathan { namespace memory {}} // namespace foonathan::memory
+    namespace foonathan { namespace memory {}}
     namespace memory = foonathan::memory;
+
+    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "memory"
+#else
+    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "foonathan::memory"
+#endif
+
+/// \brief Whether or not it is build with exception support.
+/// \details If disabled, the library can be used without exceptions enabled,
+/// e.g. when \c -fno-exceptions is active.
+/// \ingroup memory
+#cmakedefine01 FOONATHAN_EXCEPTION_SUPPORT
+
+#ifndef FOONATHAN_THROW
+    #if FOONATHAN_EXCEPTION_SUPPORT
+        #define FOONATHAN_THROW(ex) throw (ex)
+    #else
+        #include <cstdlib>
+
+        #define FOONATHAN_THROW(ex) ((ex), std::abort())
+    #endif
 #endif
 
 //=== compatibility ===//
@@ -73,7 +93,7 @@
 #cmakedefine01 FOONATHAN_HAS_CONSTEXPR
 
 #ifndef FOONATHAN_ALIGNOF
-#if FOONATHAN_HAS_ALIGNOF
+    #if FOONATHAN_HAS_ALIGNOF
         #define FOONATHAN_ALIGNOF(x) alignof(x)
     #elif !FOONATHAN_HAS_ALIGNOF && defined _MSC_VER
         #define FOONATHAN_ALIGNOF(x) __alignof(x)
@@ -83,7 +103,7 @@
 #endif
 
 #ifndef FOONATHAN_THREAD_LOCAL
-#if FOONATHAN_HAS_THREAD_LOCAL
+    #if FOONATHAN_HAS_THREAD_LOCAL
         #define FOONATHAN_THREAD_LOCAL thread_local
     #elif !FOONATHAN_HAS_THREAD_LOCAL && defined __GNUC__
         #define FOONATHAN_THREAD_LOCAL __thread
@@ -103,7 +123,7 @@
 #endif
 
 #ifndef FOONATHAN_CONSTEXPR
-#if FOONATHAN_HAS_CONSTEXPR
+    #if FOONATHAN_HAS_CONSTEXPR
         #define FOONATHAN_CONSTEXPR constexpr
     #else
         #define FOONATHAN_CONSTEXPR const

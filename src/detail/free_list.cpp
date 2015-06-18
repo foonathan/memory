@@ -7,9 +7,11 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 
+#include "detail/align.hpp"
 #include "debugging.hpp"
 
 using namespace foonathan::memory;
@@ -79,6 +81,7 @@ void foonathan::memory::detail::swap(free_memory_list &a, free_memory_list &b) F
 void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     // inserts at the back of the list
+    assert(is_aligned(mem, alignment()));
 
     auto no_nodes = size / node_size_;
     assert(no_nodes > 0u);
@@ -212,14 +215,18 @@ bool free_memory_list::empty() const FOONATHAN_NOEXCEPT
     return !first_;
 }
 
+std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return std::min(node_size_, max_alignment);
+}
+
 namespace
 {
     // xor for pointers
     char* xor_ptr(char *prev, char *next) FOONATHAN_NOEXCEPT
     {
-        using namespace std; // uintptr_t not always in namespace std
-        auto a = reinterpret_cast<uintptr_t>(prev);
-        auto b = reinterpret_cast<uintptr_t>(next);
+        auto a = reinterpret_cast<std::uintptr_t>(prev);
+        auto b = reinterpret_cast<std::uintptr_t>(next);
         auto val = a ^ b;
         return reinterpret_cast<char*>(val);
     }
@@ -442,9 +449,9 @@ ordered_free_memory_list::list_impl::pos
         {
             if (greater(cur, memory))
                 break;
-            FOONATHAN_MEMORY_IMPL_POINTER_CHECK(cur != memory,
-                                                "foonathan::memory::detail::ordered_free_memory_list",
-                                                this, memory);
+            detail::check_pointer(cur != memory,
+                                  {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::ordered_free_memory_list",
+                                   this}, memory);
             next(cur, prev);
         }
 
@@ -458,9 +465,9 @@ ordered_free_memory_list::list_impl::pos
         {
             if (less(cur, memory))
                 break;
-            FOONATHAN_MEMORY_IMPL_POINTER_CHECK(cur != memory,
-                                                "foonathan::memory::detail::ordered_free_memory_list",
-                                                this, memory);
+            detail::check_pointer(cur != memory,
+                                  {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::ordered_free_memory_list",
+                                   this}, memory);
             prev(cur, next);
         }
 
@@ -512,6 +519,7 @@ void foonathan::memory::detail::swap(ordered_free_memory_list &a, ordered_free_m
 
 void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
+    assert(is_aligned(mem, alignment()));
     auto no_nodes = size / node_size_;
     list_.insert(node_size_, mem, no_nodes, true);
     capacity_ += no_nodes;
@@ -563,4 +571,9 @@ void ordered_free_memory_list::
 std::size_t ordered_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 {
     return node_size_ - 2 * debug_fence_size;
+}
+
+std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return std::min(node_size_, max_alignment);
 }

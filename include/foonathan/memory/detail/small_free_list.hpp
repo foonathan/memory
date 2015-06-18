@@ -79,6 +79,7 @@ namespace foonathan { namespace memory
 
             //=== insert/alloc/dealloc ===//
             // inserts new memory of given size into the free list
+            // mem must be aligned for maximum alignment
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
             // allocates a node big enough for the node size
@@ -108,6 +109,9 @@ namespace foonathan { namespace memory
             {
                 return capacity_ == 0u;
             }
+
+            // the alignment of all nodes
+            std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
             // finds the chunk from which memory is and returns it

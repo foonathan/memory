@@ -64,7 +64,7 @@ namespace foonathan { namespace memory
         /// The first memory block is allocated, the block size can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
-        : leak_checker("foonathan::memory::memory_pool_collection"),
+        : leak_checker(info().name),
           block_list_(block_size, std::move(alloc)),
           stack_(block_list_.allocate()),
           pools_(stack_, max_node_size)
@@ -86,10 +86,20 @@ namespace foonathan { namespace memory
         /// the size must be smaller than the maximum node size.
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
+            static_assert(PoolType::value, "array allocations not supported");
+            detail::check_allocation_size(count * node_size, next_capacity(),
+                                          info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
-            return pool.allocate(count * node_size);
+            auto mem = pool.allocate(count * node_size);
+            if (!mem)
+            {
+                reserve_impl(pool, count * node_size);
+                mem = pool.allocate(count * node_size);
+            }
+            assert(mem);
+            return mem;
         }
 
         /// @{
@@ -101,6 +111,7 @@ namespace foonathan { namespace memory
 
         void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
+            static_assert(PoolType::value, "array allocations not supported");
             auto& pool = pools_.get(node_size);
             pool.deallocate(memory, count * node_size);
         }
@@ -148,6 +159,11 @@ namespace foonathan { namespace memory
         }
 
     private:
+        allocator_info info() const FOONATHAN_NOEXCEPT
+        {
+            return {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_pool_collection", this};
+        }
+
         std::size_t def_capacity() const FOONATHAN_NOEXCEPT
         {
             return block_list_.next_block_size() / pools_.size();
@@ -159,11 +175,19 @@ namespace foonathan { namespace memory
             if (!mem)
             {
                 // insert rest
-                if (stack_.end() - stack_.top() != 0u)
-                    pool.insert(stack_.top(), std::size_t(stack_.end() - stack_.top()));
+                if (auto remaining = std::size_t(stack_.end() - stack_.top()))
+                {
+                    auto offset = detail::align_offset(stack_.top(), detail::max_alignment);
+                    if (offset < remaining)
+                    {
+                        detail::debug_fill(stack_.top(), offset,
+                                            debug_magic::alignment_memory);
+                        pool.insert(stack_.top() + offset, remaining - offset);
+                    }
+                }
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
-                mem = stack_.allocate(capacity,  detail::max_alignment);
+                mem = stack_.allocate(capacity, detail::max_alignment);
                 assert(mem);
             }
             // insert new
@@ -196,8 +220,8 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size(state) && "invalid node size");
-            assert(alignment <=  detail::max_alignment && "invalid alignment");
+            detail::check_allocation_size(size, max_node_size(state), state.info());
+            detail::check_allocation_size(alignment, max_alignment(state), state.info());
             auto mem = state.allocate_node(size);
             state.on_allocate(size);
             return mem;
@@ -206,12 +230,9 @@ namespace foonathan { namespace memory
         static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size(state) && "invalid node size");
-            assert(alignment <=  detail::max_alignment && "invalid alignment");
-            assert(count * size <= max_array_size(state) && "invalid array count");
-            auto mem = state.allocate_array(count, size);
-            state.on_allocate(count * size);
-            return mem;
+            detail::check_allocation_size(size, max_node_size(state), state.info());
+            detail::check_allocation_size(alignment, max_alignment(state), state.info());
+            return allocate_array(Pool{}, state, count, size);
         }
 
         static void deallocate_node(allocator_type &state,
@@ -224,8 +245,7 @@ namespace foonathan { namespace memory
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
-            state.deallocate_array(array, count, size);
-            state.on_deallocate(count * size);
+            deallocate_array(Pool{}, state, array, count, size);
         }
 
         /// \brief Maximum size of a node is the maximum pool collections node size.
@@ -240,10 +260,38 @@ namespace foonathan { namespace memory
             return state.next_capacity();
         }
 
-        /// \brief Maximum alignment is alignof(std::max_align_t).
-        static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
+        /// \brief Maximum alignment is \c std::min(max_node_size(), alignof(std::max_align_t).
+        static std::size_t max_alignment(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
-            return  detail::max_alignment;
+            return std::min(state.max_node_size(), detail::max_alignment);
+        }
+
+    private:
+        static void* allocate_array(std::false_type, allocator_type &,
+                                    std::size_t, std::size_t)
+        {
+            assert(!"array allocations not supported");
+        }
+
+        static void* allocate_array(std::true_type, allocator_type &state,
+                                    std::size_t count, std::size_t size)
+        {
+            auto mem = state.allocate_array(count, size);
+            state.on_allocate(count * size);
+            return mem;
+        }
+
+        static void deallocate_array(std::false_type, allocator_type &,
+                                     void *, std::size_t, std::size_t)
+        {
+            assert(!"array allocations not supported");
+        }
+
+        static void deallocate_array(std::true_type, allocator_type &state,
+                                     void *array, std::size_t count, std::size_t size)
+        {
+            state.deallocate_array(array, count, size);
+            state.on_deallocate(count * size);
         }
     };
 }} // namespace foonathan::portal
