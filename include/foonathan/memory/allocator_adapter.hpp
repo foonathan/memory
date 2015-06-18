@@ -281,24 +281,77 @@ namespace foonathan { namespace memory
     }
     /// @}
 
+    /// \brief A storage policy storing a reference to any allocator.
+    /// \details For stateless allocators, it is constructed on the fly.<br>
+    /// It uses type erasure via virtual functions to store the allocator.
+    /// \ingroup memory
     class any_storage
     {
-        struct base_allocator
+        class base_allocator
         {
+        public:
             using is_stateful = std::true_type;
 
-            virtual void* allocate_node(std::size_t size, std::size_t alignment) = 0;
-            virtual void* allocate_array(std::size_t count,
-                                        std::size_t size, std::size_t alignment) = 0;
+            void* allocate_node(std::size_t size, std::size_t alignment)
+            {
+                return allocate(type::node, 0, size, alignment);
+            }
 
-            virtual void deallocate_node(void *node,
-                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
-            virtual void deallocate_array(void *array,
-                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+            void* allocate_array(std::size_t count,
+                                        std::size_t size, std::size_t alignment)
+            {
+                return allocate(type::array, count, size, alignment);
+            }
 
-            virtual std::size_t max_node_size() const = 0;
-            virtual std::size_t max_array_size() const = 0;
-            virtual std::size_t max_alignment() const = 0;
+            void deallocate_node(void *node,
+                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                deallocate(type::node, node, 0, size, alignment);
+            }
+
+            void deallocate_array(void *array,
+                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                deallocate(type::array, array, count, size, alignment);
+            }
+
+            std::size_t max_node_size() const
+            {
+                return max(query::node_size);
+            }
+
+            std::size_t max_array_size() const
+            {
+                return max(query::array_size);
+            }
+
+            std::size_t max_alignment() const
+            {
+                return max(query::alignment);
+            }
+
+        private:
+            enum class type
+            {
+                node,
+                array,
+            };
+
+            // count is ignored for type::node
+            virtual void* allocate(type t,
+                std::size_t count, std::size_t size, std::size_t alignment) = 0;
+            virtual void deallocate(type t,
+                void *ptr, std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+
+            enum class query
+            {
+                node_size,
+                array_size,
+                alignment
+            };
+
+            virtual std::size_t max(query q) const = 0;
+
         };
     public:
         using raw_allocator = base_allocator;
@@ -352,56 +405,40 @@ namespace foonathan { namespace memory
             basic_allocator(RawAllocator &alloc) FOONATHAN_NOEXCEPT
             : storage(alloc) {}
 
-            void* allocate_node(std::size_t size, std::size_t alignment) override
-            {
-                auto&& alloc = get();
-                return traits::allocate_node(alloc, size, alignment);
-            }
-
-            void* allocate_array(std::size_t count,
-                                 std::size_t size, std::size_t alignment) override
-            {
-                auto&& alloc = get();
-                return traits::allocate_array(alloc, count, size, alignment);
-            }
-
-            void deallocate_node(void *node,
-                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
-            {
-                auto&& alloc = get();
-                traits::deallocate_node(alloc, node, size, alignment);
-            }
-
-            void deallocate_array(void *array,
-                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
-            {
-                auto&& alloc = get();
-                traits::deallocate_array(alloc, array, count, size, alignment);
-            }
-
-            std::size_t max_node_size() const override
-            {
-                auto&& alloc = get();
-                return traits::max_node_size(alloc);
-            }
-
-            std::size_t max_array_size() const override
-            {
-                auto&& alloc = get();
-                return traits::max_array_size(alloc);
-            }
-
-            std::size_t max_alignment() const override
-            {
-                auto&& alloc = get();
-                return traits::max_alignment(alloc);
-            }
-
         private:
             auto get() const FOONATHAN_NOEXCEPT
             -> typename storage::reference_type
             {
                 return storage::get_allocator();
+            }
+
+            void* allocate(type t,
+                           std::size_t count, std::size_t size, std::size_t alignment) override
+            {
+                auto&& alloc = get();
+                if (t == type::node)
+                    return traits::allocate_node(alloc, size, alignment);
+                return traits::allocate_array(alloc, count, size, alignment);
+            }
+
+            void deallocate(type t,
+                void *ptr, std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT override
+            {
+                auto&& alloc = get();
+                if (t == type::node)
+                    traits::deallocate_node(alloc, ptr, size, alignment);
+                else
+                    traits::deallocate_array(alloc, ptr, count, size, alignment);
+            }
+
+            std::size_t max(query q) const override
+            {
+                auto&& alloc = get();
+                if (q == query::node_size)
+                    return traits::max_node_size(alloc);
+                else if (q == query::array_size)
+                    return traits::max_array_size(alloc);
+                return traits::max_alignment(alloc);
             }
         };
 
@@ -418,7 +455,12 @@ namespace foonathan { namespace memory
         storage storage_;
     };
 
-    using any_allocator = allocator_storage<any_storage, dummy_mutex>;
+    /// \brief Similar to \ref allocator_reference but can store a reference to any allocator type.
+    /// \details A mutex can be specfied to lock any accesses.<br>
+    // It is implemented via \ref allocator_storage with the \ref any_storage policy.
+    /// \ingroup memory
+    template <class Mutex = default_mutex>
+    using any_allocator = allocator_storage<any_storage, Mutex>;
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     ///
