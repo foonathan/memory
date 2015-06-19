@@ -65,6 +65,9 @@ namespace foonathan { namespace memory
     : StoragePolicy,
       detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
     {
+        static_assert(!detail::is_instantiation_of<allocator_storage, typename StoragePolicy::raw_allocator>::value,
+            "don't pass it an allocator_storage, it would lead to double wrapping");
+
         using traits = allocator_traits<typename StoragePolicy::raw_allocator>;
         using actual_mutex = const detail::mutex_storage<
                                 detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>;
@@ -212,8 +215,34 @@ namespace foonathan { namespace memory
     auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_adapter<typename std::decay<RawAllocator>::type>
     {
-        return allocator_adapter<typename std::decay<RawAllocator>::type>{std::forward<RawAllocator>(allocator)};
+        return {std::forward<RawAllocator>(allocator)};
     }
+
+    /// \brief An allocator adapter that uses a mutex for synchronizing.
+    /// \details It locks the mutex for each function called.<br>
+    /// It is implemented via \ref allocator_storage with the \ref direct_storage policy.
+    /// \ingroup memory
+    template <class RawAllocator, class Mutex = std::mutex>
+    using thread_safe_allocator = allocator_storage<direct_storage<RawAllocator>,
+                                                    Mutex>;
+
+    /// @{
+    /// \brief Creates a \ref thread_safe_allocator.
+    /// \relates thread_safe_allocator
+    template <class RawAllocator>
+    auto make_thread_safe_allocator(RawAllocator &&allocator)
+    -> thread_safe_allocator<typename std::decay<RawAllocator>::type>
+    {
+        return std::forward<RawAllocator>(allocator);
+    }
+
+    template <class Mutex, class RawAllocator>
+    auto make_thread_safe_allocator(RawAllocator &&allocator)
+    -> thread_safe_allocator<typename std::decay<RawAllocator>::type, Mutex>
+    {
+        return std::forward<RawAllocator>(allocator);
+    }
+    /// @}
 
     namespace detail
     {
