@@ -20,7 +20,7 @@ template <class RawAllocator>
 void use_allocator(RawAllocator &alloc)
 {
     // raw_allocator_allocator is the bridge between RawAllocators and STL-Allocator
-    using std_allocator = memory::raw_allocator_allocator<int, RawAllocator>;
+    using std_allocator = memory::std_allocator<int, RawAllocator>;
 
     // create a vector that uses the pool
     // it is passed via reference to the vector

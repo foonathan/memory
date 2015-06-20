@@ -566,281 +566,246 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        template <typename T>
-        class raw_allocator_allocator_base
+        template <class RawAllocator, class Mutex>
+        struct allocator_reference_for
         {
-        public:
-            //=== typedefs ===//
-            using value_type = T;
-            using pointer = T*;
-            using const_pointer = const T*;
-            using reference = T&;
-            using const_reference = const T&;
-            using size_type = std::size_t;
-            using difference_type = std::ptrdiff_t;
+            using type = allocator_reference<RawAllocator, Mutex>;
+            using is_any = std::false_type;
+        };
 
-            using propagate_on_container_swap = std::true_type;
-            using propagate_on_container_copy_assignment = std::true_type;
-            using propagate_on_container_move_assignment = std::true_type;
+        template <class Mutex1, class Mutex2>
+        struct allocator_reference_for<any_allocator_reference<Mutex1>, Mutex2>
+        {
+            // use user specified mutex, wrap in any_allocator_reference
+            using type = any_allocator_reference<Mutex2>;
+            using is_any = std::true_type;
+        };
 
-            //=== construction/destruction ===//
-            template <typename U, typename ... Args>
-            void construct(U *p, Args&&... args)
-            {
-                void* mem = p;
-                ::new(mem) U(std::forward<Args>(args)...);
-            }
-
-            template <typename U>
-            void destroy(U *p) FOONATHAN_NOEXCEPT
-            {
-                p->~U();
-            }
+        template <class Storage, class Mutex1, class Mutex2>
+        struct allocator_reference_for<allocator_storage<Storage, Mutex1>, Mutex2>
+        {
+            // use the user specified mutex
+            using type = allocator_reference<typename Storage::raw_allocator, Mutex2>;
+            using is_any = std::false_type;
         };
     } // namespace detail
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
-    /// \details It uses a \ref allocator_reference to store the allocator to allow copy constructing.<br>
-    /// The underlying allocator is never moved, only the pointer to it.<br>
-    /// \c propagate_on_container_swap is \c true to ensure that the allocator stays with its memory.
-    /// \c propagate_on_container_move_assignment is \c true to allow fast move operations.
-    /// \c propagate_on_container_copy_assignment is also \c true for consistency.
+    /// \details To allow copying of the allocator, it will not store an object directly
+    /// but instead wraps it into an allocator reference.
+    /// This wrapping won't occur, if you pass it an allocator reference already,
+    /// then it will stay in the reference.<br>
+    /// If you instantiate it with a \ref any_allocator_reference, it will be kept,
+    /// allowing it to store any allocator.
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex = default_mutex>
-    class raw_allocator_allocator
-    : public detail::raw_allocator_allocator_base<T>,
-      private allocator_reference<RawAllocator, Mutex>
+    class std_allocator
+    : detail::allocator_reference_for<RawAllocator, Mutex>::type
     {
-        using base = detail::raw_allocator_allocator_base<T>;
-        using reference = allocator_reference<RawAllocator, Mutex>;
+        using is_any = typename detail::allocator_reference_for<RawAllocator, Mutex>::is_any;
+        using alloc_reference = typename detail::allocator_reference_for<RawAllocator, Mutex>::type;
+
+        static constexpr auto size = sizeof(T);
+        static constexpr auto alignment = FOONATHAN_ALIGNOF(T);
+
     public:
         //=== typedefs ===//
+        using value_type = T;
+        using pointer = T*;
+        using const_pointer = const T*;
+        using reference = T&;
+        using const_reference = const T&;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
+
+        /// \brief Whether or not to swap the allocators, if the containers are swapped.
+        /// \details It is \c true to ensure that the allocator stays with its memory.
+        using propagate_on_container_swap = std::true_type;
+
+        /// \brief Whether or not the allocators are moved, if the containers are move assigned.
+        /// \details It is \c true to allow fast move operations.
+        using propagate_on_container_move_assignment = std::true_type;
+
+        /// \brief Whether or not to copy the allocators, if the containers are copy assigned.
+        /// \details It is \c true for consistency.
+        using propagate_on_container_copy_assignment = std::true_type;
+
         template <typename U>
-        struct rebind {using other = raw_allocator_allocator<U, RawAllocator, Mutex>;};
+        struct rebind {using other = std_allocator<U, RawAllocator, Mutex>;};
 
         /// \brief The underlying raw allocator.
-        using impl_allocator = RawAllocator;
+        /// \details Or the polymorphic base class in case or \ref any_allocator_reference.
+        using impl_allocator = typename alloc_reference::raw_allocator;
 
         /// \brief The mutex used for synchronization.
         using mutex = Mutex;
 
         //=== constructor ===//
-        /// \brief Creates it from a temporary raw allocator (only valid if stateless).
-        raw_allocator_allocator(const impl_allocator &alloc = {}) FOONATHAN_NOEXCEPT
-        : reference(alloc) {}
+        /// \brief Default constructor is only available for stateless allocators.
+        std_allocator() FOONATHAN_NOEXCEPT = default;
 
         /// \brief Creates it from a reference to a raw allocator.
-        raw_allocator_allocator(impl_allocator &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc) {}
+        /// \details If the instantiation allows any allocator, it will accept any allocator,
+        /// otherwise only the \ref impl_allocator.
+        template <class RawAlloc,
+                typename = typename std::enable_if<
+                        // require RawAlloc to be impl_allocator if not polymorphic
+                        (is_any::value ? true : std::is_same<RawAlloc, impl_allocator>::value)
+                >::type>
+        std_allocator(RawAlloc &alloc) FOONATHAN_NOEXCEPT
+        : alloc_reference(alloc) {}
 
-        /// \brief Creates it from another \ref allocator_reference.
+        /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
         /// \details It must reference the same type and use the same mutex.
-        raw_allocator_allocator(const reference &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc) {}
+        std_allocator(const alloc_reference &alloc) FOONATHAN_NOEXCEPT
+        : alloc_reference(alloc) {}
 
         /// \brief Conversion from any other \ref allocator_storage is forbidden.
-        /// \details This avoids unnecessary nested wrapper.
+        /// \details This prevents unnecessary nested wrapper classes.
         template <class StoragePolicy, class OtherMut>
-        raw_allocator_allocator(const allocator_storage<StoragePolicy, OtherMut>&) = delete;
+        std_allocator(const allocator_storage<StoragePolicy, OtherMut>&) = delete;
 
-        /// \brief Creates it from another \ref raw_allocator_allocator allocating a different type.
+        /// \brief Creates it from another \ref std_allocator allocating a different type.
+        /// \details This is required by the \c Allcoator concept.
         template <typename U>
-        raw_allocator_allocator(const raw_allocator_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc.get_allocator()) {}
+        std_allocator(const std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
+        : alloc_reference(alloc.get_allocator()) {}
 
         //=== allocation/deallocation ===//
-        typename base::pointer allocate(typename base::size_type n, void * = nullptr)
+        pointer allocate(size_type n, void * = nullptr)
         {
-            void *mem = nullptr;
-            if (n == 1)
-                mem = this->allocate_node(sizeof(typename base::value_type),
-                                          FOONATHAN_ALIGNOF(typename base::value_type));
-            else
-                mem = this->allocate_array(n, sizeof(typename base::value_type),
-                                           FOONATHAN_ALIGNOF(typename base::value_type));
-            return static_cast<typename base::pointer>(mem);
+            return static_cast<pointer>(allocate_impl(is_any{}, n));
         }
 
-        void deallocate(typename base::pointer p, typename base::size_type n) FOONATHAN_NOEXCEPT
+        void deallocate(pointer p, size_type n) FOONATHAN_NOEXCEPT
         {
-            if (n == 1)
-                this->deallocate_node(p, sizeof(typename base::value_type),
-                                      FOONATHAN_ALIGNOF(typename base::value_type));
-            else
-                this->deallocate_array(p, n, sizeof(typename base::value_type),
-                                       FOONATHAN_ALIGNOF(typename base::value_type));
+            deallocate_impl(is_any{}, p, n);
+        }
+
+        //=== construction/destruction ===//
+        template <typename U, typename ... Args>
+        void construct(U *p, Args&&... args)
+        {
+            void* mem = p;
+            ::new(mem) U(std::forward<Args>(args)...);
+        }
+
+        template <typename U>
+        void destroy(U *p) FOONATHAN_NOEXCEPT
+        {
+            p->~U();
         }
 
         //=== getter ===//
-        typename base::size_type max_size() const FOONATHAN_NOEXCEPT
+        size_type max_size() const FOONATHAN_NOEXCEPT
         {
-            return this->max_array_size() / sizeof(typename base::value_type);
+            return this->max_array_size() / sizeof(value_type);
         }
 
         /// \brief Returns the referenced allocator.
-        /// \details Depending on whether or not it is stateful,
-        /// it is either a temporary or a reference.<br>
+        /// \details It returns a reference for stateful allcoators and \ref any_allocator_reference,
+        /// otherwise a temporary object.<br>
         /// \note This function does not lock the mutex.
         /// \see allocator_storage::get_allocator
-        using reference::get_allocator;
+        using alloc_reference::get_allocator;
 
         /// \brief Returns the referenced allocator while keeping the mutex locked.
         /// \details It returns a proxy object acting like a pointer to the allocator.
         /// \see allocator_storage::lock
-        using reference::lock;
+        using alloc_reference::lock;
 
     private:
+        // any_allocator_reference: use virtual function which already does a dispatch on node/array
+        void* allocate_impl(std::true_type, size_type n)
+        {
+            return lock()->allocate_impl(n, size, alignment);
+        }
+
+        void deallocate_impl(std::true_type, void *ptr, size_type n)
+        {
+            lock()->deallocate_impl(ptr, n, size, alignment);
+        }
+
+        // alloc_reference: decide between node/array
+        void* allocate_impl(std::false_type, size_type n)
+        {
+            if (n == 1)
+                return this->allocate_node(size, alignment);
+            else
+                return this->allocate_array(n, size, alignment);
+        }
+
+        void deallocate_impl(std::false_type, void* ptr, size_type n)
+        {
+            if (n == 1)
+                this->deallocate_node(ptr, size, alignment);
+            else
+                this->deallocate_array(ptr, n, size, alignment);
+        }
+
         template <typename U> // stateful
-        bool equal_to(std::true_type, const raw_allocator_allocator<U, RawAllocator, mutex> &other) const FOONATHAN_NOEXCEPT
+        bool equal_to(std::true_type, const std_allocator<U, RawAllocator, mutex> &other) const FOONATHAN_NOEXCEPT
         {
             return &get_allocator() == &other.get_allocator();
         }
 
         template <typename U> // non-stateful
-        bool equal_to(std::false_type, const raw_allocator_allocator<U, RawAllocator, mutex> &) const FOONATHAN_NOEXCEPT
+        bool equal_to(std::false_type, const std_allocator<U, RawAllocator, mutex> &) const FOONATHAN_NOEXCEPT
         {
             return true;
         }
 
         template <typename T1, typename T2, class Impl, class Mut>
-        friend bool operator==(const raw_allocator_allocator<T1, Impl, Mut> &lhs,
-                               const raw_allocator_allocator<T2, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT;
+        friend bool operator==(const std_allocator<T1, Impl, Mut> &lhs,
+                               const std_allocator<T2, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT;
     };
 
-    /// \brief Makes an \ref raw_allocator_allocator.
-    /// \relates raw_allocator_allocator
+    /// @{
+    /// \brief Makes an \ref std_allocator.
+    /// \relates std_allocator
     template <typename T, class RawAllocator>
     auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> raw_allocator_allocator<T, typename std::decay<RawAllocator>::type>
+    -> std_allocator<T, typename std::decay<RawAllocator>::type>
     {
         return {std::forward<RawAllocator>(allocator)};
     }
 
-    /// @{
-    /// \brief Compares to \ref raw_allocator_allocator.
-    /// \details They are equal if either stateless or reference the same allocator.
-    /// \relates raw_allocator_allocator
-    template <typename T, typename U, class Impl, class Mut>
-    bool operator==(const raw_allocator_allocator<T, Impl, Mut> &lhs,
-                    const raw_allocator_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
+    template <typename T, class Mutex, class RawAllocator>
+    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> std_allocator<T, typename std::decay<RawAllocator>::type, Mutex>
     {
-        return lhs.equal_to(typename allocator_traits<Impl>::is_stateful{}, rhs);
+        return {std::forward<RawAllocator>(allocator)};
+    }
+    /// @}
+
+    /// @{
+    /// \brief Compares to \ref std_allocator.
+    /// \details They are equal if either stateless or reference the same allocator.
+    /// \relates std_allocator
+    template <typename T, typename U, class Impl, class Mut>
+    bool operator==(const std_allocator<T, Impl, Mut> &lhs,
+                    const std_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
+    {
+        using allocator = typename decltype(lhs)::impl_allocator;
+        return lhs.equal_to(typename allocator_traits<allocator>::is_stateful{}, rhs);
     }
 
     template <typename T, typename U, class Impl, class Mut>
-    bool operator!=(const raw_allocator_allocator<T, Impl, Mut> &lhs,
-                    const raw_allocator_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
+    bool operator!=(const std_allocator<T, Impl, Mut> &lhs,
+                    const std_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
     {
         return !(lhs == rhs);
     }
     /// @}
 
-    /// \brief Similar to \ref raw_allocator_allocator, but can take any raw allocator.
-    /// \details It uses \ref any_allocator_reference and its type erasure.
+    /// \brief Handy typedef to create an \ref std_allocator that can take any raw allocator.
+    /// \details It uses \ref any_allocator_reference and its type erasure.<br>
+    /// It is just an instantiation of \ref std_allocator with \ref any_allocator_reference.
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
-    class any_allocator
-    : public detail::raw_allocator_allocator_base<T>,
-      private any_allocator_reference<Mutex>
-    {
-        using base = detail::raw_allocator_allocator_base<T>;
-        using reference = any_allocator_reference<Mutex>;
-    public:
-        //=== typedefs ===//
-        template <typename U>
-        struct rebind {using other = any_allocator<U, Mutex>;};
+    using any_allocator = std_allocator<T, any_allocator_reference<Mutex>, Mutex>;
 
-        /// \brief The underlying raw allocator.
-        /// \details Since this type allows all allocators, it is a polymorphic base class.
-        using impl_allocator = typename reference::raw_allocator;
-
-        /// \brief The mutex used for synchronization.
-        using mutex = Mutex;
-
-        //=== constructor ===//
-        /// \brief Creates it from a temporary raw allocator (only valid if stateless).
-        template <class RawAllocator,
-                  typename = typename std::enable_if<
-                      !detail::is_instantiation_of<any_allocator, RawAllocator>::value &&
-                      !detail::is_instantiation_of<raw_allocator_allocator, RawAllocator>::value &&
-                      !detail::is_instantiation_of<allocator_storage, RawAllocator>::value
-                    >::type>
-        any_allocator(const RawAllocator &alloc = {}) FOONATHAN_NOEXCEPT
-        : reference(alloc)
-        {
-           static_assert(!allocator_traits<RawAllocator>::is_stateful::value,
-                "allocator must be stateless");
-        }
-
-        /// \brief Creates it from a reference to a raw allocator.
-        template <class RawAllocator,
-                typename = typename std::enable_if<
-                        !detail::is_instantiation_of<any_allocator, RawAllocator>::value &&
-                        !detail::is_instantiation_of<raw_allocator_allocator, RawAllocator>::value &&
-                        !detail::is_instantiation_of<allocator_storage, RawAllocator>::value
-                >::type>
-        any_allocator(RawAllocator &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc) {}
-
-        /// \brief Creates it from another \ref any_allocator_reference.
-        /// \details It must use the same mutex.
-        any_allocator(const reference &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc) {}
-
-        /// \brief Creates it from a \ref allocator_reference using the same mutex.
-        template <class RawAllocator>
-        any_allocator(const allocator_reference<RawAllocator, mutex> &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc.get_allocator()) {}
-
-        /// \brief Conversion from any other \ref allocator_storage is forbidden.
-        /// \details This avoids unnecessary nested wrapper.
-        template <class StoragePolicy, class OtherMut>
-        any_allocator(const allocator_storage<StoragePolicy, OtherMut>&) = delete;
-
-        /// \brief Creates it from another \ref any_allocator allocating a different type.
-        /// \details For consistency, it disallows allocator conversion here.
-        template <typename U>
-        any_allocator(const any_allocator<U, mutex> &alloc) FOONATHAN_NOEXCEPT
-        : reference(alloc.get_allocator()) {}
-
-        //=== allocation/deallocation ===//
-        typename base::pointer allocate(typename base::size_type n, void * = nullptr)
-        {
-            // use virtual allocate_impl function that already does a conditional on node/array
-            auto mem = get_allocator().allocate_impl(n, sizeof(typename base::value_type),
-                                         FOONATHAN_ALIGNOF(typename base::value_type));
-            return static_cast<typename base::pointer>(mem);
-        }
-
-        void deallocate(typename base::pointer p, typename base::size_type n) FOONATHAN_NOEXCEPT
-        {
-            // use virtual deallocate_impl function likewise
-            get_allocator().deallocate_impl(p, n, sizeof(typename base::value_type),
-                                   FOONATHAN_ALIGNOF(typename base::value_type));
-        }
-
-        //=== getter ===//
-        typename base::size_type max_size() const FOONATHAN_NOEXCEPT
-        {
-            return this->max_array_size() / sizeof(typename base::value_type);
-        }
-
-        /// \brief Returns the referenced allocator.
-        /// \details It is a reference to the polymorphic base class used.
-        /// \note This function does not lock the mutex.
-        /// \see allocator_storage::get_allocator
-        using reference::get_allocator;
-
-        /// \brief Returns the referenced allocator while keeping the mutex locked.
-        /// \details It returns a proxy object acting like a pointer to the allocator.
-        /// \see allocator_storage::lock
-        using reference::lock;
-
-        template <typename T1, typename T2, class Mut>
-        friend bool operator==(const any_allocator<T1, Mut> &lhs,
-                               const any_allocator<T2, Mut> &rhs) FOONATHAN_NOEXCEPT;
-    };
-
+    /// @{
     /// \brief Makes an \ref any_allocator.
     /// \relates any_allocator
     template <typename T, class RawAllocator>
@@ -849,22 +814,10 @@ namespace foonathan { namespace memory
         return {std::forward<RawAllocator>(allocator)};
     }
 
-    /// @{
-    /// \brief Compares to \ref any_allocator.
-    /// \details They are equal if they reference the same allocator.
-    /// \relates any_allocator
-    template <typename T, typename U, class Mut>
-    bool operator==(const any_allocator<T, Mut> &lhs,
-                    const any_allocator<U, Mut> &rhs) FOONATHAN_NOEXCEPT
+    template <typename T, class Mutex, class RawAllocator>
+    any_allocator<T, Mutex> make_any_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
-        return &lhs.get_allocator() == &rhs.get_allocator();
-    }
-
-    template <typename T, typename U, class Mut>
-    bool operator!=(const any_allocator<T, Mut> &lhs,
-                    const any_allocator<U, Mut> &rhs) FOONATHAN_NOEXCEPT
-    {
-        return !(lhs == rhs);
+        return {std::forward<RawAllocator>(allocator)};
     }
     /// @}
 }} // namespace foonathan::memory

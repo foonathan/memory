@@ -52,7 +52,7 @@ void merge_sort(RAIter begin, RAIter end)
 {
     using value_type = typename std::iterator_traits<RAIter>::value_type;
     using vector_t = std::vector<value_type,
-                    memory::raw_allocator_allocator<value_type, memory::temporary_allocator>>;
+                    memory::std_allocator<value_type, memory::temporary_allocator>>;
 
     if (end - begin <= 1)
         return;
