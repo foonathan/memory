@@ -57,6 +57,7 @@ namespace foonathan { namespace memory
     /// \brief Stores a raw allocator using a certain storage policy.
     /// \details Accesses are synchronized via a mutex.<br>
     /// The storage policy requires a typedef \c raw_allocator actually stored,
+    /// \c is_reference typedef of \c std::true/false_type whether or not the policy has reference semantics,
     /// a constructor taking the object that is stored,
     /// and a \c get_allocator() function for \c const and \c non-const returning the allocator.
     /// \ingroup memory
@@ -90,8 +91,11 @@ namespace foonathan { namespace memory
         /// The constructor is only available if it is valid.
         template <class Alloc,
             typename = typename std::enable_if<
+                // check if constructible ignoring access rules
                 detail::is_derived_constructible<storage_policy, Alloc>::value &&
-                !std::is_base_of<allocator_storage, Alloc>::value>::type>
+                // prevent false positives occurring due to implicit conversion to private base
+                !std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value
+            >::type>
         allocator_storage(Alloc &&alloc)
         : storage_policy(std::forward<Alloc>(alloc)) {}
 
@@ -180,6 +184,7 @@ namespace foonathan { namespace memory
     {
     public:
         using raw_allocator = RawAllocator;
+        using is_reference = std::false_type;
 
         RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
         {
@@ -294,6 +299,7 @@ namespace foonathan { namespace memory
                             allocator_traits<RawAllocator>::is_stateful::value>;
     public:
         using raw_allocator = RawAllocator;
+        using is_reference = std::true_type;
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> typename storage::reference_type
@@ -413,6 +419,7 @@ namespace foonathan { namespace memory
 
     public:
         using raw_allocator = base_allocator;
+        using is_reference = std::true_type;
 
         raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
@@ -570,40 +577,35 @@ namespace foonathan { namespace memory
         struct allocator_reference_for
         {
             using type = allocator_reference<RawAllocator, Mutex>;
-            using is_any = std::false_type;
-        };
-
-        template <class Mutex1, class Mutex2>
-        struct allocator_reference_for<any_allocator_reference<Mutex1>, Mutex2>
-        {
-            // use user specified mutex, wrap in any_allocator_reference
-            using type = any_allocator_reference<Mutex2>;
-            using is_any = std::true_type;
         };
 
         template <class Storage, class Mutex1, class Mutex2>
         struct allocator_reference_for<allocator_storage<Storage, Mutex1>, Mutex2>
         {
             // use the user specified mutex
-            using type = allocator_reference<typename Storage::raw_allocator, Mutex2>;
-            using is_any = std::false_type;
+            using type = typename std::conditional
+                            <Storage::is_reference::value,
+                             allocator_storage<Storage, Mutex2>, // storage provides reference semantics
+                             allocator_reference<typename Storage::raw_allocator, Mutex2> // it doesn't
+                             >::type;
         };
     } // namespace detail
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     /// \details To allow copying of the allocator, it will not store an object directly
     /// but instead wraps it into an allocator reference.
-    /// This wrapping won't occur, if you pass it an allocator reference already,
-    /// then it will stay in the reference.<br>
-    /// If you instantiate it with a \ref any_allocator_reference, it will be kept,
+    /// This wrapping won't occur, if you pass it an \ref allocator_storage providing reference semantics,
+    /// then it will stay in the it.<br>
+    /// This means, that if you instantiate it with e.g. a \ref any_allocator_reference, it will be kept,
     /// allowing it to store any allocator.
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex = default_mutex>
     class std_allocator
     : detail::allocator_reference_for<RawAllocator, Mutex>::type
     {
-        using is_any = typename detail::allocator_reference_for<RawAllocator, Mutex>::is_any;
         using alloc_reference = typename detail::allocator_reference_for<RawAllocator, Mutex>::type;
+        // if it is any_allocator_reference an optimized implementation can be used
+        using is_any = std::is_same<alloc_reference, any_allocator_reference<Mutex>>;
 
         static constexpr auto size = sizeof(T);
         static constexpr auto alignment = FOONATHAN_ALIGNOF(T);
@@ -648,10 +650,9 @@ namespace foonathan { namespace memory
         /// \details If the instantiation allows any allocator, it will accept any allocator,
         /// otherwise only the \ref impl_allocator.
         template <class RawAlloc,
-                typename = typename std::enable_if<
-                        // require RawAlloc to be impl_allocator if not polymorphic
-                        (is_any::value ? true : std::is_same<RawAlloc, impl_allocator>::value)
-                >::type>
+            typename =
+                // only accept this overload, if the allocator reference can take RawAlloc
+                typename std::enable_if<std::is_constructible<alloc_reference, RawAlloc&>::value>::type>
         std_allocator(RawAlloc &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
