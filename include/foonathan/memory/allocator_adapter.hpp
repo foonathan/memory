@@ -85,6 +85,9 @@ namespace foonathan { namespace memory
         /// \brief It is stateful, it the traits say so.
         using is_stateful = typename traits::is_stateful;
 
+        /// \brief Default constructor only available if supported by the policy.
+        allocator_storage() = default;
+
         /// \brief Passes it the allocator.
         /// \details Depending on the policy, it will either be moved
         /// or only its address taken.<br>
@@ -197,6 +200,8 @@ namespace foonathan { namespace memory
         }
 
     protected:
+        direct_storage() = default;
+
         direct_storage(RawAllocator &&allocator)
         : RawAllocator(std::move(allocator)) {}
 
@@ -654,6 +659,15 @@ namespace foonathan { namespace memory
                 // only accept this overload, if the allocator reference can take RawAlloc
                 typename std::enable_if<std::is_constructible<alloc_reference, RawAlloc&>::value>::type>
         std_allocator(RawAlloc &alloc) FOONATHAN_NOEXCEPT
+        : alloc_reference(alloc) {}
+
+        /// \brief Creates it from a temporary raw allocator.
+        /// \details Same as above, but only valid for stateless allocators.
+        template <class RawAlloc,
+                typename =
+                // only accept this overload, if the allocator reference can take RawAlloc and it is stateless
+                typename std::enable_if<std::is_constructible<alloc_reference, const RawAlloc&>::value>::type>
+        std_allocator(const RawAlloc &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
