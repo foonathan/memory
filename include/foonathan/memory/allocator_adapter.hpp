@@ -16,42 +16,42 @@
 #include "config.hpp"
 #include "allocator_traits.hpp"
 #include "threading.hpp"
-#include "tracking.hpp"
 
 namespace foonathan { namespace memory
 {
+    template <class StoragePolicy, class Mutex>
+    class allocator_storage;
+
     namespace detail
     {
-        struct accept_any
-        {
-            template <typename T>
-            accept_any(T &&) {}
-        };
-
-        template <class C>
-        struct is_derived_constructible_impl
-        {
-            static void ambig_if_valid(const C &);
-            static void ambig_if_valid(accept_any);
-
-            template <typename Arg,
-                    typename = decltype(ambig_if_valid({std::declval<Arg>()}))>
-            static std::false_type test(int);
-
-            template <typename>
-            static std::true_type test(...);
-        };
-
-        // is_constructible without access checks
-        template <class C, typename Arg>
-        using is_derived_constructible = decltype(is_derived_constructible_impl<C>::template test<Arg>(0));
-
         // whether or not a type is an instantiation of a template
         template <template <typename...> class Template, typename T>
         struct is_instantiation_of : std::false_type {};
 
         template <template <typename...> class Template, typename ... Args>
         struct is_instantiation_of<Template, Template<Args...>> : std::true_type {};
+
+        // whether or not a class is derived from a template
+        // (not really right implementation, more is_convertible, but works for the needs here)
+        template <template <typename...> class Base, class Derived>
+        struct is_base_of_template_impl
+        {
+            template <typename ... Args>
+            static std::true_type check(const Base<Args...>&);
+
+            static std::false_type check(...);
+        };
+
+        template <template <typename...> class Base, class Derived>
+        using is_base_of_template = decltype(is_base_of_template_impl<Base, Derived>::check(std::declval<Derived>()));
+
+        // whether or not the allocator of the storage policy is a raw allocator itself
+        template <class StoragePolicy>
+        using is_nested_policy = is_instantiation_of<allocator_storage, typename StoragePolicy::raw_allocator>;
+
+        // whether or not derived from allocator_storage template
+        template <class C>
+        using is_derived_from_allocator_storage = detail::is_base_of_template<allocator_storage, C>;
     } // namespace detail
 
     /// \brief Stores a raw allocator using a certain storage policy.
@@ -66,7 +66,7 @@ namespace foonathan { namespace memory
     : StoragePolicy,
       detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
     {
-        static_assert(!detail::is_instantiation_of<allocator_storage, typename StoragePolicy::raw_allocator>::value,
+        static_assert(!detail::is_nested_policy<StoragePolicy>::value,
             "don't pass it an allocator_storage, it would lead to double wrapping");
 
         using traits = allocator_traits<typename StoragePolicy::raw_allocator>;
@@ -93,13 +93,11 @@ namespace foonathan { namespace memory
         /// or only its address taken.<br>
         /// The constructor is only available if it is valid.
         template <class Alloc,
-            typename = typename std::enable_if<
-                // check if constructible ignoring access rules
-                detail::is_derived_constructible<storage_policy, Alloc>::value &&
-                // prevent false positives occurring due to implicit conversion to private base
-                !std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value
-            >::type>
-        allocator_storage(Alloc &&alloc)
+            // MSVC seems to ignore access rights in decltype SFINAE below
+            // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
+            typename = typename std::enable_if<!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value>::type>
+        allocator_storage(Alloc &&alloc,
+            decltype(new storage_policy(std::forward<Alloc>(alloc))) = nullptr)
         : storage_policy(std::forward<Alloc>(alloc)) {}
 
         /// @{
@@ -199,15 +197,22 @@ namespace foonathan { namespace memory
             return *this;
         }
 
-    protected:
         direct_storage() = default;
 
         direct_storage(RawAllocator &&allocator)
         : RawAllocator(std::move(allocator)) {}
 
-        direct_storage(direct_storage &&) = default;
+        direct_storage(direct_storage &&other)
+        : RawAllocator(std::move(other)) {}
+
+        direct_storage& operator=(direct_storage &&other)
+        {
+            RawAllocator::operator=(std::move(other));
+            return *this;
+        }
+
+    protected:
         ~direct_storage() FOONATHAN_NOEXCEPT = default;
-        direct_storage& operator=(direct_storage &&) = default;
     };
 
     /// \brief Wraps any class that has specialized the \ref allocator_traits and gives it the proper interface.
@@ -312,16 +317,19 @@ namespace foonathan { namespace memory
             return storage::get_allocator();
         }
 
-    protected:
-        reference_storage(const raw_allocator &alloc = {}) FOONATHAN_NOEXCEPT
+        reference_storage() FOONATHAN_NOEXCEPT = default;
+
+        reference_storage(const raw_allocator &alloc ) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
         reference_storage(raw_allocator &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
         reference_storage(const reference_storage &) FOONATHAN_NOEXCEPT = default;
+        reference_storage& operator=(const reference_storage &)FOONATHAN_NOEXCEPT = default;
+
+    protected:
         ~reference_storage() FOONATHAN_NOEXCEPT = default;
-        reference_storage& operator=(const reference_storage &) FOONATHAN_NOEXCEPT = default;
     };
 
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
@@ -410,7 +418,7 @@ namespace foonathan { namespace memory
                 return max(query::alignment);
             }
 
-        private:
+        protected:
             enum class query
             {
                 node_size,
@@ -419,7 +427,6 @@ namespace foonathan { namespace memory
             };
 
             virtual std::size_t max(query q) const = 0;
-
         };
 
     public:
@@ -438,7 +445,6 @@ namespace foonathan { namespace memory
             return *static_cast<const base_allocator*>(mem);
         }
 
-    protected:
         template <class RawAllocator>
         any_reference_storage(RawAllocator &alloc) FOONATHAN_NOEXCEPT
         {
@@ -467,15 +473,16 @@ namespace foonathan { namespace memory
             other.get_allocator().clone(&storage_);
         }
 
-        // basic_allocator is trivially destructible
-        ~any_reference_storage() FOONATHAN_NOEXCEPT = default;
-
         any_reference_storage& operator=(const any_reference_storage &other) FOONATHAN_NOEXCEPT
         {
             // no cleanup necessary
             other.get_allocator().clone(&storage_);
             return *this;
         }
+
+     protected:
+        // basic_allocator is trivially destructible
+        ~any_reference_storage() FOONATHAN_NOEXCEPT = default;
 
     private:
         template <class RawAllocator>
@@ -539,15 +546,10 @@ namespace foonathan { namespace memory
         };
 
         // use a stateful instantiation to determine size and alignment
-        struct dummy_allocator
-        {
-            using is_stateful = std::true_type;
-        };
-
-        using default_instantiation = basic_allocator<dummy_allocator>;
-        using storage = typename
-            std::aligned_storage<sizeof(default_instantiation),
-                                 alignof(default_instantiation)>::type;
+        // base_allocator is stateful
+        using default_instantiation = basic_allocator<base_allocator>;
+        using storage = std::aligned_storage<sizeof(default_instantiation),
+                                 FOONATHAN_ALIGNOF(default_instantiation)>::type;
         storage storage_;
     };
 
@@ -576,6 +578,9 @@ namespace foonathan { namespace memory
     }
     /// @}
 
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
+    class std_allocator;
+
     namespace detail
     {
         template <class RawAllocator, class Mutex>
@@ -594,6 +599,10 @@ namespace foonathan { namespace memory
                              allocator_reference<typename Storage::raw_allocator, Mutex2> // it doesn't
                              >::type;
         };
+
+        // whether or not derived from std_allocator template
+        template <class C>
+        using is_derived_from_std_allocator = detail::is_base_of_template<std_allocator, C>;
     } // namespace detail
 
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
@@ -604,7 +613,7 @@ namespace foonathan { namespace memory
     /// This means, that if you instantiate it with e.g. a \ref any_allocator_reference, it will be kept,
     /// allowing it to store any allocator.
     /// \ingroup memory
-    template <typename T, class RawAllocator, class Mutex = default_mutex>
+    template <typename T, class RawAllocator, class Mutex/* = default_mutex*/>
     class std_allocator
     : detail::allocator_reference_for<RawAllocator, Mutex>::type
     {
@@ -612,8 +621,8 @@ namespace foonathan { namespace memory
         // if it is any_allocator_reference an optimized implementation can be used
         using is_any = std::is_same<alloc_reference, any_allocator_reference<Mutex>>;
 
-        static constexpr auto size = sizeof(T);
-        static constexpr auto alignment = FOONATHAN_ALIGNOF(T);
+        static const std::size_t size;
+        static const std::size_t alignment;
 
     public:
         //=== typedefs ===//
@@ -655,19 +664,21 @@ namespace foonathan { namespace memory
         /// \details If the instantiation allows any allocator, it will accept any allocator,
         /// otherwise only the \ref impl_allocator.
         template <class RawAlloc,
-            typename =
-                // only accept this overload, if the allocator reference can take RawAlloc
-                typename std::enable_if<std::is_constructible<alloc_reference, RawAlloc&>::value>::type>
-        std_allocator(RawAlloc &alloc) FOONATHAN_NOEXCEPT
+            // MSVC seems to ignore access rights in decltype SFINAE below
+            // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
+            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+        std_allocator(RawAlloc &alloc,
+            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from a temporary raw allocator.
         /// \details Same as above, but only valid for stateless allocators.
         template <class RawAlloc,
-                typename =
-                // only accept this overload, if the allocator reference can take RawAlloc and it is stateless
-                typename std::enable_if<std::is_constructible<alloc_reference, const RawAlloc&>::value>::type>
-        std_allocator(const RawAlloc &alloc) FOONATHAN_NOEXCEPT
+            // MSVC seems to ignore access rights in decltype SFINAE below
+            // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
+            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+        std_allocator(const RawAlloc &alloc,
+            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
@@ -775,6 +786,11 @@ namespace foonathan { namespace memory
                                const std_allocator<T2, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT;
     };
 
+    template <typename T, class Alloc, class Mut>
+    const std::size_t std_allocator<T, Alloc, Mut>::size = sizeof(T);
+    template <typename T, class Alloc, class Mut>
+    const std::size_t std_allocator<T, Alloc, Mut>::alignment = FOONATHAN_ALIGNOF(T);
+
     /// @{
     /// \brief Makes an \ref std_allocator.
     /// \relates std_allocator
@@ -801,7 +817,7 @@ namespace foonathan { namespace memory
     bool operator==(const std_allocator<T, Impl, Mut> &lhs,
                     const std_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
     {
-        using allocator = typename decltype(lhs)::impl_allocator;
+        using allocator = typename std_allocator<T, Impl, Mut>::impl_allocator;
         return lhs.equal_to(typename allocator_traits<allocator>::is_stateful{}, rhs);
     }
 
