@@ -256,7 +256,7 @@ std::size_t small_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 
 std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 {
-    return std::min(node_size_, max_alignment);
+    return alignment_for(node_size_);
 }
 
 bool small_free_memory_list::find_chunk(std::size_t n) FOONATHAN_NOEXCEPT

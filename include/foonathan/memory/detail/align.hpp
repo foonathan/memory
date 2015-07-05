@@ -44,6 +44,12 @@ namespace foonathan { namespace memory
             // assume long double has maximum alignment
             FOONATHAN_CONSTEXPR auto max_alignment = FOONATHAN_ALIGNOF(long double);
         #endif
+
+        // returns the minimum alignment required for a node of given size
+        inline std::size_t alignment_for(std::size_t size) FOONATHAN_NOEXCEPT
+        {
+            return size < max_alignment ? size : max_alignment;
+        }
     } // namespace detail
 }} // namespace foonathan::memory
 

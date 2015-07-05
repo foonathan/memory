@@ -39,9 +39,97 @@ namespace
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
 
+void *free_memory_list::cache::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+{
+    // use alignment as fence size
+    auto fence = debug_fence_size ? alignment : 0u;
+    if (fence + size + fence > std::size_t(end_ - cur_))
+        return nullptr;
+
+    debug_fill(cur_, fence, debug_magic::fence_memory);
+    cur_ += fence;
+
+    auto mem = cur_;
+    debug_fill(cur_, size, debug_magic::new_memory);
+    cur_ += size;
+
+    debug_fill(cur_, fence, debug_magic::fence_memory);
+    cur_ += fence;
+
+    return mem;
+}
+
+bool free_memory_list::cache::try_deallocate(void *ptr,
+                                             std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+{
+    auto fence_size = debug_fence_size ? alignment : 0u;
+    auto node = static_cast<char*>(ptr);
+    if (node + size + fence_size != cur_)
+        // cannot be deallocated
+        return false;
+    debug_fill(node, size, debug_magic::freed_memory);
+    cur_ = node - fence_size; // shrink cur back
+    return true;
+}
+
+std::size_t free_memory_list::cache::no_nodes(std::size_t node_size) const FOONATHAN_NOEXCEPT
+{
+    auto actual_size = node_size + (debug_fence_size ? alignment_for(node_size) : 0u);
+    return std::size_t(end_ - cur_) / actual_size;
+}
+
+std::size_t free_memory_list::list_impl::insert(char *begin, char *end,
+                                         std::size_t node_size) FOONATHAN_NOEXCEPT
+{
+    // increase node size by fence, if necessary
+    // alignment is fence memory
+    auto actual_size = node_size + (debug_fence_size ? 2 * alignment_for(node_size) : 0u);
+    auto no_nodes = std::size_t(end - begin) / actual_size;
+    if (no_nodes == 0u)
+        return 0u;
+
+    auto cur = begin;
+    for (std::size_t i = 0u; i != no_nodes - 1; ++i)
+    {
+        set_ptr(cur, cur + actual_size);
+        cur += actual_size;
+    }
+    set_ptr(cur, first_);
+    first_ = begin;
+
+    return no_nodes;
+}
+
+void free_memory_list::list_impl::push(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT
+{
+    // alignment is fence memory
+    auto node = static_cast<char*>(ptr) - (debug_fence_size ? alignment_for(node_size) : 0u);
+    debug_fill(ptr, node_size, debug_magic::freed_memory);
+
+    set_ptr(node, first_);
+    first_ = node;
+}
+
+void *free_memory_list::list_impl::pop(std::size_t node_size) FOONATHAN_NOEXCEPT
+{
+    if (!first_)
+        return nullptr;
+
+    auto mem = first_;
+    first_ = get_ptr(mem);
+
+    // alignment is fence memory
+    auto fence = debug_fence_size ? alignment_for(node_size) : 0u;
+    debug_fill(mem, fence, debug_magic::fence_memory);
+    mem += fence;
+    debug_fill(mem, node_size, debug_magic::new_memory);
+    debug_fill(mem + node_size, fence, debug_magic::fence_memory);
+
+    return mem;
+}
+
 free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: first_(nullptr), last_(nullptr), clean_(nullptr),
-  node_size_(std::max(node_size, min_element_size) + 2 * debug_fence_size),
+: node_size_(std::max(node_size, min_element_size)),
   capacity_(0u)
 {}
 
@@ -53,12 +141,9 @@ free_memory_list::free_memory_list(std::size_t node_size,
 }
 
 free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
-: first_(other.first_), last_(other.last_), clean_(other.clean_),
+: cache_(std::move(other.cache_)), list_(std::move(other.list_)),
   node_size_(other.node_size_), capacity_(other.capacity_)
 {
-    other.first_ = nullptr;
-    other.last_ = nullptr;
-    other.clean_ = nullptr;
     other.capacity_ = 0u;
 }
 
@@ -71,136 +156,77 @@ free_memory_list& free_memory_list::operator=(free_memory_list &&other) FOONATHA
 
 void foonathan::memory::detail::swap(free_memory_list &a, free_memory_list &b) FOONATHAN_NOEXCEPT
 {
-    std::swap(a.first_, b.first_);
-    std::swap(a.last_, b.last_);
-    std::swap(a.clean_, b.clean_);
+    std::swap(a.cache_, b.cache_);
+    std::swap(a.list_, b.list_);
     std::swap(a.node_size_, b.node_size_);
     std::swap(a.capacity_, b.capacity_);
 }
 
 void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
-    // inserts at the back of the list
+    // insert into cache and old cache into list
     assert(is_aligned(mem, alignment()));
 
-    auto no_nodes = size / node_size_;
-    assert(no_nodes > 0u);
+    list_.insert(cache_.top(), cache_.end(), node_size_); // insert cache into list
+    cache_ = cache(mem, size); // insert new memory into cache
 
-    auto ptr = static_cast<char*>(mem);
-    if (!first_)
-    {
-        assert(!last_);
-        first_ = ptr;
-    }
-    else
-        // update pointer from last element
-        set_ptr(last_, ptr);
-
-    // update clean to point to the beginning of the memory
-    clean_ = ptr;
-
-    for (std::size_t i = 0u; i != no_nodes - 1; ++i, ptr += node_size_)
-        set_ptr(ptr, ptr + node_size_);
-    set_ptr(ptr, nullptr);
-    last_ = ptr;
-
-    capacity_ += no_nodes;
+    capacity_ += cache_.no_nodes(node_size_);
 }
 
 void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
-    // remove from front
     assert(!empty());
     --capacity_;
 
-    auto node = first_;
-    first_ = get_ptr(first_);
-    if (first_ == nullptr)
-    {
-        clean_ = nullptr;
-        last_ = nullptr;
-    }
-    else if (node == clean_)
-        // move clean area one back
-        clean_ = first_;
-
-    return debug_fill_new(node, node_size());
+    // try to return from list, to reserve cache for arrays
+    auto mem = list_.pop(node_size_);
+    if (!mem)
+        // use cache
+        mem = cache_.allocate(node_size_, alignment());
+    // mem must not be nullptr now
+    assert(mem);
+    return mem;
 }
 
 void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
 {
-    // remove bytes from clean area starting at last
-    auto bytes_needed = n + 2 * debug_fence_size;
-    auto nodes_needed = bytes_needed / node_size_
-                        + (bytes_needed % node_size_ != 0);
+    auto old_nodes = cache_.no_nodes(node_size_);
 
-    auto diff = std::size_t(last_ - clean_) + node_size_; // open range, need to add one element
-    if (diff < nodes_needed * node_size_)
+    // allocate from cache
+    auto mem = cache_.allocate(n, alignment());
+    if (!mem)
         return nullptr;
 
-    capacity_ -= nodes_needed;
-    last_ -= nodes_needed * node_size_;
-    set_ptr(last_, nullptr);
-
-    return debug_fill_new(last_ + 1, n);
+    auto diff = old_nodes - cache_.no_nodes(node_size_);
+    capacity_ -= diff;
+    return mem;
 }
 
 void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 {
-    // insert at front
-    auto node = debug_fill_free(ptr, node_size());
-
-    if (last_ == nullptr)
-    {
-        // list is completely empty
-        last_ = node;
-        clean_ = node;
-    }
-    else if (first_ == clean_ && node + node_size_ == first_)
-    {
-        // node is directly in fron of clean memory, can be extended
-        clean_ = node;
-    }
-
-    set_ptr(node, first_);
-    first_ = node;
-
+    // try to insert into cache
+    if (!cache_.try_deallocate(ptr, node_size_, alignment()))
+        // insert into list if failed
+        list_.push(ptr, node_size_);
     ++capacity_;
 }
 
 void free_memory_list::deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
 {
-    // inserts at end if clean, otherwise at front
-    auto mem = debug_fill_free(ptr, n);
-    auto bytes_needed = n + 2 * debug_fence_size;
-    auto nodes_needed = bytes_needed / node_size_
-                        + (bytes_needed % node_size_ != 0);
+    auto old_nodes = cache_.no_nodes(node_size_);
 
-    auto cur = mem;
-    for (std::size_t i = 0u; i != nodes_needed - 1; ++i, cur += node_size_)
-        set_ptr(cur, cur + node_size_);
-
-    if (last_ && last_ + node_size_ == mem)
+    // try to insert into cache
+    if (cache_.try_deallocate(ptr, n, alignment()))
     {
-        // clean insert, insert at the end
-        set_ptr(cur, nullptr);
-        set_ptr(last_, mem);
-        last_ = mem;
+        auto diff = cache_.no_nodes(node_size_) - old_nodes;
+        capacity_ += diff;
     }
-    else
+    else // insert into list otherwise
     {
-        // insert at the front
-        set_ptr(cur, first_);
-        first_ = mem;
-
-        if (!last_)
-        {
-            // empty list
-            last_ = cur;
-            clean_ = mem;
-        }
+        auto fence = (debug_fence_size ? alignment() : 0u);
+        auto node = static_cast<char*>(ptr) - fence;
+        capacity_ += list_.insert(node, node + fence + n + fence, node_size_);
     }
-    capacity_ += nodes_needed;
 }
 
 std::size_t free_memory_list::node_size() const FOONATHAN_NOEXCEPT
@@ -210,14 +236,12 @@ std::size_t free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 
 bool free_memory_list::empty() const FOONATHAN_NOEXCEPT
 {
-    assert(bool(first_) == bool(last_));
-    assert(bool(first_) == bool(capacity_));
-    return !first_;
+   return capacity() == 0u;
 }
 
 std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 {
-    return std::min(node_size_, max_alignment);
+    return alignment_for(node_size_);
 }
 
 namespace
@@ -575,5 +599,5 @@ std::size_t ordered_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 
 std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 {
-    return std::min(node_size_, max_alignment);
+    return alignment_for(node_size_);
 }
