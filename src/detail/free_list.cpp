@@ -74,7 +74,7 @@ bool free_memory_list::cache::try_deallocate(void *ptr,
 
 std::size_t free_memory_list::cache::no_nodes(std::size_t node_size) const FOONATHAN_NOEXCEPT
 {
-    auto actual_size = node_size + (debug_fence_size ? alignment_for(node_size) : 0u);
+    auto actual_size = node_size + (debug_fence_size ? 2 * alignment_for(node_size) : 0u);
     return std::size_t(end_ - cur_) / actual_size;
 }
 
@@ -103,8 +103,7 @@ std::size_t free_memory_list::list_impl::insert(char *begin, char *end,
 void free_memory_list::list_impl::push(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     // alignment is fence memory
-    auto node = static_cast<char*>(ptr) - (debug_fence_size ? alignment_for(node_size) : 0u);
-    debug_fill(ptr, node_size, debug_magic::freed_memory);
+    auto node = debug_fill_free(ptr, node_size, alignment_for(node_size));
 
     set_ptr(node, first_);
     first_ = node;
@@ -119,13 +118,7 @@ void *free_memory_list::list_impl::pop(std::size_t node_size) FOONATHAN_NOEXCEPT
     first_ = get_ptr(mem);
 
     // alignment is fence memory
-    auto fence = debug_fence_size ? alignment_for(node_size) : 0u;
-    debug_fill(mem, fence, debug_magic::fence_memory);
-    mem += fence;
-    debug_fill(mem, node_size, debug_magic::new_memory);
-    debug_fill(mem + node_size, fence, debug_magic::fence_memory);
-
-    return mem;
+    return debug_fill_new(mem, node_size, alignment_for(node_size));
 }
 
 free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
@@ -231,7 +224,7 @@ void free_memory_list::deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
 
 std::size_t free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 {
-    return node_size_ - 2 * debug_fence_size;
+    return node_size_;
 }
 
 bool free_memory_list::empty() const FOONATHAN_NOEXCEPT
@@ -506,7 +499,7 @@ bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
 }
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(std::max(node_size, min_element_size) + 2 * debug_fence_size),
+: node_size_(std::max(node_size, min_element_size)),
   capacity_(0u)
 {}
 
@@ -544,8 +537,8 @@ void foonathan::memory::detail::swap(ordered_free_memory_list &a, ordered_free_m
 void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     assert(is_aligned(mem, alignment()));
-    auto no_nodes = size / node_size_;
-    list_.insert(node_size_, mem, no_nodes, true);
+    auto no_nodes = size / node_fence_size();
+    list_.insert(node_fence_size(), mem, no_nodes, true);
     capacity_ += no_nodes;
 }
 
@@ -554,28 +547,29 @@ void* ordered_free_memory_list::allocate() FOONATHAN_NOEXCEPT
     assert(capacity_ > 0u);
     --capacity_;
 
-    auto node = list_.erase(node_size_);
+    auto node = list_.erase(node_fence_size());
 
-    return debug_fill_new(node, node_size());
+    return debug_fill_new(node, node_size(), alignment());
 }
 
 void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
 {
-    auto bytes_needed = n + 2 * debug_fence_size;
-    auto nodes = list_.erase(node_size_, bytes_needed);
+    auto fence = debug_fence_size ? alignment() : 0u;
+    auto bytes_needed = n + 2 * fence;
+    auto nodes = list_.erase(node_fence_size(), bytes_needed);
     if (!nodes)
         return nullptr;
 
-    auto no_nodes = bytes_needed / node_size_ + (bytes_needed % node_size_ != 0);
+    auto no_nodes = bytes_needed / node_fence_size() + (bytes_needed % node_fence_size() != 0);
     capacity_ -= no_nodes;
-    return nodes;
+    return debug_fill_new(nodes, n, fence);
 }
 
 void ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 {
-    auto node = debug_fill_free(ptr, node_size());
+    auto node = debug_fill_free(ptr, node_size(), alignment());
 
-    list_.insert(node_size_, node, 1, false);
+    list_.insert(node_fence_size(), node, 1, false);
 
     ++capacity_;
 }
@@ -583,21 +577,27 @@ void ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 void ordered_free_memory_list::
         deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
 {
-    auto node = debug_fill_free(ptr, n);
+    auto fence = debug_fence_size ? alignment() : 0u;
+    auto node = debug_fill_free(ptr, n, fence);
 
-    auto bytes = n + 2 * debug_fence_size;
-    auto no_nodes = bytes / node_size_ + (bytes % node_size_ != 0);
-    list_.insert(node_size_, node, no_nodes, false);
+    auto bytes = n + 2 * fence;
+    auto no_nodes = bytes / node_fence_size() + (bytes % node_fence_size() != 0);
+    list_.insert(node_fence_size(), node, no_nodes, false);
 
     capacity_ += no_nodes;
 }
 
 std::size_t ordered_free_memory_list::node_size() const FOONATHAN_NOEXCEPT
 {
-    return node_size_ - 2 * debug_fence_size;
+    return node_size_;
 }
 
 std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 {
     return alignment_for(node_size_);
+}
+
+std::size_t ordered_free_memory_list::node_fence_size() const FOONATHAN_NOEXCEPT
+{
+    return node_size_ + (debug_fence_size ? 2 * alignment() : 0u);
 }

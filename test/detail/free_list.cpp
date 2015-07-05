@@ -10,6 +10,8 @@
 #include <random>
 #include <vector>
 
+#include "detail/align.hpp"
+
 using namespace foonathan::memory;
 using namespace detail;
 
@@ -22,6 +24,7 @@ void use_list_node(FreeList &list)
     {
         auto ptr = list.allocate();
         REQUIRE(ptr);
+        REQUIRE(is_aligned(ptr, list.alignment()));
         ptrs.push_back(ptr);
     }
     REQUIRE(list.capacity() == 0u);
@@ -48,6 +51,7 @@ void check_list(FreeList &list, void *memory, std::size_t size)
 
     auto node = list.allocate();
     REQUIRE(node);
+    REQUIRE(is_aligned(node, list.alignment()));
     REQUIRE(list.capacity() == old_cap - 1);
 
     list.deallocate(node);
@@ -64,6 +68,7 @@ void check_move(FreeList &list)
 
     auto ptr = list.allocate();
     REQUIRE(ptr);
+    REQUIRE(is_aligned(ptr, list.alignment()));
     auto capacity = list.capacity();
 
     auto list2 = std::move(list);
@@ -81,6 +86,7 @@ void check_move(FreeList &list)
 
     ptr = list.allocate();
     REQUIRE(ptr);
+    REQUIRE(is_aligned(ptr, list.alignment()));
     list.deallocate(ptr);
 
     ptr = list2.allocate();
@@ -127,21 +133,26 @@ void use_list_array(ordered_free_memory_list &list)
 
     auto array = list.allocate(3 * list.node_size());
     REQUIRE(array);
+    REQUIRE(is_aligned(array, list.alignment()));
     auto array2 = list.allocate(2 * 3);
     REQUIRE(array2);
+    REQUIRE(is_aligned(array2, list.alignment()));
     auto node = list.allocate();
     REQUIRE(node);
+    REQUIRE(is_aligned(node, list.alignment()));
 
     list.deallocate(array2, 2 * 3);
     list.deallocate(node);
 
     array2 = list.allocate(4 * 10);
     REQUIRE(array2);
+    REQUIRE(is_aligned(array2, list.alignment()));
 
     list.deallocate(array, 3 * list.node_size());
 
     node = list.allocate();
     REQUIRE(node);
+    REQUIRE(is_aligned(node, list.alignment()));
     list.deallocate(node);
 
     list.deallocate(array2, 4 * 10);

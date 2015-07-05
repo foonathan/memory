@@ -88,21 +88,27 @@ namespace foonathan { namespace memory
 
         // fills fence, new and fence
         // returns after fence
-        inline void* debug_fill_new(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
+        inline void* debug_fill_new(void *memory, std::size_t node_size,
+                                    std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT
         {
+            if (!debug_fence_size)
+                fence_size = 0u;
             auto mem = static_cast<char*>(memory);
-            debug_fill(mem, debug_fence_size, debug_magic::fence_memory);
-            mem += debug_fence_size;
+            debug_fill(mem, fence_size, debug_magic::fence_memory);
+            mem += fence_size;
             debug_fill(mem, node_size, debug_magic::new_memory);
-            debug_fill(mem + node_size, debug_fence_size, debug_magic::fence_memory);
+            debug_fill(mem + node_size, fence_size, debug_magic::fence_memory);
             return mem;
         }
 
         // fills free memory and returns memory starting at fence
-        inline char* debug_fill_free(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
+        inline char* debug_fill_free(void *memory, std::size_t node_size,
+                                    std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT
         {
+            if (!debug_fence_size)
+                fence_size = 0u;
             debug_fill(memory, node_size, debug_magic::freed_memory);
-            return static_cast<char*>(memory) - debug_fence_size;
+            return static_cast<char*>(memory) - fence_size;
         }
     #else
         using debug_fill_enabled = std::false_type;
@@ -112,12 +118,12 @@ namespace foonathan { namespace memory
         // this includes parameter calculations
         inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
 
-        inline void* debug_fill_new(void *memory, std::size_t) FOONATHAN_NOEXCEPT
+        inline void* debug_fill_new(void *memory, std::size_t, std::size_t = 0u) FOONATHAN_NOEXCEPT
         {
             return memory;
         }
 
-        inline char* debug_fill_free(void *memory, std::size_t) FOONATHAN_NOEXCEPT
+        inline char* debug_fill_free(void *memory, std::size_t, std::size_t = 0u) FOONATHAN_NOEXCEPT
         {
             return static_cast<char*>(memory);
         }

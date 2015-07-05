@@ -238,6 +238,9 @@ namespace foonathan { namespace memory
             std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
+            // node size with fence
+            std::size_t node_fence_size() const FOONATHAN_NOEXCEPT;
+
             // xor linked list storing the free nodes
             // keeps the list ordered to support arrays
             class list_impl
