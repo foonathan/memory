@@ -52,7 +52,7 @@ TEST_CASE("memory_pool", "[pool]")
             REQUIRE(pool.capacity() == 0u);
 
             ptrs.push_back(pool.allocate_node());
-            REQUIRE(pool.capacity() >= 100u - pool.node_size());
+            REQUIRE(pool.capacity() >= capacity - pool.node_size());
             REQUIRE(alloc.no_allocated() == 2u);
 
             std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
