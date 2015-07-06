@@ -11,7 +11,6 @@
 #include <type_traits>
 
 #include "config.hpp"
-#include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -28,12 +27,20 @@ namespace foonathan { namespace memory
 
     /// \brief A \ref concept::RawAllocator that allocates memory via std::malloc/free.
     /// \ingroup memory
-    class heap_allocator : public raw_allocator_base<heap_allocator>
+    class heap_allocator
     {
     public:
         using is_stateful = std::false_type;
 
-        //=== allocation/deallocation ===//
+        heap_allocator() FOONATHAN_NOEXCEPT = default;
+        heap_allocator(heap_allocator&&) FOONATHAN_NOEXCEPT {}
+        ~heap_allocator() FOONATHAN_NOEXCEPT = default;
+
+        heap_allocator& operator=(heap_allocator &&) FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
         /// \brief Allocates raw memory from the heap.
         /// \details If it fails, it behaves like \c ::operator \c new
         /// (retry in loop calling \c std::new_handler, etc.),
@@ -43,6 +50,10 @@ namespace foonathan { namespace memory
 
         /// \brief Deallocates raw memory.
         void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
+
+        /// \brief Maximum node size.
+        /// \details It forwards to \c std::allocator<char>::max_size().
+        std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory
 

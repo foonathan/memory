@@ -7,8 +7,6 @@
 
 #include <unordered_map>
 
-#include "raw_allocator_base.hpp"
-
 struct memory_info
 {
     void *memory;
@@ -16,7 +14,7 @@ struct memory_info
 };
 
 // RawAllocator with various security checks
-class test_allocator : public foonathan::memory::raw_allocator_base<test_allocator>
+class test_allocator
 {
 public:
     using is_stateful = std::true_type;
@@ -42,6 +40,11 @@ public:
         else
             allocated_.erase(iter);
         ::operator delete(node);
+    }
+
+    std::size_t max_node_size() const FOONATHAN_NOEXCEPT
+    {
+        return std::size_t(-1);
     }
 
     bool last_deallocation_valid() FOONATHAN_NOEXCEPT

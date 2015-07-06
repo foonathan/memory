@@ -13,9 +13,69 @@
 #include <type_traits>
 
 #include "detail/align.hpp"
+#include "config.hpp"
 
 namespace foonathan { namespace memory
 {
+    namespace traits_detail // use seperate namespace to avoid name clashes
+    {
+        template <class Allocator>
+        auto allocate_array(int, Allocator &alloc, std::size_t count,
+                            std::size_t size, std::size_t alignment)
+        -> decltype(alloc.allocate_array(count, size, alignment))
+        {
+            return alloc.allocate_array(count, size, alignment);
+        }
+
+        template <class Allocator>
+        void* allocate_array(short, Allocator &alloc, std::size_t count,
+                            std::size_t size, std::size_t alignment)
+        {
+            return alloc.allocate_node(count * size, alignment);
+        }
+
+        template <class Allocator>
+        auto deallocate_array(int, Allocator &alloc, void *ptr, std::size_t count,
+                            std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        -> decltype(alloc.deallocate_array(ptr, count, size, alignment))
+        {
+            alloc.deallocate_array(ptr, count, size, alignment);
+        }
+
+        template <class Allocator>
+        void deallocate_array(short, Allocator &alloc, void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            alloc.deallocate_node(ptr, count * size, alignment);
+        }
+
+        template <class Allocator>
+        auto max_array_size(int, const Allocator &alloc)
+        -> decltype(alloc.max_array_size())
+        {
+            return alloc.max_array_size();
+        }
+
+        template <class Allocator>
+        std::size_t max_array_size(short, const Allocator &alloc)
+        {
+            return alloc.max_node_size();
+        }
+
+        template <class Allocator>
+        auto max_alignment(int, const Allocator &alloc)
+        -> decltype(alloc.max_alignment())
+        {
+            return alloc.max_alignment();
+        }
+
+        template <class Allocator>
+        std::size_t max_alignment(short, const Allocator &)
+        {
+            return detail::max_alignment;
+        }
+    } // namespace traits_detail
+
     /// \brief Default traits for \ref concept::RawAllocator classes.
     /// \details It provides the unified interface for all allocators.<br>
     /// Specialize it for own classes.
@@ -40,7 +100,7 @@ namespace foonathan { namespace memory
         static void* allocate_array(allocator_type& state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            return state.allocate_array(count, size, alignment);
+            return traits_detail::allocate_array(0, state, count, size, alignment);
         }
 
         static void deallocate_node(allocator_type& state,
@@ -52,7 +112,7 @@ namespace foonathan { namespace memory
         static void deallocate_array(allocator_type& state, void *array, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
-            state.deallocate_array(array, count, size, alignment);
+            traits_detail::deallocate_array(0, state, array, count, size, alignment);
         }
 
         static std::size_t max_node_size(const allocator_type &state)
@@ -62,12 +122,12 @@ namespace foonathan { namespace memory
 
         static std::size_t max_array_size(const allocator_type &state)
         {
-            return state.max_array_size();
+            return traits_detail::max_array_size(0, state);
         }
 
         static std::size_t max_alignment(const allocator_type &state)
         {
-            return state.max_alignment();
+            return traits_detail::max_alignment(0, state);
         }
     };
 

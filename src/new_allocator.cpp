@@ -4,6 +4,8 @@
 
 #include "new_allocator.hpp"
 
+#include <memory>
+
 #include "debugging.hpp"
 #include "error.hpp"
 
@@ -63,4 +65,9 @@ void new_allocator::deallocate_node(void* node, std::size_t size, std::size_t) F
     ::operator delete(memory);
 
     on_dealloc(size);
+}
+
+std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+{
+    return std::allocator<char>().max_size();
 }

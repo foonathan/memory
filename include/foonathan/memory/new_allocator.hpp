@@ -11,7 +11,6 @@
 #include <type_traits>
 
 #include "config.hpp"
-#include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -30,10 +29,19 @@ namespace foonathan { namespace memory
     ///
     /// It is no singleton but stateless; each instance is the same.
     /// \ingroup memory
-    class new_allocator : public raw_allocator_base<new_allocator>
+    class new_allocator
     {
     public:
         using is_stateful = std::false_type;
+
+        new_allocator() FOONATHAN_NOEXCEPT = default;
+        new_allocator(new_allocator&&) FOONATHAN_NOEXCEPT {}
+        ~new_allocator() FOONATHAN_NOEXCEPT = default;
+
+        new_allocator& operator=(new_allocator &&) FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
 
         /// \brief Allocates memory using \c ::operator \c new.
         /// \details It uses the nothrow version.
@@ -44,6 +52,10 @@ namespace foonathan { namespace memory
 
         /// \brief Deallocates memory using \c ::operator \c delete.
         void deallocate_node(void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
+
+        /// \brief Maximum node size.
+        /// \details It forwards to \c std::allocator<char>::max_size().
+        std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory
 

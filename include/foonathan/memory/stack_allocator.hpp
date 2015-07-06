@@ -17,7 +17,6 @@
 #include "allocator_traits.hpp"
 #include "debugging.hpp"
 #include "default_allocator.hpp"
-#include "raw_allocator_base.hpp"
 
 namespace foonathan { namespace memory
 {

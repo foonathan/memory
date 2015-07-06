@@ -28,7 +28,6 @@ set(header
         ${header_path}/pool_allocator.hpp
         ${header_path}/pool_collection.hpp
         ${header_path}/pool_type.hpp
-        ${header_path}/raw_allocator_base.hpp
         ${header_path}/smart_ptr.hpp
         ${header_path}/stack_allocator.hpp
         ${header_path}/temporary_allocator.hpp
