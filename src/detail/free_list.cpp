@@ -4,35 +4,56 @@
 
 #include "detail/free_list.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <functional>
 
 #include "detail/align.hpp"
 #include "debugging.hpp"
+#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
 
 namespace
 {
-    // reads a stored pointer value
-    char* get_ptr(char *address) FOONATHAN_NOEXCEPT
+    // reads stored integer value
+    std::uintptr_t get_int(void *address) FOONATHAN_NOEXCEPT
     {
         assert(address);
-        char* result = nullptr;
-        std::memcpy(&result, address, sizeof(char*));
-        return result;
+        return *static_cast<std::uintptr_t*>(address);
+    }
+
+    // sets stored integer value
+    void set_int(void *address, std::uintptr_t i) FOONATHAN_NOEXCEPT
+    {
+        assert(address);
+        *static_cast<std::uintptr_t*>(address) = i;
+    }
+
+    // pointer to integer
+    std::uintptr_t to_int(char *ptr) FOONATHAN_NOEXCEPT
+    {
+        return reinterpret_cast<std::uintptr_t>(ptr);
+    }
+
+    // integer to pointer
+    char* from_int(std::uintptr_t i) FOONATHAN_NOEXCEPT
+    {
+        return reinterpret_cast<char*>(i);
+    }
+
+    // reads a stored pointer value
+    char* get_ptr(void *address) FOONATHAN_NOEXCEPT
+    {
+        return from_int(get_int(address));
     }
 
     // stores a pointer value
-    void set_ptr(char *address, char *ptr) FOONATHAN_NOEXCEPT
+    void set_ptr(void *address, char *ptr) FOONATHAN_NOEXCEPT
     {
-        assert(address);
-        std::memcpy(address, &ptr, sizeof(char*));
+        set_int(address, to_int(ptr));
     }
 }
 
@@ -239,31 +260,23 @@ std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 
 namespace
 {
-    // xor for pointers
-    char* xor_ptr(char *prev, char *next) FOONATHAN_NOEXCEPT
-    {
-        auto a = reinterpret_cast<std::uintptr_t>(prev);
-        auto b = reinterpret_cast<std::uintptr_t>(next);
-        auto val = a ^ b;
-        return reinterpret_cast<char*>(val);
-    }
 
     // returns the next pointer given the previous pointer
-    char* get_next(char *address, char *prev) FOONATHAN_NOEXCEPT
+    char* get_next(void *address, char *prev) FOONATHAN_NOEXCEPT
     {
-        return xor_ptr(get_ptr(address), prev);
+        return from_int(get_int(address) ^ to_int(prev));
     }
 
     // returns the prev pointer given the next pointer
     char* get_prev(char *address, char *next) FOONATHAN_NOEXCEPT
     {
-        return xor_ptr(get_ptr(address), next);
+        return from_int(get_int(address) ^ to_int(next));
     }
 
     // sets the next and previous pointer
     void set_next_prev(char *address, char *prev, char *next) FOONATHAN_NOEXCEPT
     {
-        set_ptr(address, xor_ptr(prev, next));
+        set_int(address, to_int(prev) ^ to_int(next));
     }
 
     // changes next pointer given the old next pointer
