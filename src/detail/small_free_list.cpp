@@ -240,8 +240,10 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk));
     // memory is not at the right position
     check_pointer(offset % node_fence_size() == 0, info, memory);
+#if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
     // double-free
     check_pointer(!chunk_contains(dealloc_chunk, node_fence_size(), node_memory), info, memory);
+#endif
 
     *node_memory = dealloc_chunk->first_node;
     dealloc_chunk->first_node = static_cast<unsigned char>(offset / node_fence_size());

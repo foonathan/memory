@@ -307,7 +307,7 @@ namespace foonathan { namespace memory
             std::size_t node_size_, capacity_;
         };
 
-        #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
+        #if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECk
             // use ordered version to allow pointer check
             using node_free_memory_list = ordered_free_memory_list;
             using array_free_memory_list = ordered_free_memory_list;

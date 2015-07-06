@@ -17,12 +17,15 @@ include(cmake/compatibility.cmake)
 
 # debug options
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    set(debug_asserts ON)
     set(debug_checks ON)
     set(debug_fence 8)
 elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
+    set(debug_asserts OFF)
     set(debug_checks ON)
     set(debug_fence 0)
 else()
+    set(debug_asserts OFF)
     set(debug_checks OFF)
     set(debug_fence 0)
 endif()
@@ -35,6 +38,8 @@ option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
        "whether or not leak checking is active" ${debug_checks})
 option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
        "whether or not pointer checking on deallocation is active" ${debug_checks})
+option(FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
+       "whether or not the (sometimes expensive) check for double deallocation is active" ${debug_asserts})
 
 # other options
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
