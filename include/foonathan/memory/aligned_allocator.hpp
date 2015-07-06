@@ -9,9 +9,9 @@
 /// \brief An allocator ensuring a certain alignment.
 
 #include <algorithm>
-#include <cassert>
 
 #include "allocator_traits.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -32,7 +32,7 @@ namespace foonathan { namespace memory
         explicit aligned_allocator(std::size_t min_alignment, raw_allocator &&alloc = {})
         : raw_allocator(std::move(alloc)), min_alignment_(min_alignment)
         {
-            assert(min_alignment_ <= max_alignment());
+            FOONATHAN_MEMORY_ASSERT(min_alignment_ <= max_alignment());
         }
 
         /// @{
@@ -101,7 +101,7 @@ namespace foonathan { namespace memory
 
         void set_min_alignment(std::size_t min_alignment)
         {
-            assert(min_alignment <= max_alignment());
+            FOONATHAN_MEMORY_ASSERT(min_alignment <= max_alignment());
             min_alignment_ = min_alignment;
         }
         /// @}

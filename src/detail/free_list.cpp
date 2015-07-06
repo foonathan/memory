@@ -4,7 +4,7 @@
 
 #include "detail/free_list.hpp"
 
-#include <cassert>
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -21,14 +21,14 @@ namespace
     // reads stored integer value
     std::uintptr_t get_int(void *address) FOONATHAN_NOEXCEPT
     {
-        assert(address);
+        FOONATHAN_MEMORY_ASSERT(address);
         return *static_cast<std::uintptr_t*>(address);
     }
 
     // sets stored integer value
     void set_int(void *address, std::uintptr_t i) FOONATHAN_NOEXCEPT
     {
-        assert(address);
+        FOONATHAN_MEMORY_ASSERT(address);
         *static_cast<std::uintptr_t*>(address) = i;
     }
 
@@ -179,7 +179,7 @@ void foonathan::memory::detail::swap(free_memory_list &a, free_memory_list &b) F
 void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     // insert into cache and old cache into list
-    assert(is_aligned(mem, alignment()));
+    FOONATHAN_MEMORY_ASSERT(is_aligned(mem, alignment()));
 
     list_.insert(cache_.top(), cache_.end(), node_size_); // insert cache into list
     cache_ = cache(mem, size); // insert new memory into cache
@@ -189,7 +189,7 @@ void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 
 void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
-    assert(!empty());
+    FOONATHAN_MEMORY_ASSERT(!empty());
     --capacity_;
 
     // try to return from list, to reserve cache for arrays
@@ -198,7 +198,7 @@ void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
         // use cache
         mem = cache_.allocate(node_size_, alignment());
     // mem must not be nullptr now
-    assert(mem);
+    FOONATHAN_MEMORY_ASSERT(mem);
     return mem;
 }
 
@@ -282,7 +282,7 @@ namespace
     // changes next pointer given the old next pointer
     void change_next(char *address, char *old_next, char *new_next) FOONATHAN_NOEXCEPT
     {
-        assert(address);
+        FOONATHAN_MEMORY_ASSERT(address);
         // use old_next to get previous pointer
         auto prev = get_prev(address, old_next);
         // don't change previous pointer
@@ -292,7 +292,7 @@ namespace
     // same for prev
     void change_prev(char *address, char *old_prev, char *new_prev) FOONATHAN_NOEXCEPT
     {
-        assert(address);
+        FOONATHAN_MEMORY_ASSERT(address);
         auto next = get_next(address, old_prev);
         set_next_prev(address, new_prev, next);
     }
@@ -320,7 +320,7 @@ FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_alignment;
 void ordered_free_memory_list::list_impl::insert(std::size_t node_size,
                         void *memory, std::size_t no_nodes, bool new_memory) FOONATHAN_NOEXCEPT
 {
-    assert(no_nodes > 0u);
+    FOONATHAN_MEMORY_ASSERT(no_nodes > 0u);
     auto pos = find_pos(node_size, static_cast<char*>(memory));
 
     auto cur = static_cast<char*>(memory), prev = pos.prev;
@@ -358,7 +358,7 @@ void ordered_free_memory_list::list_impl::insert(std::size_t node_size,
 
 void* ordered_free_memory_list::list_impl::erase(std::size_t) FOONATHAN_NOEXCEPT
 {
-    assert(!empty());
+    FOONATHAN_MEMORY_ASSERT(!empty());
 
     auto to_erase = first_;
 
@@ -385,7 +385,7 @@ void* ordered_free_memory_list::list_impl::erase(std::size_t) FOONATHAN_NOEXCEPT
 void* ordered_free_memory_list::list_impl::
     erase(std::size_t node_size, std::size_t bytes_needed) FOONATHAN_NOEXCEPT
 {
-    assert(!empty());
+    FOONATHAN_MEMORY_ASSERT(!empty());
     if (bytes_needed <= node_size)
         return erase(node_size);
 
@@ -411,7 +411,7 @@ void* ordered_free_memory_list::list_impl::
                 // end is one after last node
                 auto begin_prev = get_prev(cur, next);
 
-                assert(std::size_t(last - cur) % node_size == 0u);
+                FOONATHAN_MEMORY_ASSERT(std::size_t(last - cur) % node_size == 0u);
 
                 // update next
                 if (begin_prev)
@@ -507,7 +507,7 @@ ordered_free_memory_list::list_impl::pos
 
 bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
 {
-    assert(bool(first_) == bool(last_));
+    FOONATHAN_MEMORY_ASSERT(bool(first_) == bool(last_));
     return !first_;
 }
 
@@ -549,7 +549,7 @@ void foonathan::memory::detail::swap(ordered_free_memory_list &a, ordered_free_m
 
 void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
-    assert(is_aligned(mem, alignment()));
+    FOONATHAN_MEMORY_ASSERT(is_aligned(mem, alignment()));
     auto no_nodes = size / node_fence_size();
     list_.insert(node_fence_size(), mem, no_nodes, true);
     capacity_ += no_nodes;
@@ -557,7 +557,7 @@ void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOE
 
 void* ordered_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
-    assert(capacity_ > 0u);
+    FOONATHAN_MEMORY_ASSERT(capacity_ > 0u);
     --capacity_;
 
     auto node = list_.erase(node_fence_size());

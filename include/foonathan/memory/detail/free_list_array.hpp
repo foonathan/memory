@@ -5,13 +5,13 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 #define FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 
-#include <cassert>
 #include <type_traits>
 
 #include "align.hpp"
 #include "memory_stack.hpp"
 
 #include "../config.hpp"
+#include "../error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -38,7 +38,7 @@ namespace foonathan { namespace memory
             {
                 array_ = static_cast<FreeList*>(stack.allocate(no_elements_ * sizeof(FreeList),
                                                                FOONATHAN_ALIGNOF(FreeList)));
-                assert(array_);
+                FOONATHAN_MEMORY_ASSERT(array_);
                 for (std::size_t i = 0u; i != no_elements_; ++i)
                 {
                     auto node_size = AccessPolicy::size_from_index(i + min_size_index);

@@ -5,43 +5,10 @@
 #include "error.hpp"
 
 #include <atomic>
-#include <cassert>
 #include <cstdio>
+#include <cstdlib>
 
 using namespace foonathan::memory;
-
-#if FOONATHAN_HAS_GET_NEW_HANDLER
-    std::new_handler foonathan::memory::detail::get_new_handler()
-    {
-        return std::get_new_handler();
-    }
-#else
-    std::new_handler foonathan::memory::detail::get_new_handler()
-    {
-        auto handler = std::set_new_handler(nullptr);
-        std::set_new_handler(handler);
-        return handler;
-    }
-#endif
-
-void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std::size_t size,
-                   const allocator_info& info)
-{
-    while (true)
-    {
-        auto memory = alloc_func(size);
-        if (memory)
-            return memory;
-
-        auto handler = detail::get_new_handler();
-        if (handler)
-            handler();
-        else
-            FOONATHAN_THROW(out_of_memory(info, size));
-    }
-    assert(false);
-    return nullptr;
-}
 
 namespace
 {
@@ -116,4 +83,46 @@ bad_allocation_size::bad_allocation_size(const allocator_info& info,
 const char* bad_allocation_size::what() const FOONATHAN_NOEXCEPT
 {
     return "allocation size/alignment exceeds supported maximum for allocator";
+}
+
+void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std::size_t size,
+                                              const allocator_info& info)
+{
+    while (true)
+    {
+        auto memory = alloc_func(size);
+        if (memory)
+            return memory;
+
+        auto handler = detail::get_new_handler();
+        if (handler)
+            handler();
+        else
+            FOONATHAN_THROW(out_of_memory(info, size));
+    }
+    FOONATHAN_MEMORY_UNREACHABLE("while (true) shouldn't exit");
+    return nullptr;
+}
+
+#if FOONATHAN_HAS_GET_NEW_HANDLER
+    std::new_handler foonathan::memory::detail::get_new_handler()
+    {
+        return std::get_new_handler();
+    }
+#else
+    std::new_handler foonathan::memory::detail::get_new_handler()
+    {
+        auto handler = std::set_new_handler(nullptr);
+        std::set_new_handler(handler);
+        return handler;
+    }
+#endif
+
+
+void foonathan::memory::detail::handle_failed_assert(const char *msg,
+                                                     const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT
+{
+    std::fprintf(stderr, "[%s] Assertion failure in function %s (%s:%d): %s.",
+                          FOONATHAN_MEMORY_IMPL_LOG_PREFIX, fnc, file, line, msg);
+    std::abort();
 }

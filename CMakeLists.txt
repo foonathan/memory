@@ -30,6 +30,8 @@ else()
     set(debug_fence 0)
 endif()
 
+option(FOONATHAN_MEMORY_DEBUG_ASSERT
+      "whether or not internal assertions (like the macro assert) are enabled" ${debug_asserts})
 option(FOONATHAN_MEMORY_DEBUG_FILL
        "whether or not the (de-)allocated memory will be pre-filled" ${debug_checks})
 set(FOONATHAN_MEMORY_DEBUG_FENCE ${debug_fence} CACHE STRING

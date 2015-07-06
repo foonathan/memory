@@ -17,6 +17,7 @@
 #include "allocator_traits.hpp"
 #include "debugging.hpp"
 #include "default_allocator.hpp"
+#include "error.hpp"
 #include "pool_type.hpp"
 
 namespace foonathan { namespace memory
@@ -193,7 +194,7 @@ namespace foonathan { namespace memory
                 stack_ = detail::fixed_memory_stack(block_list_.allocate());
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity, detail::max_alignment);
-                assert(mem);
+                FOONATHAN_MEMORY_ASSERT(mem);
             }
             // insert new
             pool.insert(mem, capacity);
@@ -275,7 +276,7 @@ namespace foonathan { namespace memory
         static void* allocate_array(std::false_type, allocator_type &,
                                     std::size_t, std::size_t)
         {
-            assert(!"array allocations not supported");
+            FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
         }
 
         static void* allocate_array(std::true_type, allocator_type &state,
@@ -289,7 +290,7 @@ namespace foonathan { namespace memory
         static void deallocate_array(std::false_type, allocator_type &,
                                      void *, std::size_t, std::size_t)
         {
-            assert(!"array allocations not supported");
+            FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
         }
 
         static void deallocate_array(std::true_type, allocator_type &state,

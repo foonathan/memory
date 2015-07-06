@@ -4,8 +4,9 @@
 
 #include "detail/block_list.hpp"
 
-#include <cassert>
 #include <new>
+
+#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -34,7 +35,7 @@ std::size_t block_list_impl::push(void* &memory, std::size_t size) FOONATHAN_NOE
 
 block_info block_list_impl::push(block_list_impl &other) FOONATHAN_NOEXCEPT
 {
-    assert(other.head_ && "stack underflow");
+    FOONATHAN_MEMORY_ASSERT_MSG(other.head_, "stack underflow");
     auto top = other.head_;
     other.head_ = top->prev;
     top->prev = head_;
@@ -44,7 +45,7 @@ block_info block_list_impl::push(block_list_impl &other) FOONATHAN_NOEXCEPT
 
 block_info block_list_impl::pop() FOONATHAN_NOEXCEPT
 {
-    assert(head_ && "stack underflow");
+    FOONATHAN_MEMORY_ASSERT_MSG(head_, "stack underflow");
     auto top = head_;
     head_ = top->prev;
     return {top, top->size};
@@ -52,6 +53,6 @@ block_info block_list_impl::pop() FOONATHAN_NOEXCEPT
 
 block_info block_list_impl::top() const FOONATHAN_NOEXCEPT
 {
-    assert(head_ && "stack underflow");
+    FOONATHAN_MEMORY_ASSERT_MSG(head_, "stack underflow");
     return {head_ + 1, head_->size - sizeof(node)};
 }

@@ -13,7 +13,7 @@
 /// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION_MINOR ${FOONATHAN_MEMORY_VERSION_MINOR}
 
-/// \brief Total version number.
+/// \brief Total version number of the form Mmm.
 /// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
@@ -24,6 +24,12 @@
 /// \details This is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE.
 /// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
+
+/// \brief Whether or not assertions (similar to assert macro) are enabled.
+/// \details These are all checks not handled via the others, including checking pre- and postconditions.
+/// It is enabled by default in Debug mode only, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_ASSERT.
+/// \ingroup memory
+#cmakedefine01 FOONATHAN_MEMORY_DEBUG_ASSERT
 
 /// \brief Whether or not the allocators fill their memory with magic values.
 /// \details This is useful for debugging purposes.<br>

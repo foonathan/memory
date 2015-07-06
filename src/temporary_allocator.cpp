@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "default_allocator.hpp"
+#include "error.hpp"
 
 using namespace foonathan::memory;
 
@@ -65,7 +66,7 @@ namespace
 
     stack_type& get() FOONATHAN_NOEXCEPT
     {
-        assert(is_created);
+        FOONATHAN_MEMORY_ASSERT(is_created);
         return *static_cast<stack_type*>(static_cast<void*>(&temporary_stack));
     }
 
@@ -125,7 +126,7 @@ temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other)
 
 void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
 {
-    assert(top_ == this && "must allocate from top temporary allocator");
+    FOONATHAN_MEMORY_ASSERT_MSG(top_ == this, "must allocate from top temporary allocator");
     return get().allocate(size, alignment);
 }
 
