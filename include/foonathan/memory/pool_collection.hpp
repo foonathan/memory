@@ -97,8 +97,10 @@ namespace foonathan { namespace memory
             {
                 reserve_impl(pool, count * node_size);
                 mem = pool.allocate(count * node_size);
+                if (!mem)
+                    FOONATHAN_THROW(bad_allocation_size(info(),
+                                                        count * node_size, next_capacity()));
             }
-            assert(mem);
             return mem;
         }
 
@@ -147,6 +149,9 @@ namespace foonathan { namespace memory
         /// \brief Returns the size of the next memory block.
         /// \details This is the new capacity after \ref capacity() is exhausted.<br>
         /// This is also the maximum array size.
+        /// \note Especially if debug fences are involved, there is no guarantee
+        /// that the resulting capacity after grow is as big as this value;
+        /// it is just an upper bound.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return block_list_.next_block_size();
