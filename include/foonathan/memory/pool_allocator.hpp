@@ -112,11 +112,12 @@ namespace foonathan { namespace memory
         /// \brief Returns the size of the next memory block.
         /// \details This is the new capacity after \ref capacity() is exhausted.<br>
         /// This is also the maximum array size.
+        /// \note Especially if debug fences are involved, there is no guarantee
+        /// that the resulting capacity after grow is as big as this value;
+        /// it is just an upper bound.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
-            // subtract max alignment to ensure that it can be aligned properly
-            return block_list_.next_block_size()
-                   - detail::max_alignment;
+            return block_list_.next_block_size();
         }
 
         /// \brief Returns the \ref impl_allocator.
@@ -149,12 +150,11 @@ namespace foonathan { namespace memory
             if (!mem)
             {
                 allocate_block();
-                // it must now provide at least the older next capacity
-                // otherwise the array allocation still won't work
-                assert(capacity() >= next_cap);
                 mem = free_list_.allocate(n * node_size);
+                if (!mem)
+                    FOONATHAN_THROW(bad_allocation_size(info(),
+                                                        n * node_size, capacity()));
             }
-            assert(mem);
             return mem;
         }
 

@@ -35,13 +35,13 @@ TEST_CASE("memory_pool_collection", "[pool]")
         SECTION("normal alloc/dealloc")
         {
             std::vector<void*> a, b;
-            for (auto i = 0u; i != 10u; ++i)
+            for (auto i = 0u; i != 5u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
                 b.push_back(pool.allocate_node(5));
             }
-            REQUIRE(pool.capacity() <= 1000u);
             REQUIRE(alloc.no_allocated() == 1u);
+            REQUIRE(pool.capacity() <= 1000u);
 
             std::shuffle(a.begin(), a.end(), std::mt19937{});
             std::shuffle(b.begin(), b.end(), std::mt19937{});

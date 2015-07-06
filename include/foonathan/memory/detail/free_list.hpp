@@ -75,8 +75,102 @@ namespace foonathan { namespace memory
             std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
-            char *first_, *last_;
-            char *clean_; // area between clean_ and last_ is continous and can be used for arrays
+            // cache for new nodes that were never used
+            // it works like a stack and is continous, so supports arrays
+            class cache
+            {
+            public:
+                cache() FOONATHAN_NOEXCEPT
+                : cur_(nullptr), end_(nullptr) {}
+
+                cache(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
+                : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
+
+                cache(cache &&other) FOONATHAN_NOEXCEPT
+                : cur_(other.cur_), end_(other.end_)
+                {
+                    other.cur_ = other.end_ = nullptr;
+                }
+
+                ~cache() FOONATHAN_NOEXCEPT = default;
+
+                cache& operator=(cache &&other) FOONATHAN_NOEXCEPT
+                {
+                    cur_ = other.cur_;
+                    end_ = other.end_;
+                    other.cur_ = other.end_ = nullptr;
+                    return *this;
+                }
+
+                // allocates memory of given size and alignment
+                // takes care of debug filling
+                // returns nullptr if no memory available
+                void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
+
+                // tries to deallocate memory
+                // only works if deallocation in reversed order
+                // returns true if succesfully deallocated
+                bool try_deallocate(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
+
+                char* top() FOONATHAN_NOEXCEPT
+                {
+                    return cur_;
+                }
+
+                char* end() FOONATHAN_NOEXCEPT
+                {
+                    return end_;
+                }
+
+                // number of nodes that can be allocated from the cache
+                std::size_t no_nodes(std::size_t node_size) const FOONATHAN_NOEXCEPT;
+
+            private:
+                char *cur_, *end_;
+            };
+
+            // intrusive list for unused memory nodes
+            // gives only a stack like interface
+            class list_impl
+            {
+            public:
+                list_impl() FOONATHAN_NOEXCEPT
+                : first_(nullptr) {}
+
+                list_impl(list_impl &&other) FOONATHAN_NOEXCEPT
+                : first_(other.first_)
+                {
+                    other.first_ = nullptr;
+                }
+
+                ~list_impl() FOONATHAN_NOEXCEPT = default;
+
+                list_impl& operator=(list_impl &&other) FOONATHAN_NOEXCEPT
+                {
+                    first_ = other.first_;
+                    other.first_ = nullptr;
+                    return *this;
+                }
+
+                // inserts all memory from an intervall into the list
+                // it will be inserted into the front
+                std::size_t insert(char *begin, char *end, std::size_t node_size) FOONATHAN_NOEXCEPT;
+
+                // pushes a single node into the list
+                // it takes care of debug filling
+                void push(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT;
+
+                // pops the first node from the list
+                // it takes care of debug fillilng
+                // returns nullptr if empty
+                void* pop(std::size_t node_size) FOONATHAN_NOEXCEPT;
+
+            private:
+                char *first_;
+            };
+
+            cache cache_;
+            list_impl list_;
             std::size_t node_size_, capacity_;
         };
 
@@ -144,6 +238,9 @@ namespace foonathan { namespace memory
             std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
         private:
+            // node size with fence
+            std::size_t node_fence_size() const FOONATHAN_NOEXCEPT;
+
             // xor linked list storing the free nodes
             // keeps the list ordered to support arrays
             class list_impl

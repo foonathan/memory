@@ -97,7 +97,7 @@ namespace foonathan { namespace memory
         /// Use \ref shrink_to_fit() to actually free them.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            detail::check_pointer(m.index > list_.size() - 1, info(), m.top);
+            detail::check_pointer(m.index <= list_.size() - 1, info(), m.top);
 
             if (std::size_t to_deallocate = (list_.size() - 1) - m.index) // different index
             {
@@ -105,7 +105,7 @@ namespace foonathan { namespace memory
                 for (std::size_t i = 1; i != to_deallocate; ++i)
                     list_.deallocate(); // other blocks fully used
 
-                detail::check_pointer(m.end != list_.top().end(), info(), m.top);
+                detail::check_pointer(m.end == list_.top().end(), info(), m.top);
 
                 // mark memory from new top to end of the block as freed
                 detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
@@ -113,7 +113,7 @@ namespace foonathan { namespace memory
             }
             else // same index
             {
-                detail::check_pointer(stack_.top() < m.top, info(), m.top);
+                detail::check_pointer(stack_.top() >= m.top, info(), m.top);
                 stack_.unwind(m.top);
             }
         }

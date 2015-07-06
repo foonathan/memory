@@ -119,6 +119,9 @@ namespace foonathan { namespace memory
             // returns nullptr if no chunk
             chunk* chunk_for(void *memory) FOONATHAN_NOEXCEPT;
 
+            // node size with fence
+            std::size_t node_fence_size() const FOONATHAN_NOEXCEPT;
+
             chunk_list unused_chunks_, used_chunks_;
             chunk *alloc_chunk_, *dealloc_chunk_;
 

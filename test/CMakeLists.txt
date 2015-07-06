@@ -19,7 +19,7 @@ file(DOWNLOAD
 
 list(GET status 0 status_code)
 list(GET status 1 status_string)
-if(NOT status_code EQUAL 0)
+if((NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp) AND (NOT status_code EQUAL 0))
     message(FATAL_ERROR "error downloading catch: ${status_string}"
                         "${log}")
 else()
