@@ -22,6 +22,7 @@ set(header
         ${header_path}/container.hpp
         ${header_path}/debugging.hpp
         ${header_path}/default_allocator.hpp
+        ${header_path}/deleter.hpp
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
         ${header_path}/new_allocator.hpp
