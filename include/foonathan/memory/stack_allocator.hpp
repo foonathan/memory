@@ -60,7 +60,7 @@ namespace foonathan { namespace memory
         explicit memory_stack(std::size_t block_size,
                         impl_allocator allocator = impl_allocator())
         : leak_checker(info().name),
-          list_(block_size, std::move(allocator))
+          list_(block_size, detail::move(allocator))
         {
             allocate_block();
         }

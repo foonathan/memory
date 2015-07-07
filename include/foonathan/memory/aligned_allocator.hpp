@@ -8,6 +8,7 @@
 /// \file
 /// \brief An allocator ensuring a certain alignment.
 
+#include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -29,7 +30,7 @@ namespace foonathan { namespace memory
         /// \brief Creates it passing it the minimum alignment requirement.
         /// \details It must be less than the maximum supported alignment.
         explicit aligned_allocator(std::size_t min_alignment, raw_allocator &&alloc = {})
-        : raw_allocator(std::move(alloc)), min_alignment_(min_alignment)
+        : raw_allocator(detail::move(alloc)), min_alignment_(min_alignment)
         {
             FOONATHAN_MEMORY_ASSERT(min_alignment_ <= max_alignment());
         }
@@ -120,7 +121,7 @@ namespace foonathan { namespace memory
     -> aligned_allocator<typename std::decay<RawAllocator>::type>
     {
         return aligned_allocator<typename std::decay<RawAllocator>::type>
-                {min_alignment, std::forward<RawAllocator>(allocator)};
+                {min_alignment, detail::forward<RawAllocator>(allocator)};
     }
 }} // namespace foonathan::memory
 

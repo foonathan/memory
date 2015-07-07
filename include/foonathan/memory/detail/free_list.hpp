@@ -6,8 +6,8 @@
 #define FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED
 
 #include <cstddef>
-#include <utility>
 
+#include "utility.hpp"
 #include "../config.hpp"
 
 namespace foonathan { namespace memory
@@ -269,17 +269,17 @@ namespace foonathan { namespace memory
 
                 list_impl& operator=(list_impl &&other) FOONATHAN_NOEXCEPT
                 {
-                    list_impl tmp(std::move(other));
+                    list_impl tmp(detail::move(other));
                     swap(*this, tmp);
                     return *this;
                 }
 
                 friend void swap(list_impl &a, list_impl &b) FOONATHAN_NOEXCEPT
                 {
-                    std::swap(a.first_, b.first_);
-                    std::swap(a.last_, b.last_);
-                    std::swap(a.insert_, b.insert_);
-                    std::swap(a.insert_prev_, b.insert_prev_);
+                    detail::adl_swap(a.first_, b.first_);
+                    detail::adl_swap(a.last_, b.last_);
+                    detail::adl_swap(a.insert_, b.insert_);
+                    detail::adl_swap(a.insert_prev_, b.insert_prev_);
                 }
 
                 // inserts nodes into the list

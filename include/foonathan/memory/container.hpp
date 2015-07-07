@@ -102,7 +102,7 @@ namespace foonathan { namespace memory
         make_priority_queue(RawAllocator &allocator, Compare comp = {})
     {
         return std::priority_queue<T, Container, Compare>
-                {std::move(comp), Container(allocator)};
+                {detail::move(comp), Container(allocator)};
     }
     /// @}
 }} // namespace foonathan::memory

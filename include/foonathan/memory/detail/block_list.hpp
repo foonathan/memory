@@ -6,9 +6,9 @@
 #define FOONATHAN_MEMORY_DETAIL_BLOCK_LIST_HPP_INCLUDED
 
 #include <cstddef>
-#include <utility>
 
 #include "align.hpp"
+#include "utility.hpp"
 #include "../allocator_traits.hpp"
 #include "../config.hpp"
 #include "../debugging.hpp"
@@ -55,14 +55,14 @@ namespace foonathan { namespace memory
 
             block_list_impl& operator=(block_list_impl &&other) FOONATHAN_NOEXCEPT
             {
-                block_list_impl tmp(std::move(other));
+                block_list_impl tmp(detail::move(other));
                 swap(*this, tmp);
                 return *this;
             }
 
             friend void swap(block_list_impl &a, block_list_impl &b) FOONATHAN_NOEXCEPT
             {
-                std::swap(a.head_, b.head_);
+                detail::adl_swap(a.head_, b.head_);
             }
 
             // inserts a new memory block, returns the size needed for the implementation
@@ -104,11 +104,11 @@ namespace foonathan { namespace memory
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
                     RawAllocator allocator)
-            : RawAllocator(std::move(allocator)), size_(0u), cur_block_size_(block_size) {}
+            : RawAllocator(detail::move(allocator)), size_(0u), cur_block_size_(block_size) {}
 
             block_list(block_list &&other) FOONATHAN_NOEXCEPT
-            : RawAllocator(std::move(other)),
-              used_(std::move(other.used_)), free_(std::move(other.free_)),
+            : RawAllocator(detail::move(other)),
+              used_(detail::move(other.used_)), free_(detail::move(other.free_)),
               size_(other.size_), cur_block_size_(other.cur_block_size_)
             {
                 other.size_ = 0u;
@@ -128,7 +128,7 @@ namespace foonathan { namespace memory
             block_list& operator=(block_list &&other) FOONATHAN_NOEXCEPT
             {
                 using std::swap;
-                block_list tmp(std::move(other));
+                block_list tmp(detail::move(other));
                 swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
                 swap(used_, tmp.used_);
                 swap(free_, tmp.free_);

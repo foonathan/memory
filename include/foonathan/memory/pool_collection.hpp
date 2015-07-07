@@ -66,7 +66,7 @@ namespace foonathan { namespace memory
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
         : leak_checker(info().name),
-          block_list_(block_size, std::move(alloc)),
+          block_list_(block_size, detail::move(alloc)),
           stack_(block_list_.allocate()),
           pools_(stack_, max_node_size)
         {}

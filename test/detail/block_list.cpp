@@ -74,7 +74,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         mem = memory;
         list.push(mem, 1024);
 
-        auto another_list = std::move(list);
+        auto another_list = detail::move(list);
         REQUIRE(!another_list.empty());
         REQUIRE(list.empty());
         REQUIRE(another_list.top().memory == mem);
@@ -90,7 +90,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(!list.empty());
         REQUIRE(list.top().memory == mem);
 
-        list = std::move(another_list);
+        list = detail::move(another_list);
         REQUIRE(another_list.empty());
         REQUIRE(!list.empty());
         REQUIRE(list.pop().memory == memory2);
@@ -144,7 +144,7 @@ TEST_CASE("detail::block_list", "[detail][core]")
             a.allocate();
         REQUIRE(a.size() == 10u);
         REQUIRE(alloc.no_allocated() == 10u);
-        auto b = std::move(a);
+        auto b = detail::move(a);
         REQUIRE(a.size() == 0u);
         REQUIRE(b.size() == 10u);
         for (std::size_t i = 0u; i != 10u; ++i)
@@ -155,7 +155,7 @@ TEST_CASE("detail::block_list", "[detail][core]")
         a.allocate();
         a.allocate();
         REQUIRE(a.size() == 2u);
-        b = std::move(a);
+        b = detail::move(a);
         REQUIRE(b.size() == 2u);
         REQUIRE(a.size() == 0u);
     }
