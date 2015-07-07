@@ -7,15 +7,17 @@
 #include <memory>
 
 #include "default_allocator.hpp"
-#include "raw_allocator_base.hpp"
+#include "error.hpp"
 
 using namespace foonathan::memory;
 
 namespace
 {
-    class stack_impl_allocator : public raw_allocator_base<stack_impl_allocator>
+    class stack_impl_allocator
     {
     public:
+        using is_stateful = std::false_type;
+
         stack_impl_allocator() FOONATHAN_NOEXCEPT {}
 
         void* allocate_node(std::size_t size, std::size_t alignment)
@@ -27,10 +29,16 @@ namespace
             return default_allocator().allocate_node(size, alignment);
         }
 
-        void deallocate_node(void *memory, std::size_t size, std::size_t alignment)
+        void deallocate_node(void *memory, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             default_allocator().deallocate_node(memory, size, alignment);
         }
+
+        std::size_t max_node_size() const FOONATHAN_NOEXCEPT
+        {
+            return default_allocator().max_node_size();
+        }
+
 
         static temporary_allocator::growth_tracker set_tracker(temporary_allocator::growth_tracker t)
         {
@@ -58,7 +66,7 @@ namespace
 
     stack_type& get() FOONATHAN_NOEXCEPT
     {
-        assert(is_created);
+        FOONATHAN_MEMORY_ASSERT(is_created);
         return *static_cast<stack_type*>(static_cast<void*>(&temporary_stack));
     }
 
@@ -118,7 +126,7 @@ temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other)
 
 void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
 {
-    assert(top_ == this && "must allocate from top temporary allocator");
+    FOONATHAN_MEMORY_ASSERT_MSG(top_ == this, "must allocate from top temporary allocator");
     return get().allocate(size, alignment);
 }
 

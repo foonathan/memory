@@ -9,7 +9,6 @@
 /// \brief A pool allocator.
 
 #include <algorithm>
-#include <cassert>
 #include <memory>
 #include <type_traits>
 
@@ -20,6 +19,7 @@
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "debugging.hpp"
+#include "error.hpp"
 #include "default_allocator.hpp"
 #include "pool_type.hpp"
 
@@ -67,7 +67,7 @@ namespace foonathan { namespace memory
         {
             if (free_list_.empty())
                 allocate_block();
-            assert(!free_list_.empty());
+            FOONATHAN_MEMORY_ASSERT(!free_list_.empty());
             return free_list_.allocate();
         }
 
@@ -245,7 +245,7 @@ namespace foonathan { namespace memory
         static void* allocate_array(std::false_type, allocator_type &,
                                     std::size_t, std::size_t)
         {
-            assert(!"array allocations not supported");
+            FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
             return nullptr;
         }
 
@@ -260,7 +260,7 @@ namespace foonathan { namespace memory
         static void deallocate_array(std::false_type, allocator_type &,
                                 void *, std::size_t, std::size_t)
         {
-            assert(!"array allocations not supported");
+            FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
         }
 
         static void deallocate_array(std::true_type, allocator_type &state,

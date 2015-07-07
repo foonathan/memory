@@ -8,7 +8,6 @@
 /// \file
 /// \brief A stack allocator.
 
-#include <cassert>
 #include <cstdint>
 #include <type_traits>
 
@@ -17,7 +16,7 @@
 #include "allocator_traits.hpp"
 #include "debugging.hpp"
 #include "default_allocator.hpp"
-#include "raw_allocator_base.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -77,7 +76,7 @@ namespace foonathan { namespace memory
             {
                 allocate_block();
                 mem = stack_.allocate(size, alignment);
-                assert(mem);
+                FOONATHAN_MEMORY_ASSERT(mem);
             }
             return mem;
         }

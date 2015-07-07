@@ -5,6 +5,7 @@
 #include "heap_allocator.hpp"
 
 #include <cstdlib>
+#include <memory>
 #include <new>
 
 #include "debugging.hpp"
@@ -65,4 +66,9 @@ void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) F
     std::free(memory);
 
     on_dealloc(size);
+}
+
+std::size_t heap_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+{
+    return std::allocator<char>().max_size();
 }

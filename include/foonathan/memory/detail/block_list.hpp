@@ -9,6 +9,8 @@
 #include <utility>
 
 #include "align.hpp"
+#include "../allocator_traits.hpp"
+#include "../config.hpp"
 #include "../debugging.hpp"
 
 namespace foonathan { namespace memory
@@ -95,6 +97,7 @@ namespace foonathan { namespace memory
         template <class RawAllocator>
         class block_list : RawAllocator
         {
+            using traits = allocator_traits<RawAllocator>;
             static FOONATHAN_CONSTEXPR auto growth_factor = 2u;
         public:
             // gives it an initial block size and allocates it
@@ -117,8 +120,8 @@ namespace foonathan { namespace memory
                 while (!used_.empty())
                 {
                     auto block = used_.pop();
-                    get_allocator().
-                        deallocate_node(block.memory, block.size, detail::max_alignment);
+                    traits::deallocate_array(get_allocator(), block.memory,
+                                  block.size, 1, detail::max_alignment);
                 }
             }
 
@@ -146,8 +149,8 @@ namespace foonathan { namespace memory
             {
                 if (free_.empty())
                 {
-                    auto memory = get_allocator().
-                        allocate_node(cur_block_size_, detail::max_alignment);
+                    auto memory = traits::allocate_array(get_allocator(),
+                                                cur_block_size_, 1, detail::max_alignment);
                     ++size_;
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
                     cur_block_size_ *= growth_factor;
@@ -192,8 +195,8 @@ namespace foonathan { namespace memory
                 while (!free_.empty())
                 {
                     auto block = free_.pop();
-                    get_allocator().
-                        deallocate_node(block.memory, block.size, detail::max_alignment);
+                    traits::deallocate_array(get_allocator(), block.memory,
+                                             block.size, 1, detail::max_alignment);
                 }
             }
 
