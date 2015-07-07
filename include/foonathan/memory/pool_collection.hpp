@@ -62,7 +62,7 @@ namespace foonathan { namespace memory
 
         /// \brief Creates a new pool collection with given max node size the memory block size.
         /// \details It can handle node sizes up to a given size.<br>
-        /// The first memory block is allocated, the block size can change.
+        /// The first memory block is allocated, the block size /can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     impl_allocator alloc = impl_allocator())
         : leak_checker(info().name),

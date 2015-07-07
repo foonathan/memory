@@ -8,12 +8,15 @@
 /// \file
 /// \brief Mutexes and utilities to synchronize allocators.
 
-#include <mutex>
 #include <type_traits>
 
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <mutex>
+#endif
 
 namespace foonathan { namespace memory
 {
@@ -29,8 +32,9 @@ namespace foonathan { namespace memory
 
     /// \brief The default mutex used by \ref allocator_reference.
     /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true, \ref dummy_mutex otherwise.
+    /// \note On a freestanding implementation, it is always \ref dummy_mutex.
     /// \ingroup memory
-#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
+#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HOSTED_IMPLEMENTATION
     using default_mutex = std::mutex;
 #else
     using default_mutex = dummy_mutex;

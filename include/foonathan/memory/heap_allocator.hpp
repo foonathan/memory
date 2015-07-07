@@ -25,7 +25,10 @@ namespace foonathan { namespace memory
     } // namespace detail
 #endif
 
-    /// \brief A \ref concept::RawAllocator that allocates memory via std::malloc/free.
+    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::malloc/free.
+    /// \note It has no implementation for a freestanding implementation,
+    /// since the implementation isn't required to provide \c std::malloc/free.
+    /// You need to provide your own.
     /// \ingroup memory
     class heap_allocator
     {

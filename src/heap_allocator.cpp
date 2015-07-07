@@ -4,6 +4,7 @@
 
 #include "heap_allocator.hpp"
 
+#if FOONATHAN_HOSTED_IMPLEMENTATION // no definition if not hosted
 #include <cstdlib>
 #include <memory>
 #include <new>
@@ -72,3 +73,4 @@ std::size_t heap_allocator::max_node_size() const FOONATHAN_NOEXCEPT
 {
     return std::allocator<char>().max_size();
 }
+#endif

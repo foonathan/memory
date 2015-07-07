@@ -69,7 +69,8 @@ namespace foonathan { namespace memory
         /// If it returns, this exception will be thrown.<br>
         /// It gets the \ref allocator_info and the amount of memory last tried to be allocated.<br>
         /// The default handler writes this information to \c stderr and continues execution,
-        /// leading to the exception.
+        /// leading to the exception,
+        /// unless it is a freestanding implementation where it does nothing.
         /// \note Unlike \c std::new_handler, this function does not get called in a loop or similar,
         /// it will be called only once and is only meant for error reporting.
         using handler = void(*)(const allocator_info &info, std::size_t amount);
@@ -123,7 +124,8 @@ namespace foonathan { namespace memory
         /// It gets the \ref allocator_info,
         /// the size/alignment passed to it and the size/alignment supported maximum.<br>
         /// The default handler writes this information to \c stderr and continues execution,
-        /// leading to the exception.
+        /// leading to the exception,
+        /// unless it is a freestanding implementation where it does nothing.
         using handler = void(*)(const allocator_info &info,
                                 std::size_t passed, std::size_t supported);
 

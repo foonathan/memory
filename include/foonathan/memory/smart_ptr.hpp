@@ -7,6 +7,12 @@
 
 /// \file
 /// \brief Smart pointer creators using \ref concept::RawAllocator.
+/// \note Only available on a hosted implementation.
+
+#include "config.hpp"
+#if !FOONATHAN_HOSTED_IMPLEMENTATION
+    #error "This header is only available for a hosted implementation.
+#endif
 
 #include <memory>
 

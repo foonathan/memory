@@ -58,6 +58,7 @@ endif()
 
 # build options
 option(FOONATHAN_EXCEPTION_SUPPORT "whether or not to build with exception support" ON)
+option(FOONATHAN_HOSTED_IMPLEMENTATION "whether or not this is a hosted implementation" ON)
 
 option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${is_toplevel})
 option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${is_toplevel})

@@ -70,7 +70,8 @@
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
 
 /// \brief Whether or not everything is in namespace foonathan::memory.
-/// \details If off, a namespace alias memory is provided that is a shortcut for foonathan::memory.
+/// \details If off, a namespace alias memory is provided that is a shortcut for foonathan::memory.<br>
+/// It is off by default, change it via the CMake option \ref FOONATHAN_MEMORY_NAMESPACE_PREFIX.
 /// \note Changing this option breaks \c using \c namespace \c foonathan!
 /// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_NAMESPACE_PREFIX
@@ -86,9 +87,20 @@
 
 /// \brief Whether or not it is build with exception support.
 /// \details If disabled, the library can be used without exceptions enabled,
-/// e.g. when \c -fno-exceptions is active.
+/// e.g. when \c -fno-exceptions is active.<br>
+/// It is \c true by default, change it via the CMake option \ref FOONATHAN_EXCEPTION_SUPPORT.
 /// \ingroup memory
 #cmakedefine01 FOONATHAN_EXCEPTION_SUPPORT
+
+/// \brief Whether or not it is build as a hosted implementation.
+/// \details It is possible to use this library on a freestanding implementation,
+/// where only few headers are available.
+/// then it uses workarounds or own implementations on most headers,
+/// but some headers or classes are also disabled,
+/// this includes e.g. \ref heap_allocator (requires \c std::malloc),
+/// \ref smart_ptr.hpp (requires smart pointers) or \ref container.hpp (requires container).<br>
+/// It is \c true by default, change it via the CMake option \ref FOONATHAN_HOSTED_IMPLEMENTATION.
+#cmakedefine01 FOONATHAN_HOSTED_IMPLEMENTATION
 
 #ifndef FOONATHAN_THROW
     #if FOONATHAN_EXCEPTION_SUPPORT

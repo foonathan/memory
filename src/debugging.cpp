@@ -5,8 +5,12 @@
 #include "debugging.hpp"
 
 #include <atomic>
-#include <cstdio>
 #include <cstdlib>
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <cstdio>
+#endif
+
 
 using namespace foonathan::memory;
 
@@ -14,8 +18,10 @@ namespace
 {
     void default_leak_handler(const allocator_info &info, std::size_t amount) FOONATHAN_NOEXCEPT
     {
+    #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr, "[%s] Allocator %s (at %p) leaked %zu bytes.\n",
                     FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, amount);
+    #endif
     }
 
     std::atomic<leak_handler> leak_h(default_leak_handler);
@@ -35,8 +41,10 @@ namespace
 {
     void default_invalid_ptr_handler(const allocator_info &info, const void *ptr) FOONATHAN_NOEXCEPT
     {
+    #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr, "[%s] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
                              FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, ptr);
+    #endif
         std::abort();
     }
 

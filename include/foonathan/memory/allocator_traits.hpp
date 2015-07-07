@@ -9,11 +9,14 @@
 /// \brief Allocator traits class template.
 
 #include <cstddef>
-#include <memory>
 #include <type_traits>
 
 #include "detail/align.hpp"
 #include "config.hpp"
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <memory>
+#endif
 
 namespace foonathan { namespace memory
 {
@@ -203,12 +206,15 @@ namespace foonathan { namespace memory
     };
 
     /// \brief Specialization of \ref allocator_traits for \c std::allocator.
+    /// \details It is only available on a hosted implementation.
     /// \ingroup memory
-    // implementation note: std::allocator can have any number of implementation defined, defaulted arguments
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     template <typename ... ImplArguments>
     class allocator_traits<std::allocator<ImplArguments...>>
+    // implementation note: std::allocator can have any number of implementation defined, defaulted arguments
     : public allocator_traits_std_allocator<std::allocator<ImplArguments...>>
     {};
+#endif
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED

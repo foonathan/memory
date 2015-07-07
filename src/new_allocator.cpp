@@ -4,7 +4,9 @@
 
 #include "new_allocator.hpp"
 
-#include <memory>
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <memory>
+#endif
 
 #include "debugging.hpp"
 #include "error.hpp"
@@ -69,5 +71,9 @@ void new_allocator::deallocate_node(void* node, std::size_t size, std::size_t) F
 
 std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     return std::allocator<char>().max_size();
+#else
+    return -1;
+#endif
 }

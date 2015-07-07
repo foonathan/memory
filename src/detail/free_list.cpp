@@ -6,7 +6,10 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <functional>
+#endif
 
 #include "detail/align.hpp"
 #include "debugging.hpp"
@@ -457,8 +460,20 @@ ordered_free_memory_list::list_impl::pos
     ordered_free_memory_list::list_impl::find_pos(std::size_t,
                                                   char* memory) const FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     auto greater = std::greater<char*>();
     auto less = std::less<char*>();
+#else
+    // compare integral values and hope it works
+    auto greater = [](char *a, char *b)
+    {
+        return to_int(a) > to_int(b);
+    };
+    auto less = [](char *a, char *b)
+    {
+        return to_int(a) < to_int(b);
+    };
+#endif
 
     // starting position is insert_, if set, otherwise first_
     // first_ might be null, too, but this is handled

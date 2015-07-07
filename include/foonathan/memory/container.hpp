@@ -7,6 +7,12 @@
 
 /// \file
 /// \brief Aliasas for STL containers to apply \c RawAllocator more easily.
+/// \note Only available on a hosted implementation.
+
+#include "config.hpp"
+#if !FOONATHAN_HOSTED_IMPLEMENTATION
+    #error "This header is only available for a hosted implementation.
+#endif
 
 #include <deque>
 #include <forward_list>
