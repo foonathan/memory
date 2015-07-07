@@ -9,6 +9,7 @@
 /// \brief Mutexes and utilities to synchronize allocators.
 
 #include <mutex>
+#include <type_traits>
 
 #include "allocator_traits.hpp"
 #include "config.hpp"
@@ -91,23 +92,40 @@ namespace foonathan { namespace memory
         {
         public:
             locked_allocator(Alloc &alloc, Mutex &m) FOONATHAN_NOEXCEPT
-            : lock_(m), alloc_(&alloc) {}
+            : mutex_(&m), alloc_(&alloc)
+            {
+                mutex_->lock();
+            }
 
             locked_allocator(locked_allocator &&other) FOONATHAN_NOEXCEPT
-            : lock_(std::move(other.lock_)), alloc_(other.alloc_) {}
+            : mutex_(other.mutex_), alloc_(other.alloc_)
+            {
+                other.mutex_ = nullptr;
+                other.alloc_ = nullptr;
+            }
+
+            ~locked_allocator() FOONATHAN_NOEXCEPT
+            {
+                if (mutex_)
+                    mutex_->unlock();
+            }
+
+            locked_allocator& operator=(locked_allocator &&other) FOONATHAN_NOEXCEPT = delete;
 
             Alloc& operator*() const FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(alloc_);
                 return *alloc_;
             }
 
             Alloc* operator->() const FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(alloc_);
                 return alloc_;
             }
 
         private:
-            std::unique_lock<Mutex> lock_;
+            Mutex *mutex_; // don't use unqiue_lock to avoid dependency
             Alloc *alloc_;
         };
     } // namespace detail

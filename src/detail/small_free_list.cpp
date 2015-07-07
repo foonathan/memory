@@ -4,7 +4,6 @@
 
 #include "detail/small_free_list.hpp"
 
-#include <algorithm>
 #include <limits>
 #include <new>
 #include <utility>

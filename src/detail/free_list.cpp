@@ -4,7 +4,6 @@
 
 #include "detail/free_list.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -143,7 +142,7 @@ void *free_memory_list::list_impl::pop(std::size_t node_size) FOONATHAN_NOEXCEPT
 }
 
 free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(std::max(node_size, min_element_size)),
+: node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u)
 {}
 
@@ -512,7 +511,7 @@ bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
 }
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(std::max(node_size, min_element_size)),
+: node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u)
 {}
 
