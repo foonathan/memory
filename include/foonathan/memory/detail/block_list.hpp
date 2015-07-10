@@ -127,13 +127,12 @@ namespace foonathan { namespace memory
 
             block_list& operator=(block_list &&other) FOONATHAN_NOEXCEPT
             {
-                using std::swap;
                 block_list tmp(detail::move(other));
-                swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
-                swap(used_, tmp.used_);
-                swap(free_, tmp.free_);
-                swap(size_, tmp.size_);
-                swap(cur_block_size_, other.cur_block_size_);
+                adl_swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
+                adl_swap(used_, tmp.used_);
+                adl_swap(free_, tmp.free_);
+                adl_swap(size_, tmp.size_);
+                adl_swap(cur_block_size_, other.cur_block_size_);
                 return *this;
             }
 

@@ -157,7 +157,7 @@ free_memory_list::free_memory_list(std::size_t node_size,
 }
 
 free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
-: cache_(std::move(other.cache_)), list_(std::move(other.list_)),
+: cache_(detail::move(other.cache_)), list_(detail::move(other.list_)),
   node_size_(other.node_size_), capacity_(other.capacity_)
 {
     other.capacity_ = 0u;

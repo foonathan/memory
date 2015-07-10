@@ -11,6 +11,10 @@
 
 #include "../config.hpp"
 
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <utility>
+#endif
+
 namespace foonathan { namespace memory
 {
     namespace detail
@@ -53,7 +57,14 @@ namespace foonathan { namespace memory
         template <typename T>
         void adl_swap(T &a, T &b) FOONATHAN_NOEXCEPT
         {
+            // sometimes std::swap is found via ADL
+            // use it instead of swap_impl::swap to prevent ambiguity
+            // when both functions exist, i.e. on hosted
+        #if FOONATHAN_HOSTED_IMPLEMENTATION
+            using std::swap;
+        #else
             using swap_impl::swap;
+        #endif
             swap(a, b);
         }
     } // namespace detail

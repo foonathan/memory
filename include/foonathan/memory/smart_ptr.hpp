@@ -11,7 +11,7 @@
 
 #include "config.hpp"
 #if !FOONATHAN_HOSTED_IMPLEMENTATION
-    #error "This header is only available for a hosted implementation.
+    #error "This header is only available for a hosted implementation."
 #endif
 
 #include <memory>

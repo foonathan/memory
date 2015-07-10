@@ -137,7 +137,9 @@ namespace foonathan { namespace memory
     /// \brief Provides all traits functions for \c std::allocator types.
     /// \details Inherit from it when specializing the \ref allocator_traits for such allocators.<br>
     /// It uses the std::allocator_traits to call the functions.
+    /// \note It is only available on a hosted implementation.
     /// \ingroup memory
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     template <class StdAllocator>
     class allocator_traits_std_allocator
     {
@@ -204,9 +206,10 @@ namespace foonathan { namespace memory
             return  detail::max_alignment;
         }
     };
+#endif
 
     /// \brief Specialization of \ref allocator_traits for \c std::allocator.
-    /// \details It is only available on a hosted implementation.
+    /// \note It is only available on a hosted implementation.
     /// \ingroup memory
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     template <typename ... ImplArguments>
