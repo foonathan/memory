@@ -100,7 +100,14 @@
 /// this includes e.g. \ref heap_allocator (requires \c std::malloc),
 /// \ref smart_ptr.hpp (requires smart pointers) or \ref container.hpp (requires container).<br>
 /// It is \c true by default, change it via the CMake option \ref FOONATHAN_HOSTED_IMPLEMENTATION.
+/// \note If \c __STDC_HOSTED__ is \c 0, it will be overriden to \c OFF automatically.
+/// \ingroup memory
 #cmakedefine01 FOONATHAN_HOSTED_IMPLEMENTATION
+
+#if !__STDC_HOSTED__
+    #undef FOONATHAN_HOSTED_IMPLEMENTATION
+    #define FOONATHAN_HOSTED_IMPLEMENTATION 0
+#endif
 
 #ifndef FOONATHAN_THROW
     #if FOONATHAN_EXCEPTION_SUPPORT
