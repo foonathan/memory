@@ -10,6 +10,7 @@
 
 #include <cstddef>
 
+#include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 
 namespace foonathan { namespace memory
@@ -28,7 +29,7 @@ namespace foonathan { namespace memory
 
             tracked_impl_allocator(tracker &t, raw_allocator allocator = {})
             : t_(&t),
-              raw_allocator(std::move(allocator)) {}
+              raw_allocator(detail::move(allocator)) {}
 
             void* allocate_node(std::size_t size, std::size_t alignment)
             {
@@ -104,7 +105,7 @@ namespace foonathan { namespace memory
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
 
         explicit tracked_allocator(tracker t = {}, raw_allocator&& allocator = {})
-        : tracker(std::move(t)), raw_allocator(std::move(allocator)) {}
+        : tracker(detail::move(t)), raw_allocator(detail::move(allocator)) {}
 
         /// @{
         /// \brief (De-)Allocation functions call the appropriate tracker function.
@@ -186,9 +187,9 @@ namespace foonathan { namespace memory
         template <class ImplRawAllocator, typename ... Args>
         tracked_allocator(tracker t, ImplRawAllocator impl,
                         Args&&... args)
-        : tracker(std::move(t)),
-          raw_allocator(std::forward<Args>(args)...,
-                detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, std::move(impl)))
+        : tracker(detail::move(t)),
+          raw_allocator(detail::forward<Args>(args)...,
+                detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
         {}
 
         template <template <class> class A, class T, class I, class ... Args>
@@ -201,7 +202,7 @@ namespace foonathan { namespace memory
     auto make_tracked_allocator(Tracker t, RawAllocator &&alloc)
     -> tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>
     {
-        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{std::move(t), std::forward<RawAllocator>(alloc)};
+        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::forward<RawAllocator>(alloc)};
     }
 
     /// \brief Creates a deeply tracked \ref tracked_allocator.
@@ -216,7 +217,7 @@ namespace foonathan { namespace memory
     auto make_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
     -> tracked_allocator<Tracker, RawAllocator<detail::tracked_impl_allocator<Tracker, ImplRawAllocator>>>
     {
-        return {std::move(t), std::move(impl), std::forward<Args&&>(args)...};
+        return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
     }
 }} // namespace foonathan::memory
 

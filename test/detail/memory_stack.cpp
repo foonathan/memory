@@ -69,7 +69,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
         REQUIRE(other.top() == memory);
         REQUIRE(other.end() == memory + 1024);
 
-        stack = std::move(other);
+        stack = detail::move(other);
         REQUIRE(stack.top() == memory);
         REQUIRE(stack.end() == memory + 1024);
 
@@ -77,7 +77,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
         REQUIRE(stack.allocate(10, 1));
         auto top = stack.top();
 
-        other = std::move(stack);
+        other = detail::move(stack);
         REQUIRE(other.top() == top);
         REQUIRE(!stack.allocate(10, 1));
         REQUIRE(other.allocate(10, 1));

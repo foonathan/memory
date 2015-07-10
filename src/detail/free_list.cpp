@@ -4,10 +4,12 @@
 
 #include "detail/free_list.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <functional>
+#endif
 
 #include "detail/align.hpp"
 #include "debugging.hpp"
@@ -143,7 +145,7 @@ void *free_memory_list::list_impl::pop(std::size_t node_size) FOONATHAN_NOEXCEPT
 }
 
 free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(std::max(node_size, min_element_size)),
+: node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u)
 {}
 
@@ -155,7 +157,7 @@ free_memory_list::free_memory_list(std::size_t node_size,
 }
 
 free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
-: cache_(std::move(other.cache_)), list_(std::move(other.list_)),
+: cache_(detail::move(other.cache_)), list_(detail::move(other.list_)),
   node_size_(other.node_size_), capacity_(other.capacity_)
 {
     other.capacity_ = 0u;
@@ -163,17 +165,17 @@ free_memory_list::free_memory_list(free_memory_list &&other) FOONATHAN_NOEXCEPT
 
 free_memory_list& free_memory_list::operator=(free_memory_list &&other) FOONATHAN_NOEXCEPT
 {
-    free_memory_list tmp(std::move(other));
+    free_memory_list tmp(detail::move(other));
     swap(*this, tmp);
     return *this;
 }
 
 void foonathan::memory::detail::swap(free_memory_list &a, free_memory_list &b) FOONATHAN_NOEXCEPT
 {
-    std::swap(a.cache_, b.cache_);
-    std::swap(a.list_, b.list_);
-    std::swap(a.node_size_, b.node_size_);
-    std::swap(a.capacity_, b.capacity_);
+    detail::adl_swap(a.cache_, b.cache_);
+    detail::adl_swap(a.list_, b.list_);
+    detail::adl_swap(a.node_size_, b.node_size_);
+    detail::adl_swap(a.capacity_, b.capacity_);
 }
 
 void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -458,8 +460,20 @@ ordered_free_memory_list::list_impl::pos
     ordered_free_memory_list::list_impl::find_pos(std::size_t,
                                                   char* memory) const FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     auto greater = std::greater<char*>();
     auto less = std::less<char*>();
+#else
+    // compare integral values and hope it works
+    auto greater = [](char *a, char *b)
+    {
+        return to_int(a) > to_int(b);
+    };
+    auto less = [](char *a, char *b)
+    {
+        return to_int(a) < to_int(b);
+    };
+#endif
 
     // starting position is insert_, if set, otherwise first_
     // first_ might be null, too, but this is handled
@@ -512,7 +526,7 @@ bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
 }
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(std::max(node_size, min_element_size)),
+: node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u)
 {}
 
@@ -525,7 +539,7 @@ ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size,
 
 ordered_free_memory_list::ordered_free_memory_list(
         ordered_free_memory_list &&other) FOONATHAN_NOEXCEPT
-: list_(std::move(other.list_)),
+: list_(detail::move(other.list_)),
   node_size_(other.node_size_), capacity_(other.capacity_)
 {
     other.capacity_ = 0u;
@@ -534,17 +548,16 @@ ordered_free_memory_list::ordered_free_memory_list(
 ordered_free_memory_list &ordered_free_memory_list::operator=(
         ordered_free_memory_list &&other) FOONATHAN_NOEXCEPT
 {
-    ordered_free_memory_list tmp(std::move(other));
+    ordered_free_memory_list tmp(detail::move(other));
     swap(*this, tmp);
     return *this;
 }
 
 void foonathan::memory::detail::swap(ordered_free_memory_list &a, ordered_free_memory_list &b) FOONATHAN_NOEXCEPT
 {
-    using std::swap;
-    swap(a.list_, b.list_);
-    swap(a.node_size_, b.node_size_);
-    swap(a.capacity_, b.capacity_);
+    detail::adl_swap(a.list_, b.list_);
+    detail::adl_swap(a.node_size_, b.node_size_);
+    detail::adl_swap(a.capacity_, b.capacity_);
 }
 
 void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT

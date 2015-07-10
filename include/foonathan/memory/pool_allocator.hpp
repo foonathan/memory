@@ -8,8 +8,6 @@
 /// \file
 /// \brief A pool allocator.
 
-#include <algorithm>
-#include <memory>
 #include <type_traits>
 
 #include "detail/align.hpp"
@@ -55,7 +53,7 @@ namespace foonathan { namespace memory
         memory_pool(std::size_t node_size, std::size_t block_size,
                     impl_allocator allocator = impl_allocator())
         : leak_checker(info().name),
-          block_list_(block_size, std::move(allocator)),
+          block_list_(block_size, detail::move(allocator)),
           free_list_(node_size)
         {
             allocate_block();
@@ -73,7 +71,7 @@ namespace foonathan { namespace memory
 
         /// \brief Allocates an array from the pool.
         /// \details Returns \c n subsequent nodes.<br>
-        /// If not \ref array_pool, may fail, throwing \c std::bad_alloc.
+        /// If not \ref array_pool may fail leading to a grow.
         void* allocate_array(std::size_t n)
         {
             static_assert(pool_type::value,

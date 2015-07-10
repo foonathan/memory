@@ -8,10 +8,15 @@
 /// \file
 /// \brief Mutexes and utilities to synchronize allocators.
 
-#include <mutex>
+#include <type_traits>
 
+#include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <mutex>
+#endif
 
 namespace foonathan { namespace memory
 {
@@ -27,8 +32,9 @@ namespace foonathan { namespace memory
 
     /// \brief The default mutex used by \ref allocator_reference.
     /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true, \ref dummy_mutex otherwise.
+    /// \note On a freestanding implementation, it is always \ref dummy_mutex.
     /// \ingroup memory
-#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
+#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HOSTED_IMPLEMENTATION
     using default_mutex = std::mutex;
 #else
     using default_mutex = dummy_mutex;
@@ -91,23 +97,40 @@ namespace foonathan { namespace memory
         {
         public:
             locked_allocator(Alloc &alloc, Mutex &m) FOONATHAN_NOEXCEPT
-            : lock_(m), alloc_(&alloc) {}
+            : mutex_(&m), alloc_(&alloc)
+            {
+                mutex_->lock();
+            }
 
             locked_allocator(locked_allocator &&other) FOONATHAN_NOEXCEPT
-            : lock_(std::move(other.lock_)), alloc_(other.alloc_) {}
+            : mutex_(other.mutex_), alloc_(other.alloc_)
+            {
+                other.mutex_ = nullptr;
+                other.alloc_ = nullptr;
+            }
+
+            ~locked_allocator() FOONATHAN_NOEXCEPT
+            {
+                if (mutex_)
+                    mutex_->unlock();
+            }
+
+            locked_allocator& operator=(locked_allocator &&other) FOONATHAN_NOEXCEPT = delete;
 
             Alloc& operator*() const FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(alloc_);
                 return *alloc_;
             }
 
             Alloc* operator->() const FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(alloc_);
                 return alloc_;
             }
 
         private:
-            std::unique_lock<Mutex> lock_;
+            Mutex *mutex_; // don't use unqiue_lock to avoid dependency
             Alloc *alloc_;
         };
     } // namespace detail

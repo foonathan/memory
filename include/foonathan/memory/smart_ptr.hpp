@@ -7,6 +7,12 @@
 
 /// \file
 /// \brief Smart pointer creators using \ref concept::RawAllocator.
+/// \note Only available on a hosted implementation.
+
+#include "config.hpp"
+#if !FOONATHAN_HOSTED_IMPLEMENTATION
+    #error "This header is only available for a hosted implementation."
+#endif
 
 #include <memory>
 
@@ -26,7 +32,7 @@ namespace foonathan { namespace memory
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc});
             // call constructor
-            ::new(memory) T(std::forward<Args>(args)...);
+            ::new(memory) T(detail::forward<Args>(args)...);
             // pass ownership to return value using a deleter that calls destructor
             return {result.release(), {alloc}};
         }
@@ -35,7 +41,7 @@ namespace foonathan { namespace memory
         void construct(std::true_type, T *cur, T *end, Args&&... args)
         {
             for (; cur != end; ++cur)
-                ::new(static_cast<void*>(cur)) T(std::forward<Args>(args)...);
+                ::new(static_cast<void*>(cur)) T(detail::forward<Args>(args)...);
         }
 
         template <typename T, typename ... Args>
@@ -46,7 +52,7 @@ namespace foonathan { namespace memory
             try
             {
                 for (; cur != end; ++cur)
-                    ::new(static_cast<void*>(cur)) T(std::forward<Args>(args)...);
+                    ::new(static_cast<void*>(cur)) T(detail::forward<Args>(args)...);
             }
             catch (...)
             {
@@ -55,7 +61,7 @@ namespace foonathan { namespace memory
                 throw;
             }
         #else
-            construct(std::true_type{}, begin, end, std::forward<Args>(args)...);
+            construct(std::true_type{}, begin, end, detail::forward<Args>(args)...);
         #endif
         }
 
@@ -85,8 +91,8 @@ namespace foonathan { namespace memory
         std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
     >::type
     {
-        return detail::allocate_unique<T>(make_allocator_reference(std::forward<RawAllocator>(alloc)),
-                                        std::forward<Args>(args)...);
+        return detail::allocate_unique<T>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
+                                        detail::forward<Args>(args)...);
     }
 
     /// \brief Creates an array wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
@@ -100,7 +106,7 @@ namespace foonathan { namespace memory
     >::type
     {
         return detail::allocate_array_unique<typename std::remove_extent<T>::type>
-                    (size, make_allocator_reference(std::forward<RawAllocator>(alloc)));
+                    (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
     }
 
     /// \brief Creates an object wrapped in a \c std::shared_ptr using a \ref concept::RawAllocator.
@@ -108,7 +114,7 @@ namespace foonathan { namespace memory
     template <typename T, class RawAllocator, typename ... Args>
     std::shared_ptr<T> raw_allocate_shared(RawAllocator &&alloc, Args&&... args)
     {
-        return std::allocate_shared<T>(make_std_allocator<T>(std::forward<RawAllocator>(alloc)), std::forward<Args>(args)...);
+        return std::allocate_shared<T>(make_std_allocator<T>(detail::forward<RawAllocator>(alloc)), detail::forward<Args>(args)...);
     }
 }} // namespace foonathan::memory
 

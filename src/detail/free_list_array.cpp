@@ -4,10 +4,11 @@
 
 #include "detail/free_list_array.hpp"
 
-#include <cmath>
 #include <cfloat>
 #include <climits>
 #include <cstdint>
+
+#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -17,7 +18,7 @@ namespace
     template <typename Integral>
     bool is_power_of_two(Integral no) FOONATHAN_NOEXCEPT
     {
-        return no && (no & (no - 1)) == 0;
+        return (no & (no - 1)) == 0;
     }
 
     // ilog2 is a ceiling implementation of log2 for integers
@@ -43,24 +44,21 @@ namespace
         return sizeof(no) * CHAR_BIT
                 - unsigned(__builtin_clzll(no)) - unsigned(is_power_of_two(no));
     }
-#elif FLT_RADIX == 2
-    // floating points exponent are for base 2, use ilogb to get the exponent
-    // subtract one if power of two, otherwise zero
-    std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
-    {
-        return std::ilogb(no) - unsigned(is_power_of_two(no));
-    }
 #else
-    // just ceil log2
+    // naive loop, starting with 1 for non power of two to be ceiling
     std::size_t ilog2(std::size_t no) FOONATHAN_NOEXCEPT
     {
-        return std::ceil(std::log2(no));
+        std::size_t result = is_power_of_two(no) ? 0u : 1u;
+        while (no >>= 1)
+            ++result;
+        return result;
     }
 #endif
 }
 
 std::size_t log2_access_policy::index_from_size(std::size_t size) FOONATHAN_NOEXCEPT
 {
+    FOONATHAN_MEMORY_ASSERT_MSG(size, "size must not be zero");
     return ilog2(size);
 }
 

@@ -5,8 +5,11 @@
 #include "error.hpp"
 
 #include <atomic>
-#include <cstdio>
 #include <cstdlib>
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <cstdio>
+#endif
 
 using namespace foonathan::memory;
 
@@ -15,9 +18,11 @@ namespace
     void default_out_of_memory_handler(const allocator_info &info,
                                         std::size_t amount) FOONATHAN_NOEXCEPT
     {
+    #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr,
                 "[%s] Allocator %s (at %p) ran out of memory trying to allocate %zu bytes.\n",
                 FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, amount);
+    #endif
     }
 
     std::atomic<out_of_memory::handler> out_of_memory_h(default_out_of_memory_handler);
@@ -50,11 +55,13 @@ namespace
                                         std::size_t passed,
                                         std::size_t supported) FOONATHAN_NOEXCEPT
     {
+    #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr,
                 "[%s] Allocator %s (at %p) received invalid size/alignment %zu, "
                 "max supported is %zu",
                 FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator,
                 passed, supported);
+    #endif
     }
 
     std::atomic<bad_allocation_size::handler>
@@ -122,7 +129,9 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
 void foonathan::memory::detail::handle_failed_assert(const char *msg,
                                                      const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT
 {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
     std::fprintf(stderr, "[%s] Assertion failure in function %s (%s:%d): %s.",
                           FOONATHAN_MEMORY_IMPL_LOG_PREFIX, fnc, file, line, msg);
+#endif
     std::abort();
 }

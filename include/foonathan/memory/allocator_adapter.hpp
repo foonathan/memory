@@ -11,8 +11,8 @@
 #include <limits>
 #include <new>
 #include <type_traits>
-#include <utility>
 
+#include "detail/utility.hpp"
 #include "config.hpp"
 #include "allocator_traits.hpp"
 #include "threading.hpp"
@@ -97,8 +97,8 @@ namespace foonathan { namespace memory
             // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
             typename = typename std::enable_if<!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value>::type>
         allocator_storage(Alloc &&alloc,
-            decltype(new storage_policy(std::forward<Alloc>(alloc))) = nullptr)
-        : storage_policy(std::forward<Alloc>(alloc)) {}
+            decltype(new storage_policy(detail::forward<Alloc>(alloc))) = nullptr)
+        : storage_policy(detail::forward<Alloc>(alloc)) {}
 
         /// @{
         /// \brief Forwards the function to the stored allocator.
@@ -200,14 +200,14 @@ namespace foonathan { namespace memory
         direct_storage() = default;
 
         direct_storage(RawAllocator &&allocator)
-        : RawAllocator(std::move(allocator)) {}
+        : RawAllocator(detail::move(allocator)) {}
 
         direct_storage(direct_storage &&other)
-        : RawAllocator(std::move(other)) {}
+        : RawAllocator(detail::move(other)) {}
 
         direct_storage& operator=(direct_storage &&other)
         {
-            RawAllocator::operator=(std::move(other));
+            RawAllocator::operator=(detail::move(other));
             return *this;
         }
 
@@ -230,7 +230,7 @@ namespace foonathan { namespace memory
     auto make_allocator_adapter(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_adapter<typename std::decay<RawAllocator>::type>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
 
     /// \brief An allocator adapter that uses a mutex for synchronizing.
@@ -248,14 +248,14 @@ namespace foonathan { namespace memory
     auto make_thread_safe_allocator(RawAllocator &&allocator)
     -> thread_safe_allocator<typename std::decay<RawAllocator>::type>
     {
-        return std::forward<RawAllocator>(allocator);
+        return detail::forward<RawAllocator>(allocator);
     }
 
     template <class Mutex, class RawAllocator>
     auto make_thread_safe_allocator(RawAllocator &&allocator)
     -> thread_safe_allocator<typename std::decay<RawAllocator>::type, Mutex>
     {
-        return std::forward<RawAllocator>(allocator);
+        return detail::forward<RawAllocator>(allocator);
     }
     /// @}
 
@@ -349,14 +349,14 @@ namespace foonathan { namespace memory
     auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_reference<typename std::decay<RawAllocator>::type>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
 
     template <class Mutex, class RawAllocator>
     auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
     /// @}
 
@@ -567,14 +567,14 @@ namespace foonathan { namespace memory
     auto make_any_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> any_allocator_reference<>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
 
     template <class Mutex, class RawAllocator>
     auto make_any_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> any_allocator_reference<Mutex>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
     /// @}
 
@@ -713,7 +713,7 @@ namespace foonathan { namespace memory
         void construct(U *p, Args&&... args)
         {
             void* mem = p;
-            ::new(mem) U(std::forward<Args>(args)...);
+            ::new(mem) U(detail::forward<Args>(args)...);
         }
 
         template <typename U>
@@ -798,14 +798,14 @@ namespace foonathan { namespace memory
     auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> std_allocator<T, typename std::decay<RawAllocator>::type>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
 
     template <typename T, class Mutex, class RawAllocator>
     auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     -> std_allocator<T, typename std::decay<RawAllocator>::type, Mutex>
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
     /// @}
 
@@ -842,13 +842,13 @@ namespace foonathan { namespace memory
     template <typename T, class RawAllocator>
     any_allocator<T> make_any_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
 
     template <typename T, class Mutex, class RawAllocator>
     any_allocator<T, Mutex> make_any_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
-        return {std::forward<RawAllocator>(allocator)};
+        return {detail::forward<RawAllocator>(allocator)};
     }
     /// @}
 }} // namespace foonathan::memory

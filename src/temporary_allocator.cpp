@@ -4,7 +4,8 @@
 
 #include "temporary_allocator.hpp"
 
-#include <memory>
+#include <new>
+#include <type_traits>
 
 #include "default_allocator.hpp"
 #include "error.hpp"

@@ -54,7 +54,8 @@ namespace foonathan { namespace memory
         void deallocate_node(void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
         /// \brief Maximum node size.
-        /// \details It forwards to \c std::allocator<char>::max_size().
+        /// \details It forwards to \c std::allocator<char>::max_size(),
+        /// or on a freestanding implementation returns the maximum value.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory

@@ -8,11 +8,14 @@
 /// \file
 /// \brief Methods for debugging errors.
 
-#include <cstring>
 #include <type_traits>
 
 #include "config.hpp"
 #include "error.hpp"
+
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <cstring>
+#endif
 
 namespace foonathan { namespace memory
 {
@@ -42,7 +45,8 @@ namespace foonathan { namespace memory
     /// Leak checking is only done through the unified \c RawAllocator interface,
     /// if you use the allocator directly, any leaks are considered on purpose
     /// since you know the type of the allocator and that a leak might not be bad.<br>
-    /// The default handler writes the information to \c stderr and continues execution.
+    /// The default handler writes the information to \c stderr and continues execution,
+    /// unless on a free standing implementation where it does nothing.
     /// \ingroup memory
     using leak_handler = void(*)(const allocator_info &info, std::size_t amount);
 
@@ -60,7 +64,8 @@ namespace foonathan { namespace memory
     /// It gets the \ref allocator_info and the invalid pointer.<br>
     /// It must not throw any exceptions since it might be called in the cleanup process.<br>
     /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is \c true.<br>
-    /// The default handler writes the information to \c stderr and aborts the program.
+    /// The default handler writes the information to \c stderr and aborts the program,
+    /// unless on a freestanding implementation where it does nothing.
     /// \note The instance pointer is just used as identification, it is different for each allocator,
     /// but may refer to subobjects, don't cast it.
     /// \ingroup memory
@@ -83,7 +88,14 @@ namespace foonathan { namespace memory
 
         inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
         {
+        #if FOONATHAN_HOSTED_IMPLEMENTATION
             std::memset(memory, static_cast<int>(m), size);
+        #else
+            // do the naive loop :(
+            auto ptr = static_cast<unsigned char*>(memory);
+            for (std::size_t i = 0u; i != size; ++i)
+                *ptr++ = static_cast<unsigned char>(m);
+        #endif
         }
 
         // fills fence, new and fence

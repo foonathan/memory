@@ -71,7 +71,7 @@ void check_move(FreeList &list)
     REQUIRE(is_aligned(ptr, list.alignment()));
     auto capacity = list.capacity();
 
-    auto list2 = std::move(list);
+    auto list2 = detail::move(list);
     REQUIRE(list.empty());
     REQUIRE(list.capacity() == 0u);
     REQUIRE(!list2.empty());
@@ -91,7 +91,7 @@ void check_move(FreeList &list)
 
     ptr = list2.allocate();
 
-    list = std::move(list2);
+    list = detail::move(list2);
     REQUIRE(list2.empty());
     REQUIRE(list2.capacity() == 0u);
     REQUIRE(!list.empty());
