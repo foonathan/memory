@@ -60,8 +60,13 @@ endif()
 option(FOONATHAN_EXCEPTION_SUPPORT "whether or not to build with exception support" ON)
 option(FOONATHAN_HOSTED_IMPLEMENTATION "whether or not this is a hosted implementation" ON)
 
+if (NOT FOONATHAN_HOSTED_IMPLEMENTATION)
+    set(is_toplevel 0) # never build examples/test on freestanding by default
+endif()
+
 option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${is_toplevel})
 option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${is_toplevel})
+
 option(FOONATHAN_MEMORY_INCLUDE_PREFIX "whether or not you have to use <foonathan/memory/xxx.hpp>" OFF)
 option(FOONATHAN_MEMORY_NAMESPACE_PREFIX "whether or not everything is in namespace foonathan::memory" OFF)
 
