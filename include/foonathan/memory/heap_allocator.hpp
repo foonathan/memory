@@ -25,10 +25,21 @@ namespace foonathan { namespace memory
     } // namespace detail
 #endif
 
-    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::malloc/free.
+    /// @{
+    /// \brief Wrapper around \c std::malloc/free.
+    /// \details Simply calls the corresponding function from the standard library.
     /// \note It has no implementation for a freestanding implementation,
     /// since the implementation isn't required to provide \c std::malloc/free.
     /// You need to provide your own.
+    /// \ingroup memory
+    void* malloc(std::size_t size) FOONATHAN_NOEXCEPT;
+    void free(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
+    /// @}
+
+    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::malloc/free.
+    /// \details It calls the wrapper functions instead the actual library functions,
+    /// this allows using it on a freestanding implementation where they may not be defined,
+    /// but an implementation of the wrapper.
     /// \ingroup memory
     class heap_allocator
     {
