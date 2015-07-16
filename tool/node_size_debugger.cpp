@@ -3,6 +3,7 @@
 // found in the top-level directory of this distribution.
 
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -17,6 +18,19 @@ struct simple_serializer
         out << result.container_name << ":\n";
         for (auto pair : result.node_sizes)
             out << '\t' << pair.first << '=' << pair.second << '\n';
+    }
+};
+
+struct verbose_serializer
+{
+    std::ostream &out;
+
+    void operator()(const debug_result &result) const
+    {
+        out << "For container '" << result.container_name << "':\n";
+        for (auto pair : result.node_sizes)
+            out << '\t' << "With an alignment of " << std::setw(2) << pair.first
+                << " is the base node size " << std::setw(2) << pair.second << ".\n";
     }
 };
 
@@ -49,10 +63,11 @@ std::string exe_spaces(std::strlen(exe_name), ' ');
 void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
-    out << "       "  << exe_spaces << " [--simple]\n";
+    out << "       "  << exe_spaces << " [--simple][--verbose]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
+    out << "   --verbose\tprints node sizes in a more verbose form\n";
     out << "   --help\tdisplay this help and exit\n";
     out << "   --version\toutput version information and exit\n";
     out << '\n';
@@ -80,6 +95,8 @@ int main(int argc, char *argv[])
 {
     if (argc == 1 || argv[1] == std::string("--simple"))
         serialize(simple_serializer{std::cout});
+    else if (argv[1] == std::string("--verbose"))
+        serialize(verbose_serializer{std::cout});
     else if (argv[1] == std::string("--help"))
         print_help(std::cout);
     else if (argv[1] == std::string("--version"))
