@@ -3,6 +3,7 @@
 // found in the top-level directory of this distribution.
 
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -149,7 +150,7 @@ void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
     out << "       "  << exe_spaces << " [--simple][--verbose]\n";
-    out << "       "  << exe_spaces << " [--code [-t digit]]\n";
+    out << "       "  << exe_spaces << " [--code [-t digit] [outputfile]]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
@@ -190,20 +191,39 @@ int print_invalid_argument(std::ostream &out, const char *option)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1 || argv[1] == std::string("--simple"))
+    if (argc <= 1 || argv[1] == std::string("--simple"))
         serialize(simple_serializer{std::cout});
     else if (argv[1] == std::string("--verbose"))
         serialize(verbose_serializer{std::cout});
     else if (argv[1] == std::string("--code"))
     {
-        code_serializer serializer{std::cout, 4};
-        if (argc > 2 && argv[2] == std::string("-t"))
+        std::size_t tab_width = 4u;
+
+        std::ofstream file;
+        std::ostream out(std::cout.rdbuf());
+
+        for (auto cur = &argv[2]; *cur; ++cur)
         {
-            if (argc > 3 && std::isdigit(argv[3][0]))
-                serializer.tab_width = std::size_t(argv[3][0] - '0');
+            if (*cur == std::string("-t"))
+            {
+                ++cur;
+                if (*cur && std::isdigit(cur[0][0]) && !cur[0][1])
+                    tab_width = std::size_t(cur[0][0] - '0');
+                else
+                    return print_invalid_argument(std::cerr, "-t");
+            }
+            else if (!file.is_open())
+            {
+                file.open(*cur);
+                if (!file.is_open())
+                    return print_invalid_argument(std::cerr, "outputfile");
+                out.rdbuf(file.rdbuf());
+            }
             else
-                return print_invalid_argument(std::cout, "-t");
+                return print_invalid_argument(std::cerr, "--code");
         }
+
+        code_serializer serializer{out, tab_width};
         serialize(serializer);
     }
     else if (argv[1] == std::string("--help"))
@@ -211,5 +231,5 @@ int main(int argc, char *argv[])
     else if (argv[1] == std::string("--version"))
         print_version(std::cout);
     else
-        return print_invalid_option(std::cout, argv[1]);
+        return print_invalid_option(std::cerr, argv[1]);
 }
