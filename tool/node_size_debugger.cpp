@@ -148,7 +148,8 @@ void serialize(const Serializer &serializer)
 void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
-    out << "       "  << exe_spaces << " [--simple][--verbose][--code]\n";
+    out << "       "  << exe_spaces << " [--simple][--verbose]\n";
+    out << "       "  << exe_spaces << " [--code [-t digit]]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
@@ -156,6 +157,9 @@ void print_help(std::ostream &out)
     out << "   --code\tgenerates C++ code to obtain the node size\n";
     out << "   --help\tdisplay this help and exit\n";
     out << "   --version\toutput version information and exit\n";
+    out << '\n';
+    out << "Options for code generation: \n";
+    out << "   -t\tfollowed by single digit specifying tab width, 0 uses '\\t'\n";
     out << '\n';
     out << "The base node size is the size of the node without the storage for the value type.\n"
         << "Add 'sizeof(value_type)' to the base node size for the appropriate alignment to get the whole size.\n";
@@ -177,6 +181,13 @@ int print_invalid_option(std::ostream &out, const char *option)
     return 2;
 }
 
+int print_invalid_argument(std::ostream &out, const char *option)
+{
+    out << exe_name << ": invalid argument for option -- '" << option << "'\n";
+    out << "Try '" << exe_name << " --help' for more information.\n";
+    return 2;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc == 1 || argv[1] == std::string("--simple"))
@@ -184,7 +195,17 @@ int main(int argc, char *argv[])
     else if (argv[1] == std::string("--verbose"))
         serialize(verbose_serializer{std::cout});
     else if (argv[1] == std::string("--code"))
-        serialize(code_serializer{std::cout, 4});
+    {
+        code_serializer serializer{std::cout, 4};
+        if (argc > 2 && argv[2] == std::string("-t"))
+        {
+            if (argc > 3 && std::isdigit(argv[3][0]))
+                serializer.tab_width = std::size_t(argv[3][0] - '0');
+            else
+                return print_invalid_argument(std::cout, "-t");
+        }
+        serialize(serializer);
+    }
     else if (argv[1] == std::string("--help"))
         print_help(std::cout);
     else if (argv[1] == std::string("--version"))
