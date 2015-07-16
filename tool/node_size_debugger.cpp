@@ -49,6 +49,7 @@ struct verbose_serializer
 struct code_serializer
 {
     std::ostream &out;
+    std::string alignment;
     std::size_t tab_width;
 
     void prefix() const
@@ -92,7 +93,7 @@ struct code_serializer
             << "template <typename T>" << newline
             << "struct " << struct_name(result.container_name) << newline
             << ": std::integral_constant<std::size_t," << newline
-            << "       detail::" << struct_name(result.container_name) << '<' << alignment() << ">::value + sizeof(T)>" << newline
+            << "       detail::" << struct_name(result.container_name) << '<' << alignment << ">::value + sizeof(T)>" << newline
             << "{};" << newline << newline;
     }
 
@@ -111,11 +112,6 @@ struct code_serializer
     std::string struct_name(const char *container_name) const
     {
         return container_name + std::string("_node_size");
-    }
-
-    std::string alignment() const
-    {
-        return "FOONATHAN_ALIGNOF(T)";
     }
 };
 
@@ -150,7 +146,7 @@ void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
     out << "       "  << exe_spaces << " [--simple][--verbose]\n";
-    out << "       "  << exe_spaces << " [--code [-t digit] [outputfile]]\n";
+    out << "       "  << exe_spaces << " [--code [-t digit] [--alignof expr] [outputfile]]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
@@ -161,6 +157,7 @@ void print_help(std::ostream &out)
     out << '\n';
     out << "Options for code generation: \n";
     out << "   -t\tfollowed by single digit specifying tab width, 0 uses '\\t'\n";
+    out << "   --alignof\tfollowed by an expression that calculates the alignment of a type named 'T', default is 'alignof(T)'\n";
     out << '\n';
     out << "The base node size is the size of the node without the storage for the value type.\n"
         << "Add 'sizeof(value_type)' to the base node size for the appropriate alignment to get the whole size.\n";
@@ -198,7 +195,7 @@ int main(int argc, char *argv[])
     else if (argv[1] == std::string("--code"))
     {
         std::size_t tab_width = 4u;
-
+        std::string alignment = "alignof(T)";
         std::ofstream file;
         std::ostream out(std::cout.rdbuf());
 
@@ -212,6 +209,14 @@ int main(int argc, char *argv[])
                 else
                     return print_invalid_argument(std::cerr, "-t");
             }
+            else if (*cur == std::string("--alignof"))
+            {
+                ++cur;
+                if (*cur)
+                    alignment = *cur;
+                else
+                    return print_invalid_argument(std::cerr, "--alignof");
+            }
             else if (!file.is_open())
             {
                 file.open(*cur);
@@ -223,7 +228,7 @@ int main(int argc, char *argv[])
                 return print_invalid_argument(std::cerr, "--code");
         }
 
-        code_serializer serializer{out, tab_width};
+        code_serializer serializer{out, alignment, tab_width};
         serialize(serializer);
     }
     else if (argv[1] == std::string("--help"))
