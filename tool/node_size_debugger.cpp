@@ -146,7 +146,7 @@ void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
     out << "       "  << exe_spaces << " [--simple][--verbose]\n";
-    out << "       "  << exe_spaces << " [--code [-t digit] [--alignof expr] [outputfile]]\n";
+    out << "       "  << exe_spaces << " [--code [-t digit] [--alignof expr] [--append] [outputfile]]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
@@ -158,6 +158,7 @@ void print_help(std::ostream &out)
     out << "Options for code generation: \n";
     out << "   -t\tfollowed by single digit specifying tab width, 0 uses '\\t'\n";
     out << "   --alignof\tfollowed by an expression that calculates the alignment of a type named 'T', default is 'alignof(T)'\n";
+    out << "   --append\tappend to the outputfile instead of overwriting it (the default)\n";
     out << '\n';
     out << "The base node size is the size of the node without the storage for the value type.\n"
         << "Add 'sizeof(value_type)' to the base node size for the appropriate alignment to get the whole size.\n";
@@ -196,6 +197,7 @@ int main(int argc, char *argv[])
     {
         std::size_t tab_width = 4u;
         std::string alignment = "alignof(T)";
+        auto append = false;
         std::ofstream file;
         std::ostream out(std::cout.rdbuf());
 
@@ -217,9 +219,13 @@ int main(int argc, char *argv[])
                 else
                     return print_invalid_argument(std::cerr, "--alignof");
             }
+            else if (!file.is_open() && *cur == std::string("--append"))
+            {
+                append = true;
+            }
             else if (!file.is_open())
             {
-                file.open(*cur);
+                file.open(*cur, append ? std::ios_base::app : std::ios_base::out);
                 if (!file.is_open())
                     return print_invalid_argument(std::cerr, "outputfile");
                 out.rdbuf(file.rdbuf());
