@@ -146,7 +146,7 @@ void print_help(std::ostream &out)
 {
     out << "Usage: " << exe_name << " [--version][--help]\n";
     out << "       "  << exe_spaces << " [--simple][--verbose]\n";
-    out << "       "  << exe_spaces << " [--code [-t digit] [--alignof expr] [--append] [outputfile]]\n";
+    out << "       "  << exe_spaces << " [--code [--alignof expr] [--append] [--tab digit] [outputfile]]\n";
     out << "Obtains information about the internal node sizes of the STL containers.\n";
     out << '\n';
     out << "   --simple\tprints node sizes in the form 'alignment=base-node-size'\n";
@@ -156,9 +156,9 @@ void print_help(std::ostream &out)
     out << "   --version\toutput version information and exit\n";
     out << '\n';
     out << "Options for code generation: \n";
-    out << "   -t\tfollowed by single digit specifying tab width, 0 uses '\\t'\n";
     out << "   --alignof\tfollowed by an expression that calculates the alignment of a type named 'T', default is 'alignof(T)'\n";
     out << "   --append\tappend to the outputfile instead of overwriting it (the default)\n";
+    out << "   --tab\tfollowed by single digit specifying tab width, 0 uses '\\t'\n";
     out << '\n';
     out << "The base node size is the size of the node without the storage for the value type.\n"
         << "Add 'sizeof(value_type)' to the base node size for the appropriate alignment to get the whole size.\n";
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
         for (auto cur = &argv[2]; *cur; ++cur)
         {
-            if (*cur == std::string("-t"))
+            if (*cur == std::string("--tab"))
             {
                 ++cur;
                 if (*cur && std::isdigit(cur[0][0]) && !cur[0][1])
