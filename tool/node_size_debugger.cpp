@@ -10,8 +10,8 @@
 
 #include "node_size_debugger.hpp"
 
-const char* exe_name = "foonathan_memory_node_size_debugger";
-std::string exe_spaces(std::strlen(exe_name), ' ');
+const char* const exe_name = "nodesize_dbg";
+const std::string exe_spaces(std::strlen(exe_name), ' ');
 
 struct simple_serializer
 {
