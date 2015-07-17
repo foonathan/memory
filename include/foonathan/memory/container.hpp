@@ -112,7 +112,9 @@ namespace foonathan { namespace memory
     }
     /// @}
 
+    #define FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
     #include "container_node_sizes.hpp"
+    #undef FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_CONTAINER_HPP_INCLUDED
