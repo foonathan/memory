@@ -49,24 +49,27 @@ set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
     "whether or not allocator_reference is thread safe by default" ON)
 
-# whether or not this is project is build directly or as subdirectory
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(is_toplevel 1)
-else()
-    set(is_toplevel 0)
-endif()
-
 # build options
 option(FOONATHAN_EXCEPTION_SUPPORT "whether or not to build with exception support" ON)
 option(FOONATHAN_HOSTED_IMPLEMENTATION "whether or not this is a hosted implementation" ON)
 
-if (NOT FOONATHAN_HOSTED_IMPLEMENTATION)
-    set(is_toplevel 0) # never build examples/test on freestanding by default
+# calculates default values for build_* options
+if(FOONATHAN_HOSTED_IMPLEMENTATION AND (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+    # examples/tests if toplevel directory (i.e. direct build, not as subdirectory) and hosted
+    set(build_examples_tests 1)
+else()
+    set(build_examples_tests 0)
 endif()
 
-option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${is_toplevel})
-option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${is_toplevel})
-option(FOONATHAN_MEMORY_BUILD_TOOLS "whether or not to build the tools" ON)
+if(FOONATHAN_HOSTED_IMPLEMENTATION)
+    set(build_tools 1)
+else()
+    set(build_tools 0)
+endif()
+
+option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${build_examples_tests})
+option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${build_examples_tests})
+option(FOONATHAN_MEMORY_BUILD_TOOLS "whether or not to build the tools" ${build_tools})
 
 option(FOONATHAN_MEMORY_INCLUDE_PREFIX "whether or not you have to use <foonathan/memory/xxx.hpp>" OFF)
 option(FOONATHAN_MEMORY_NAMESPACE_PREFIX "whether or not everything is in namespace foonathan::memory" OFF)
