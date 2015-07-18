@@ -11,7 +11,7 @@
 
 #include "config.hpp"
 #if !FOONATHAN_HOSTED_IMPLEMENTATION
-    #error "This header is only available for a hosted implementation.
+    #error "This header is only available for a hosted implementation."
 #endif
 
 #include <deque>
@@ -111,6 +111,10 @@ namespace foonathan { namespace memory
                 {detail::move(comp), Container(allocator)};
     }
     /// @}
+
+    #define FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
+    #include "container_node_sizes.hpp"
+    #undef FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_CONTAINER_HPP_INCLUDED

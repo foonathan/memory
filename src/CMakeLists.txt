@@ -4,6 +4,8 @@
 
 # builds actual library
 
+include(../cmake/cpp11.cmake)
+
 # configure config file
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
@@ -48,41 +50,34 @@ set(src
         new_allocator.cpp
         temporary_allocator.cpp)
 
-# only apply features if not using MSVC, not supported there on cmake 3.1 and unnecessary
-set(cpp_features
-        cxx_alias_templates
-        cxx_auto_type
-        cxx_defaulted_functions
-        cxx_defaulted_move_initializers
-        cxx_delegating_constructors
-        cxx_deleted_functions
-        cxx_extended_friend_declarations
-        cxx_nonstatic_member_init
-        cxx_nullptr
-        cxx_range_for
-        cxx_right_angle_brackets
-        cxx_static_assert
-        cxx_strong_enums
-        cxx_trailing_return_types
-        cxx_uniform_initialization
-        cxx_variadic_templates
-        cxx_template_template_parameters)
-
 if(BIICODE)
-    target_include_directories(${BII_BLOCK_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpps
-    if(NOT MSVC)
-        target_compile_features(${BII_BLOCK_TARGET} INTERFACE ${cpp_features})
-    endif()
-
-    if(BII_LIB_SRC)
-        target_include_directories(${BII_LIB_TARGET} INTERFACE ${header_path})
-    endif()
+    set(foonathan_memory ${BII_LIB_TARGET})
 else()
     add_library(foonathan_memory ${header} ${src})
-    target_include_directories(foonathan_memory PRIVATE ${header_path})
-    target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp
-    target_include_directories(foonathan_memory INTERFACE ${FOONATHAN_MEMORY_INCLUDE_DIR}) # for other targets using it
-    if(NOT MSVC)
-        target_compile_features(foonathan_memory PUBLIC ${cpp_features})
-    endif()
+endif()
+
+target_include_directories(foonathan_memory PRIVATE ${header_path})
+target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp
+target_include_directories(foonathan_memory INTERFACE ${FOONATHAN_MEMORY_INCLUDE_DIR}) # for other targets using it
+target_link_libraries(foonathan_memory PUBLIC foonathan_cpp11)
+
+
+# copy container_node_sizes.hpp.in to binary dir without generating code
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/container_node_sizes.hpp.in"
+     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp")
+
+if(FOONATHAN_MEMORY_BUILD_TOOLS AND (NOT CMAKE_CROSS_COMPILING))
+    # custom command that generates the node sizes
+    # it is technically a hack to ensure that the command will only run once
+    # only works because the header container.hpp isn't actually used inside the library
+    add_custom_command(TARGET foonathan_memory PRE_BUILD
+        COMMAND foonathan_memory_node_size_debugger --code --append --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
+        MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/container_node_sizes.hpp.in"
+        DEPENDS foonathan_memory_node_size_debugger
+        VERBATIM)
+else()
+    message(WARNING "cannot generate container_node_sizes.hpp, node size information will be unavailable")
 endif()
