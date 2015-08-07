@@ -167,7 +167,7 @@ namespace foonathan { namespace memory
     private:
         allocator_info info() const FOONATHAN_NOEXCEPT
         {
-            return {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_pool_collection", this};
+            return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool_collection", this};
         }
 
         std::size_t def_capacity() const FOONATHAN_NOEXCEPT

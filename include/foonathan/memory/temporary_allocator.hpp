@@ -88,7 +88,7 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
             detail::check_allocation_size(size, max_node_size(state),
-                {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::temporary_allocator", &state});
+                {FOONATHAN_MEMORY_LOG_PREFIX "::temporary_allocator", &state});
             return state.allocate(size, alignment);
         }
 

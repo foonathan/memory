@@ -146,7 +146,7 @@ namespace foonathan { namespace memory
     private:
         allocator_info info() const FOONATHAN_NOEXCEPT
         {
-            return {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_stack", this};
+            return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_stack", this};
         }
 
         void allocate_block()

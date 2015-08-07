@@ -2,7 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-// dummy header including the real config file from the CMake binary dir
+/// \file
+/// \brief Configuration macros.
 
 #ifndef FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 #define FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
@@ -30,9 +31,9 @@
     namespace foonathan { namespace memory {}}
     namespace memory = foonathan::memory;
 
-    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "memory"
+    #define FOONATHAN_MEMORY_LOG_PREFIX "memory"
 #else
-    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "foonathan::memory"
+    #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
 #endif
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

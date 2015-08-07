@@ -39,7 +39,7 @@ using namespace foonathan::memory;
     detail::new_allocator_leak_checker_initializer_t::~new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
     {
         if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::new_allocator", nullptr}, alloc_counter);
+            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr}, alloc_counter);
     }
 #else
     namespace
@@ -56,7 +56,7 @@ void* new_allocator::allocate_node(std::size_t size, std::size_t)
                                         return ::operator new(size,
                                                               std::nothrow);
                                     }, size + 2 * detail::debug_fence_size,
-                                    {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::new_allocator", this});
+                                    {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", this});
     on_alloc(size);
     return detail::debug_fill_new(mem, size);
 }

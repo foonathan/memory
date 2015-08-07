@@ -20,7 +20,7 @@ namespace
     {
     #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr, "[%s] Allocator %s (at %p) leaked %zu bytes.\n",
-                    FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, amount);
+                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, amount);
     #endif
     }
 
@@ -43,7 +43,7 @@ namespace
     {
     #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr, "[%s] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
-                             FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, ptr);
+                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, ptr);
     #endif
         std::abort();
     }
