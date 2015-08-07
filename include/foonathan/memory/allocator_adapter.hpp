@@ -93,11 +93,11 @@ namespace foonathan { namespace memory
         /// or only its address taken.<br>
         /// The constructor is only available if it is valid.
         template <class Alloc,
-            // MSVC seems to ignore access rights in decltype SFINAE below
+            // MSVC seems to ignore access rights in SFINAE below
             // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
-            typename = typename std::enable_if<!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value)>
         allocator_storage(Alloc &&alloc,
-            decltype(new storage_policy(detail::forward<Alloc>(alloc))) = nullptr)
+            FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
         : storage_policy(detail::forward<Alloc>(alloc)) {}
 
         /// @{
@@ -672,9 +672,9 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
             // MSVC seems to ignore access rights in decltype SFINAE below
             // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(RawAlloc &alloc,
-            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
+            FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from a temporary raw allocator.
@@ -682,9 +682,9 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
             // MSVC seems to ignore access rights in decltype SFINAE below
             // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(const RawAlloc &alloc,
-            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
+            FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.

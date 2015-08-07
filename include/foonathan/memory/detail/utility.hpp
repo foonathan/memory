@@ -67,6 +67,26 @@ namespace foonathan { namespace memory
         #endif
             swap(a, b);
         }
+
+        // fancier syntax for enable_if
+        // used as (template) parameter
+        // also useful for doxygen
+        // define PREDEFINED: FOONATHAN_REQUIRES(x):=
+        #define FOONATHAN_REQUIRES(Expr) \
+            typename std::enable_if<(Expr), int>::type = 0
+
+        // same as above, but as return type
+        // also useful for doxygen:
+        // defined PREDEFINED: FOONATHAN_REQUIRES_RET(x,r):=r
+        #define FOONATHAN_REQUIRES_RET(Expr, ...) \
+            typename std::enable_if<(Expr), __VA_ARGS__>::type
+
+        // fancier syntax for general expression SFINAE
+        // used as (template) parameter
+        // also useful for doxygen:
+        // define PREDEFINED: FOONATHAN_SFINAE(x):=
+        #define FOONATHAN_SFINAE(Expr) \
+            decltype((Expr), int()) = 0
     } // namespace detail
 }} // namespace foonathan::memory
 

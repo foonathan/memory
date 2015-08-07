@@ -85,11 +85,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
     auto raw_allocate_unique(RawAllocator &&alloc, Args&&... args)
-    -> typename std::enable_if
-    <
-        !std::is_array<T>::value,
-        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
-    >::type
+    -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
+                        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
         return detail::allocate_unique<T>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
                                         detail::forward<Args>(args)...);
@@ -99,11 +96,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator>
     auto raw_allocate_unique(RawAllocator &&alloc, std::size_t size)
-    -> typename std::enable_if
-    <
-        std::is_array<T>::value,
-        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
-    >::type
+    -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
+                              std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
         return detail::allocate_array_unique<typename std::remove_extent<T>::type>
                     (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
