@@ -14,6 +14,7 @@ function(_foonathan_use_comp target)
     comp_target_features(${target} PUBLIC
         cpp11_lang/alignof cpp11_lang/constexpr cpp11_lang/noexcept cpp11_lang/thread_local
         cpp11_lib/max_align_t cpp11_lib/get_new_handler
+        env/exception_support env/hosted_implementation
         PREFIX "FOONATHAN_" NAMESPACE "foonathan_memory_comp"
         CMAKE_PATH "${_foonathan_comp_dest_dir}")
 endfunction()
