@@ -22,7 +22,7 @@
 
 #include "comp/exception_support.hpp"
 #include "comp/hosted_implementation.hpp"
-
+#include "comp/threading_support.hpp"
 #undef COMP_IN_PARENT_HEADER
 
 // namespace prefix

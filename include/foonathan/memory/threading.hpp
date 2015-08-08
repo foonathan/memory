@@ -34,7 +34,7 @@ namespace foonathan { namespace memory
     /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true, \ref dummy_mutex otherwise.
     /// \note On a freestanding implementation, it is always \ref dummy_mutex.
     /// \ingroup memory
-#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HOSTED_IMPLEMENTATION
+#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HAS_THREADING_SUPPORT
     using default_mutex = std::mutex;
 #else
     using default_mutex = dummy_mutex;
