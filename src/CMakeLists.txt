@@ -4,9 +4,6 @@
 
 # builds actual library
 
-# configure config file
-configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
-
 set(header_path ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 set(header
         ${header_path}/detail/align.hpp
@@ -57,7 +54,10 @@ endif()
 target_include_directories(foonathan_memory PRIVATE ${header_path})
 target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp
 target_include_directories(foonathan_memory INTERFACE ${FOONATHAN_MEMORY_INCLUDE_DIR}) # for other targets using it
-comp_target_features(foonathan_memory PUBLIC CPP11)
+_foonathan_use_comp(foonathan_memory) # setup compatiblity code
+
+# configure config file
+configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 # copy container_node_sizes.hpp.in to binary dir without generating code
 file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp")

@@ -31,19 +31,8 @@ namespace foonathan { namespace memory
             return address % alignment == 0u;
         }
 
-        // max_align_t is sometimes not in namespace std and sometimes not available at all
-        #if FOONATHAN_HAS_MAX_ALIGN
-            namespace max_align
-            {
-                using namespace std;
-                using type = max_align_t;
-            }
-
-            FOONATHAN_CONSTEXPR auto max_alignment = FOONATHAN_ALIGNOF(max_align::type);
-        #else
-            // assume long double has maximum alignment
-            FOONATHAN_CONSTEXPR auto max_alignment = FOONATHAN_ALIGNOF(long double);
-        #endif
+        // maximum alignment value
+        FOONATHAN_CONSTEXPR auto max_alignment = FOONATHAN_ALIGNOF(foonathan_memory_comp::max_align_t);
 
         // returns the minimum alignment required for a node of given size
         inline std::size_t alignment_for(std::size_t size) FOONATHAN_NOEXCEPT

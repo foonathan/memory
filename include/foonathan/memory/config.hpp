@@ -11,4 +11,13 @@
 #include "config_impl.hpp"
 #undef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 
+#define COMP_IN_PARENT_HEADER
+#include "comp/alignof.hpp"
+#include "comp/constexpr.hpp"
+#include "comp/get_new_handler.hpp"
+#include "comp/max_align_t.hpp"
+#include "comp/noexcept.hpp"
+#include "comp/thread_local.hpp"
+#undef COMP_IN_PARENT_HEADER
+
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

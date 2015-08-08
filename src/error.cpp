@@ -101,7 +101,7 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
         if (memory)
             return memory;
 
-        auto handler = detail::get_new_handler();
+        auto handler = foonathan_memory_comp::get_new_handler();
         if (handler)
             handler();
         else
@@ -110,21 +110,6 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
     FOONATHAN_MEMORY_UNREACHABLE("while (true) shouldn't exit");
     return nullptr;
 }
-
-#if FOONATHAN_HAS_GET_NEW_HANDLER
-    std::new_handler foonathan::memory::detail::get_new_handler()
-    {
-        return std::get_new_handler();
-    }
-#else
-    std::new_handler foonathan::memory::detail::get_new_handler()
-    {
-        auto handler = std::set_new_handler(nullptr);
-        std::set_new_handler(handler);
-        return handler;
-    }
-#endif
-
 
 void foonathan::memory::detail::handle_failed_assert(const char *msg,
                                                      const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT

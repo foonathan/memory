@@ -173,9 +173,6 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        // compatibility implementation for std::get_new_handler()
-        std::new_handler get_new_handler();
-
         // tries to allocate memory by calling the function in a loop
         // if the function returns a non-null pointer, it is returned
         // otherwise the std::new_handler is called, if it exits and the loop continued
