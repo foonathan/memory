@@ -237,19 +237,25 @@ namespace foonathan { namespace memory
     /// \details It locks the mutex for each function called.<br>
     /// It is implemented via \ref allocator_storage with the \ref direct_storage policy.
     /// \ingroup memory
+#if FOONATHAN_HAS_THREADING_SUPPORT
     template <class RawAllocator, class Mutex = std::mutex>
+#else
+    template <class RawAllocator, class Mutex>
+#endif
     using thread_safe_allocator = allocator_storage<direct_storage<RawAllocator>,
                                                     Mutex>;
 
     /// @{
     /// \brief Creates a \ref thread_safe_allocator.
     /// \relates thread_safe_allocator
+#if FOONATHAN_HAS_THREADING_SUPPORT
     template <class RawAllocator>
     auto make_thread_safe_allocator(RawAllocator &&allocator)
     -> thread_safe_allocator<typename std::decay<RawAllocator>::type>
     {
         return detail::forward<RawAllocator>(allocator);
     }
+#endif
 
     template <class Mutex, class RawAllocator>
     auto make_thread_safe_allocator(RawAllocator &&allocator)

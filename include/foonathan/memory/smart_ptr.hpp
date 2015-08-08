@@ -47,7 +47,7 @@ namespace foonathan { namespace memory
         template <typename T, typename ... Args>
         void construct(std::false_type, T *begin, T *end, Args&&... args)
         {
-        #if FOONATHAN_EXCEPTION_SUPPORT
+        #if FOONATHAN_HAS_EXCEPTION_SUPPORT
             auto cur = begin;
             try
             {
@@ -74,7 +74,7 @@ namespace foonathan { namespace memory
             auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc, size});
-            construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT(T())>{},
+            construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT_OP(T())>{},
                     result.get(), result.get() + size);
             // pass ownership to return value using a deleter that calls destructor
             return {result.release(), {alloc, size}};

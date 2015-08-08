@@ -142,7 +142,7 @@ namespace foonathan { namespace memory
         {
             detail::check_allocation_size(n * node_size, next_capacity(),
                                           info());
-            auto next_cap = next_capacity();
+
             auto mem = free_list_.empty() ? nullptr
                                           : free_list_.allocate(n * node_size);
             if (!mem)

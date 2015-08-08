@@ -49,19 +49,15 @@ set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
     "whether or not allocator_reference is thread safe by default" ON)
 
-# build options
-option(FOONATHAN_EXCEPTION_SUPPORT "whether or not to build with exception support" ON)
-option(FOONATHAN_HOSTED_IMPLEMENTATION "whether or not this is a hosted implementation" ON)
-
 # calculates default values for build_* options
-if(FOONATHAN_HOSTED_IMPLEMENTATION AND (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+if(COMP_HAS_HOSTED_IMPLEMENTATION AND (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
     # examples/tests if toplevel directory (i.e. direct build, not as subdirectory) and hosted
     set(build_examples_tests 1)
 else()
     set(build_examples_tests 0)
 endif()
 
-if(FOONATHAN_HOSTED_IMPLEMENTATION)
+if(COMP_HAS_HOSTED_IMPLEMENTATION)
     set(build_tools 1)
 else()
     set(build_tools 0)
