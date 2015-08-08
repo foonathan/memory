@@ -13,6 +13,7 @@ macro(_foonathan_add_example name)
     target_link_libraries(foonathan_memory_example_${name} PRIVATE foonathan_memory)
     target_include_directories(foonathan_memory_example_${name} PRIVATE
                                ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/)
+    comp_target_features(foonathan_memory_example_${name} PUBLIC CPP11)
 endmacro()
 
 _foonathan_add_example(allocator)

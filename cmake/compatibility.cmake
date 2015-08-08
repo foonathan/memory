@@ -4,6 +4,8 @@
 
 # compatibility.cmake - various necessary compatibility checks
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/comp/comp_base.cmake)
+
 include(CheckCXXSourceCompiles)
 include(CheckCXXCompilerFlag)
 
