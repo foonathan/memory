@@ -12,7 +12,6 @@
 #include "config_impl.hpp"
 #undef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 
-
 #define COMP_IN_PARENT_HEADER
 #include "comp/alignof.hpp"
 #include "comp/constexpr.hpp"
@@ -49,6 +48,21 @@
 // add PREDEFINED: FOONATHAN_EBO():=
 #ifndef FOONATHAN_EBO
     #define FOONATHAN_EBO(...) __VA_ARGS__
+#endif
+
+#ifndef FOONATHAN_ALIAS_TEMPLATE
+    // defines a template alias
+    // usage:
+    // template <typename T>
+    // FOONATHAN_ALIAS_TEMPLATE(bar, foo<T, int>);
+    // useful for doxygen
+    #ifdef DOXYGEN
+        #define FOONATHAN_ALIAS_TEMPLATE(Name, ...) \
+            class Name : public __VA_ARGS__ {}
+    #else
+        #define FOONATHAN_ALIAS_TEMPLATE(Name, ...) \
+            using Name = __VA_ARGS__
+    #endif
 #endif
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

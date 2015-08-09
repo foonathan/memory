@@ -209,7 +209,8 @@ namespace foonathan { namespace memory
     /// \details It is a typedef \ref memory_pool_collection with \ref identity_buckets.
     /// \ingroup memory
     template <class PoolType, class ImplAllocator = default_allocator>
-    using bucket_allocator = memory_pool_collection<PoolType, identity_buckets, ImplAllocator>;
+    FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
+                             memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
     /// \details This allows passing a pool directly as allocator to container types.

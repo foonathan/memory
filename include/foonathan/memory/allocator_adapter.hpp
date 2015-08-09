@@ -223,8 +223,9 @@ namespace foonathan { namespace memory
     /// It does not use a mutex, since there is no need.
     /// \ingroup memory
     template <class RawAllocator>
-    using allocator_adapter = allocator_storage<direct_storage<RawAllocator>,
-                                                dummy_mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(allocator_adapter,
+                             allocator_storage<direct_storage<RawAllocator>,
+                                                dummy_mutex>);
 
     /// \brief Creates an \ref allocator_adapter.
     /// \relates allocator_adapter
@@ -241,11 +242,13 @@ namespace foonathan { namespace memory
     /// \ingroup memory
 #if FOONATHAN_HAS_THREADING_SUPPORT
     template <class RawAllocator, class Mutex = std::mutex>
+    FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
+                             allocator_storage<direct_storage<RawAllocator>, Mutex>;
 #else
     template <class RawAllocator, class Mutex>
+    FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
+                              allocator_storage<direct_storage<RawAllocator>, Mutex>);
 #endif
-    using thread_safe_allocator = allocator_storage<direct_storage<RawAllocator>,
-                                                    Mutex>;
 
     /// @{
     /// \brief Creates a \ref thread_safe_allocator.
@@ -348,7 +351,8 @@ namespace foonathan { namespace memory
     /// It is implemented via \ref allocator_storage with the \ref reference_storage policy.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = default_mutex>
-    using allocator_reference = allocator_storage<reference_storage<RawAllocator>, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
+                             allocator_storage<reference_storage<RawAllocator>, Mutex>);
 
     /// @{
     /// \brief Creates a \ref allocator_reference.
@@ -566,7 +570,8 @@ namespace foonathan { namespace memory
     /// It is implemented via \ref allocator_storage with the \ref any_reference_storage policy.
     /// \ingroup memory
     template <class Mutex = default_mutex>
-    using any_allocator_reference = allocator_storage<any_reference_storage, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(any_allocator_reference,
+                             allocator_storage<any_reference_storage, Mutex>);
 
     /// @{
     /// \brief Creates a \ref any_allocator_reference.
@@ -842,7 +847,8 @@ namespace foonathan { namespace memory
     /// It is just an instantiation of \ref std_allocator with \ref any_allocator_reference.
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
-    using any_allocator = std_allocator<T, any_allocator_reference<Mutex>, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(any_allocator,
+                             std_allocator<T, any_allocator_reference<Mutex>, Mutex>);
 
     /// @{
     /// \brief Makes an \ref any_allocator.
