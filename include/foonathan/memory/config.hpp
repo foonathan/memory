@@ -12,6 +12,7 @@
 #include "config_impl.hpp"
 #undef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 
+
 #define COMP_IN_PARENT_HEADER
 #include "comp/alignof.hpp"
 #include "comp/constexpr.hpp"
@@ -34,6 +35,20 @@
     #define FOONATHAN_MEMORY_LOG_PREFIX "memory"
 #else
     #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
+#endif
+
+// use this macro to mark implementation-defined types
+// gives it more semantics and useful with doxygen
+// add PREDEFINED: FOONATHAN_IMPL_DEFINED():=implementation_defined
+#ifndef FOONATHAN_IMPL_DEFINED
+    #define FOONATHAN_IMPL_DEFINED(...) __VA_ARGS__
+#endif
+
+// use this macro to mark base class which only purpose is EBO
+// gives it more semantics and useful with doxygen
+// add PREDEFINED: FOONATHAN_EBO():=
+#ifndef FOONATHAN_EBO
+    #define FOONATHAN_EBO(...) __VA_ARGS__
 #endif
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

@@ -16,7 +16,8 @@ namespace foonathan { namespace memory
     /// \details It stores an \ref allocator_reference. It does not call any destrucotrs.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator : allocator_reference<RawAllocator>
+    class raw_allocator_deallocator
+    : FOONATHAN_EBO(allocator_reference<RawAllocator>)
     {
     public:
         using raw_allocator = RawAllocator;
@@ -44,7 +45,8 @@ namespace foonathan { namespace memory
     /// \brief Specialization of \ref raw_allocator_deallocator for arrays.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator<Type[], RawAllocator> : allocator_reference<RawAllocator>
+    class raw_allocator_deallocator<Type[], RawAllocator>
+    : FOONATHAN_EBO(allocator_reference<RawAllocator>)
     {
     public:
         using raw_allocator = RawAllocator;
@@ -84,7 +86,8 @@ namespace foonathan { namespace memory
     /// \details It stores an \ref allocator_reference. It calls destructors.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deleter : allocator_reference<RawAllocator>
+    class raw_allocator_deleter
+    : FOONATHAN_EBO(allocator_reference<RawAllocator>)
     {
     public:
         using raw_allocator = RawAllocator;
@@ -113,7 +116,8 @@ namespace foonathan { namespace memory
     /// \brief Specialization of \ref raw_allocator_deleter for arrays.
     /// \ingroup memory
     template <typename Type, class RawAllocator>
-    class raw_allocator_deleter<Type[], RawAllocator> : allocator_reference<RawAllocator>
+    class raw_allocator_deleter<Type[], RawAllocator>
+    : FOONATHAN_EBO(allocator_reference<RawAllocator>)
     {
     public:
         using raw_allocator = RawAllocator;

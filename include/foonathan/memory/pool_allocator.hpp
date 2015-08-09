@@ -20,6 +20,7 @@
 #include "error.hpp"
 #include "default_allocator.hpp"
 #include "pool_type.hpp"
+#include "pool_type.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -34,7 +35,8 @@ namespace foonathan { namespace memory
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
     template <typename PoolType, class RawAllocator = default_allocator>
-    class memory_pool : detail::leak_checker<memory_pool<node_pool, default_allocator>>
+    class memory_pool
+    : FOONATHAN_EBO(detail::leak_checker<memory_pool<node_pool, default_allocator>>)
     {
         using free_list = typename PoolType::type;
         using leak_checker = detail::leak_checker<memory_pool<node_pool, default_allocator>>;

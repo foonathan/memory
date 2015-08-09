@@ -33,17 +33,20 @@ namespace foonathan { namespace memory
     /// \ref small_node_pool is a little bit slower than \ref node_pool.
     /// The nodes from the other pools need to be able to store a pointer, in this, they don't.
     /// \ingroup memory
-    struct node_pool : std::true_type
+    struct node_pool
+    : FOONATHAN_EBO(std::true_type)
     {
         using type = detail::node_free_memory_list;
     };
 
-    struct array_pool : std::true_type
+    struct array_pool
+    : FOONATHAN_EBO(std::true_type)
     {
         using type = detail::array_free_memory_list;
     };
 
-    struct small_node_pool : std::false_type
+    struct small_node_pool
+    : FOONATHAN_EBO(std::false_type)
     {
         using type = detail::small_free_memory_list;
     };

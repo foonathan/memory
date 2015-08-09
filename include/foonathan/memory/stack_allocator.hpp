@@ -48,7 +48,8 @@ namespace foonathan { namespace memory
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
     template <class RawAllocator = default_allocator>
-    class memory_stack : detail::leak_checker<memory_stack<default_allocator>>
+    class memory_stack
+    : FOONATHAN_EBO(detail::leak_checker<memory_stack<default_allocator>>)
     {
         using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
@@ -82,7 +83,7 @@ namespace foonathan { namespace memory
         }
 
         /// \brief Marker type for unwinding.
-        using marker = detail::stack_marker;
+        using marker = FOONATHAN_IMPL_DEFINED(detail::stack_marker);
 
         /// \brief Returns a marker to the current top of the stack.
         marker top() const FOONATHAN_NOEXCEPT

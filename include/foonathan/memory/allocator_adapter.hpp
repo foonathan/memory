@@ -63,8 +63,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class StoragePolicy, class Mutex>
     class allocator_storage
-    : StoragePolicy,
-      detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
+    : FOONATHAN_EBO(StoragePolicy,
+        detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>)
     {
         static_assert(!detail::is_nested_policy<StoragePolicy>::value,
             "don't pass it an allocator_storage, it would lead to double wrapping");
@@ -165,12 +165,14 @@ namespace foonathan { namespace memory
         /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        detail::locked_allocator<raw_allocator, actual_mutex> lock() FOONATHAN_NOEXCEPT
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<raw_allocator, actual_mutex>)
+            lock() FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
         }
 
-        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<const raw_allocator, actual_mutex>)
+            lock() const FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
         }
@@ -181,7 +183,7 @@ namespace foonathan { namespace memory
     /// \details Just stores the allocator directly.
     /// \ingroup memory
     template <class RawAllocator>
-    class direct_storage : RawAllocator
+    class direct_storage : FOONATHAN_EBO(RawAllocator)
     {
     public:
         using raw_allocator = RawAllocator;
@@ -308,8 +310,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class RawAllocator>
     class reference_storage
-    : detail::reference_storage_impl<RawAllocator,
-        allocator_traits<RawAllocator>::is_stateful::value>
+    : FOONATHAN_EBO(detail::reference_storage_impl<RawAllocator,
+        allocator_traits<RawAllocator>::is_stateful::value>)
     {
         using storage = detail::reference_storage_impl<RawAllocator,
                             allocator_traits<RawAllocator>::is_stateful::value>;
@@ -621,7 +623,7 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex/* = default_mutex*/>
     class std_allocator
-    : detail::allocator_reference_for<RawAllocator, Mutex>::type
+    : FOONATHAN_EBO(detail::allocator_reference_for<RawAllocator, Mutex>::type)
     {
         using alloc_reference = typename detail::allocator_reference_for<RawAllocator, Mutex>::type;
         // if it is any_allocator_reference an optimized implementation can be used

@@ -49,7 +49,7 @@ namespace foonathan { namespace memory
     template <class PoolType, class BucketDistribution,
             class RawAllocator = default_allocator>
     class memory_pool_collection
-    : detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>
+    : FOONATHAN_EBO(detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>)
     {
         using free_list_array = detail::free_list_array<typename PoolType::type,
                                                         typename BucketDistribution::type>;
