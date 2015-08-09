@@ -49,7 +49,7 @@ namespace foonathan { namespace memory
     template <class PoolType, class BucketDistribution,
             class RawAllocator = default_allocator>
     class memory_pool_collection
-    : detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>
+    : FOONATHAN_EBO(detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>)
     {
         using free_list_array = detail::free_list_array<typename PoolType::type,
                                                         typename BucketDistribution::type>;
@@ -167,7 +167,7 @@ namespace foonathan { namespace memory
     private:
         allocator_info info() const FOONATHAN_NOEXCEPT
         {
-            return {FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::memory_pool_collection", this};
+            return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool_collection", this};
         }
 
         std::size_t def_capacity() const FOONATHAN_NOEXCEPT
@@ -209,7 +209,8 @@ namespace foonathan { namespace memory
     /// \details It is a typedef \ref memory_pool_collection with \ref identity_buckets.
     /// \ingroup memory
     template <class PoolType, class ImplAllocator = default_allocator>
-    using bucket_allocator = memory_pool_collection<PoolType, identity_buckets, ImplAllocator>;
+    FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
+                             memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
     /// \details This allows passing a pool directly as allocator to container types.

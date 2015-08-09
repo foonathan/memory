@@ -2,7 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-// dummy header including the real config file from the CMake binary dir
+/// \file
+/// \brief Configuration macros.
 
 #ifndef FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 #define FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
@@ -30,9 +31,38 @@
     namespace foonathan { namespace memory {}}
     namespace memory = foonathan::memory;
 
-    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "memory"
+    #define FOONATHAN_MEMORY_LOG_PREFIX "memory"
 #else
-    #define FOONATHAN_MEMORY_IMPL_LOG_PREFIX "foonathan::memory"
+    #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
+#endif
+
+// use this macro to mark implementation-defined types
+// gives it more semantics and useful with doxygen
+// add PREDEFINED: FOONATHAN_IMPL_DEFINED():=implementation_defined
+#ifndef FOONATHAN_IMPL_DEFINED
+    #define FOONATHAN_IMPL_DEFINED(...) __VA_ARGS__
+#endif
+
+// use this macro to mark base class which only purpose is EBO
+// gives it more semantics and useful with doxygen
+// add PREDEFINED: FOONATHAN_EBO():=
+#ifndef FOONATHAN_EBO
+    #define FOONATHAN_EBO(...) __VA_ARGS__
+#endif
+
+#ifndef FOONATHAN_ALIAS_TEMPLATE
+    // defines a template alias
+    // usage:
+    // template <typename T>
+    // FOONATHAN_ALIAS_TEMPLATE(bar, foo<T, int>);
+    // useful for doxygen
+    #ifdef DOXYGEN
+        #define FOONATHAN_ALIAS_TEMPLATE(Name, ...) \
+            class Name : public __VA_ARGS__ {}
+    #else
+        #define FOONATHAN_ALIAS_TEMPLATE(Name, ...) \
+            using Name = __VA_ARGS__
+    #endif
 #endif
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

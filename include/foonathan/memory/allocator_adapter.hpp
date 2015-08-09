@@ -63,8 +63,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class StoragePolicy, class Mutex>
     class allocator_storage
-    : StoragePolicy,
-      detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>
+    : FOONATHAN_EBO(StoragePolicy,
+        detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>)
     {
         static_assert(!detail::is_nested_policy<StoragePolicy>::value,
             "don't pass it an allocator_storage, it would lead to double wrapping");
@@ -93,11 +93,11 @@ namespace foonathan { namespace memory
         /// or only its address taken.<br>
         /// The constructor is only available if it is valid.
         template <class Alloc,
-            // MSVC seems to ignore access rights in decltype SFINAE below
+            // MSVC seems to ignore access rights in SFINAE below
             // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
-            typename = typename std::enable_if<!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value)>
         allocator_storage(Alloc &&alloc,
-            decltype(new storage_policy(detail::forward<Alloc>(alloc))) = nullptr)
+            FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
         : storage_policy(detail::forward<Alloc>(alloc)) {}
 
         /// @{
@@ -165,12 +165,14 @@ namespace foonathan { namespace memory
         /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        detail::locked_allocator<raw_allocator, actual_mutex> lock() FOONATHAN_NOEXCEPT
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<raw_allocator, actual_mutex>)
+            lock() FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
         }
 
-        detail::locked_allocator<const raw_allocator, actual_mutex> lock() const FOONATHAN_NOEXCEPT
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<const raw_allocator, actual_mutex>)
+            lock() const FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
         }
@@ -181,7 +183,7 @@ namespace foonathan { namespace memory
     /// \details Just stores the allocator directly.
     /// \ingroup memory
     template <class RawAllocator>
-    class direct_storage : RawAllocator
+    class direct_storage : FOONATHAN_EBO(RawAllocator)
     {
     public:
         using raw_allocator = RawAllocator;
@@ -221,8 +223,9 @@ namespace foonathan { namespace memory
     /// It does not use a mutex, since there is no need.
     /// \ingroup memory
     template <class RawAllocator>
-    using allocator_adapter = allocator_storage<direct_storage<RawAllocator>,
-                                                dummy_mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(allocator_adapter,
+                             allocator_storage<direct_storage<RawAllocator>,
+                                                dummy_mutex>);
 
     /// \brief Creates an \ref allocator_adapter.
     /// \relates allocator_adapter
@@ -239,11 +242,13 @@ namespace foonathan { namespace memory
     /// \ingroup memory
 #if FOONATHAN_HAS_THREADING_SUPPORT
     template <class RawAllocator, class Mutex = std::mutex>
+    FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
+                             allocator_storage<direct_storage<RawAllocator>, Mutex>;
 #else
     template <class RawAllocator, class Mutex>
+    FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
+                              allocator_storage<direct_storage<RawAllocator>, Mutex>);
 #endif
-    using thread_safe_allocator = allocator_storage<direct_storage<RawAllocator>,
-                                                    Mutex>;
 
     /// @{
     /// \brief Creates a \ref thread_safe_allocator.
@@ -308,8 +313,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class RawAllocator>
     class reference_storage
-    : detail::reference_storage_impl<RawAllocator,
-        allocator_traits<RawAllocator>::is_stateful::value>
+    : FOONATHAN_EBO(detail::reference_storage_impl<RawAllocator,
+        allocator_traits<RawAllocator>::is_stateful::value>)
     {
         using storage = detail::reference_storage_impl<RawAllocator,
                             allocator_traits<RawAllocator>::is_stateful::value>;
@@ -346,7 +351,8 @@ namespace foonathan { namespace memory
     /// It is implemented via \ref allocator_storage with the \ref reference_storage policy.
     /// \ingroup memory
     template <class RawAllocator, class Mutex = default_mutex>
-    using allocator_reference = allocator_storage<reference_storage<RawAllocator>, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
+                             allocator_storage<reference_storage<RawAllocator>, Mutex>);
 
     /// @{
     /// \brief Creates a \ref allocator_reference.
@@ -564,7 +570,8 @@ namespace foonathan { namespace memory
     /// It is implemented via \ref allocator_storage with the \ref any_reference_storage policy.
     /// \ingroup memory
     template <class Mutex = default_mutex>
-    using any_allocator_reference = allocator_storage<any_reference_storage, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(any_allocator_reference,
+                             allocator_storage<any_reference_storage, Mutex>);
 
     /// @{
     /// \brief Creates a \ref any_allocator_reference.
@@ -621,7 +628,7 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex/* = default_mutex*/>
     class std_allocator
-    : detail::allocator_reference_for<RawAllocator, Mutex>::type
+    : FOONATHAN_EBO(detail::allocator_reference_for<RawAllocator, Mutex>::type)
     {
         using alloc_reference = typename detail::allocator_reference_for<RawAllocator, Mutex>::type;
         // if it is any_allocator_reference an optimized implementation can be used
@@ -672,9 +679,9 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
             // MSVC seems to ignore access rights in decltype SFINAE below
             // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(RawAlloc &alloc,
-            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
+            FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from a temporary raw allocator.
@@ -682,9 +689,9 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
             // MSVC seems to ignore access rights in decltype SFINAE below
             // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-            typename = typename std::enable_if<!detail::is_derived_from_std_allocator<RawAlloc>::value>::type>
+            FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(const RawAlloc &alloc,
-            decltype((alloc_reference(alloc), 0)) = 0) FOONATHAN_NOEXCEPT
+            FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
         /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
@@ -840,7 +847,8 @@ namespace foonathan { namespace memory
     /// It is just an instantiation of \ref std_allocator with \ref any_allocator_reference.
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
-    using any_allocator = std_allocator<T, any_allocator_reference<Mutex>, Mutex>;
+    FOONATHAN_ALIAS_TEMPLATE(any_allocator,
+                             std_allocator<T, any_allocator_reference<Mutex>, Mutex>);
 
     /// @{
     /// \brief Makes an \ref any_allocator.

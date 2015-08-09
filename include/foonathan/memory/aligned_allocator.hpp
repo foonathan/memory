@@ -20,7 +20,8 @@ namespace foonathan { namespace memory
     /// and forwards to the wrapped allocator.
     /// \ingroup memory
     template <class RawAllocator>
-    class aligned_allocator : RawAllocator
+    class aligned_allocator
+    : FOONATHAN_EBO(RawAllocator)
     {
         using traits = allocator_traits<RawAllocator>;
     public:

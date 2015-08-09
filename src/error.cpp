@@ -21,7 +21,7 @@ namespace
     #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr,
                 "[%s] Allocator %s (at %p) ran out of memory trying to allocate %zu bytes.\n",
-                FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator, amount);
+                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, amount);
     #endif
     }
 
@@ -59,7 +59,7 @@ namespace
         std::fprintf(stderr,
                 "[%s] Allocator %s (at %p) received invalid size/alignment %zu, "
                 "max supported is %zu",
-                FOONATHAN_MEMORY_IMPL_LOG_PREFIX, info.name, info.allocator,
+                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator,
                 passed, supported);
     #endif
     }
@@ -116,7 +116,7 @@ void foonathan::memory::detail::handle_failed_assert(const char *msg,
 {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     std::fprintf(stderr, "[%s] Assertion failure in function %s (%s:%d): %s.",
-                          FOONATHAN_MEMORY_IMPL_LOG_PREFIX, fnc, file, line, msg);
+                 FOONATHAN_MEMORY_LOG_PREFIX, fnc, file, line, msg);
 #endif
     std::abort();
 }

@@ -231,7 +231,7 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
     auto node_memory = static_cast<unsigned char*>(memory) - (debug_fence_size ? alignment() : 0u);
     auto dealloc_chunk = chunk_for(node_memory);
 
-    auto info = allocator_info(FOONATHAN_MEMORY_IMPL_LOG_PREFIX "::detail::small_free_memory_list", this);
+    auto info = allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
 
     // memory was never managed by this list
     check_pointer(dealloc_chunk, info, memory);

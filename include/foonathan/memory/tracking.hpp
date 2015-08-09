@@ -93,7 +93,8 @@ namespace foonathan { namespace memory
     /// <br>The \c RawAllocator functions are called via the \ref allocator_traits.
     /// \ingroup memory
     template <class Tracker, class RawAllocator>
-    class tracked_allocator : Tracker, RawAllocator
+    class tracked_allocator
+    : FOONATHAN_EBO(Tracker, RawAllocator)
     {
         using traits = allocator_traits<RawAllocator>;
     public:
