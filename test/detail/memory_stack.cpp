@@ -19,7 +19,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
 
     SECTION("allocate")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         stack = {memory, 1024};
         REQUIRE(stack.top() == memory);
         REQUIRE(stack.end() == memory + 1024);
@@ -63,7 +63,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
     }
     SECTION("move")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
 
         fixed_memory_stack other(memory, memory + 1024);
         REQUIRE(other.top() == memory);

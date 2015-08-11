@@ -32,7 +32,7 @@ TEST_CASE("detail::log2_access_policy", "[detail][pool]")
 
 TEST_CASE("detail::free_list_array", "[detail][pool]")
 {
-    char memory[1024];
+    alignas(max_alignment) char memory[1024];
     detail::fixed_memory_stack stack(memory, 1024);
     SECTION("power of two max size, small list")
     {

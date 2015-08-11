@@ -19,7 +19,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
 
     SECTION("push/pop/top")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         void *mem = memory;
         auto offset = list.push(mem, 1024);
         REQUIRE(offset == block_list_impl::impl_offset());
@@ -37,7 +37,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     }
     SECTION("multiple lists")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         void *mem = memory;
         list.push(mem, 1024);
 
@@ -50,7 +50,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(list.empty());
     }
 
-    char a[1024], b[1024], c[1024];
+    alignas(max_alignment) char a[1024], b[1024], c[1024];
     void* mem = a;
     list.push(mem, 1024);
     mem = b;
@@ -70,7 +70,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     }
     SECTION("move")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         mem = memory;
         list.push(mem, 1024);
 
@@ -79,12 +79,12 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(list.empty());
         REQUIRE(another_list.top().memory == mem);
 
-        char memory2[1024];
+        alignas(max_alignment) char memory2[1024];
         mem = memory2;
         another_list.push(mem, 1024);
         REQUIRE(another_list.top().memory == mem);
 
-        char memory3[1024];
+        alignas(max_alignment) char memory3[1024];
         mem = memory3;
         list.push(mem, 1024);
         REQUIRE(!list.empty());
