@@ -95,19 +95,20 @@ namespace foonathan { namespace memory
         // acts like a stack, new memory blocks are pushed
         // and can be popped in lifo order
         template <class RawAllocator>
-        class block_list : RawAllocator
+        class block_list : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
             using traits = allocator_traits<RawAllocator>;
+            using allocator = typename traits::allocator_type;
             static FOONATHAN_CONSTEXPR auto growth_factor = 2u;
         public:
             // gives it an initial block size and allocates it
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
-                    RawAllocator allocator)
-            : RawAllocator(detail::move(allocator)), size_(0u), cur_block_size_(block_size) {}
+                    allocator &&alloc)
+            : allocator(detail::move(alloc)), size_(0u), cur_block_size_(block_size) {}
 
             block_list(block_list &&other) FOONATHAN_NOEXCEPT
-            : RawAllocator(detail::move(other)),
+            : allocator(detail::move(other)),
               used_(detail::move(other.used_)), free_(detail::move(other.free_)),
               size_(other.size_), cur_block_size_(other.cur_block_size_)
             {
@@ -136,7 +137,7 @@ namespace foonathan { namespace memory
                 return *this;
             }
 
-            RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
+            allocator& get_allocator() FOONATHAN_NOEXCEPT
             {
                 return *this;
             }

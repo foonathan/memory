@@ -56,7 +56,7 @@ namespace foonathan { namespace memory
         using leak_checker =  detail::leak_checker<memory_pool_collection<node_pool,
                                                 identity_buckets, default_allocator>>;
     public:
-        using impl_allocator = RawAllocator;
+        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
         using pool_type = PoolType;
         using bucket_distribution = BucketDistribution;
 

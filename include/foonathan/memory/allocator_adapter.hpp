@@ -183,33 +183,33 @@ namespace foonathan { namespace memory
     /// \details Just stores the allocator directly.
     /// \ingroup memory
     template <class RawAllocator>
-    class direct_storage : FOONATHAN_EBO(RawAllocator)
+    class direct_storage : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
     public:
-        using raw_allocator = RawAllocator;
+        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
         using is_reference = std::false_type;
 
-        RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
+        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
         direct_storage() = default;
 
-        direct_storage(RawAllocator &&allocator)
-        : RawAllocator(detail::move(allocator)) {}
+        direct_storage(raw_allocator &&allocator)
+        : raw_allocator(detail::move(allocator)) {}
 
         direct_storage(direct_storage &&other)
-        : RawAllocator(detail::move(other)) {}
+        : raw_allocator(detail::move(other)) {}
 
         direct_storage& operator=(direct_storage &&other)
         {
-            RawAllocator::operator=(detail::move(other));
+            raw_allocator::operator=(detail::move(other));
             return *this;
         }
 
@@ -313,13 +313,15 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class RawAllocator>
     class reference_storage
-    : FOONATHAN_EBO(detail::reference_storage_impl<RawAllocator,
+    : FOONATHAN_EBO(detail::reference_storage_impl<
+        typename allocator_traits<RawAllocator>::allocator_type,
         allocator_traits<RawAllocator>::is_stateful::value>)
     {
-        using storage = detail::reference_storage_impl<RawAllocator,
+        using storage = detail::reference_storage_impl<
+                            typename allocator_traits<RawAllocator>::allocator_type,
                             allocator_traits<RawAllocator>::is_stateful::value>;
     public:
-        using raw_allocator = RawAllocator;
+        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
         using is_reference = std::true_type;
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
@@ -500,7 +502,8 @@ namespace foonathan { namespace memory
         template <class RawAllocator>
         class basic_allocator
         : public base_allocator,
-          private detail::reference_storage_impl<RawAllocator,
+          private detail::reference_storage_impl<
+                        typename allocator_traits<RawAllocator>::allocator_type,
                         allocator_traits<RawAllocator>::is_stateful::value>
         {
             using traits = allocator_traits<RawAllocator>;
