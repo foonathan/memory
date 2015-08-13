@@ -31,7 +31,7 @@ int main()
     std::cout << "Allocated: " << alloc.allocate(sizeof(int), FOONATHAN_ALIGNOF(int)) << '\n';
 
     // create temporary array of 5 elements
-    auto array = memory::raw_allocate_unique<int[]>(alloc, 5);
+    auto array = memory::allocate_unique<int[]>(alloc, 5);
     array[0] = 4;
     array[1] = 2;
     array[2] = 5;
