@@ -34,8 +34,8 @@ namespace foonathan { namespace memory
     /// \details It is just a shorthand to pass a \c RawAllocator to a container.
     /// \ingroup memory
 #define FOONATHAN_MEMORY_IMPL_CONTAINER1(Name) \
-    template <typename T, class RawAllocator> \
-    using Name = std::Name<T, std_allocator<T, RawAllocator>>;
+    template <typename T, class RawAllocator, class Mutex = default_mutex> \
+    using Name = std::Name<T, std_allocator<T, RawAllocator, Mutex>>;
 
     FOONATHAN_MEMORY_IMPL_CONTAINER1(vector)
     FOONATHAN_MEMORY_IMPL_CONTAINER1(deque)
@@ -44,39 +44,39 @@ namespace foonathan { namespace memory
 
 #undef FOONATHAN_MEMORY_IMPL_CONTAINER1
 
-    template <typename T, class RawAllocator>
-    using set = std::set<T, std::less<T>, std_allocator<T, RawAllocator>>;
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
+    using set = std::set<T, std::less<T>, std_allocator<T, RawAllocator, Mutex>>;
 
-    template <typename T, class RawAllocator>
-    using multiset = std::multiset<T, std::less<T>, std_allocator<T, RawAllocator>>;
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
+    using multiset = std::multiset<T, std::less<T>, std_allocator<T, RawAllocator, Mutex>>;
 
-    template <typename Key, typename Value, class RawAllocator>
+    template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     using map = std::map<Key, Value, std::less<Key>,
-                    std_allocator<std::pair<const Key, Value>, RawAllocator>>;
+                    std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>;
 
-    template <typename Key, typename Value, class RawAllocator>
+    template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     using multimap = std::multimap<Key, Value, std::less<Key>,
-                    std_allocator<std::pair<const Key, Value>, RawAllocator>>;
+                    std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>;
 
-    template <typename T, class RawAllocator>
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
     using unordered_set = std::unordered_set<T, std::hash<T>, std::equal_to<T>,
-                        std_allocator<T, RawAllocator>>;
+                        std_allocator<T, RawAllocator, Mutex>>;
 
-    template <typename T, class RawAllocator>
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
     using unordered_multiset = std::unordered_multiset<T, std::hash<T>, std::equal_to<T>,
-                        std_allocator<T, RawAllocator>>;
+                        std_allocator<T, RawAllocator, Mutex>>;
 
-    template <typename Key, typename Value, class RawAllocator>
+    template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     using unordered_map = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>,
-                        std_allocator<std::pair<const Key, Value>, RawAllocator>>;
+                        std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>;
 
-    template <typename Key, typename Value, class RawAllocator>
+    template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     using unordered_multimap = std::unordered_multimap<Key, std::hash<Key>, std::equal_to<Key>,
-                        std_allocator<std::pair<const Key, Value>, RawAllocator>>;
+                        std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>;
 
 #define FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(Name) \
-    template <typename T, class RawAllocator> \
-    using Name = std::Name<T, deque<T, RawAllocator>>;
+    template <typename T, class RawAllocator, class Mutex = default_mutex> \
+    using Name = std::Name<T, deque<T, RawAllocator, Mutex>>;
     FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(stack)
     FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(queue)
     FOONATHAN_MEMORY_IMPL_CONTAINER_ADAPTER(priority_queue)
