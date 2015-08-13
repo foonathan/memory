@@ -34,7 +34,7 @@ namespace foonathan { namespace memory
     /// It allocates big blocks from an implementation allocator.
     /// If their size is sufficient, allocations are fast.
     /// \ingroup memory
-    template <typename PoolType, class RawAllocator = default_allocator>
+    template <typename PoolType = node_pool, class RawAllocator = default_allocator>
     class memory_pool
     : FOONATHAN_EBO(detail::leak_checker<memory_pool<node_pool, default_allocator>>)
     {
