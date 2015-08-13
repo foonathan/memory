@@ -37,6 +37,7 @@ set(tests
         detail/free_list_array.cpp
         detail/memory_stack.cpp
         aligned_allocator.cpp
+        allocator_traits.cpp
         pool_allocator.cpp
         pool_collection.cpp
         stack_allocator.cpp)

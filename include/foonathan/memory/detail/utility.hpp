@@ -87,6 +87,18 @@ namespace foonathan { namespace memory
         // define PREDEFINED: FOONATHAN_SFINAE(x):=
         #define FOONATHAN_SFINAE(Expr) \
             decltype((Expr), int()) = 0
+
+        // avoids code repetition for one-line forwarding functions
+        #define FOONATHAN_AUTO_RETURN(Expr) \
+            decltype(Expr) {return Expr;}
+
+        // same as above, but requires certain type
+        #define FOONATHAN_AUTO_RETURN_TYPE(Expr, T) \
+            decltype(Expr) \
+            { \
+                static_assert(std::is_same<decltype(Expr), T>::value, "wrong return type"); \
+                return Expr; \
+            }
     } // namespace detail
 }} // namespace foonathan::memory
 
