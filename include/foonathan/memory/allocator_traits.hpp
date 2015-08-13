@@ -52,6 +52,19 @@ namespace foonathan { namespace memory
         template <class Allocator>
         auto allocator_type(std_concept, FOONATHAN_SFINAE(std::declval<typename Allocator::value_type>()))
         -> typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
+    #else
+        template <class Allocator, typename T>
+        struct allocator_rebinder;
+
+        template <template <typename, typename...> class Alloc, typename U, typename ... Args, typename T>
+        struct allocator_rebinder<Alloc<U, Args...>, T>
+        {
+            using type = Alloc<T, Args...>;
+        };
+
+        template <class Allocator>
+        auto allocator_type(std_concept, FOONATHAN_SFINAE(std::declval<typename Allocator::value_type>()))
+        -> typename allocator_rebinder<Allocator, char>::type;
     #endif
 
         template <class Allocator>
