@@ -32,6 +32,18 @@ struct standard_multi_arg
     using value_type = T;
 };
 
+template <typename T, typename Dummy>
+struct standard_with_rebind
+{
+    using value_type = T;
+
+    template <typename U>
+    struct rebind
+    {
+        using other = standard_with_rebind<U, int>;
+    };
+};
+
 void instantiate_test_type_statefulness()
 {
     struct empty_raw {};
@@ -58,6 +70,9 @@ void instantiate_test_type_statefulness()
 
     test_type_statefulness<standard_multi_arg<char, int, int>, standard_multi_arg<char, int, int>, false>();
     test_type_statefulness<standard_multi_arg<int, int, int>, standard_multi_arg<char, int, int>, false>();
+
+    test_type_statefulness<standard_with_rebind<char, char>, standard_with_rebind<char, int>, false>();
+    test_type_statefulness<standard_with_rebind<int, char>, standard_with_rebind<char, int>, false>();
 }
 
 template <class Allocator>
