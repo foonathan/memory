@@ -21,11 +21,11 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class RawAllocator>
     class aligned_allocator
-    : FOONATHAN_EBO(RawAllocator)
+    : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
         using traits = allocator_traits<RawAllocator>;
     public:
-        using raw_allocator = RawAllocator;
+        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
         using is_stateful = std::true_type;
 
         /// \brief Creates it passing it the minimum alignment requirement.

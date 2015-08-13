@@ -54,7 +54,7 @@ namespace foonathan { namespace memory
         using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
         /// \brief The implementation allocator.
-        using impl_allocator = RawAllocator;
+        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
 
         /// \brief Constructs it with a given start block size.
         /// \details The first memory block is allocated, the block size can change.

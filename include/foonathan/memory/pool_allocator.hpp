@@ -42,7 +42,7 @@ namespace foonathan { namespace memory
         using leak_checker = detail::leak_checker<memory_pool<node_pool, default_allocator>>;
 
     public:
-        using impl_allocator = RawAllocator;
+        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
 
         /// \brief The type of the pool (\ref node_pool, \ref array_pool, \ref small_node_pool).
         using pool_type = PoolType;
