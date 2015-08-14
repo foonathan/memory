@@ -8,7 +8,7 @@
 
 #include "detail/align.hpp"
 #include "allocator_adapter.hpp"
-#include "stack_allocator.hpp"
+#include "memory_stack.hpp"
 
 using namespace foonathan::memory;
 

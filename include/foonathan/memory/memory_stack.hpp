@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
-#define FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED
+#define FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED
 
 /// \file
 /// \brief A stack allocator.
@@ -226,4 +226,4 @@ namespace foonathan { namespace memory
     };
 }} // namespace foonathan::memory
 
-#endif // FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED

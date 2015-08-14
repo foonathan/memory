@@ -7,7 +7,7 @@
 
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "stack_allocator.hpp"
+#include "memory_stack.hpp"
 
 namespace foonathan { namespace memory
 {

@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
-#define FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#define FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
 
 /// \file
 /// \brief A class managing pools of different sizes.
@@ -18,7 +18,7 @@
 #include "debugging.hpp"
 #include "default_allocator.hpp"
 #include "error.hpp"
-#include "pool_type.hpp"
+#include "memory_pool_type.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -303,4 +303,4 @@ namespace foonathan { namespace memory
     };
 }} // namespace foonathan::portal
 
-#endif // FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED

@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
-#define FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
+#define FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 
 /// \file
 /// \brief A pool allocator.
@@ -19,8 +19,8 @@
 #include "debugging.hpp"
 #include "error.hpp"
 #include "default_allocator.hpp"
-#include "pool_type.hpp"
-#include "pool_type.hpp"
+#include "memory_pool_type.hpp"
+#include "memory_pool_type.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -272,4 +272,4 @@ namespace foonathan { namespace memory
     };
 }} // namespace foonathan::memory
 
-#endif // FOONATHAN_MEMORY_POOL_ALLOCATOR_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED

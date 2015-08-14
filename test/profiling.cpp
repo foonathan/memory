@@ -14,8 +14,8 @@
 #include "allocator_adapter.hpp"
 #include "heap_allocator.hpp"
 #include "new_allocator.hpp"
-#include "pool_allocator.hpp"
-#include "stack_allocator.hpp"
+#include "memory_pool.hpp"
+#include "memory_stack.hpp"
 
 namespace memory = foonathan::memory;
 

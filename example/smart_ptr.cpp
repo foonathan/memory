@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include <memory/smart_ptr.hpp> // raw_allocate_unique/shared
-#include <memory/stack_allocator.hpp> // memory_stack
+#include <memory/memory_stack.hpp> // memory_stack
 
 // namespace alias for easier access
 // if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
