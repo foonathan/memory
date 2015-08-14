@@ -18,18 +18,19 @@ namespace foonathan { namespace memory
     namespace detail
     {
         template <class Tracker, class ImplRawAllocator>
-        class tracked_impl_allocator : ImplRawAllocator
+        class tracked_impl_allocator
+        : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
         {
             using traits = allocator_traits<ImplRawAllocator>;
         public:
-            using raw_allocator = ImplRawAllocator;
+            using allocator_type = typename traits::allocator_type ;
             using tracker = Tracker;
 
             using is_stateful = std::true_type;
 
-            tracked_impl_allocator(tracker &t, raw_allocator allocator = {})
+            tracked_impl_allocator(tracker &t, allocator_type allocator = {})
             : t_(&t),
-              raw_allocator(detail::move(allocator)) {}
+              allocator_type(detail::move(allocator)) {}
 
             void* allocate_node(std::size_t size, std::size_t alignment)
             {
@@ -94,19 +95,19 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class Tracker, class RawAllocator>
     class tracked_allocator
-    : FOONATHAN_EBO(Tracker, RawAllocator)
+    : FOONATHAN_EBO(Tracker, allocator_traits<RawAllocator>::allocator_type)
     {
         using traits = allocator_traits<RawAllocator>;
     public:
-        using raw_allocator = RawAllocator;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using tracker = Tracker;
 
-        /// \brief The allocator is stateful if the \ref raw_allocator is or the \ref tracker non-empty.
+        /// \brief The allocator is stateful if the \ref allocator_type is or the \ref tracker non-empty.
         using is_stateful = std::integral_constant<bool,
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
 
-        explicit tracked_allocator(tracker t = {}, raw_allocator&& allocator = {})
-        : tracker(detail::move(t)), raw_allocator(detail::move(allocator)) {}
+        explicit tracked_allocator(tracker t = {}, allocator_type&& allocator = {})
+        : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
 
         /// @{
         /// \brief (De-)Allocation functions call the appropriate tracker function.
@@ -159,12 +160,12 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \brief Returns a reference to the allocator.
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -189,7 +190,7 @@ namespace foonathan { namespace memory
         tracked_allocator(tracker t, ImplRawAllocator impl,
                         Args&&... args)
         : tracker(detail::move(t)),
-          raw_allocator(detail::forward<Args>(args)...,
+          allocator_type(detail::forward<Args>(args)...,
                 detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
         {}
 

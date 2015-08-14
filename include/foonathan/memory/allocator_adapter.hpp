@@ -47,7 +47,7 @@ namespace foonathan { namespace memory
 
         // whether or not the allocator of the storage policy is a raw allocator itself
         template <class StoragePolicy>
-        using is_nested_policy = is_instantiation_of<allocator_storage, typename StoragePolicy::raw_allocator>;
+        using is_nested_policy = is_instantiation_of<allocator_storage, typename StoragePolicy::allocator_type>;
 
         // whether or not derived from allocator_storage template
         template <class C>
@@ -56,7 +56,7 @@ namespace foonathan { namespace memory
 
     /// \brief Stores a raw allocator using a certain storage policy.
     /// \details Accesses are synchronized via a mutex.<br>
-    /// The storage policy requires a typedef \c raw_allocator actually stored,
+    /// The storage policy requires a typedef allocator type actually stored,
     /// \c is_reference typedef of \c std::true/false_type whether or not the policy has reference semantics,
     /// a constructor taking the object that is stored,
     /// and a \c get_allocator() function for \c const and \c non-const returning the allocator.
@@ -64,17 +64,17 @@ namespace foonathan { namespace memory
     template <class StoragePolicy, class Mutex>
     class allocator_storage
     : FOONATHAN_EBO(StoragePolicy,
-        detail::mutex_storage<detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>)
+        detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>)
     {
         static_assert(!detail::is_nested_policy<StoragePolicy>::value,
             "don't pass it an allocator_storage, it would lead to double wrapping");
 
-        using traits = allocator_traits<typename StoragePolicy::raw_allocator>;
+        using traits = allocator_traits<typename StoragePolicy::allocator_type>;
         using actual_mutex = const detail::mutex_storage<
-                                detail::mutex_for<typename StoragePolicy::raw_allocator, Mutex>>;
+                                detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
     public:
         /// \brief The stored allocator type.
-        using raw_allocator = typename StoragePolicy::raw_allocator;
+        using allocator_type = typename StoragePolicy::allocator_type;
 
         /// \brief The used storage policy.
         using storage_policy = StoragePolicy;
@@ -165,13 +165,13 @@ namespace foonathan { namespace memory
         /// \details It returns a proxy object that holds the lock.
         /// It has overloaded operator* and -> to give access to the allocator
         /// but it can't be reassigned to a different allocator object.
-        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<raw_allocator, actual_mutex>)
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<allocator_type, actual_mutex>)
             lock() FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
         }
 
-        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<const raw_allocator, actual_mutex>)
+        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<const allocator_type, actual_mutex>)
             lock() const FOONATHAN_NOEXCEPT
         {
             return {get_allocator(), *this};
@@ -186,30 +186,30 @@ namespace foonathan { namespace memory
     class direct_storage : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
     public:
-        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using is_reference = std::false_type;
 
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
         direct_storage() = default;
 
-        direct_storage(raw_allocator &&allocator)
-        : raw_allocator(detail::move(allocator)) {}
+        direct_storage(allocator_type &&allocator)
+        : allocator_type(detail::move(allocator)) {}
 
         direct_storage(direct_storage &&other)
-        : raw_allocator(detail::move(other)) {}
+        : allocator_type(detail::move(other)) {}
 
         direct_storage& operator=(direct_storage &&other)
         {
-            raw_allocator::operator=(detail::move(other));
+            allocator_type::operator=(detail::move(other));
             return *this;
         }
 
@@ -321,7 +321,7 @@ namespace foonathan { namespace memory
                             typename allocator_traits<RawAllocator>::allocator_type,
                             allocator_traits<RawAllocator>::is_stateful::value>;
     public:
-        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using is_reference = std::true_type;
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
@@ -332,10 +332,10 @@ namespace foonathan { namespace memory
 
         reference_storage() FOONATHAN_NOEXCEPT = default;
 
-        reference_storage(const raw_allocator &alloc ) FOONATHAN_NOEXCEPT
+        reference_storage(const allocator_type &alloc ) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
-        reference_storage(raw_allocator &alloc) FOONATHAN_NOEXCEPT
+        reference_storage(allocator_type &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
         reference_storage(const reference_storage &) FOONATHAN_NOEXCEPT = default;
@@ -444,16 +444,16 @@ namespace foonathan { namespace memory
         };
 
     public:
-        using raw_allocator = base_allocator;
+        using allocator_type = base_allocator;
         using is_reference = std::true_type;
 
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             auto mem = static_cast<void*>(&storage_);
             return *static_cast<base_allocator*>(mem);
         }
 
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             auto mem = static_cast<const void*>(&storage_);
             return *static_cast<const base_allocator*>(mem);
@@ -612,7 +612,7 @@ namespace foonathan { namespace memory
             using type = typename std::conditional
                             <Storage::is_reference::value,
                              allocator_storage<Storage, Mutex2>, // storage provides reference semantics
-                             allocator_reference<typename Storage::raw_allocator, Mutex2> // it doesn't
+                             allocator_reference<typename Storage::allocator_type, Mutex2> // it doesn't
                              >::type;
         };
 
@@ -667,7 +667,7 @@ namespace foonathan { namespace memory
 
         /// \brief The underlying raw allocator.
         /// \details Or the polymorphic base class in case or \ref any_allocator_reference.
-        using impl_allocator = typename alloc_reference::raw_allocator;
+        using allocator_type = typename alloc_reference::allocator_type;
 
         /// \brief The mutex used for synchronization.
         using mutex = Mutex;
@@ -678,7 +678,7 @@ namespace foonathan { namespace memory
 
         /// \brief Creates it from a reference to a raw allocator.
         /// \details If the instantiation allows any allocator, it will accept any allocator,
-        /// otherwise only the \ref impl_allocator.
+        /// otherwise only the \ref allocator_type.
         template <class RawAlloc,
             // MSVC seems to ignore access rights in decltype SFINAE below
             // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
@@ -833,7 +833,7 @@ namespace foonathan { namespace memory
     bool operator==(const std_allocator<T, Impl, Mut> &lhs,
                     const std_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
     {
-        using allocator = typename std_allocator<T, Impl, Mut>::impl_allocator;
+        using allocator = typename std_allocator<T, Impl, Mut>::allocator_type;
         return lhs.equal_to(typename allocator_traits<allocator>::is_stateful{}, rhs);
     }
 

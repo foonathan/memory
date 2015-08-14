@@ -42,7 +42,7 @@ namespace foonathan { namespace memory
         using leak_checker = detail::leak_checker<memory_pool<node_pool, default_allocator>>;
 
     public:
-        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
         /// \brief The type of the pool (\ref node_pool, \ref array_pool, \ref small_node_pool).
         using pool_type = PoolType;
@@ -53,7 +53,7 @@ namespace foonathan { namespace memory
         /// \brief Gives it the size of the nodes inside the pool and start block size.
         /// \details The first memory block is allocated, the block size can change.
         memory_pool(std::size_t node_size, std::size_t block_size,
-                    impl_allocator allocator = impl_allocator())
+                    allocator_type allocator = allocator_type())
         : leak_checker(info().name),
           block_list_(block_size, detail::move(allocator)),
           free_list_(node_size)
@@ -120,8 +120,8 @@ namespace foonathan { namespace memory
             return block_list_.next_block_size();
         }
 
-        /// \brief Returns the \ref impl_allocator.
-        impl_allocator& get_impl_allocator() FOONATHAN_NOEXCEPT
+        /// \brief Returns the \ref allocator_type.
+        allocator_type & get_impl_allocator() FOONATHAN_NOEXCEPT
         {
             return block_list_.get_allocator();
         }
@@ -163,7 +163,7 @@ namespace foonathan { namespace memory
             free_list_.deallocate(ptr, n * node_size);
         }
 
-        detail::block_list<impl_allocator> block_list_;
+        detail::block_list<allocator_type> block_list_;
         free_list free_list_;
 
         friend allocator_traits<memory_pool<PoolType, RawAllocator>>;

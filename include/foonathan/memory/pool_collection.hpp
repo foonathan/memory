@@ -56,7 +56,7 @@ namespace foonathan { namespace memory
         using leak_checker =  detail::leak_checker<memory_pool_collection<node_pool,
                                                 identity_buckets, default_allocator>>;
     public:
-        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using pool_type = PoolType;
         using bucket_distribution = BucketDistribution;
 
@@ -64,7 +64,7 @@ namespace foonathan { namespace memory
         /// \details It can handle node sizes up to a given size.<br>
         /// The first memory block is allocated, the block size /can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
-                    impl_allocator alloc = impl_allocator())
+                    allocator_type alloc = allocator_type())
         : leak_checker(info().name),
           block_list_(block_size, detail::move(alloc)),
           stack_(block_list_.allocate()),
@@ -158,8 +158,8 @@ namespace foonathan { namespace memory
             return block_list_.next_block_size();
         }
 
-        /// \brief Returns the \ref impl_allocator.
-        impl_allocator& get_impl_allocator() FOONATHAN_NOEXCEPT
+        /// \brief Returns the \ref allocator_type.
+        allocator_type & get_impl_allocator() FOONATHAN_NOEXCEPT
         {
             return block_list_.get_allocator();
         }
