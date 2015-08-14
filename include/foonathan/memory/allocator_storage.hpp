@@ -200,13 +200,13 @@ namespace foonathan { namespace memory
 
         direct_storage() = default;
 
-        direct_storage(allocator_type &&allocator)
+        direct_storage(allocator_type &&allocator) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(allocator)) {}
 
-        direct_storage(direct_storage &&other)
+        direct_storage(direct_storage &&other) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(other)) {}
 
-        direct_storage& operator=(direct_storage &&other)
+        direct_storage& operator=(direct_storage &&other) FOONATHAN_NOEXCEPT
         {
             allocator_type::operator=(detail::move(other));
             return *this;
