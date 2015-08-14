@@ -25,7 +25,7 @@ TEST_CASE("memory_pool", "[pool]")
         REQUIRE(pool.node_size() >= 4u);
         REQUIRE(pool.capacity() <= 100u);
         REQUIRE(pool.next_capacity() >= 100u);
-        REQUIRE(&pool.get_impl_allocator().get_allocator() == &alloc);
+        REQUIRE(&pool.get_allocator().get_allocator() == &alloc);
         REQUIRE(alloc.no_allocated() == 1u);
 
         SECTION("normal alloc/dealloc")

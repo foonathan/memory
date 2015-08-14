@@ -26,7 +26,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
         REQUIRE(pool.max_node_size() == max_size);
         REQUIRE(pool.capacity() <= 1000u);
         REQUIRE(pool.next_capacity() >= 1000u);
-        REQUIRE(&pool.get_impl_allocator().get_allocator() == &alloc);
+        REQUIRE(&pool.get_allocator().get_allocator() == &alloc);
         REQUIRE(alloc.no_allocated() == 1u);
 
         for (auto i = 0u; i != max_size; ++i)

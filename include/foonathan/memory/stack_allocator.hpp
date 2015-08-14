@@ -139,7 +139,7 @@ namespace foonathan { namespace memory
         }
 
         /// \brief Returns the \ref allocator_type.
-        allocator_type & get_impl_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return list_.get_allocator();
         }
