@@ -29,6 +29,7 @@ set(header
         ${header_path}/memory_stack.hpp
         ${header_path}/new_allocator.hpp
         ${header_path}/smart_ptr.hpp
+        ${header_path}/std_allocator.hpp
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp)

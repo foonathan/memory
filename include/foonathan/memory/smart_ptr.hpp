@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "deleter.hpp"
+#include "std_allocator.hpp"
 
 namespace foonathan { namespace memory
 {
