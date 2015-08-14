@@ -14,7 +14,7 @@ set(header
         ${header_path}/detail/small_free_list.hpp
         ${header_path}/detail/utility.hpp
         ${header_path}/aligned_allocator.hpp
-        ${header_path}/allocator_adapter.hpp
+        ${header_path}/allocator_storage.hpp
         ${header_path}/allocator_traits.hpp
         ${header_path}/config.hpp
         ${header_path}/container.hpp

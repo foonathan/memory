@@ -8,7 +8,7 @@
 /// \file
 /// \brief RawAllocator deleter classes to be used in smart pointers, std::function,...
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 
 namespace foonathan { namespace memory
 {

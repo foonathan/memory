@@ -9,7 +9,7 @@
 #include <new>
 
 #include "config.hpp"
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 
 namespace foonathan { namespace memory
 {

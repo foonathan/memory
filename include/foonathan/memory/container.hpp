@@ -25,7 +25,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 
 namespace foonathan { namespace memory
 {

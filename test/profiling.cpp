@@ -11,7 +11,7 @@
 #include <random>
 #include <vector>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 #include "heap_allocator.hpp"
 #include "new_allocator.hpp"
 #include "memory_pool.hpp"
