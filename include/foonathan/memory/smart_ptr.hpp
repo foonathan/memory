@@ -82,6 +82,11 @@ namespace foonathan { namespace memory
         }
     } // namespace detail
 
+    /// \brief A \c std::unique_ptr that has a deleter using a \c RawAllocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    FOONATHAN_ALIAS_TEMPLATE(unique_ptr, std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
+
     /// \brief Creates an object wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
@@ -93,6 +98,17 @@ namespace foonathan { namespace memory
                                         detail::forward<Args>(args)...);
     }
 
+    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator, typename ... Args>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, Args &&... args)
+    -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
+                        std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_unique<T, any_allocator>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
+                                        detail::forward<Args>(args)...);
+    }
+
     /// \brief Creates an array wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
     /// \ingroup memory
     template <typename T, class RawAllocator>
@@ -101,6 +117,17 @@ namespace foonathan { namespace memory
                               std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
         return detail::allocate_array_unique<typename std::remove_extent<T>::type>
+                    (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
+    }
+
+    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, std::size_t size)
+    -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
+                              std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_array_unique<typename std::remove_extent<T>::type, any_allocator>
                     (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
     }
 

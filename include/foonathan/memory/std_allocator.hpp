@@ -18,23 +18,6 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        template <class RawAllocator, class Mutex>
-        struct allocator_reference_for
-        {
-            using type = allocator_reference<RawAllocator, Mutex>;
-        };
-
-        template <class Storage, class Mutex1, class Mutex2>
-        struct allocator_reference_for<allocator_storage<Storage, Mutex1>, Mutex2>
-        {
-            // use the user specified mutex
-            using type = typename std::conditional
-                    <Storage::is_reference::value,
-                            allocator_storage<Storage, Mutex2>, // storage provides reference semantics
-                            allocator_reference<typename Storage::allocator_type, Mutex2> // it doesn't
-                    >::type;
-        };
-
         // whether or not derived from std_allocator template
         template <class C>
         using is_derived_from_std_allocator = detail::is_base_of_template<std_allocator, C>;
@@ -50,9 +33,9 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex/* = default_mutex*/>
     class std_allocator
-            : FOONATHAN_EBO(detail::allocator_reference_for<RawAllocator, Mutex>::type)
+    : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
-        using alloc_reference = typename detail::allocator_reference_for<RawAllocator, Mutex>::type;
+        using alloc_reference = allocator_reference<RawAllocator, Mutex>;
         // if it is any_allocator_reference an optimized implementation can be used
         using is_any = std::is_same<alloc_reference, any_allocator_reference<Mutex>>;
 
@@ -104,7 +87,7 @@ namespace foonathan { namespace memory
                 FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(RawAlloc &alloc,
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc) {}
+        : alloc_reference(alloc) {}
 
         /// \brief Creates it from a temporary raw allocator.
         /// \details Same as above, but only valid for stateless allocators.
@@ -114,12 +97,12 @@ namespace foonathan { namespace memory
                 FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
         std_allocator(const RawAlloc &alloc,
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc) {}
+        : alloc_reference(alloc) {}
 
         /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
         /// \details It must reference the same type and use the same mutex.
         std_allocator(const alloc_reference &alloc) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc) {}
+        : alloc_reference(alloc) {}
 
         /// \brief Conversion from any other \ref allocator_storage is forbidden.
         /// \details This prevents unnecessary nested wrapper classes.
@@ -130,7 +113,7 @@ namespace foonathan { namespace memory
         /// \details This is required by the \c Allcoator concept.
         template <typename U>
         std_allocator(const std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc.get_allocator()) {}
+        : alloc_reference(alloc.get_allocator()) {}
 
         //=== allocation/deallocation ===//
         pointer allocate(size_type n, void * = nullptr)
@@ -270,7 +253,7 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(any_std_allocator,
-                             std_allocator<T, any_allocator_reference<Mutex>, Mutex>);
+                             std_allocator<T, any_allocator, Mutex>);
 
     /// @{
     /// \brief Makes an \ref any_allocator.

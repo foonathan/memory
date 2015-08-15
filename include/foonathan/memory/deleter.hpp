@@ -20,12 +20,12 @@ namespace foonathan { namespace memory
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
     public:
-        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_reference<RawAllocator, Mutex>::allocator_type;
         using mutex = Mutex;
         using value_type = Type;
 
         /// \brief Creates it giving it the allocator used for deallocation.
-        allocator_deallocator(allocator_reference<allocator_type, mutex> alloc) FOONATHAN_NOEXCEPT
+        allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator, Mutex>(std::move(alloc)) {}
 
         /// \brief Deallocates the memory via the stored allocator.
@@ -50,12 +50,12 @@ namespace foonathan { namespace memory
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
     public:
-        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_reference<RawAllocator, Mutex>::allocator_type;
         using mutex = Mutex;
         using value_type = Type;
 
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        allocator_deallocator(allocator_reference<allocator_type, mutex> alloc,
+        allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc,
                                   std::size_t size) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator, Mutex>(std::move(alloc)),
           size_(size) {}
@@ -92,12 +92,12 @@ namespace foonathan { namespace memory
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
     public:
-        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_reference<RawAllocator, Mutex>::allocator_type;
         using mutex = Mutex;
         using value_type = Type;
 
         /// \brief Creates it giving it the allocator used for deallocation.
-        allocator_deleter(allocator_reference<allocator_type, mutex> alloc) FOONATHAN_NOEXCEPT
+        allocator_deleter(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
         : allocator_reference<RawAllocator, Mutex>(std::move(alloc)) {}
 
         /// \brief Deallocates the memory via the stored allocator.
@@ -123,13 +123,13 @@ namespace foonathan { namespace memory
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
     public:
-        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_reference<RawAllocator, Mutex>::allocator_type;
         using mutex = Mutex;
         using value_type = Type;
 
         /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        allocator_deleter(allocator_reference<allocator_type, mutex> alloc,
-                              std::size_t size) FOONATHAN_NOEXCEPT
+        allocator_deleter(allocator_reference<RawAllocator, mutex> alloc,
+                          std::size_t size) FOONATHAN_NOEXCEPT
          : allocator_reference<RawAllocator, Mutex>(std::move(alloc)),
            size_(size) {}
 

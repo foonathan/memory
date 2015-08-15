@@ -56,7 +56,6 @@ namespace foonathan { namespace memory
     /// \brief Stores a raw allocator using a certain storage policy.
     /// \details Accesses are synchronized via a mutex.<br>
     /// The storage policy requires a typedef allocator type actually stored,
-    /// \c is_reference typedef of \c std::true/false_type whether or not the policy has reference semantics,
     /// a constructor taking the object that is stored,
     /// and a \c get_allocator() function for \c const and \c non-const returning the allocator.
     /// \ingroup memory
@@ -66,7 +65,7 @@ namespace foonathan { namespace memory
         detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>)
     {
         static_assert(!detail::is_nested_policy<StoragePolicy>::value,
-            "don't pass it an allocator_storage, it would lead to double wrapping");
+            "allocator_storage instantiated with another allocator_storage, double wrapping!");
 
         using traits = allocator_traits<typename StoragePolicy::allocator_type>;
         using actual_mutex = const detail::mutex_storage<
@@ -98,6 +97,13 @@ namespace foonathan { namespace memory
         allocator_storage(Alloc &&alloc,
             FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
         : storage_policy(detail::forward<Alloc>(alloc)) {}
+
+        /// \brief Passes it another \ref allocator_storage with a different storage policy but the same mutex.
+        /// \details Initializes itself with the stored allocator, if it is valid.
+        template <class OtherPolicy>
+        allocator_storage(const allocator_storage<OtherPolicy, Mutex> &other,
+            FOONATHAN_SFINAE(new storage_policy(other.get_allocator())))
+        : storage_policy(other.get_allocator()) {}
 
         /// @{
         /// \brief Forwards the function to the stored allocator.
@@ -178,25 +184,21 @@ namespace foonathan { namespace memory
         /// @}.
     };
 
+    /// \brief Tag type to enable type-erasure in \ref reference_storage.
+    /// \details It can be used everywhere an \ref allocator_reference is used internally.
+    /// \ingroup memory
+    struct any_allocator {};
+
     /// \brief A direct storage policy.
     /// \details Just stores the allocator directly.
     /// \ingroup memory
     template <class RawAllocator>
     class direct_storage : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
+        static_assert(!std::is_same<RawAllocator, any_allocator>::value,
+                      "cannot type-erase in direct_storage");
     public:
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
-        using is_reference = std::false_type;
-
-        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
 
         direct_storage() = default;
 
@@ -209,6 +211,16 @@ namespace foonathan { namespace memory
         direct_storage& operator=(direct_storage &&other) FOONATHAN_NOEXCEPT
         {
             allocator_type::operator=(detail::move(other));
+            return *this;
+        }
+
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+        {
             return *this;
         }
 
@@ -321,17 +333,10 @@ namespace foonathan { namespace memory
                             allocator_traits<RawAllocator>::is_stateful::value>;
     public:
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
-        using is_reference = std::true_type;
-
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> typename storage::reference_type
-        {
-            return storage::get_allocator();
-        }
 
         reference_storage() FOONATHAN_NOEXCEPT = default;
 
-        reference_storage(const allocator_type &alloc ) FOONATHAN_NOEXCEPT
+        reference_storage(const allocator_type &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
         reference_storage(allocator_type &alloc) FOONATHAN_NOEXCEPT
@@ -340,44 +345,21 @@ namespace foonathan { namespace memory
         reference_storage(const reference_storage &) FOONATHAN_NOEXCEPT = default;
         reference_storage& operator=(const reference_storage &)FOONATHAN_NOEXCEPT = default;
 
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> typename storage::reference_type
+        {
+            return storage::get_allocator();
+        }
+
     protected:
         ~reference_storage() FOONATHAN_NOEXCEPT = default;
     };
 
-    /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
-    /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
-    /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
-    /// For stateless allocators there is no locking or storing overhead whatsover,
-    /// they are just created as needed on the fly.<br>
-    /// It is implemented via \ref allocator_storage with the \ref reference_storage policy.
-    /// \ingroup memory
-    template <class RawAllocator, class Mutex = default_mutex>
-    FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
-                             allocator_storage<reference_storage<RawAllocator>, Mutex>);
-
-    /// @{
-    /// \brief Creates a \ref allocator_reference.
-    /// \relates allocator_reference
-    template <class RawAllocator>
-    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_reference<typename std::decay<RawAllocator>::type>
-    {
-        return {detail::forward<RawAllocator>(allocator)};
-    }
-
-    template <class Mutex, class RawAllocator>
-    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex>
-    {
-        return {detail::forward<RawAllocator>(allocator)};
-    }
-    /// @}
-
-    /// \brief A storage policy storing a reference to any allocator.
-    /// \details For stateless allocators, it is constructed on the fly.<br>
-    /// It uses type erasure via virtual functions to store the allocator.
-    /// \ingroup memory
-    class any_reference_storage
+    /// \brief Specialization of \ref reference_storage that is type-erased.
+    /// \details It uses type erasure via virtual functions to store the allocator.
+    /// \ingroup
+    template <>
+    class reference_storage<any_allocator>
     {
         class base_allocator
         {
@@ -392,19 +374,19 @@ namespace foonathan { namespace memory
             }
 
             void* allocate_array(std::size_t count,
-                                        std::size_t size, std::size_t alignment)
+                                 std::size_t size, std::size_t alignment)
             {
                 return allocate_impl(count, size, alignment);
             }
 
             void deallocate_node(void *node,
-                        std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
                 deallocate_impl(node, 1, size, alignment);
             }
 
             void deallocate_array(void *array,
-                        std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t count, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
                 deallocate_impl(array, count, size, alignment);
             }
@@ -444,7 +426,46 @@ namespace foonathan { namespace memory
 
     public:
         using allocator_type = base_allocator;
-        using is_reference = std::true_type;
+
+        // create from lvalue
+        template <class RawAllocator>
+        reference_storage(RawAllocator &alloc) FOONATHAN_NOEXCEPT
+        {
+            static_assert(sizeof(basic_allocator<RawAllocator>)
+                          <= sizeof(basic_allocator<default_instantiation>),
+                          "requires all instantiations to have certain maximum size");
+            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
+        }
+
+        // create from rvalue
+        template <class RawAllocator>
+        reference_storage(const RawAllocator &alloc,
+                    FOONATHAN_REQUIRES(!allocator_traits<RawAllocator>::is_stateful::value)) FOONATHAN_NOEXCEPT
+        {
+            static_assert(sizeof(basic_allocator<RawAllocator>)
+                          <= sizeof(basic_allocator<default_instantiation>),
+                          "requires all instantiations to have certain maximum size");
+            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
+        }
+
+        // create from base_allocator
+        reference_storage(const base_allocator &alloc) FOONATHAN_NOEXCEPT
+        {
+            alloc.clone(&storage_);
+        }
+
+        // copy
+        reference_storage(const reference_storage &other) FOONATHAN_NOEXCEPT
+        {
+            other.get_allocator().clone(&storage_);
+        }
+
+        reference_storage& operator=(const reference_storage &other) FOONATHAN_NOEXCEPT
+        {
+            // no cleanup necessary
+            other.get_allocator().clone(&storage_);
+            return *this;
+        }
 
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
@@ -458,56 +479,21 @@ namespace foonathan { namespace memory
             return *static_cast<const base_allocator*>(mem);
         }
 
-        template <class RawAllocator>
-        any_reference_storage(RawAllocator &alloc) FOONATHAN_NOEXCEPT
-        {
-            static_assert(sizeof(basic_allocator<RawAllocator>)
-                          <= sizeof(basic_allocator<default_instantiation>),
-                    "requires all instantiations to have certain maximum size");
-            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
-        }
-
-        template <class RawAllocator>
-        any_reference_storage(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
-        {
-            static_assert(sizeof(basic_allocator<RawAllocator>)
-                          <= sizeof(basic_allocator<default_instantiation>),
-                          "requires all instantiations to have certain maximum size");
-            ::new(static_cast<void*>(&storage_)) basic_allocator<RawAllocator>(alloc);
-        }
-
-        any_reference_storage(const base_allocator &alloc) FOONATHAN_NOEXCEPT
-        {
-            alloc.clone(&storage_);
-        }
-
-        any_reference_storage(const any_reference_storage &other) FOONATHAN_NOEXCEPT
-        {
-            other.get_allocator().clone(&storage_);
-        }
-
-        any_reference_storage& operator=(const any_reference_storage &other) FOONATHAN_NOEXCEPT
-        {
-            // no cleanup necessary
-            other.get_allocator().clone(&storage_);
-            return *this;
-        }
-
-     protected:
+    protected:
         // basic_allocator is trivially destructible
-        ~any_reference_storage() FOONATHAN_NOEXCEPT = default;
+        ~reference_storage() FOONATHAN_NOEXCEPT = default;
 
     private:
         template <class RawAllocator>
         class basic_allocator
         : public base_allocator,
           private detail::reference_storage_impl<
-                        typename allocator_traits<RawAllocator>::allocator_type,
-                        allocator_traits<RawAllocator>::is_stateful::value>
+                  typename allocator_traits<RawAllocator>::allocator_type,
+                  allocator_traits<RawAllocator>::is_stateful::value>
         {
             using traits = allocator_traits<RawAllocator>;
             using storage = detail::reference_storage_impl<RawAllocator,
-                    allocator_traits<RawAllocator>::is_stateful::value>;
+            allocator_traits<RawAllocator>::is_stateful::value>;
         public:
             // non stateful
             basic_allocator(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
@@ -563,13 +549,47 @@ namespace foonathan { namespace memory
         // base_allocator is stateful
         using default_instantiation = basic_allocator<base_allocator>;
         using storage = std::aligned_storage<sizeof(default_instantiation),
-                                 FOONATHAN_ALIGNOF(default_instantiation)>::type;
+                FOONATHAN_ALIGNOF(default_instantiation)>::type;
         storage storage_;
     };
 
+    /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
+    /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
+    /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
+    /// For stateless allocators there is no locking or storing overhead whatsover,
+    /// they are just created as needed on the fly.<br>
+    /// The tag allocator type \ref any_allocator can be used to enable type-erasure.
+    /// \ingroup memory
+    template <class RawAllocator, class Mutex = default_mutex>
+    FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
+                             allocator_storage<reference_storage<RawAllocator>, Mutex>);
+
+    /// @{
+    /// \brief Creates a \ref allocator_reference.
+    /// \relates allocator_reference
+    template <class RawAllocator>
+    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> allocator_reference<typename std::decay<RawAllocator>::type>
+    {
+        return {detail::forward<RawAllocator>(allocator)};
+    }
+
+    template <class Mutex, class RawAllocator>
+    auto make_allocator_reference(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex>
+    {
+        return {detail::forward<RawAllocator>(allocator)};
+    }
+    /// @}
+
+    /// \brief A storage policy storing a reference to any allocator.
+    /// \details It is a typedef for the type-erased reference storage
+    /// \ingroup memory
+    using any_reference_storage = reference_storage<any_allocator>;
+
     /// \brief Similar to \ref allocator_reference but can store a reference to any allocator type.
     /// \details A mutex can be specfied to lock any accesses.<br>
-    /// It is implemented via \ref allocator_storage with the \ref any_reference_storage policy.
+    /// It is an instantiation of \ref allocator_reference with the tag \ref any_allocator to enable type-erasure
     /// \ingroup memory
     template <class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(any_allocator_reference,
