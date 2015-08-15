@@ -269,20 +269,20 @@ namespace foonathan { namespace memory
     /// It is just an instantiation of \ref std_allocator with \ref any_allocator_reference.
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
-    FOONATHAN_ALIAS_TEMPLATE(any_allocator,
+    FOONATHAN_ALIAS_TEMPLATE(any_std_allocator,
                              std_allocator<T, any_allocator_reference<Mutex>, Mutex>);
 
     /// @{
     /// \brief Makes an \ref any_allocator.
-    /// \relates any_allocator
+    /// \relates any_std_allocator
     template <typename T, class RawAllocator>
-    any_allocator<T> make_any_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    any_std_allocator<T> make_any_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
         return {detail::forward<RawAllocator>(allocator)};
     }
 
     template <typename T, class Mutex, class RawAllocator>
-    any_allocator<T, Mutex> make_any_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    any_std_allocator<T, Mutex> make_any_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
         return {detail::forward<RawAllocator>(allocator)};
     }
