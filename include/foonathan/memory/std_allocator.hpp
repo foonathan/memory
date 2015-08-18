@@ -76,7 +76,8 @@ namespace foonathan { namespace memory
 
         //=== constructor ===//
         /// \brief Default constructor is only available for stateless allocators.
-        std_allocator() FOONATHAN_NOEXCEPT = default;
+        std_allocator() FOONATHAN_NOEXCEPT
+        : alloc_reference(allocator_type{}) {}
 
         /// \brief Creates it from a reference to a raw allocator.
         /// \details If the instantiation allows any allocator, it will accept any allocator,

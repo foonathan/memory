@@ -334,8 +334,6 @@ namespace foonathan { namespace memory
     public:
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
-        reference_storage() FOONATHAN_NOEXCEPT = default;
-
         reference_storage(const allocator_type &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
