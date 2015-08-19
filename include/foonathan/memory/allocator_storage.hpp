@@ -236,7 +236,7 @@ namespace foonathan { namespace memory
     template <class RawAllocator>
     FOONATHAN_ALIAS_TEMPLATE(allocator_adapter,
                              allocator_storage<direct_storage<RawAllocator>,
-                                                dummy_mutex>);
+                                                no_mutex>);
 
     /// \brief Creates an \ref allocator_adapter.
     /// \relates allocator_adapter
@@ -553,7 +553,7 @@ namespace foonathan { namespace memory
 
     /// \brief A \ref concept::RawAllocator storing a pointer to an allocator, thus making it copyable.
     /// \details It adapts any class by forwarding all requests to the stored allocator via the \ref allocator_traits.<br>
-    /// A mutex or \ref dummy_mutex can be specified that is locked prior to accessing the allocator.<br>
+    /// A mutex or \ref no_mutex can be specified that is locked prior to accessing the allocator.<br>
     /// For stateless allocators there is no locking or storing overhead whatsover,
     /// they are just created as needed on the fly.<br>
     /// The tag allocator type \ref any_allocator can be used to enable type-erasure.
