@@ -37,14 +37,6 @@ namespace foonathan { namespace memory
             static const bool error = false;
         };
 
-        // used in lowest priority overload for a better error message
-        template <typename T>
-        void handle_error()
-        {
-            static_assert(invalid_allocator_concept<T>::error,
-                "type does not model requirement for default allocator_traits specialization");
-        }
-
         //=== allocator_type ===//
         // if Allocator has a type ::value_type, assume std_allocator and rebind to char,
         // by first trying ::rebind, then manual as in Alloc<T, Args> if this Alloc is Alloc<U, Args>.
@@ -87,13 +79,28 @@ namespace foonathan { namespace memory
         auto is_stateful(full_concept)
         -> decltype(typename Allocator::is_stateful{});
 
+        template <class Allocator, bool IsEmpty>
+        struct is_stateful_impl;
+
         template <class Allocator>
-        auto is_stateful(min_concept)
-        ->  FOONATHAN_REQUIRES_RET(std::is_empty<Allocator>::value, std::false_type);
+        struct is_stateful_impl<Allocator, true>
+        {
+            static_assert(std::is_default_constructible<Allocator>::value,
+                        "RawAllocator is empty but not default constructible ."
+                        "This means it is not a stateless allocator. "
+                        "If this is actually intended provide the appropriate is_stateful typedef in your class.");
+            using type = std::false_type;
+        };
+
+        template <class Allocator>
+        struct is_stateful_impl<Allocator, false>
+        {
+            using type = std::true_type;
+        };
 
         template <class Allocator>
         auto is_stateful(min_concept)
-        -> FOONATHAN_REQUIRES_RET(!std::is_empty<Allocator>::value, std::true_type);
+        -> typename is_stateful_impl<Allocator, std::is_empty<Allocator>::value>::type;
 
         //=== allocate_node() ===//
         // first try Allocator::allocate_node
@@ -113,7 +120,9 @@ namespace foonathan { namespace memory
         void* allocate_node(error, Allocator &,
                            std::size_t, std::size_t)
         {
-            return handle_error<Allocator>(), nullptr;
+            static_assert(invalid_allocator_concept<Allocator>::error,
+                          "type does not provide: void* allocate_node(std::size_t, std::size_t)");
+            return nullptr;
         }
 
         //=== deallocate_node() ===//
@@ -133,7 +142,8 @@ namespace foonathan { namespace memory
         template <class Allocator>
         void deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
         {
-            handle_error<Allocator>();
+            static_assert(invalid_allocator_concept<Allocator>::error,
+                          "type does not provide: void deallocate_node(void*, std::size_t, std::size_t)");
         }
 
         //=== allocate_array() ===//
