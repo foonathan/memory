@@ -49,15 +49,15 @@ namespace foonathan { namespace memory
             void deallocate_node(void *ptr,
                                   std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                traits::deallocate_node(*this, ptr, size, alignment);
                 t_->on_allocator_shrinking(ptr, size);
+                traits::deallocate_node(*this, ptr, size, alignment);
             }
 
             void deallocate_array(void *ptr, std::size_t count,
                                   std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                traits::deallocate_array(*this, ptr, count, size, alignment);
                 t_->on_allocator_shrinking(ptr, size * count);
+                traits::deallocate_array(*this, ptr, count, size, alignment);
             }
 
             std::size_t max_node_size() const
