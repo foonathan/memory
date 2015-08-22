@@ -204,7 +204,7 @@ namespace foonathan { namespace memory
     auto make_tracked_allocator(Tracker t, RawAllocator &&alloc)
     -> tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>
     {
-        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::forward<RawAllocator>(alloc)};
+        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
 
     /// \brief Creates a deeply tracked \ref tracked_allocator.
@@ -216,7 +216,7 @@ namespace foonathan { namespace memory
     /// \c args are passed to its constructor followed by the implementation allocator.
     /// \relates tracked_allocator
     template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
-    auto make_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
+    auto make_deeply_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
     -> tracked_allocator<Tracker, RawAllocator<detail::tracked_impl_allocator<Tracker, ImplRawAllocator>>>
     {
         return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
