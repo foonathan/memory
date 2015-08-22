@@ -15,70 +15,69 @@
 
 namespace foonathan { namespace memory
 {
-    namespace detail
+    /// \brief A tracked impleemntation allocator.
+    /// \ingroup memory
+    template <class Tracker, class ImplRawAllocator>
+    class tracked_impl_allocator
+    : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
     {
-        template <class Tracker, class ImplRawAllocator>
-        class tracked_impl_allocator
-        : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
+        using traits = allocator_traits<ImplRawAllocator>;
+    public:
+        using allocator_type = typename traits::allocator_type ;
+        using tracker = Tracker;
+
+        using is_stateful = std::true_type;
+
+        tracked_impl_allocator(tracker &t, allocator_type allocator = {})
+        : t_(&t),
+          allocator_type(detail::move(allocator)) {}
+
+        void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            using traits = allocator_traits<ImplRawAllocator>;
-        public:
-            using allocator_type = typename traits::allocator_type ;
-            using tracker = Tracker;
+            auto mem = traits::allocate_node(*this, size, alignment);
+            t_->on_allocator_growth(mem, size);
+            return mem;
+        }
 
-            using is_stateful = std::true_type;
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        {
+            auto mem = traits::allocate_array(*this, count, size, alignment);
+            t_->on_allocator_growth(mem, size * count);
+            return mem;
+        }
 
-            tracked_impl_allocator(tracker &t, allocator_type allocator = {})
-            : t_(&t),
-              allocator_type(detail::move(allocator)) {}
+        void deallocate_node(void *ptr,
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            t_->on_allocator_shrinking(ptr, size);
+            traits::deallocate_node(*this, ptr, size, alignment);
+        }
 
-            void* allocate_node(std::size_t size, std::size_t alignment)
-            {
-                auto mem = traits::allocate_node(*this, size, alignment);
-                t_->on_allocator_growth(mem, size);
-                return mem;
-            }
+        void deallocate_array(void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            t_->on_allocator_shrinking(ptr, size * count);
+            traits::deallocate_array(*this, ptr, count, size, alignment);
+        }
 
-            void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
-            {
-                auto mem = traits::allocate_array(*this, count, size, alignment);
-                t_->on_allocator_growth(mem, size * count);
-                return mem;
-            }
+        std::size_t max_node_size() const
+        {
+            return traits::max_node_size(*this);
+        }
 
-            void deallocate_node(void *ptr,
-                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-            {
-                t_->on_allocator_shrinking(ptr, size);
-                traits::deallocate_node(*this, ptr, size, alignment);
-            }
+        std::size_t max_array_size() const
+        {
+            return traits::max_array_size(*this);
+        }
 
-            void deallocate_array(void *ptr, std::size_t count,
-                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-            {
-                t_->on_allocator_shrinking(ptr, size * count);
-                traits::deallocate_array(*this, ptr, count, size, alignment);
-            }
+        std::size_t max_alignment() const
+        {
+            return traits::max_alignment(*this);
+        }
 
-            std::size_t max_node_size() const
-            {
-                return traits::max_node_size(*this);
-            }
-
-            std::size_t max_array_size() const
-            {
-                return traits::max_array_size(*this);
-            }
-
-            std::size_t max_alignment() const
-            {
-                return traits::max_alignment(*this);
-            }
-
-        private:
-            Tracker *t_;
-        };
-    } // namespace detail
+    private:
+        Tracker *t_;
+    };
 
     /// \brief A wrapper around an \ref concept::RawAllocator that allows logging.
     /// \details The \c Tracker must provide the following, \c FOONATHAN_NOEXCEPT functions:
@@ -191,11 +190,8 @@ namespace foonathan { namespace memory
                         Args&&... args)
         : tracker(detail::move(t)),
           allocator_type(detail::forward<Args>(args)...,
-                detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
+                tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
         {}
-
-        template <template <class> class A, class T, class I, class ... Args>
-        friend tracked_allocator<T, A<detail::tracked_impl_allocator<T, I>>> make_tracked_allocator(T t, I impl, Args&&... args);
     };
 
     /// \brief Creates a \ref tracked_allocator.
@@ -217,7 +213,7 @@ namespace foonathan { namespace memory
     /// \relates tracked_allocator
     template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
     auto make_deeply_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
-    -> tracked_allocator<Tracker, RawAllocator<detail::tracked_impl_allocator<Tracker, ImplRawAllocator>>>
+    -> tracked_allocator<Tracker, RawAllocator<tracked_impl_allocator<Tracker, ImplRawAllocator>>>
     {
         return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
     }
