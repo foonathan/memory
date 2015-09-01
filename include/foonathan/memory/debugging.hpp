@@ -65,7 +65,7 @@ namespace foonathan { namespace memory
     /// It must not throw any exceptions since it might be called in the cleanup process.<br>
     /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is \c true.<br>
     /// The default handler writes the information to \c stderr and aborts the program,
-    /// unless on a freestanding implementation where it does nothing.
+    /// unless on a freestanding implementation where it only aborts.
     /// \note The instance pointer is just used as identification, it is different for each allocator,
     /// but may refer to subobjects, don't cast it.
     /// \ingroup memory
@@ -79,6 +79,28 @@ namespace foonathan { namespace memory
     /// \brief Returns the current \ref invalid_pointer_handler.
     /// \ingroup memory
     invalid_pointer_handler get_invalid_pointer_handler();
+
+    /// \brief The buffer overflow handler.
+    /// \details It will be called when a buffer overflow (or underflow) on allocated memory is detected when it is freed again.
+    /// It gets the pointer to the memory block, its size and the position where it has been detected.<br>
+    /// It must not throw any exceptions since it might be called in the cleanup process.<br>
+    /// This function only gets called if \ref FOONATHAN_MEMORY_DEBUG_FENCE has a non-zero value
+    /// and \ref FOONATHAN_MEMORY_DEBUG_FILL is \c true.<br>
+    /// The default handler writes the information to \c stderr and aborts the program,
+    /// unless on a freestanding implementation where it only aborts.
+    /// \note The instance pointer is just used as identification, it is different for each allocator,
+    /// but may refer to subobjects, don't cast it.
+    /// \ingroup memory
+    using buffer_overflow_handler = void(*)(const void *memory, std::size_t size, const void *write_ptr);
+
+    /// \brief Exchanges the \ref buffer_overflow_handler.
+    /// \details This function is thread safe.
+    /// \ingroup memory
+    buffer_overflow_handler set_buffer_overflow_handler(buffer_overflow_handler h);
+
+    /// \brief Returns the current \ref buffer_overflow_handler.
+    /// \ingroup memory
+    buffer_overflow_handler get_buffer_overflow_handler();
 
     namespace detail
     {
@@ -119,7 +141,20 @@ namespace foonathan { namespace memory
         {
             if (!debug_fence_size)
                 fence_size = 0u;
+
             debug_fill(memory, node_size, debug_magic::freed_memory);
+
+            auto pre_fence = static_cast<unsigned char*>(memory) - fence_size;
+            for (auto cur = pre_fence; cur != static_cast<unsigned char*>(memory); ++cur)
+                if (*cur != static_cast<unsigned char>(debug_magic::fence_memory))
+                    get_buffer_overflow_handler()(memory, node_size, cur);
+
+            auto end = static_cast<unsigned char*>(memory) + node_size;
+            auto post_fence = end + fence_size;
+            for (auto cur = end; cur != post_fence; ++cur)
+                if (*cur != static_cast<unsigned char>(debug_magic::fence_memory))
+                    get_buffer_overflow_handler()(memory, node_size, cur);
+
             return static_cast<char*>(memory) - fence_size;
         }
     #else
