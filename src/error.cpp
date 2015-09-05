@@ -30,7 +30,7 @@ namespace
 
 out_of_memory::handler out_of_memory::set_handler(out_of_memory::handler h)
 {
-    return out_of_memory_h.exchange(h);
+    return out_of_memory_h.exchange(h ? h : default_out_of_memory_handler);
 }
 
 out_of_memory::handler out_of_memory::get_handler()
@@ -71,7 +71,7 @@ namespace
 bad_allocation_size::handler bad_allocation_size::set_handler(
         bad_allocation_size::handler h)
 {
-    return bad_alloc_size_h.exchange(h);
+    return bad_alloc_size_h.exchange(h ? h : default_bad_alloc_size_handler);
 }
 
 bad_allocation_size::handler bad_allocation_size::get_handler()

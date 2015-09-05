@@ -29,7 +29,7 @@ namespace
 
 leak_handler foonathan::memory::set_leak_handler(leak_handler h)
 {
-    return leak_h.exchange(h);
+    return leak_h.exchange(h ? h : default_leak_handler);
 }
 
 leak_handler foonathan::memory::get_leak_handler()
@@ -53,7 +53,7 @@ namespace
 
 invalid_pointer_handler foonathan::memory::set_invalid_pointer_handler(invalid_pointer_handler h)
 {
-    return invalid_ptr_h.exchange(h);
+    return invalid_ptr_h.exchange(h ? h : default_invalid_ptr_handler);
 }
 
 invalid_pointer_handler foonathan::memory::get_invalid_pointer_handler()
@@ -78,7 +78,7 @@ namespace
 
 buffer_overflow_handler foonathan::memory::set_buffer_overflow_handler(buffer_overflow_handler h)
 {
-    return buffer_overflow_h.exchange(h);
+    return buffer_overflow_h.exchange(h ? h : default_buffer_overflow_handler);
 }
 
 buffer_overflow_handler foonathan::memory::get_buffer_overflow_handler()
