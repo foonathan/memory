@@ -26,17 +26,17 @@ namespace foonathan { namespace memory
 #endif
 
     /// @{
-    /// \brief Wrapper around \c std::malloc/free.
+    /// \brief Wrapper around \c std::heap_alloc/heap_dealloc.
     /// \details Simply calls the corresponding function from the standard library.
     /// \note It has no implementation for a freestanding implementation,
-    /// since the implementation isn't required to provide \c std::malloc/free.
+    /// since the implementation isn't required to provide \c std::heap_alloc/heap_dealloc.
     /// You need to provide your own.
     /// \ingroup memory
-    void* malloc(std::size_t size) FOONATHAN_NOEXCEPT;
-    void free(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
+    void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
+    void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
     /// @}
 
-    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::malloc/free.
+    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::heap_alloc/heap_dealloc.
     /// \details It calls the wrapper functions instead the actual library functions,
     /// this allows using it on a freestanding implementation where they may not be defined,
     /// but an implementation of the wrapper.

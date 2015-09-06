@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
-#define FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#define FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
 
 /// \file
 /// \brief A class managing pools of different sizes.
@@ -18,7 +18,7 @@
 #include "debugging.hpp"
 #include "default_allocator.hpp"
 #include "error.hpp"
-#include "pool_type.hpp"
+#include "memory_pool_type.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -56,7 +56,7 @@ namespace foonathan { namespace memory
         using leak_checker =  detail::leak_checker<memory_pool_collection<node_pool,
                                                 identity_buckets, default_allocator>>;
     public:
-        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using pool_type = PoolType;
         using bucket_distribution = BucketDistribution;
 
@@ -64,7 +64,7 @@ namespace foonathan { namespace memory
         /// \details It can handle node sizes up to a given size.<br>
         /// The first memory block is allocated, the block size /can change.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
-                    impl_allocator alloc = impl_allocator())
+                    allocator_type alloc = allocator_type())
         : leak_checker(info().name),
           block_list_(block_size, detail::move(alloc)),
           stack_(block_list_.allocate()),
@@ -158,8 +158,8 @@ namespace foonathan { namespace memory
             return block_list_.next_block_size();
         }
 
-        /// \brief Returns the \ref impl_allocator.
-        impl_allocator& get_impl_allocator() FOONATHAN_NOEXCEPT
+        /// \brief Returns the \ref allocator_type.
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return block_list_.get_allocator();
         }
@@ -208,7 +208,7 @@ namespace foonathan { namespace memory
     /// \brief A bucket allocator.
     /// \details It is a typedef \ref memory_pool_collection with \ref identity_buckets.
     /// \ingroup memory
-    template <class PoolType, class ImplAllocator = default_allocator>
+    template <class PoolType = node_pool, class ImplAllocator = default_allocator>
     FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                              memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
 
@@ -303,4 +303,4 @@ namespace foonathan { namespace memory
     };
 }} // namespace foonathan::portal
 
-#endif // FOONATHAN_MEMORY_POOL_COLLECTION_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED

@@ -6,8 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <memory/allocator_adapter.hpp> // for raw_allocator_allocator
-#include <memory/pool_allocator.hpp> // for memory_pool
+#include <memory/memory_pool.hpp> // for memory_pool<>
+#include <memory/std_allocator.hpp> // for std_allocator
 #include <memory/tracking.hpp> // for make_tracked_allocator
 
 // namespace alias for easier access

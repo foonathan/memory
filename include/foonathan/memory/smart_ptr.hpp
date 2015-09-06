@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "deleter.hpp"
+#include "std_allocator.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -24,9 +25,9 @@ namespace foonathan { namespace memory
     {
         template <typename T, class RawAllocator, typename ... Args>
         auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
-        -> std::unique_ptr<T, raw_allocator_deleter<T, RawAllocator>>
+        -> std::unique_ptr<T, allocator_deleter<T, RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T, raw_allocator_deallocator<T, RawAllocator>>;
+            using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator, no_mutex>>;
 
             auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
@@ -67,9 +68,9 @@ namespace foonathan { namespace memory
 
         template <typename T, class RawAllocator>
         auto allocate_array_unique(std::size_t size, allocator_reference<RawAllocator> alloc)
-        -> std::unique_ptr<T[], raw_allocator_deleter<T[], RawAllocator>>
+        -> std::unique_ptr<T[], allocator_deleter<T[], RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T[], raw_allocator_deallocator<T[], RawAllocator>>;
+            using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator, no_mutex>>;
 
             auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
@@ -81,32 +82,59 @@ namespace foonathan { namespace memory
         }
     } // namespace detail
 
+    /// \brief A \c std::unique_ptr that has a deleter using a \c RawAllocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    FOONATHAN_ALIAS_TEMPLATE(unique_ptr, std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
+
     /// \brief Creates an object wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
-    auto raw_allocate_unique(RawAllocator &&alloc, Args&&... args)
+    auto allocate_unique(RawAllocator &&alloc, Args &&... args)
     -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
-                        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
+                        std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
         return detail::allocate_unique<T>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
+                                        detail::forward<Args>(args)...);
+    }
+
+    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator, typename ... Args>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, Args &&... args)
+    -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
+                        std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_unique<T, any_allocator>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
                                         detail::forward<Args>(args)...);
     }
 
     /// \brief Creates an array wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
     /// \ingroup memory
     template <typename T, class RawAllocator>
-    auto raw_allocate_unique(RawAllocator &&alloc, std::size_t size)
+    auto allocate_unique(RawAllocator &&alloc, std::size_t size)
     -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
-                              std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
+                              std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
         return detail::allocate_array_unique<typename std::remove_extent<T>::type>
+                    (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
+    }
+
+    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, std::size_t size)
+    -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
+                              std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_array_unique<typename std::remove_extent<T>::type, any_allocator>
                     (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
     }
 
     /// \brief Creates an object wrapped in a \c std::shared_ptr using a \ref concept::RawAllocator.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
-    std::shared_ptr<T> raw_allocate_shared(RawAllocator &&alloc, Args&&... args)
+    std::shared_ptr<T> allocate_shared(RawAllocator &&alloc, Args &&... args)
     {
         return std::allocate_shared<T>(make_std_allocator<T>(detail::forward<RawAllocator>(alloc)), detail::forward<Args>(args)...);
     }

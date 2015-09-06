@@ -25,13 +25,13 @@ namespace foonathan { namespace memory
     {
         using traits = allocator_traits<RawAllocator>;
     public:
-        using raw_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using is_stateful = std::true_type;
 
         /// \brief Creates it passing it the minimum alignment requirement.
         /// \details It must be less than the maximum supported alignment.
-        explicit aligned_allocator(std::size_t min_alignment, raw_allocator &&alloc = {})
-        : raw_allocator(detail::move(alloc)), min_alignment_(min_alignment)
+        explicit aligned_allocator(std::size_t min_alignment, allocator_type &&alloc = {})
+        : allocator_type(detail::move(alloc)), min_alignment_(min_alignment)
         {
             FOONATHAN_MEMORY_ASSERT(min_alignment_ <= max_alignment());
         }
@@ -86,12 +86,12 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \brief Returns a reference to the actual allocator.
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type & get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type & get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }

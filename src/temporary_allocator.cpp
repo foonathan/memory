@@ -44,8 +44,13 @@ namespace
         static temporary_allocator::growth_tracker set_tracker(temporary_allocator::growth_tracker t)
         {
             auto old = tracker_;
-            tracker_ = t;
+            tracker_ = t ? t : default_tracker;
             return old;
+        }
+
+        static temporary_allocator::growth_tracker get_tracker()
+        {
+            return tracker_;
         }
 
     private:
@@ -101,6 +106,11 @@ FOONATHAN_THREAD_LOCAL std::size_t detail::temporary_allocator_dtor_t::nifty_cou
 temporary_allocator::growth_tracker temporary_allocator::set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT
 {
     return stack_impl_allocator::set_tracker(t);
+}
+
+temporary_allocator::growth_tracker temporary_allocator::get_growth_tracker() FOONATHAN_NOEXCEPT
+{
+    return stack_impl_allocator::get_tracker();
 }
 
 temporary_allocator::temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT

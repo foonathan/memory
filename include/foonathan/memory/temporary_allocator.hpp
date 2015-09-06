@@ -7,7 +7,7 @@
 
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "stack_allocator.hpp"
+#include "memory_stack.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -40,6 +40,8 @@ namespace foonathan { namespace memory
 
         /// \brief Exchanges the \ref growth_tracker.
         static growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT;
+
+        static growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT;
 
         temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT;
         ~temporary_allocator() FOONATHAN_NOEXCEPT;

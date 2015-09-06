@@ -38,9 +38,9 @@ set(tests
         detail/memory_stack.cpp
         aligned_allocator.cpp
         allocator_traits.cpp
-        pool_allocator.cpp
-        pool_collection.cpp
-        stack_allocator.cpp)
+        memory_pool.cpp
+        memory_pool_collection.cpp
+        memory_stack.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)

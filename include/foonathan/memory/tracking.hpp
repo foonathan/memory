@@ -15,69 +15,69 @@
 
 namespace foonathan { namespace memory
 {
-    namespace detail
+    /// \brief A tracked impleemntation allocator.
+    /// \ingroup memory
+    template <class Tracker, class ImplRawAllocator>
+    class tracked_impl_allocator
+    : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
     {
-        template <class Tracker, class ImplRawAllocator>
-        class tracked_impl_allocator : ImplRawAllocator
+        using traits = allocator_traits<ImplRawAllocator>;
+    public:
+        using allocator_type = typename traits::allocator_type ;
+        using tracker = Tracker;
+
+        using is_stateful = std::true_type;
+
+        tracked_impl_allocator(tracker &t, allocator_type allocator = {})
+        : t_(&t),
+          allocator_type(detail::move(allocator)) {}
+
+        void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            using traits = allocator_traits<ImplRawAllocator>;
-        public:
-            using raw_allocator = ImplRawAllocator;
-            using tracker = Tracker;
+            auto mem = traits::allocate_node(*this, size, alignment);
+            t_->on_allocator_growth(mem, size);
+            return mem;
+        }
 
-            using is_stateful = std::true_type;
+        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        {
+            auto mem = traits::allocate_array(*this, count, size, alignment);
+            t_->on_allocator_growth(mem, size * count);
+            return mem;
+        }
 
-            tracked_impl_allocator(tracker &t, raw_allocator allocator = {})
-            : t_(&t),
-              raw_allocator(detail::move(allocator)) {}
+        void deallocate_node(void *ptr,
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            t_->on_allocator_shrinking(ptr, size);
+            traits::deallocate_node(*this, ptr, size, alignment);
+        }
 
-            void* allocate_node(std::size_t size, std::size_t alignment)
-            {
-                auto mem = traits::allocate_node(*this, size, alignment);
-                t_->on_allocator_growth(mem, size);
-                return mem;
-            }
+        void deallocate_array(void *ptr, std::size_t count,
+                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            t_->on_allocator_shrinking(ptr, size * count);
+            traits::deallocate_array(*this, ptr, count, size, alignment);
+        }
 
-            void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
-            {
-                auto mem = traits::allocate_array(*this, count, size, alignment);
-                t_->on_allocator_growth(mem, size * count);
-                return mem;
-            }
+        std::size_t max_node_size() const
+        {
+            return traits::max_node_size(*this);
+        }
 
-            void deallocate_node(void *ptr,
-                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-            {
-                traits::deallocate_node(*this, ptr, size, alignment);
-                t_->on_allocator_shrinking(ptr, size);
-            }
+        std::size_t max_array_size() const
+        {
+            return traits::max_array_size(*this);
+        }
 
-            void deallocate_array(void *ptr, std::size_t count,
-                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-            {
-                traits::deallocate_array(*this, ptr, count, size, alignment);
-                t_->on_allocator_shrinking(ptr, size * count);
-            }
+        std::size_t max_alignment() const
+        {
+            return traits::max_alignment(*this);
+        }
 
-            std::size_t max_node_size() const
-            {
-                return traits::max_node_size(*this);
-            }
-
-            std::size_t max_array_size() const
-            {
-                return traits::max_array_size(*this);
-            }
-
-            std::size_t max_alignment() const
-            {
-                return traits::max_alignment(*this);
-            }
-
-        private:
-            Tracker *t_;
-        };
-    } // namespace detail
+    private:
+        Tracker *t_;
+    };
 
     /// \brief A wrapper around an \ref concept::RawAllocator that allows logging.
     /// \details The \c Tracker must provide the following, \c FOONATHAN_NOEXCEPT functions:
@@ -94,19 +94,19 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class Tracker, class RawAllocator>
     class tracked_allocator
-    : FOONATHAN_EBO(Tracker, RawAllocator)
+    : FOONATHAN_EBO(Tracker, allocator_traits<RawAllocator>::allocator_type)
     {
         using traits = allocator_traits<RawAllocator>;
     public:
-        using raw_allocator = RawAllocator;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using tracker = Tracker;
 
-        /// \brief The allocator is stateful if the \ref raw_allocator is or the \ref tracker non-empty.
+        /// \brief The allocator is stateful if the \ref allocator_type is or the \ref tracker non-empty.
         using is_stateful = std::integral_constant<bool,
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
 
-        explicit tracked_allocator(tracker t = {}, raw_allocator&& allocator = {})
-        : tracker(detail::move(t)), raw_allocator(detail::move(allocator)) {}
+        explicit tracked_allocator(tracker t = {}, allocator_type&& allocator = {})
+        : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
 
         /// @{
         /// \brief (De-)Allocation functions call the appropriate tracker function.
@@ -159,12 +159,12 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \brief Returns a reference to the allocator.
-        raw_allocator& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const raw_allocator& get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
@@ -189,12 +189,9 @@ namespace foonathan { namespace memory
         tracked_allocator(tracker t, ImplRawAllocator impl,
                         Args&&... args)
         : tracker(detail::move(t)),
-          raw_allocator(detail::forward<Args>(args)...,
-                detail::tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
+          allocator_type(detail::forward<Args>(args)...,
+                tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
         {}
-
-        template <template <class> class A, class T, class I, class ... Args>
-        friend tracked_allocator<T, A<detail::tracked_impl_allocator<T, I>>> make_tracked_allocator(T t, I impl, Args&&... args);
     };
 
     /// \brief Creates a \ref tracked_allocator.
@@ -203,7 +200,7 @@ namespace foonathan { namespace memory
     auto make_tracked_allocator(Tracker t, RawAllocator &&alloc)
     -> tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>
     {
-        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::forward<RawAllocator>(alloc)};
+        return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
 
     /// \brief Creates a deeply tracked \ref tracked_allocator.
@@ -215,8 +212,8 @@ namespace foonathan { namespace memory
     /// \c args are passed to its constructor followed by the implementation allocator.
     /// \relates tracked_allocator
     template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
-    auto make_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
-    -> tracked_allocator<Tracker, RawAllocator<detail::tracked_impl_allocator<Tracker, ImplRawAllocator>>>
+    auto make_deeply_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
+    -> tracked_allocator<Tracker, RawAllocator<tracked_impl_allocator<Tracker, ImplRawAllocator>>>
     {
         return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
     }

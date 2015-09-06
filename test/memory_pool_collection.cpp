@@ -2,14 +2,14 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "pool_collection.hpp"
+#include "memory_pool_collection.hpp"
 
 #include <algorithm>
 #include <catch.hpp>
 #include <random>
 #include <vector>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
@@ -26,7 +26,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
         REQUIRE(pool.max_node_size() == max_size);
         REQUIRE(pool.capacity() <= 1000u);
         REQUIRE(pool.next_capacity() >= 1000u);
-        REQUIRE(&pool.get_impl_allocator().get_allocator() == &alloc);
+        REQUIRE(&pool.get_allocator().get_allocator() == &alloc);
         REQUIRE(alloc.no_allocated() == 1u);
 
         for (auto i = 0u; i != max_size; ++i)

@@ -96,7 +96,8 @@ namespace foonathan { namespace memory
         #define FOONATHAN_AUTO_RETURN_TYPE(Expr, T) \
             decltype(Expr) \
             { \
-                static_assert(std::is_same<decltype(Expr), T>::value, "wrong return type"); \
+                static_assert(std::is_same<decltype(Expr), T>::value, \
+                              #Expr " does not have the return type " #T); \
                 return Expr; \
             }
     } // namespace detail

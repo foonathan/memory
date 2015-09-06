@@ -14,7 +14,7 @@ set(header
         ${header_path}/detail/small_free_list.hpp
         ${header_path}/detail/utility.hpp
         ${header_path}/aligned_allocator.hpp
-        ${header_path}/allocator_adapter.hpp
+        ${header_path}/allocator_storage.hpp
         ${header_path}/allocator_traits.hpp
         ${header_path}/config.hpp
         ${header_path}/container.hpp
@@ -23,12 +23,13 @@ set(header
         ${header_path}/deleter.hpp
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
+        ${header_path}/memory_pool.hpp
+        ${header_path}/memory_pool_collection.hpp
+        ${header_path}/memory_pool_type.hpp
+        ${header_path}/memory_stack.hpp
         ${header_path}/new_allocator.hpp
-        ${header_path}/pool_allocator.hpp
-        ${header_path}/pool_collection.hpp
-        ${header_path}/pool_type.hpp
         ${header_path}/smart_ptr.hpp
-        ${header_path}/stack_allocator.hpp
+        ${header_path}/std_allocator.hpp
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp)

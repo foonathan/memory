@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
-#define FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED
+#define FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED
 
 /// \file
 /// \brief A stack allocator.
@@ -54,12 +54,12 @@ namespace foonathan { namespace memory
         using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
         /// \brief The implementation allocator.
-        using impl_allocator = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
         /// \brief Constructs it with a given start block size.
         /// \details The first memory block is allocated, the block size can change.
         explicit memory_stack(std::size_t block_size,
-                        impl_allocator allocator = impl_allocator())
+                        allocator_type allocator = allocator_type())
         : leak_checker(info().name),
           list_(block_size, detail::move(allocator))
         {
@@ -138,8 +138,8 @@ namespace foonathan { namespace memory
             list_.shrink_to_fit();
         }
 
-        /// \brief Returns the \ref impl_allocator.
-        impl_allocator& get_impl_allocator() FOONATHAN_NOEXCEPT
+        /// \brief Returns the \ref allocator_type.
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return list_.get_allocator();
         }
@@ -156,10 +156,10 @@ namespace foonathan { namespace memory
             stack_ = detail::fixed_memory_stack(block.memory, block.size);
         }
 
-        detail::block_list<impl_allocator> list_;
+        detail::block_list<allocator_type> list_;
         detail::fixed_memory_stack stack_;
 
-        friend allocator_traits<memory_stack<impl_allocator>>;
+        friend allocator_traits<memory_stack<allocator_type>>;
     };
 
     /// \brief Specialization of the \ref allocator_traits for a \ref memory_stack.
@@ -226,4 +226,4 @@ namespace foonathan { namespace memory
     };
 }} // namespace foonathan::memory
 
-#endif // FOONATHAN_MEMORY_STACK_ALLOCATOR_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED

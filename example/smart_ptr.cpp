@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include <memory/smart_ptr.hpp> // raw_allocate_unique/shared
-#include <memory/stack_allocator.hpp> // memory_stack
+#include <memory/memory_stack.hpp> // memory_stack
 
 // namespace alias for easier access
 // if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
@@ -25,7 +25,7 @@ int main()
 
     // create a shared pointer
     // special deleter takes care of deallocation
-    auto sptr = memory::raw_allocate_shared<int>(stack, 5);
+    auto sptr = memory::allocate_shared<int>(stack, 5);
     func(sptr);
 
     // create marker for stack unwinding
@@ -38,11 +38,11 @@ int main()
         // create a unique pointer to a single int
         // when ptr goes out of scope, its special deleter will call the appropriate deallocate function
         // this is a no-op for memory_stack but for other allocator types it works
-        auto ptr = memory::raw_allocate_unique<int>(stack, i);
+        auto ptr = memory::allocate_unique<int>(stack, i);
         std::cout << *ptr << '\n';
 
         // create a unique pointer for an array of size 3
-        auto array = memory::raw_allocate_unique<int[]>(stack, 3);
+        auto array = memory::allocate_unique<int[]>(stack, 3);
         array[2] = 5;
     }
 }

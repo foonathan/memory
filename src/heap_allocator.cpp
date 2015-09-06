@@ -53,12 +53,12 @@ using namespace foonathan::memory;
     #include <cstdlib>
     #include <memory>
 
-    void* foonathan::memory::malloc(std::size_t size) FOONATHAN_NOEXCEPT
+    void* foonathan::memory::heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT
     {
         return std::malloc(size);
     }
 
-    void foonathan::memory::free(void *ptr, std::size_t) FOONATHAN_NOEXCEPT
+    void foonathan::memory::heap_dealloc(void *ptr, std::size_t) FOONATHAN_NOEXCEPT
     {
         std::free(ptr);
     }
@@ -71,7 +71,7 @@ using namespace foonathan::memory;
         }
     }
 #else
-    // no implemenetation for malloc/free
+    // no implemenetation for heap_alloc/heap_dealloc
 
     namespace
     {
@@ -84,9 +84,10 @@ using namespace foonathan::memory;
 
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto memory = detail::try_allocate(memory::malloc,
-                                       size + 2 * detail::debug_fence_size,
-                                       {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this});
+    auto memory = memory::heap_alloc(size + 2 * detail::debug_fence_size);
+    if (!memory)
+        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
+                                      size + 2 * detail::debug_fence_size));
     on_alloc(size);
     return detail::debug_fill_new(memory, size);
 }
@@ -94,7 +95,7 @@ void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
     auto memory = detail::debug_fill_free(ptr, size);
-    memory::free(memory, size);
+    memory::heap_dealloc(memory, size);
 
     on_dealloc(size);
 }
