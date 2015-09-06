@@ -5,20 +5,24 @@
 #ifndef FOONATHAN_MEMORY_DEFAULT_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DEFAULT_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+/// The typedef \ref foonathan::memory::default_allocator.
+
 #include "config.hpp"
 #include "heap_allocator.hpp"
 #include "new_allocator.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \brief The default allocator as implementation for the higher-level ones.
-    /// \details The higher-level allocator (\ref memory_stack, \ref memory_pool) use this allocator as default.
-    /// It must be one of the low-level, statelesss allocators.<br>
-    /// You can change it via the CMake variable \c FOONATHAN_MEMORY_DEFAULT_ALLOCATOR,
+    /// The default \concept{concept_rawallocator,RawAllocator} that will be used as implementation allocator in memory arenas.
+    /// Arena allocators like \ref memory_stack or \ref memory_pool allocate memory by subdividing a huge block.
+    /// They get an implementation allocator that will be used for their internal allocation,
+    /// this type is the default value.
+    /// \requiredbe Its type can be changed via the CMake option \c FOONATHAN_MEMORY_DEFAULT_ALLCOATOR,
     /// but it must be one of the following: \ref heap_allocator, \ref new_allocator.
-    /// The default is \ref heap_allocator.
+    /// \defaultbe The default is \ref heap_allocator.
     /// \ingroup memory
-    using default_allocator = FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR;
+    using default_allocator = FOONATHAN_IMPL_DEFINED(FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR);
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_DEFAULT_ALLOCATOR_HPP_INCLUDED

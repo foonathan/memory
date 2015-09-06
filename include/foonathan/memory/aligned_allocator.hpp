@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_ALIGNED_ALLOCATOR_HPP_INCLUDED
 
 /// \file
-/// \brief An allocator ensuring a certain alignment.
+/// Class \ref foonathan::memory::aligned_allocator and related functions.
 
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
@@ -15,9 +15,8 @@
 
 namespace foonathan { namespace memory
 {
-    /// \brief A \c RawAllocator adapter that ensures a minimum alignment.
-    /// \details It changes the alignment requirements passed to the allocation function if necessary
-    /// and forwards to the wrapped allocator.
+    /// A \concept{concept_rawallocator,RawAllocator} adapter that ensures a minimum alignment.
+    /// It adjusts the alignment value so that it is always larger than the minimum and forwards to the specified allocator.
     /// \ingroup memory
     template <class RawAllocator>
     class aligned_allocator
@@ -28,8 +27,8 @@ namespace foonathan { namespace memory
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
         using is_stateful = std::true_type;
 
-        /// \brief Creates it passing it the minimum alignment requirement.
-        /// \details It must be less than the maximum supported alignment.
+        /// \effects Creates it passing it the minimum alignment value and the allocator object.
+        /// \requires \c min_alignment must be less than \c this->max_alignment().
         explicit aligned_allocator(std::size_t min_alignment, allocator_type &&alloc = {})
         : allocator_type(detail::move(alloc)), min_alignment_(min_alignment)
         {
@@ -37,8 +36,15 @@ namespace foonathan { namespace memory
         }
 
         /// @{
-        /// \brief (De-)Allocation functions ensure the given minimum alignemnt.
-        /// \details If the alignment requirement is higher, it is unchanged.
+        /// \effects Moves the \c aligned_allocator object.
+        /// It simply moves the underlying allocator.
+        aligned_allocator(aligned_allocator &&) FOONATHAN_NOEXCEPT = default;
+        aligned_allocator& operator=(aligned_allocator &&) FOONATHAN_NOEXCEPT = default;
+        /// @}
+
+        /// @{
+        /// \effects Forwards to the underlying allocator through the \ref allocator_traits.
+        /// If the \c alignment is less than the \c min_alignment(), it is set to the minimum alignment.
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
             if (min_alignment_ > alignment)
@@ -69,6 +75,8 @@ namespace foonathan { namespace memory
         }
         /// @}
 
+        /// @{
+        /// \returns The value returned by the \ref allocator_traits for the underlying allocator.
         std::size_t max_node_size() const
         {
             return traits::max_node_size(get_allocator());
@@ -83,39 +91,40 @@ namespace foonathan { namespace memory
         {
             return traits::max_alignment(get_allocator());
         }
+        /// @}
 
         /// @{
-        /// \brief Returns a reference to the actual allocator.
-        allocator_type & get_allocator() FOONATHAN_NOEXCEPT
+        /// \returns A reference to the underlying allocator.
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return *this;
         }
 
-        const allocator_type & get_allocator() const FOONATHAN_NOEXCEPT
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return *this;
         }
         /// @}
 
-        /// @{
-        /// \brief Get/set the minimum alignment.
+        /// \returns The minimum alignment.
         std::size_t min_alignment() const FOONATHAN_NOEXCEPT
         {
             return min_alignment_;
         }
 
+        /// \effects Sets the minimum alignment to a new value.
+        /// \requires \c min_alignment must be less than \c this->max_alignment().
         void set_min_alignment(std::size_t min_alignment)
         {
             FOONATHAN_MEMORY_ASSERT(min_alignment <= max_alignment());
             min_alignment_ = min_alignment;
         }
-        /// @}
 
     private:
         std::size_t min_alignment_;
     };
 
-    /// \brief Creates an \ref aligned_allocator.
+    /// \returns A new \ref aligned_allocator created by forwarding the parameters to the constructor.
     /// \relates aligned_allocator
     template <class RawAllocator>
     auto make_aligned_allocator(std::size_t min_alignment, RawAllocator &&allocator) FOONATHAN_NOEXCEPT

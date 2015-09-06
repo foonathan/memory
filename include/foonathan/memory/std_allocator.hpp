@@ -5,21 +5,22 @@
 #ifndef FOONATHAN_MEMORY_STD_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_STD_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+/// Class \ref foonathan::memory::std_allocator and related classes and functions.
+
 #include <limits>
 #include <new>
 
+#include "detail/utility.hpp"
 #include "config.hpp"
 #include "allocator_storage.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
-    /// \details To allow copying of the allocator, it will not store an object directly
-    /// but instead wraps it into an allocator reference.
-    /// This wrapping won't occur, if you pass it an \ref allocator_storage providing reference semantics,
-    /// then it will stay in the it.<br>
-    /// This means, that if you instantiate it with e.g. a \ref any_allocator_reference, it will be kept,
-    /// allowing it to store any allocator.
+    /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a "normal" \c Allocator.
+    /// It allows using a \c RawAllocator anywhere a \c Allocator is required.
+    /// It stores the allocator as \ref allocator_reference to allow required copying of a \c Allocator,
+    /// synchronization is done via a \c Mutex which defaults to \ref default_mutex.
     /// \ingroup memory
     template <typename T, class RawAllocator, class Mutex = default_mutex>
     class std_allocator
@@ -42,36 +43,29 @@ namespace foonathan { namespace memory
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
 
-        /// \brief Whether or not to swap the allocators, if the containers are swapped.
-        /// \details It is \c true to ensure that the allocator stays with its memory.
         using propagate_on_container_swap = std::true_type;
-
-        /// \brief Whether or not the allocators are moved, if the containers are move assigned.
-        /// \details It is \c true to allow fast move operations.
         using propagate_on_container_move_assignment = std::true_type;
-
-        /// \brief Whether or not to copy the allocators, if the containers are copy assigned.
-        /// \details It is \c true for consistency.
         using propagate_on_container_copy_assignment = std::true_type;
 
         template <typename U>
         struct rebind {using other = std_allocator<U, RawAllocator, Mutex>;};
 
-        /// \brief The underlying raw allocator.
-        /// \details Or the polymorphic base class in case or \ref any_allocator_reference.
         using allocator_type = typename alloc_reference::allocator_type;
-
-        /// \brief The mutex used for synchronization.
         using mutex = Mutex;
 
         //=== constructor ===//
-        /// \brief Default constructor is only available for stateless allocators.
+        /// \effects Default constructs it by storing a default constructed, stateless \c RawAllocator inside the reference.
+        /// \requires The \c RawAllocator type is stateless, otherwise the body of this function will not compile.
         std_allocator() FOONATHAN_NOEXCEPT
         : alloc_reference(allocator_type{}) {}
 
-        /// \brief Creates it from a reference to a raw allocator.
-        /// \details If the instantiation allows any allocator, it will accept any allocator,
-        /// otherwise only the \ref allocator_type.
+        /// \effects Creates it from a reference to a \c RawAllocator.
+        /// It will store an \ref allocator_reference to it.
+        /// \requires The expression <tt>allocator_reference<RawAllocator, Mutex>(alloc)</tt> is well-formed,
+        /// that is either \c RawAlloc is the same as \c RawAllocator or \c RawAllocator is the tag type \ref any_allocator.
+        /// If the requirement is not fulfilled this function does not participate in overload resolution.
+        /// \note The caller has to ensure that the lifetime of the \c RawAllocator is at least as long as the lifetime
+        /// of this \ref std_allocator object.
         template <class RawAlloc,
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
@@ -80,8 +74,11 @@ namespace foonathan { namespace memory
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
-        /// \brief Creates it from a temporary raw allocator.
-        /// \details Same as above, but only valid for stateless allocators.
+        /// \effects Creates it from a stateless, temporary \c RawAllocator object.
+        /// It will not store a reference but create it on the fly.
+        /// \requires The \c RawAllocator is stateless
+        /// and the expression <tt>allocator_reference<RawAllocator, Mutex>(alloc)</tt> is well-formed as above,
+        /// otherwise this function does not participate in overload resolution.
         template <class RawAlloc,
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
@@ -90,18 +87,18 @@ namespace foonathan { namespace memory
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
-        /// \brief Creates it from another \ref alloc_reference or \ref any_allocator_reference.
-        /// \details It must reference the same type and use the same mutex.
+        /// \effects Creates it from another \ref allocator_reference using the same allocator type and mutex.
         std_allocator(const alloc_reference &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
 
-        /// \brief Conversion from any other \ref allocator_storage is forbidden.
-        /// \details This prevents unnecessary nested wrapper classes.
+        /// \details Implicit conversion from any other \ref allocator_storage is forbidden
+        /// to prevent accidentally wrapping another \ref allocator_storage inside a \ref allocator_reference.
         template <class StoragePolicy, class OtherMut>
         std_allocator(const allocator_storage<StoragePolicy, OtherMut>&) = delete;
 
-        /// \brief Creates it from another \ref std_allocator allocating a different type.
-        /// \details This is required by the \c Allcoator concept.
+        /// @{
+        /// \effects Creates it from another \ref std_allocator allocating a different type.
+        /// This is required by the \c Allcoator concept and simply takes the same \ref allocator_reference.
         template <typename U>
         std_allocator(const std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc.get_allocator()) {}
@@ -109,19 +106,29 @@ namespace foonathan { namespace memory
         template <typename U>
         std_allocator(std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc.get_allocator()) {}
-
+		/// @}
+        
         //=== allocation/deallocation ===//
+        /// \effects Allocates memory using the underlying \concept{concept_rawallocator,RawAllocator}.
+        /// If \c n is \c 1, it will call <tt>allocate_node(sizeof(T), alignof(T))</tt>,
+        /// otherwise <tt>allocate_array(n, sizeof(T), alignof(T))</tt>.
+        /// \returns A pointer to a memory block suitable for \c n objects of type \c T.
+        /// \throws Anything thrown by the \c RawAllocator.
         pointer allocate(size_type n, void * = nullptr)
         {
             return static_cast<pointer>(allocate_impl(is_any{}, n));
         }
 
+        /// \effects Deallcoates memory using the underlying \concept{concept_rawallocator,RawAllocator}.
+        /// It will forward to the deallocation function in the same way as in \ref allocate().
+        /// \requires The pointer must come from a previous call to \ref allocate() with the same \c n on this object or any copy of it.
         void deallocate(pointer p, size_type n) FOONATHAN_NOEXCEPT
         {
             deallocate_impl(is_any{}, p, n);
         }
 
         //=== construction/destruction ===//
+        /// \effects Creates an object of type \c U at given address using the passed arguments.
         template <typename U, typename ... Args>
         void construct(U *p, Args&&... args)
         {
@@ -129,6 +136,7 @@ namespace foonathan { namespace memory
             ::new(mem) U(detail::forward<Args>(args)...);
         }
 
+        /// \effects Calls the destructor for an object of type \c U at given address.
         template <typename U>
         void destroy(U *p) FOONATHAN_NOEXCEPT
         {
@@ -136,22 +144,36 @@ namespace foonathan { namespace memory
         }
 
         //=== getter ===//
+        /// \returns The maximum size for an allocation which is <tt>max_array_size() / sizeof(value_type)</tt>.
+        /// This is only an upper bound, not the exact maximum.
         size_type max_size() const FOONATHAN_NOEXCEPT
         {
             return this->max_array_size() / sizeof(value_type);
         }
 
-        /// \brief Returns the referenced allocator.
-        /// \details It returns a reference for stateful allcoators and \ref any_allocator_reference,
-        /// otherwise a temporary object.<br>
-        /// \note This function does not lock the mutex.
-        /// \see allocator_storage::get_allocator
-        using alloc_reference::get_allocator;
+        /// @{
+        /// \effects Returns a reference to the referenced allocator.
+        /// \returns For stateful allocators: A (\c const) reference to the stored allocator.
+        /// For stateless allocators: A temporary constructed allocator.
+        /// \note This does not lock the \c Mutex.
+        auto get_allocator() FOONATHAN_NOEXCEPT
+        -> FOONATHAN_AUTO_RETURN(alloc_reference::get_allocator())
 
-        /// \brief Returns the referenced allocator while keeping the mutex locked.
-        /// \details It returns a proxy object acting like a pointer to the allocator.
-        /// \see allocator_storage::lock
-        using alloc_reference::lock;
+        auto get_allocator() const FOONATHAN_NOEXCEPT
+        -> FOONATHAN_AUTO_RETURN(alloc_reference::get_allocator())
+        /// @}
+
+        /// @{
+        /// \returns A proxy object that acts like a pointer to the stored allocator.
+        /// It cannot be reassigned to point to another allocator object and only moving is supported, which is destructive.
+        /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
+        /// \requires The result of \ref get_allocator() must not be a temporary, otherwise the body of this function will not compile.
+        auto lock() FOONATHAN_NOEXCEPT
+        -> FOONATHAN_AUTO_RETURN(alloc_reference::lock())
+
+        auto lock() const FOONATHAN_NOEXCEPT
+        -> FOONATHAN_AUTO_RETURN(alloc_reference::lock())
+        /// @}.
 
     private:
         // any_allocator_reference: use virtual function which already does a dispatch on node/array
@@ -204,27 +226,8 @@ namespace foonathan { namespace memory
     template <typename T, class Alloc, class Mut>
     const std::size_t std_allocator<T, Alloc, Mut>::alignment = FOONATHAN_ALIGNOF(T);
 
-    /// @{
-    /// \brief Makes an \ref std_allocator.
-    /// \relates std_allocator
-    template <typename T, class RawAllocator>
-    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> std_allocator<T, typename std::decay<RawAllocator>::type>
-    {
-        return {detail::forward<RawAllocator>(allocator)};
-    }
-
-    template <typename T, class Mutex, class RawAllocator>
-    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
-    -> std_allocator<T, typename std::decay<RawAllocator>::type, Mutex>
-    {
-        return {detail::forward<RawAllocator>(allocator)};
-    }
-    /// @}
-
-    /// @{
-    /// \brief Compares to \ref std_allocator.
-    /// \details They are equal if either stateless or reference the same allocator.
+    /// \effects Compares two \ref std_allocator object, they are equal if either stateless or reference the same allocator.
+    /// \returns The result of the comparision for equality.
     /// \relates std_allocator
     template <typename T, typename U, class Impl, class Mut>
     bool operator==(const std_allocator<T, Impl, Mut> &lhs,
@@ -234,24 +237,43 @@ namespace foonathan { namespace memory
         return lhs.equal_to(typename allocator_traits<allocator>::is_stateful{}, rhs);
     }
 
+    /// \effects Compares two \ref std_allocator object, they are equal if either stateless or reference the same allocator.
+    /// \returns The result of the comparision for inequality.
+    /// \relates std_allocator
     template <typename T, typename U, class Impl, class Mut>
     bool operator!=(const std_allocator<T, Impl, Mut> &lhs,
                     const std_allocator<U, Impl, Mut> &rhs) FOONATHAN_NOEXCEPT
     {
         return !(lhs == rhs);
     }
-    /// @}
 
-    /// \brief Handy typedef to create an \ref std_allocator that can take any raw allocator.
-    /// \details It uses \ref any_allocator_reference and its type erasure.<br>
-    /// It is just an instantiation of \ref std_allocator with \ref any_allocator_reference.
+    /// \returns A new \ref std_allocator for a given type using a certain allocator object.
+    /// \relates std_allocator
+    template <typename T, class RawAllocator>
+    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> std_allocator<T, typename std::decay<RawAllocator>::type>
+    {
+        return {detail::forward<RawAllocator>(allocator)};
+    }
+
+    /// \returns A new \ref std_allocator for a given type and \c Mutex using a certain allocator object.
+    /// \relates std_allocator
+    template <typename T, class Mutex, class RawAllocator>
+    auto make_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
+    -> std_allocator<T, typename std::decay<RawAllocator>::type, Mutex>
+    {
+        return {detail::forward<RawAllocator>(allocator)};
+    }
+
+    /// An alias template for \ref std_allocator using a type-erased \concept{concept_rawallocator,RawAllocator}.
+    /// This is the same as using a \ref std_allocator with the tag type \ref any_allocator.
+    /// The implementation is optimized to call fewer virtual functions.
     /// \ingroup memory
     template <typename T, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(any_std_allocator,
                              std_allocator<T, any_allocator, Mutex>);
 
-    /// @{
-    /// \brief Makes an \ref any_allocator.
+    /// \returns A new \ref any_std_allocator for a given type using a certain allocator object.
     /// \relates any_std_allocator
     template <typename T, class RawAllocator>
     any_std_allocator<T> make_any_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
@@ -259,12 +281,13 @@ namespace foonathan { namespace memory
         return {detail::forward<RawAllocator>(allocator)};
     }
 
+    /// \returns A new \ref any_std_allocator for a given type and \c Mutex using a certain allocator object.
+    /// \relates any_std_allocator
     template <typename T, class Mutex, class RawAllocator>
     any_std_allocator<T, Mutex> make_any_std_allocator(RawAllocator &&allocator) FOONATHAN_NOEXCEPT
     {
         return {detail::forward<RawAllocator>(allocator)};
     }
-    /// @}
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_STD_ALLOCATOR_HPP_INCLUDED

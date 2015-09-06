@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED
 
 /// \file
-/// \brief A stack allocator.
+/// Class \ref foonathan::memory::memory_stack and its \ref foonathan::memory::allocator_traits specialization.
 
 #include <cstdint>
 #include <type_traits>
@@ -39,13 +39,11 @@ namespace foonathan { namespace memory
         };
     } // namespace detail
 
-    /// \brief A memory stack.
-    ///
-    /// Allows fast memory allocations but deallocation is only possible via markers.
-    /// All memory after a marker is then freed, too.<br>
-    /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
-    /// It allocates big blocks from an implementation allocator.
-    /// If their size is sufficient, allocations are fast.
+    /// A stateful \concept{concept_rawallocator,RawAllocator} that provides stack-like (LIFO) allocations.
+    /// It allocates huge memory blocks serving as arena from a given \c RawAllocator defaulting to \ref default_allocator
+    /// and saves a marker to the current top.
+    /// Allocation simply moves this marker by the appropriate number of bytes and returns the pointer at the old marker position,
+    /// deallocation is not directly supported, only setting the marker to a previously queried position.
     /// \ingroup memory
     template <class RawAllocator = default_allocator>
     class memory_stack
@@ -53,11 +51,10 @@ namespace foonathan { namespace memory
     {
         using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
-        /// \brief The implementation allocator.
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
-        /// \brief Constructs it with a given start block size.
-        /// \details The first memory block is allocated, the block size can change.
+        /// \effects Creates it with a given initial block size and implementation allocator.
+        /// It will allocate the first block and sets the top to its beginning.
         explicit memory_stack(std::size_t block_size,
                         allocator_type allocator = allocator_type())
         : leak_checker(info().name),
@@ -66,9 +63,15 @@ namespace foonathan { namespace memory
             allocate_block();
         }
 
-        /// \brief Allocates a memory block of given size and alignment.
-        /// \details If it does not fit into the current block, a new one will be allocated.
-        /// The new block must be big enough for the requested memory.
+        /// \effects Allocates a memory block of given size and alignment.
+        /// It simply moves the top marker.
+        /// If there is not enough space on the current memory block,
+        /// a new one will be allocated by the implementation allocator or taken from a cache
+        /// and used for the allocation.
+        /// \returns A \concept{concept_node,node} with given size and alignment.
+        /// \throws Anything thrown by the implementation allocator on growth
+        /// or \ref bad_allocation_size if \c size is too big.
+        /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
             detail::check_allocation_size(size, next_capacity(), info());
@@ -82,19 +85,25 @@ namespace foonathan { namespace memory
             return mem;
         }
 
-        /// \brief Marker type for unwinding.
+        /// The marker type that is used for unwinding.
+        /// The exact type is implementation defined,
+        /// it is only required that it is copyable.
         using marker = FOONATHAN_IMPL_DEFINED(detail::stack_marker);
 
-        /// \brief Returns a marker to the current top of the stack.
+        /// \returns A marker to the current top of the stack.
         marker top() const FOONATHAN_NOEXCEPT
         {
             return {list_.size() - 1, stack_};
         }
 
-        /// \brief Unwinds the stack to a certain marker.
-        /// \details It must be less than the previous one.
-        /// Any access blocks are not directly freed but cached.
-        /// Use \ref shrink_to_fit() to actually free them.
+       /// \effects Unwinds the stack to a certain marker position.
+        /// This sets the top pointer of the stack to the position described by the marker
+        /// and has the effect of deallocating all memory allocated since the marker was obtained.
+        /// If any memory blocks are unused after the operation,
+        /// they are not deallocated but put in a cache for later use,
+        /// call \ref shrink_to_fit() to actually deallocate them.
+        /// \requires The marker must point to memory that is still in use and was the whole time,
+        /// i.e. it must have been pointed below the top at all time.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
             detail::check_pointer(m.index <= list_.size() - 1, info(), m.top);
@@ -118,27 +127,32 @@ namespace foonathan { namespace memory
             }
         }
 
-        /// \brief Returns the capacity remaining in the current block.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
-        {
-            return std::size_t(stack_.end() - stack_.top());
-        }
-
-        /// \brief Returns the size of the next memory block.
-        /// \details This is the new capacity after \ref capacity() is exhausted.<br>
-        /// This is also the maximum array size.
-        std::size_t next_capacity() const FOONATHAN_NOEXCEPT
-        {
-            return list_.next_block_size();
-        }
-
-        /// \brief Frees all unused memory blocks.
+        /// \effects \ref unwind() does not actually do any deallocation of blocks on the implementation allocator,
+        /// unused memory is stored in a cache for later reuse.
+        /// This function clears that cache.
         void shrink_to_fit() FOONATHAN_NOEXCEPT
         {
             list_.shrink_to_fit();
         }
 
-        /// \brief Returns the \ref allocator_type.
+        /// \returns The amount of memory remaining in the current block.
+        /// This is the number of bytes that are available for allocation
+        /// before the cache or implementation allocator needs to be used.
+        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        {
+            return std::size_t(stack_.end() - stack_.top());
+        }
+
+        /// \returns The size of the next memory block after the free list gets empty and the arena grows.
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// but it is an upper bound to it.
+        std::size_t next_capacity() const FOONATHAN_NOEXCEPT
+        {
+            return list_.next_block_size();
+        }
+
+        /// \returns A reference to the implementation allocator used for managing the arena.
+        /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return list_.get_allocator();
@@ -162,10 +176,9 @@ namespace foonathan { namespace memory
         friend allocator_traits<memory_stack<allocator_type>>;
     };
 
-    /// \brief Specialization of the \ref allocator_traits for a \ref memory_stack.
-    /// \details This allows passing a state directly as allocator to container types.
-    /// \note This interface provides leak checking, if you call their allocate functions, you need to call deallocate.
-    /// Use the direct stack interface to prevent it.
+    /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
+    /// \note It is not allowed to mix calls through the specialization and through the member functions,
+    /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
     /// \ingroup memory
     template <class ImplRawAllocator>
     class allocator_traits<memory_stack<ImplRawAllocator>>
@@ -174,8 +187,7 @@ namespace foonathan { namespace memory
         using allocator_type = memory_stack<ImplRawAllocator>;
         using is_stateful = std::true_type;
 
-        /// @{
-        /// \brief Allocation function forward to the stack for array and node.
+        /// \returns The result of \ref memory_stack::allocate().
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
             auto mem = state.allocate(size, alignment);
@@ -183,15 +195,16 @@ namespace foonathan { namespace memory
             return mem;
         }
 
+        /// \returns The result of \ref memory_stack::allocate().
         static void* allocate_array(allocator_type &state, std::size_t count,
                                 std::size_t size, std::size_t alignment)
         {
             return allocate_node(state, count * size, alignment);
         }
-        /// @}
 
         /// @{
-        /// \brief Deallocation functions do nothing besides leak checking, use unwinding on the stack to free memory.
+        /// \effects Does nothing besides bookmarking for leak checking, if that is enabled.
+        /// Actual deallocation can only be done via \ref memory_stack::unwind().
         static void deallocate_node(allocator_type &state,
                     void *, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
@@ -206,7 +219,7 @@ namespace foonathan { namespace memory
         /// @}
 
         /// @{
-        /// \brief The maximum size is the equivalent of the \ref next_capacity().
+        /// \returns The maximum size which is \ref memory_stack::next_capacity().
         static std::size_t max_node_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return state.next_capacity();
@@ -218,7 +231,8 @@ namespace foonathan { namespace memory
         }
         /// @}
 
-        /// \brief There is no maximum alignment (except indirectly through \ref next_capacity()).
+        /// \returns The maximum possible value since there is no alignment restriction
+        /// (except indirectly through \ref memory_stack::next_capacity()).
         static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
             return std::size_t(-1);

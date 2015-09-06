@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED
 
 /// \file
-/// \brief Allocator traits class template.
+/// The default specialization of the \ref foonathan::memory::allocator_traits.
 
 #include <cstddef>
 #include <type_traits>
@@ -41,8 +41,7 @@ namespace foonathan { namespace memory
         // if Allocator has a type ::value_type, assume std_allocator and rebind to char,
         // by first trying ::rebind, then manual as in Alloc<T, Args> if this Alloc is Alloc<U, Args>.
         // everything else returns the type as-is
-        // add a reference to the type to allow abstract types
-    #if FOONATHAN_HOSTED_IMPLEMENTATION && 0
+    #if FOONATHAN_HOSTED_IMPLEMENTATION
         template <class Allocator>
         auto allocator_type(std_concept, FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
         -> typename std::allocator_traits<Allocator>::template rebind_alloc<char>&;
@@ -217,19 +216,14 @@ namespace foonathan { namespace memory
         }
     } // namespace traits_detail
 
-    /// \brief Default traits for \ref concept::RawAllocator classes.
-    /// \details It provides the unified interface for all allocators.<br>
-    /// Specialize it for own classes.
-    /// \note Do not mix memory allocated through this interface and directly over the pool,
-    /// since their allocation function might be implemented in a different way,
-    /// e.g. this interfaces provides leak checking, the other one don't.
-    /// \ref alignment "Valid alignment value"
+    /// The default specialization of the allocator_traits for a \concept{concept_rawallocator,RawAllocator}.
+    /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
+    /// Any specialization must provide the same interface.
     /// \ingroup memory
     template <class Allocator>
     class allocator_traits
     {
     public:
-        /// \brief Must be the same as the template parameter.
         using allocator_type = typename std::decay<decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
         using is_stateful = decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
 

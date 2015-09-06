@@ -3,7 +3,7 @@
 // found in the top-level directory of this distribution.
 
 /// \file
-/// \brief Error handling routines.
+/// The exception classes.
 
 #ifndef FOONATHAN_MEMORY_ERROR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_ERROR_HPP_INCLUDED
@@ -15,30 +15,31 @@
 
 namespace foonathan { namespace memory
 {
-    /// \brief Information about an allocator.
-    /// \details It consists of a name and a pointer to it.<br>
-    /// It will be used for logging in error handling.
+    /// Contains information about an allocator.
+    /// It can be used for logging in the various handler functions.
     /// \ingroup memory
     struct allocator_info
     {
-        /// \brief The name of the allocator.
-        /// \details Must be a NTBS whose lifetime outlives this object (i.e. a string literal).
+        /// The name of the allocator.
+        /// It is a NTBS whose lifetime is not managed by this object,
+        /// it must be stored elsewhere or be a string literal.
         const char *name;
 
-        /// \brief A pointer to the allocator.
-        /// \details This may point to a subobject of the allocator,
-        /// so it must not be casted to an actual allocator.
-        /// It's only purpose is for identifying different allocator objects.<br>
-        /// Depending on the context, it might be \c null to represent stateless allocators.
+        /// A pointer representing an allocator.
+        /// It does not necessarily point to the beginning of the allocator object,
+        /// the only guarantee is that different allocator objects result in a different pointer value.
+        /// For stateless allocators it is sometimes \c nullptr.
+        /// \note The pointer must not be cast back to any allocator type.
         const void *allocator;
 
-        /// \brief Creates a new allocator info.
+        /// \effects Creates it by giving it the name of the allocator and a pointer.
         FOONATHAN_CONSTEXPR allocator_info(const char *name,
                                            const void *allocator) FOONATHAN_NOEXCEPT
         : name(name), allocator(allocator) {}
 
         /// @{
-        /// \brief Two allocator info objects are equal if the object pointer is the same.
+        /// \effects Compares two \ref allocator_info objects, they are equal, if the \ref allocator is the same.
+        /// \returns The result of the comparision.
         friend FOONATHAN_CONSTEXPR
             bool operator==(const allocator_info &a,
                             const allocator_info &b) FOONATHAN_NOEXCEPT
@@ -55,50 +56,52 @@ namespace foonathan { namespace memory
         /// @}
     };
 
-    /// \brief The exception class thrown in case of out of memory condition.
-    /// \details This happens when a low level allocation function (e.g. \c std::malloc)
-    /// runs out of memory.
-    /// It will be thrown when the handler returns.
+    /// The exception class thrown when a low level allocator runs out of memory.
+    /// It is derived from \c std::bad_alloc.
+    /// This can happen if a low level allocation function like \c std::malloc() runs out of memory.
+    /// Throwing can be prohibited by the handler function.
     /// \ingroup memory
     class out_of_memory : public std::bad_alloc
     {
     public:
-        /// \brief The out of memory handler.
-        /// \details It will be called prior to throwing the exception.
-        /// It can log the error, throw another exception or abort the program.
-        /// If it returns, this exception will be thrown.<br>
-        /// It gets the \ref allocator_info and the amount of memory last tried to be allocated.<br>
-        /// The default handler writes this information to \c stderr and continues execution,
-        /// leading to the exception,
-        /// unless it is a freestanding implementation where it does nothing.
-        /// \note Unlike \c std::new_handler, this function does not get called in a loop or similar,
-        /// it will be called only once and is only meant for error reporting.
+        /// The type of the handler called in the constructor of \ref out_of_memory.
+        /// When an out of memory situation is encountered and the exception class created,
+        /// this handler gets called.
+        /// It is especially useful if exception support is disabled.
+        /// It gets the \ref allocator_info and the amount of memory that was tried to be allocated.
+        /// \requiredbe It can log the error, throw a different exception derived from \c std::bad_alloc or abort the program.
+        /// If it returns, this exception object will be created and thrown.
+        /// \defaultbe On a hosted implementation it logs the error on \c stderr and continues execution,
+        /// leading to this exception being thrown.
+        /// On a freestanding implementation it does nothing.
+        /// \note It is different from \c std::new_handler; it will not be called in a loop trying to allocate memory
+        /// or something like that. Its only job is to report the error.
         using handler = void(*)(const allocator_info &info, std::size_t amount);
 
-        /// \brief Exchanges the \ref handler.
-        /// \details This function is thread safe.
+        /// \effects Sets \c h as the new \ref handler in an atomic operation.
+        /// A \c nullptr sets the default \ref handler.
+        /// \returns The previous \ref handler. This is never \c nullptr.
         static handler set_handler(handler h);
 
-        /// \brief Returns the \ref handler.
+        /// \returns The current \ref handler. This is never \c nullptr.
         static handler get_handler();
 
-        /// \brief Creates a new exception object.
-        /// \details This also calls the \ref handler.
-        /// This might lead to a different exception actually thrown by the program.
+        /// \effects Creates it by passing it the \ref allocator_info and the amount of memory failed to be allocated.
+        /// It also calls the \ref handler to control whether or not it will be thrown.
         out_of_memory(const allocator_info &info, std::size_t amount);
 
-        /// \brief Returns a message describing the error.
-        /// \details It is a static string,
-        /// since it cannot do any formatting (it lacks the memory for it).
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
         const char* what() const FOONATHAN_NOEXCEPT override;
 
-        /// \brief Returns the \ref allocator_info.
+        /// \returns The \ref allocator_info passed to it in the constructor.
         const allocator_info& allocator() const FOONATHAN_NOEXCEPT
         {
             return info_;
         }
 
-        /// \brief Returns the amount of memory that was tried to be allocated.
+        /// \returns The amount of memory that was tried to be allocated.
+        /// This is the value passed in the constructor.
         std::size_t failed_allocation_size() const FOONATHAN_NOEXCEPT
         {
             return amount_;
@@ -109,62 +112,69 @@ namespace foonathan { namespace memory
         std::size_t amount_;
     };
 
-    /// \brief The exception class thrown if an allocation size/alignment exceeds the supported maximum.
-    /// \details This applies to the node size (\c max_node_size()),
-    /// the array size (\c max_array_size()) or the alignment (\c max_alignment()).<br>
-    /// It will be thrown when the handler returns.
+    /// The exception class thrown if a size or alignemnt parameter in an allocation function exceeds the supported maximum.
+    /// It is derived from \c std::bad_alloc.
+    /// This is either a node size, an array size or an alignment value.
+    /// Throwing can be prohibited by the handler function.
+    /// \note This exception can be thrown even if all parameters are less than the maximum
+    /// returned by \c max_node_size(), \c max_array_size() or \c max_alignment().
+    /// Those functions return an upper bound and not the actual supported maximum size,
+    /// since it always depends on fence memory, alignment buffer and the like.
     /// \ingroup memory
     class bad_allocation_size : public std::bad_alloc
     {
     public:
-        /// \brief The bad allocation handler.
-        /// \details It will be called prior to throwing the exception.
-        /// It can log the error, throw another exception or abort the program.
-        /// If it returns, this exception will be thrown.<br>
-        /// It gets the \ref allocator_info,
-        /// the size/alignment passed to it and the size/alignment supported maximum.<br>
-        /// The default handler writes this information to \c stderr and continues execution,
-        /// leading to the exception,
-        /// unless it is a freestanding implementation where it does nothing.
+        /// The type of the handler called in the constructor of \ref bad_allocation_size.
+        /// When a bad allocation size is detected and the exception object created,
+        /// this handler gets called.
+        /// It is especially useful if exception support is disabled.
+        /// It gets the \ref allocator_info, the size passed to the function and the supported size
+        /// (the latter is still an upper bound).
+        /// \requiredbe It can log the error, throw a different exception derived from \c std::bad_alloc or abort the program.
+        /// If it returns, this exception object will be created and thrown.
+        /// \defaultbe On a hosted implementation it logs the error on \c stderr and continues execution,
+        /// leading to this exception being thrown.
+        /// On a freestanding implementation it does nothing.
         using handler = void(*)(const allocator_info &info,
                                 std::size_t passed, std::size_t supported);
 
-        /// \brief Exchanges the \ref handler.
-        /// \details This function is thread safe.
+        /// \effects Sets \c h as the new \ref handler in an atomic operation.
+        /// A \c nullptr sets the default \ref handler.
+        /// \returns The previous \ref handler. This is never \c nullptr.
         static handler set_handler(handler h);
 
-        /// \brief Returns the \ref handler.
+        /// \returns The current \ref handler. This is never \c nullptr.
         static handler get_handler();
 
-        /// \brief Creates a new exception object.
-        /// \details This also calls the \ref handler.
-        /// This might lead to a different exception actually thrown by the program.
+        /// \effects Creates it by passing it the \ref allocator_info, the size passed to the allocation function
+        /// and an upper bound on the supported size.
+        /// It also calls the \ref handler to control whether or not it will be thrown.
         bad_allocation_size(const allocator_info &info,
                             std::size_t passed, std::size_t supported);
 
-        /// \brief Returns a message describing the error.
-        /// \details It is a static string,
-        /// since it cannot do any formatting.
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
         const char* what() const FOONATHAN_NOEXCEPT override;
 
-        /// \brief Returns the \ref allocator_info.
+        /// \returns The \ref allocator_info passed to it in the constructor.
         const allocator_info& allocator() const FOONATHAN_NOEXCEPT
         {
             return info_;
         }
 
-        /// @{
-        /// \brief Returns the passed/support size/alignment.
+        /// \returns The size or alignment value that was passed to the allocation function
+        /// which was too big. This is the same value passed to the constructor.
         std::size_t passed_value() const FOONATHAN_NOEXCEPT
         {
             return passed_;
         }
 
+        /// \returns An upper bound on the maximum supported size/alignment.
+        /// It is only an upper bound, values below can fail, but values above will always fail.
         std::size_t supported_value() const FOONATHAN_NOEXCEPT
         {
             return supported_;
         }
-        /// @}
 
     private:
         allocator_info info_;

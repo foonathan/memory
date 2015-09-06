@@ -6,14 +6,15 @@
 #define FOONATHAN_MEMORY_DELETER_HPP_INCLUDED
 
 /// \file
-/// \brief RawAllocator deleter classes to be used in smart pointers, std::function,...
+/// \c Deleter classes using a \concept{concept_rawallocator,RawAllocator}.
 
 #include "allocator_storage.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \brief A deleter class that calls the appropriate deallocate function.
-    /// \details It stores an \ref allocator_reference. It does not call any destrucotrs.
+    /// A deleter class that deallocates the memory through a specified \concept{concept_rawallocator,RawAllocator}.
+    /// It deallocates memory for a specified type but does not call its destructors.
+    /// Only a reference to the \c RawAllocator is stored, access to it is synchronized by a given \c Mutex which defaults to \ref default_mutex.
     /// \ingroup memory
     template <typename Type, class RawAllocator, class Mutex = default_mutex>
     class allocator_deallocator
@@ -24,18 +25,20 @@ namespace foonathan { namespace memory
         using mutex = Mutex;
         using value_type = Type;
 
-        /// \brief Creates it giving it the allocator used for deallocation.
+        /// \effects Creates it by passing it an \ref allocator_reference.
+        /// It will store the reference to it and uses the referenced allocator object for the deallocation.
         allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator, Mutex>(std::move(alloc)) {}
+        : allocator_reference<RawAllocator, Mutex>(alloc) {}
 
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls \ref allocator_traits::deallocate_node, but no destructors.
+        /// \effects Deallocates the memory given to it.
+        /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type)) on the referenced allocator object.
         void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
 
-        /// \brief Returns a reference to the stored allocator.
+        /// \returns The reference to the allocator.
+        /// It has the same type as the call to \ref allocator_reference::get_allocator().
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> decltype(std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
         {
@@ -43,7 +46,8 @@ namespace foonathan { namespace memory
         }
     };
 
-    /// \brief Specialization of \ref allocator_deallocator for arrays.
+    /// Specialization of \ref allocator_deallocator for array types.
+    /// Otherwise the same behavior.
     /// \ingroup memory
     template <typename Type, class RawAllocator, class Mutex>
     class allocator_deallocator<Type[], RawAllocator, Mutex>
@@ -54,27 +58,31 @@ namespace foonathan { namespace memory
         using mutex = Mutex;
         using value_type = Type;
 
-        /// \brief Creates it giving it the allocator used for deallocation and the array size.
+        /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
+        /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
         allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc,
                                   std::size_t size) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator, Mutex>(std::move(alloc)),
+        : allocator_reference<RawAllocator, Mutex>(alloc),
           size_(size) {}
 
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls \ref allocator_traits::deallocate_array, but no destructors.
+        /// \effects Deallocates the memory given to it.
+        /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
+        /// on the referenced allocator object with the size given in the constructor.
         void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
 
-        /// \brief Returns a reference to the stored allocator.
+        /// \returns The reference to the allocator.
+        /// It has the same type as the call to \ref allocator_reference::get_allocator().
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> decltype(std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
         {
             return this->allocator_reference<allocator_type, mutex>::get_allocator();
         }
 
-        /// \brief Returns the array size.
+        /// \returns The size of the array that will be deallocated.
+        /// This is the same value as passed in the constructor.
         std::size_t array_size() const FOONATHAN_NOEXCEPT
         {
             return size_;
@@ -84,8 +92,8 @@ namespace foonathan { namespace memory
         std::size_t size_;
     };
 
-    /// \brief A deleter class that calls the appropriate destructors and deallocate function.
-    /// \details It stores an \ref allocator_reference. It calls destructors.
+    /// Similar to \ref allocator_deallocator but calls the destructors of the objects.
+    /// Otherwise behaves the same.
     /// \ingroup memory
     template <typename Type, class RawAllocator, class Mutex = default_mutex>
     class allocator_deleter
@@ -96,19 +104,22 @@ namespace foonathan { namespace memory
         using mutex = Mutex;
         using value_type = Type;
 
-        /// \brief Creates it giving it the allocator used for deallocation.
+        /// \effects Creates it by passing it an \ref allocator_reference.
+        /// It will store the reference to it and uses the referenced allocator object for the deallocation.
         allocator_deleter(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator, Mutex>(std::move(alloc)) {}
+        : allocator_reference<RawAllocator, Mutex>(alloc) {}
 
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls the destructor and \ref allocator_traits::deallocate_node.
+        /// \effects Calls the destructor and deallocates the memory given to it.
+        /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type))
+        /// on the referenced allocator object for the deallocation.
         void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             pointer->~value_type();
             this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
 
-        /// \brief Returns a reference to the stored allocator.
+        /// \returns The reference to the allocator.
+        /// It has the same type as the call to \ref allocator_reference::get_allocator().
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> decltype(std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
         {
@@ -116,7 +127,8 @@ namespace foonathan { namespace memory
         }
     };
 
-    /// \brief Specialization of \ref allocator_deleter for arrays.
+    /// Specialization of \ref allocator_deleter for array types.
+    /// Otherwise the same behavior.
     /// \ingroup memory
     template <typename Type, class RawAllocator, class Mutex>
     class allocator_deleter<Type[], RawAllocator, Mutex>
@@ -127,14 +139,16 @@ namespace foonathan { namespace memory
         using mutex = Mutex;
         using value_type = Type;
 
-        /// \brief Creates it giving it the allocator used for deallocation and the array size.
+        /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
+        /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
         allocator_deleter(allocator_reference<RawAllocator, mutex> alloc,
                           std::size_t size) FOONATHAN_NOEXCEPT
-         : allocator_reference<RawAllocator, Mutex>(std::move(alloc)),
+         : allocator_reference<RawAllocator, Mutex>(alloc),
            size_(size) {}
 
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls the destructors and \ref allocator_traits::deallocate_array.
+        /// \effects Calls the destructors and deallocates the memory given to it.
+        /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
+        /// on the referenced allocator object with the size given in the constructor for the deallocation.
         void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
         {
             for (auto cur = pointer; cur != pointer + size_; ++cur)
@@ -142,14 +156,16 @@ namespace foonathan { namespace memory
             this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
         }
 
-        /// \brief Returns a reference to the stored allocator.
+        /// \returns The reference to the allocator.
+        /// It has the same type as the call to \ref allocator_reference::get_allocator().
         auto get_allocator() const FOONATHAN_NOEXCEPT
         -> decltype(std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
         {
             return this->allocator_reference<allocator_type, mutex>::get_allocator();
         }
 
-        /// \brief Returns the array size.
+        /// \returns The size of the array that will be deallocated.
+        /// This is the same value as passed in the constructor.
         std::size_t array_size() const FOONATHAN_NOEXCEPT
         {
             return size_;

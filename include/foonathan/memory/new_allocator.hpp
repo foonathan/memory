@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_NEW_ALLOCATOR_HPP_INCLUDED
 
 /// \file
-/// \brief A new allocator.
+/// Class \ref foonathan::memory::new_allocator.
 
 #include <type_traits>
 
@@ -25,9 +25,7 @@ namespace foonathan { namespace memory
     } // namespace detail
 #endif
 
-    /// \brief A \ref concept::RawAllocator that allocates memory using \c new.
-    ///
-    /// It is no singleton but stateless; each instance is the same.
+    /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using <tt>operator new</tt>.
     /// \ingroup memory
     class new_allocator
     {
@@ -43,19 +41,20 @@ namespace foonathan { namespace memory
             return *this;
         }
 
-        /// \brief Allocates memory using \c ::operator \c new.
-        /// \details It uses the nothrow version.
-        /// In case of \c nullptr, it loops calling \c std::new_handler
-        /// as usual but if the handler is \c null,
-        /// it calls \ref out_of_memory_handler prior to throwing \ref out_of_memory.
+        /// \effects A \concept{concept_rawallocator,RawAllocator} allocation function.
+        /// It uses the nothrow <tt>operator new</tt>,
+        /// if it returns \c nullptr, it behaves like \c new and loops calling \c std::new_handler,
+        /// but instead of throwing \c std::bad_alloc, it throws \ref out_of_memory at the end.
+        /// \returns A pointer to a \concept{concept_node,node}, it will never be \c nullptr.
+        /// \throws An exception of type \ref out_of_memory or whatever is thrown by its handler if the allocation fails.
         void* allocate_node(std::size_t size, std::size_t alignment);
 
-        /// \brief Deallocates memory using \c ::operator \c delete.
+        /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
+        /// It uses <tt>operator delete</tt>
         void deallocate_node(void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
-        /// \brief Maximum node size.
-        /// \details It forwards to \c std::allocator<char>::max_size(),
-        /// or on a freestanding implementation returns the maximum value.
+        /// \returns The maximum node size by forwaring to \c std::allocator<char>::max_size()
+        /// or the maximum value on a freestanding implementation.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory
