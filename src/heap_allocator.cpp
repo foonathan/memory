@@ -84,9 +84,10 @@ using namespace foonathan::memory;
 
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto memory = detail::try_allocate(memory::heap_alloc,
-                                       size + 2 * detail::debug_fence_size,
-                                       {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this});
+    auto memory = memory::heap_alloc(size + 2 * detail::debug_fence_size);
+    if (!memory)
+        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
+                                      size + 2 * detail::debug_fence_size));
     on_alloc(size);
     return detail::debug_fill_new(memory, size);
 }

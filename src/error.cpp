@@ -103,9 +103,20 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
 
         auto handler = foonathan_memory_comp::get_new_handler();
         if (handler)
-            handler();
+        {
+            FOONATHAN_TRY
+            {
+                handler();
+            }
+            FOONATHAN_CATCH_ALL
+            {
+                FOONATHAN_THROW(out_of_memory(info, size));
+            }
+        }
         else
+        {
             FOONATHAN_THROW(out_of_memory(info, size));
+        }
     }
     FOONATHAN_MEMORY_UNREACHABLE("while (true) shouldn't exit");
     return nullptr;
