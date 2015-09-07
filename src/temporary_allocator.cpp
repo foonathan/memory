@@ -14,19 +14,30 @@ using namespace foonathan::memory;
 
 namespace
 {
+    void default_growth_tracker(std::size_t) FOONATHAN_NOEXCEPT {}
+    // purposely not initialized due to a weird Windows bug with clang and maybe others?
+    // if missing thread support thread_local variables will only be zero initialized
+    // initialization of growth tracker only done on access, since this is the only way to set it
+    static FOONATHAN_THREAD_LOCAL temporary_allocator::growth_tracker stack_growth_tracker;
+
     class stack_impl_allocator
     {
     public:
         using is_stateful = std::false_type;
 
-        stack_impl_allocator() FOONATHAN_NOEXCEPT {}
+        stack_impl_allocator() FOONATHAN_NOEXCEPT
+        : first_call_(true)
+        {}
 
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            if (!first_call_)
-                tracker_(size);
-            else
+            if (first_call_)
                 first_call_ = false;
+            else if (stack_growth_tracker)
+                stack_growth_tracker(size);
+            else // not initialized yet, see comment at definition
+                stack_growth_tracker = default_growth_tracker;
+
             return default_allocator().allocate_node(size, alignment);
         }
 
@@ -40,29 +51,9 @@ namespace
             return default_allocator().max_node_size();
         }
 
-
-        static temporary_allocator::growth_tracker set_tracker(temporary_allocator::growth_tracker t)
-        {
-            auto old = tracker_;
-            tracker_ = t ? t : default_tracker;
-            return old;
-        }
-
-        static temporary_allocator::growth_tracker get_tracker()
-        {
-            return tracker_;
-        }
-
     private:
-        static void default_tracker(std::size_t) FOONATHAN_NOEXCEPT {}
-
-        static FOONATHAN_THREAD_LOCAL temporary_allocator::growth_tracker tracker_;
-        static FOONATHAN_THREAD_LOCAL bool first_call_;
+        bool first_call_;
     };
-
-    FOONATHAN_THREAD_LOCAL temporary_allocator::growth_tracker
-        stack_impl_allocator::tracker_ = stack_impl_allocator::default_tracker;
-    FOONATHAN_THREAD_LOCAL bool stack_impl_allocator::first_call_ = true;
 
     using stack_type = memory_stack<stack_impl_allocator>;
     using storage_t = std::aligned_storage<sizeof(stack_type), FOONATHAN_ALIGNOF(stack_type)>::type;
@@ -97,7 +88,7 @@ detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() FOONATHAN_NOEX
     if (--nifty_counter_ == 0u && is_created)
     {
         get().~stack_type();
-        // at this point the current thread is over, so boolean not necessary
+        is_created = false;
     }
 }
 
@@ -105,12 +96,16 @@ FOONATHAN_THREAD_LOCAL std::size_t detail::temporary_allocator_dtor_t::nifty_cou
 
 temporary_allocator::growth_tracker temporary_allocator::set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT
 {
-    return stack_impl_allocator::set_tracker(t);
+    // check if not initialized, see comment at definition
+    auto old = stack_growth_tracker ? stack_growth_tracker : default_growth_tracker;
+    stack_growth_tracker = t ? t : default_growth_tracker;
+    return old;
 }
 
 temporary_allocator::growth_tracker temporary_allocator::get_growth_tracker() FOONATHAN_NOEXCEPT
 {
-    return stack_impl_allocator::get_tracker();
+    // check if not initialized, see comment at definition
+    return stack_growth_tracker ? stack_growth_tracker : default_growth_tracker;
 }
 
 temporary_allocator::temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT
