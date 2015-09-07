@@ -32,7 +32,8 @@ set(header
         ${header_path}/std_allocator.hpp
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
-        ${header_path}/tracking.hpp)
+        ${header_path}/tracking.hpp
+        ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
         detail/block_list.cpp
@@ -52,30 +53,21 @@ else()
     add_library(foonathan_memory ${header} ${src})
 endif()
 
-target_include_directories(foonathan_memory PRIVATE ${header_path})
-target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp
+target_include_directories(foonathan_memory PRIVATE ${header_path}) # for source files
+target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp/container_node_sizes.hpp
 target_include_directories(foonathan_memory INTERFACE ${FOONATHAN_MEMORY_INCLUDE_DIR}) # for other targets using it
 _foonathan_use_comp(foonathan_memory) # setup compatiblity code
 
 # configure config file
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
-# copy container_node_sizes.hpp.in to binary dir without generating code
-file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp")
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/container_node_sizes.hpp.in"
-     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp")
-
+# generate container_node_sizes.hpp
 if(FOONATHAN_MEMORY_BUILD_TOOLS AND (NOT CMAKE_CROSS_COMPILING))
-    # custom command that generates the node sizes
-    # it is technically a hack to ensure that the command will only run once
-    # only works because the header container.hpp isn't actually used inside the library
-    add_custom_command(TARGET foonathan_memory PRE_BUILD
-        COMMAND foonathan_memory_node_size_debugger --code --append --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
-        MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/container_node_sizes.hpp.in"
-        DEPENDS foonathan_memory_node_size_debugger
-        VERBATIM)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
+       COMMAND foonathan_memory_node_size_debugger --code --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
+       DEPENDS foonathan_memory_node_size_debugger
+       VERBATIM)
 else()
     message(WARNING "cannot generate container_node_sizes.hpp, node size information will be unavailable")
+    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp "")
 endif()
