@@ -74,33 +74,6 @@ public:
 };
 ```
 
-You can also only override certain parts of it by inheriting from another instantiation.
-Note that you always need to specify the `allocator_type`, otherwise bad things will happen (see way 3)!
-An example is shown below:
-
-```cpp
-template <>
-class allocator_traits<raw_allocator>
-: public allocator_traits<memory::default_allocator>
-{
-public:
-    using allocator_type = raw_allocator;
-
-    static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
-    {
-        ...
-    }
-
-    static void deallocate_node(allocator_type &state, void *node, std::size_t size, std::size_t alignment) noexcept
-    {
-        ...
-    }
-};
-```
-
-Here only the node (de-)allocation functions are overwritten, the others are taken from the default traits specialization,
-this means that the fallbacks will be used (unless your class provides the required members).
-
 This approach is used in the mentioned [memory_stack] but also the [memory_pool] classes.
 
 ## 3. Forward all behavior to another class
