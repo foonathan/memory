@@ -35,12 +35,14 @@ namespace foonathan { namespace memory
             FOONATHAN_MEMORY_ASSERT(min_alignment_ <= max_alignment());
         }
 
+#ifdef DOXYGEN
         /// @{
         /// \effects Moves the \c aligned_allocator object.
         /// It simply moves the underlying allocator.
         aligned_allocator(aligned_allocator &&) FOONATHAN_NOEXCEPT = default;
         aligned_allocator& operator=(aligned_allocator &&) FOONATHAN_NOEXCEPT = default;
         /// @}
+#endif
 
         /// @{
         /// \effects Forwards to the underlying allocator through the \ref allocator_traits.

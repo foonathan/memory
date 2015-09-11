@@ -84,12 +84,14 @@ namespace foonathan { namespace memory
             FOONATHAN_SFINAE(new storage_policy(other.get_allocator())))
         : storage_policy(other.get_allocator()) {}
 
+#ifdef DOXYGEN
         /// @{
         /// \effects Moves the \c allocator_storage object.
         /// A moved-out \c allocator_storage object must still store a valid allocator object.
         allocator_storage(allocator_storage &&) FOONATHAN_NOEXCEPT = default;
         allocator_storage& operator=(allocator_storage &&) FOONATHAN_NOEXCEPT = default;
         /// @}
+#endif
 
         /// @{
         /// \effects Copies the \c allocator_storage object.

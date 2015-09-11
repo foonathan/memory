@@ -67,6 +67,7 @@ namespace foonathan { namespace memory
         /// regardless of properly deallocated back to the implementation allocator.
         ~memory_pool() FOONATHAN_NOEXCEPT = default;
 
+#ifdef DOXYGEN
         /// @{
         /// \effects Moving a \ref memory_pool object transfers ownership over the free list,
         /// i.e. the moved from pool is completely empty and the new one has all its memory.
@@ -75,6 +76,7 @@ namespace foonathan { namespace memory
         memory_pool(memory_pool &&) FOONATHAN_NOEXCEPT = default;
         memory_pool& operator=(memory_pool &&) FOONATHAN_NOEXCEPT = default;
         /// @}
+#endif
 
         /// \effects Allocates a single \concept{concept_node,node} by removing it from the free list.
         /// If the free list is empty, a new memory block will be allocated and put onto it.

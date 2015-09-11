@@ -77,6 +77,7 @@ namespace foonathan { namespace memory
         /// regardless of properly deallocated back to the implementation allocator.
         ~memory_pool_collection() FOONATHAN_NOEXCEPT = default;
 
+#ifdef DOXYGEN
         /// @{
         /// \effects Moving a \ref memory_pool_collection object transfers ownership over the free lists,
         /// i.e. the moved from pool is completely empty and the new one has all its memory.
@@ -85,6 +86,7 @@ namespace foonathan { namespace memory
         memory_pool_collection(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
         memory_pool_collection& operator=(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
         /// @}
+#endif
 
         /// \brief Allocates a node of given size.
         /// \details It selects the smallest node pool with sufficient size,
