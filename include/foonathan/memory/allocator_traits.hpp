@@ -41,15 +41,16 @@ namespace foonathan { namespace memory
         // if Allocator has a type ::value_type, assume std_allocator and rebind to char,
         // by first trying ::rebind, then manual as in Alloc<T, Args> if this Alloc is Alloc<U, Args>.
         // everything else returns the type as-is
+        // add a reference to the type to allow abstract types
     #if FOONATHAN_HOSTED_IMPLEMENTATION && 0
         template <class Allocator>
-        auto allocator_type(std_concept, FOONATHAN_SFINAE(std::declval<typename Allocator::value_type>()))
-        -> typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
+        auto allocator_type(std_concept, FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
+        -> typename std::allocator_traits<Allocator>::template rebind_alloc<char>&;
     #else
         // we need to simulate the behavior of std::allocator_traits::rebind_alloc
         template <class Allocator>
         auto rebind_impl(int)
-        -> typename Allocator::template rebind<char>::other;
+        -> typename Allocator::template rebind<char>::other&;
 
         template <class Allocator, typename T>
         struct allocator_rebinder;
@@ -57,7 +58,7 @@ namespace foonathan { namespace memory
         template <template <typename, typename...> class Alloc, typename U, typename ... Args, typename T>
         struct allocator_rebinder<Alloc<U, Args...>, T>
         {
-            using type = Alloc<T, Args...>;
+            using type = Alloc<T, Args...>&;
         };
 
         template <class Allocator>
@@ -65,12 +66,12 @@ namespace foonathan { namespace memory
         -> typename allocator_rebinder<Allocator, char>::type;
 
         template <class Allocator>
-        auto allocator_type(std_concept, FOONATHAN_SFINAE(std::declval<typename Allocator::value_type>()))
+        auto allocator_type(std_concept, FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
         -> decltype(rebind_impl<Allocator>(0));
     #endif
 
         template <class Allocator>
-        Allocator allocator_type(error);
+        Allocator& allocator_type(error);
 
         //=== is_stateful ===//
         // first try to access Allocator::is_stateful,
@@ -229,7 +230,7 @@ namespace foonathan { namespace memory
     {
     public:
         /// \brief Must be the same as the template parameter.
-        using allocator_type = decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}));
+        using allocator_type = typename std::decay<decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
         using is_stateful = decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
 
         static void* allocate_node(allocator_type& state,

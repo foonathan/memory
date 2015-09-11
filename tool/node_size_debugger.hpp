@@ -94,9 +94,9 @@ struct debug_forward_list
     std::size_t debug()
     {
         std::forward_list<T, node_size_debugger<T, T>> list;
-        list.emplace_front();
-        list.emplace_front();
-        list.emplace_front();
+        list.push_front(T());
+        list.push_front(T());
+        list.push_front(T());
         return list.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -112,9 +112,9 @@ struct debug_list
     std::size_t debug()
     {
         std::list<T, node_size_debugger<T, T>> list;
-        list.emplace_back();
-        list.emplace_back();
-        list.emplace_back();
+        list.push_front(T());
+        list.push_front(T());
+        list.push_front(T());
         return list.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -130,9 +130,9 @@ struct debug_set
     std::size_t debug()
     {
         std::set<T, compare, node_size_debugger<T, T>> set;
-        set.emplace();
-        set.emplace();
-        set.emplace();
+        set.insert(T());
+        set.insert(T());
+        set.insert(T());
         return set.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -148,9 +148,9 @@ struct debug_multiset
     std::size_t debug()
     {
         std::multiset<T, compare, node_size_debugger<T, T>> set;
-        set.emplace();
-        set.emplace();
-        set.emplace();
+        set.insert(T());
+        set.insert(T());
+        set.insert(T());
         return set.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -166,9 +166,9 @@ struct debug_unordered_set
     std::size_t debug()
     {
         std::unordered_set<T, hash, compare, node_size_debugger<T, T>> set;
-        set.emplace();
-        set.emplace();
-        set.emplace();
+        set.insert(T());
+        set.insert(T());
+        set.insert(T());
         return set.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -184,9 +184,9 @@ struct debug_unordered_multiset
     std::size_t debug()
     {
         std::unordered_multiset<T, hash, compare, node_size_debugger<T, T>> set;
-        set.emplace();
-        set.emplace();
-        set.emplace();
+        set.insert(T());
+        set.insert(T());
+        set.insert(T());
         return set.get_allocator().node_size() - sizeof(T);
     }
 };
@@ -202,9 +202,9 @@ struct debug_map
     std::size_t debug()
     {
         std::map<T, T, compare, node_size_debugger<T, T>> map;
-        map.emplace();
-        map.emplace();
-        map.emplace();
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
         return map.get_allocator().node_size() - sizeof(typename decltype(map)::value_type);
     }
 };
@@ -220,9 +220,9 @@ struct debug_multimap
     std::size_t debug()
     {
         std::multimap<T, T, compare, node_size_debugger<T, T>> map;
-        map.emplace();
-        map.emplace();
-        map.emplace();
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
         return map.get_allocator().node_size() - sizeof(typename decltype(map)::value_type);
     }
 };
@@ -238,9 +238,9 @@ struct debug_unordered_map
     std::size_t debug()
     {
         std::unordered_map<T, T, hash, compare, node_size_debugger<T, T>> map;
-        map.emplace();
-        map.emplace();
-        map.emplace();
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
         return map.get_allocator().node_size() - sizeof(typename decltype(map)::value_type);
     }
 };
@@ -256,9 +256,9 @@ struct debug_unordered_multimap
     std::size_t debug()
     {
         std::unordered_multimap<T, T, hash, compare, node_size_debugger<T, T>> map;
-        map.emplace();
-        map.emplace();
-        map.emplace();
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
+        map.insert(std::make_pair(T(), T()));
         return map.get_allocator().node_size() - sizeof(typename decltype(map)::value_type);
     }
 };

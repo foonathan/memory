@@ -30,27 +30,9 @@ namespace foonathan { namespace memory
         template <template <typename...> class Template, typename ... Args>
         struct is_instantiation_of<Template, Template<Args...>> : std::true_type {};
 
-        // whether or not a class is derived from a template
-        // (not really right implementation, more is_convertible, but works for the needs here)
-        template <template <typename...> class Base, class Derived>
-        struct is_base_of_template_impl
-        {
-            template <typename ... Args>
-            static std::true_type check(const Base<Args...>&);
-
-            static std::false_type check(...);
-        };
-
-        template <template <typename...> class Base, class Derived>
-        using is_base_of_template = decltype(is_base_of_template_impl<Base, Derived>::check(std::declval<Derived>()));
-
         // whether or not the allocator of the storage policy is a raw allocator itself
         template <class StoragePolicy>
         using is_nested_policy = is_instantiation_of<allocator_storage, typename StoragePolicy::allocator_type>;
-
-        // whether or not derived from allocator_storage template
-        template <class C>
-        using is_derived_from_allocator_storage = detail::is_base_of_template<allocator_storage, C>;
     } // namespace detail
 
     /// \brief Stores a raw allocator using a certain storage policy.
@@ -93,7 +75,7 @@ namespace foonathan { namespace memory
         template <class Alloc,
             // MSVC seems to ignore access rights in SFINAE below
             // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
-            FOONATHAN_REQUIRES(!detail::is_derived_from_allocator_storage<typename std::decay<Alloc>::type>::value)>
+            FOONATHAN_REQUIRES((!std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value))>
         allocator_storage(Alloc &&alloc,
             FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
         : storage_policy(detail::forward<Alloc>(alloc)) {}
@@ -254,7 +236,7 @@ namespace foonathan { namespace memory
 #if FOONATHAN_HAS_THREADING_SUPPORT
     template <class RawAllocator, class Mutex = std::mutex>
     FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
-                             allocator_storage<direct_storage<RawAllocator>, Mutex>;
+                             allocator_storage<direct_storage<RawAllocator>, Mutex>);
 #else
     template <class RawAllocator, class Mutex>
     FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
@@ -490,8 +472,8 @@ namespace foonathan { namespace memory
                   allocator_traits<RawAllocator>::is_stateful::value>
         {
             using traits = allocator_traits<RawAllocator>;
-            using storage = detail::reference_storage_impl<RawAllocator,
-            allocator_traits<RawAllocator>::is_stateful::value>;
+            using storage = detail::reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
+                                                            allocator_traits<RawAllocator>::is_stateful::value>;
         public:
             // non stateful
             basic_allocator(const RawAllocator &alloc) FOONATHAN_NOEXCEPT

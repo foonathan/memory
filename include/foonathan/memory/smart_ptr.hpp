@@ -27,7 +27,7 @@ namespace foonathan { namespace memory
         auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
         -> std::unique_ptr<T, allocator_deleter<T, RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator, no_mutex>>;
+            using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator>>;
 
             auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
@@ -70,7 +70,7 @@ namespace foonathan { namespace memory
         auto allocate_array_unique(std::size_t size, allocator_reference<RawAllocator> alloc)
         -> std::unique_ptr<T[], allocator_deleter<T[], RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator, no_mutex>>;
+            using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator>>;
 
             auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception

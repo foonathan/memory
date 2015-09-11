@@ -13,16 +13,6 @@
 
 namespace foonathan { namespace memory
 {
-    template <typename T, class RawAllocator, class Mutex = default_mutex>
-    class std_allocator;
-
-    namespace detail
-    {
-        // whether or not derived from std_allocator template
-        template <class C>
-        using is_derived_from_std_allocator = detail::is_base_of_template<std_allocator, C>;
-    } // namespace detail
-
     /// \brief Wraps a \ref concept::RawAllocator to create an \c std::allocator.
     /// \details To allow copying of the allocator, it will not store an object directly
     /// but instead wraps it into an allocator reference.
@@ -31,7 +21,7 @@ namespace foonathan { namespace memory
     /// This means, that if you instantiate it with e.g. a \ref any_allocator_reference, it will be kept,
     /// allowing it to store any allocator.
     /// \ingroup memory
-    template <typename T, class RawAllocator, class Mutex/* = default_mutex*/>
+    template <typename T, class RawAllocator, class Mutex = default_mutex>
     class std_allocator
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
     {
@@ -85,7 +75,7 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-                FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
+                FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
         std_allocator(RawAlloc &alloc,
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
@@ -95,7 +85,7 @@ namespace foonathan { namespace memory
         template <class RawAlloc,
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-                FOONATHAN_REQUIRES(!detail::is_derived_from_std_allocator<RawAlloc>::value)>
+                FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
         std_allocator(const RawAlloc &alloc,
                       FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc) {}
@@ -114,6 +104,10 @@ namespace foonathan { namespace memory
         /// \details This is required by the \c Allcoator concept.
         template <typename U>
         std_allocator(const std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
+        : alloc_reference(alloc.get_allocator()) {}
+
+        template <typename U>
+        std_allocator(std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc.get_allocator()) {}
 
         //=== allocation/deallocation ===//
