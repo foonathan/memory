@@ -5,12 +5,7 @@
 # root CMakeLists.txt, specifies option and interface library
 
 cmake_minimum_required(VERSION 3.1)
-
-if (BIICODE)
-    ADD_BII_TARGETS()
-else()
-    project(FOONATHAN_MEMORY)
-endif()
+project(FOONATHAN_MEMORY)
 
 # compatibility options
 include(cmake/compatibility.cmake)
@@ -80,7 +75,7 @@ else()
 endif()
 
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
-set(FOONATHAN_MEMORY_VERSION_MINOR 3 CACHE STRING "minor version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_MINOR 4 CACHE STRING "minor version of memory" FORCE)
 
 # subdirectories
 add_subdirectory(src)
