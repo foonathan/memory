@@ -4,10 +4,6 @@
 
 # builds examples
 
-if(BIICODE)
-    return()
-endif()
-
 macro(_foonathan_add_example name)
     add_executable(foonathan_memory_example_${name} ${name}.cpp)
     target_link_libraries(foonathan_memory_example_${name} PRIVATE foonathan_memory)

@@ -47,11 +47,7 @@ set(src
         new_allocator.cpp
         temporary_allocator.cpp)
 
-if(BIICODE)
-    set(foonathan_memory ${BII_LIB_TARGET})
-else()
-    add_library(foonathan_memory ${header} ${src})
-endif()
+add_library(foonathan_memory ${header} ${src})
 
 target_include_directories(foonathan_memory PRIVATE ${header_path}) # for source files
 target_include_directories(foonathan_memory PUBLIC ${CMAKE_CURRENT_BINARY_DIR}) # for config_impl.hpp/container_node_sizes.hpp

@@ -5,12 +5,7 @@
 # root CMakeLists.txt, specifies option and interface library
 
 cmake_minimum_required(VERSION 3.1)
-
-if (BIICODE)
-    ADD_BII_TARGETS()
-else()
-    project(FOONATHAN_MEMORY)
-endif()
+project(FOONATHAN_MEMORY)
 
 # compatibility options
 include(cmake/compatibility.cmake)
