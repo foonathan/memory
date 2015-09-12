@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_POOL_TYPE_HPP_INCLUDED
 
 /// \file
-/// \brief Tag types defining different pool types.
+/// The \c PoolType tag types.
 
 #include <type_traits>
 
@@ -16,22 +16,9 @@
 
 namespace foonathan { namespace memory
 {
-    /// @{
-    /// \brief Tag types defining the type of a memory pool.
-    /// \details There are three ypes of pools:
-    /// * \ref node_pool: doesn't support array allocations that well.
-    /// * \ref array_pool: does support array allocations but slower.
-    /// * \ref small_node_pool: optimized for small objects, low memory overhead, but slower.
-    /// Does not support array allocations.<br>
-    /// \ref node_pool may not always be able to allocate arrays, even if there would be enough space.
-    /// It does not keep its nodes ordered, so the user have to do that manually for better array support.
-    /// If not, it may grow unnecessarily but is really fast otherwise.<br>
-    /// \ref array_pool does keep its nodes ordered, but is thus slower.
-    /// The overhead is really big for deallocation in random order.
-    /// Array allocations themselves are pretty slow, too, for bigger arrays slower than new.
-    /// Use it only if the low memory overhead is really needed.<br>
-    /// \ref small_node_pool is a little bit slower than \ref node_pool.
-    /// The nodes from the other pools need to be able to store a pointer, in this, they don't.
+    /// Tag type defining a memory pool optimized for nodes.
+    /// It does not support array allocations that great and may trigger a growth even if there is enough memory.
+    /// But it is the fastest pool type.
     /// \ingroup memory
     struct node_pool
     : FOONATHAN_EBO(std::true_type)
@@ -39,18 +26,28 @@ namespace foonathan { namespace memory
         using type = detail::node_free_memory_list;
     };
 
+    /// Tag type defining a memory pool optimized for arrays.
+    /// It keeps the nodes oredered inside the free list and searches the list for an appropriate memory block.
+    /// Array allocations are still pretty slow, if the array gets big enough it can get slower than \c new.
+    /// Node allocations are still fast, unless there is deallocation in random order.
+    /// \note Use this tag type only if you really need to have a memory pool!
+    /// \ingroup memory
     struct array_pool
     : FOONATHAN_EBO(std::true_type)
     {
         using type = detail::array_free_memory_list;
     };
 
+    /// Tag type defining a memory pool optimized for small nodes.
+    /// The free list is intrusive and thus requires that each node has at least the size of a pointer.
+    /// This tag type does not have this requirement and thus allows zero-memory-overhead allocations of small nodes.
+    /// It is a little bit slower than \ref node_pool and does not support arrays.
+    /// \ingroup memory
     struct small_node_pool
     : FOONATHAN_EBO(std::false_type)
     {
         using type = detail::small_free_memory_list;
     };
-    /// @}
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_TYPE_HPP_INCLUDED

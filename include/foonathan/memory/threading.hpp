@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_THREADING_HPP_INCLUDED
 
 /// \file
-/// \brief Mutexes and utilities to synchronize allocators.
+/// The \ref foonathan::memory::default_mutex.
 
 #include <type_traits>
 
@@ -20,23 +20,30 @@
 
 namespace foonathan { namespace memory
 {
-    /// \brief A dummy mutex class that does not lock anything.
-    /// \details It serves the \c Mutex concept. Use it to disable locking for adapters.
+    /// A dummy \c Mutex class that does not lock anything.
+    /// It is a valid \c Mutex and can be used to disable locking anywhere a \c Mutex is requested.
     /// \ingroup memory
     struct no_mutex
     {
-        void lock() FOONATHAN_NOEXCEPT {}
-        bool try_lock() FOONATHAN_NOEXCEPT {return true;}
-        void unlock() FOONATHAN_NOEXCEPT {}
+        void lock() FOONATHAN_NOEXCEPT
+        {}
+
+        bool try_lock() FOONATHAN_NOEXCEPT
+        {
+            return true;
+        }
+
+        void unlock() FOONATHAN_NOEXCEPT
+        {}
     };
 
-    /// \brief The default mutex used by \ref allocator_reference.
-    /// \details It is \c std::mutex if \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true, \ref no_mutex otherwise.
-    /// \note On a freestanding implementation, it is always \ref no_mutex.
-    /// \ingroup memory
 #if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HAS_THREADING_SUPPORT
     using default_mutex = std::mutex;
 #else
+    /// The default \c Mutex type used as default template paremeter in, e.g. \ref allocator_reference.
+    /// If the CMake option \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true and there is threading support,
+    /// it is \c std::mutex, else \ref no_mutex.
+    /// \ingroup memory
     using default_mutex = no_mutex;
 #endif
 

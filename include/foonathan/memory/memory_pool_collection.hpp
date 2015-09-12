@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
 
 /// \file
-/// \brief A class managing pools of different sizes.
+/// Class \ref foonathan::memory::memory_pool_collection and related classes.
 
 #include <type_traits>
 
@@ -22,29 +22,28 @@
 
 namespace foonathan { namespace memory
 {
-    /// @{
-    /// \brief Tag type defining the bucket (i.e. pool) distribution of a \ref memory_pool_collection.
-    /// \details There are two different distribution policies:
-    /// * \ref identity_buckets: there is a bucket for each size.
-    /// * \ref log2_buckets: there is a bucket for each power of two size.
-    /// \ingroup memory
+    /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each size.
+    /// That means that for each possible size up to an upper bound there will be a seperate free list.
+    /// Allocating a node will not waste any memory.
     struct identity_buckets
     {
         using type = detail::identity_access_policy;
     };
 
+    /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each power of two.
+    /// That means for each power of two up to an upper bound there will be a separate free list.
+    /// Allocating a node will only waste half of the memory.
     struct log2_buckets
     {
         using type = detail::log2_access_policy;
     };
-    /// @}
 
-    /// \brief Manages multiple memory pools, each with a fixed size.
-    /// \details This allows allocating of nodes of various sizes.
-    /// The pool type can be specified via the tag types in \ref pool_type.hpp.<br>
-    /// The distribution of buckets (i.e. pools) can be specified via the policy tags above.
-    /// They control for which sizes pools are created.<br>
-    /// Otherwise behaves the same as \ref memory_pool.
+    /// A stateful \concept{concept_rawallocator,RawAllocator} that behaves as a collection of multiple \ref memory_pool objects.
+    /// It maintains a list of multiple free lists, whose types are controlled via the \c PoolType tags defined in \ref memory_pool_type.hpp,
+    /// each of a different size as defined in the \c BucketDistribution (\ref identity_buckets or \ref log2_buckets).
+    /// Allocating a node of given size will use the appropriate free list.<br>
+    /// This allocator is ideal for \concept{concept_node,node} allocations in any order but with a predefined set of sizes,
+    /// not only one size like \ref memory_pool.
     /// \ingroup memory
     template <class PoolType, class BucketDistribution,
             class RawAllocator = default_allocator>
@@ -60,9 +59,12 @@ namespace foonathan { namespace memory
         using pool_type = PoolType;
         using bucket_distribution = BucketDistribution;
 
-        /// \brief Creates a new pool collection with given max node size the memory block size.
-        /// \details It can handle node sizes up to a given size.<br>
-        /// The first memory block is allocated, the block size /can change.
+        /// \effects Creates it by giving it the maximum node size it should be able to allocate,
+        /// the size of the initial memory block and the implementation allocator used for the arena.
+        /// The \c BucketDistribution controls how many free lists are created,
+        /// but unlike in \ref memory_pool all free lists are initially empty and the first memory block queued.
+        /// \requires \c max_node_size must be a valid \concept{concept_node,node} size
+        /// and \c block_size must be non-zero.
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     allocator_type alloc = allocator_type())
         : leak_checker(info().name),
@@ -71,9 +73,36 @@ namespace foonathan { namespace memory
           pools_(stack_, max_node_size)
         {}
 
+        /// \effects Destroys the \ref memory_pool_collection by returning all memory blocks,
+        /// regardless of properly deallocated back to the implementation allocator.
+        ~memory_pool_collection() FOONATHAN_NOEXCEPT = default;
+
+#ifdef DOXYGEN
+        /// @{
+        /// \effects Moving a \ref memory_pool_collection object transfers ownership over the free lists,
+        /// i.e. the moved from pool is completely empty and the new one has all its memory.
+        /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
+        /// even when passing it memory that was previously allocated by this object.
+        memory_pool_collection(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
+        memory_pool_collection& operator=(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
+        /// @}
+#endif
+
         /// \brief Allocates a node of given size.
         /// \details It selects the smallest node pool with sufficient size,
         /// the size must be smaller than the maximum node size.
+
+        /// \effects Allocates a \concept{concept_node,node} of given size.
+        /// It first finds the appropriate free list as defined in the \c BucketDistribution.
+        /// If it is empty, it will use an implementation defined amount of memory from the arena
+        /// and inserts it in it.
+        /// If the arena is empty too, it will request a new memory block from the implementation allocator
+        /// of size \ref next_capacity() and puts part of it onto this free list.
+        /// Then it removes a node from it.
+        /// \returns A \concept{concept_node,node} of given size suitable aligned,
+        /// i.e. suitable for any type where <tt>sizeof(T) < node_size</tt>.
+        /// \throws Anything thrown by the implementation allocator if a growth is needed.
+        /// \requires \c node_size must be a valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
         void* allocate_node(std::size_t node_size)
         {
             auto& pool = pools_.get(node_size);
@@ -82,9 +111,16 @@ namespace foonathan { namespace memory
             return pool.allocate();
         }
 
-        /// \brief Allocates an array of given node size and number of elements.
-        /// \details It selects the smallest node pool with sufficient size,
-        /// the size must be smaller than the maximum node size.
+        /// \effects Allocates an \concept{concept_array,array} of nodes by searching for \c n continuous nodes on the appropriate free list and removing them.
+        /// Depending on the \c PoolType this can be a slow operation or not allowed at all.
+        /// This can sometimes lead to a growth on the free list, even if technically there is enough continuous memory on the free list.
+        /// Otherwise has the same behavior as \ref allocate_node().
+        /// \returns An array of \c n nodes of size \c node_size suitable aligned.
+        /// \throws Anything thrown by the used implementation allocator's allocation function if a growth is needed,
+        /// or \ref bad_allocation_size if <tt>n * node_size()</tt> is too big.
+        /// \requires The \c PoolType must support array allocations, otherwise the body of this function will not compile.
+        /// \c count must be valid \concept{concept_array,array count} and
+        /// \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
             static_assert(PoolType::value, "array allocations not supported");
@@ -105,60 +141,72 @@ namespace foonathan { namespace memory
             return mem;
         }
 
-        /// @{
-        /// \brief Deallocates the memory into the appropriate pool.
-        void deallocate_node(void *memory, std::size_t node_size) FOONATHAN_NOEXCEPT
+        /// \effects Deallocates a \concept{concept_node,node} by putting it back onto the appropriate free list.
+        /// \requires \c ptr must be a result from a previous call to \ref allocate_node() with the same size on the same free list,
+        /// i.e. either this allocator object or a new object created by moving this to it.
+        void deallocate_node(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            pools_.get(node_size).deallocate(memory);
+            pools_.get(node_size).deallocate(ptr);
         }
 
-        void deallocate_array(void *memory, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
+        /// \effects Deallocates an \concept{concept_array,array} by putting it back onto the free list.
+        /// \requires \c ptr must be a result from a previous call to \ref allocate_array() with the same sizes on the same free list,
+        /// i.e. either this allocator object or a new object created by moving this to it.
+        void deallocate_array(void *ptr, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
             static_assert(PoolType::value, "array allocations not supported");
             auto& pool = pools_.get(node_size);
-            pool.deallocate(memory, count * node_size);
+            pool.deallocate(ptr, count * node_size);
         }
-        /// @}
 
-        /// \brief Reserves memory for the pool for a given node size.
+        /// \effects Inserts more memory on the free list for nodes of given size.
+        /// It will try to put \c capacity bytes from the arena onto the free list defined over the \c BucketDistribution,
+        /// if the arena is empty, a new memory block is requested from the implementation allocator
+        /// and it will be used.
+        /// \throws Anything thrown by the implementation allocator if a growth is needed.
+        /// \requires \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size(),
+        /// \c capacity must be less than \ref next_capacity().
         void reserve(std::size_t node_size, std::size_t capacity)
         {
             auto& pool = pools_.get(node_size);
             reserve_impl(pool, capacity);
         }
 
-        /// \brief Returns the maximum node size for which there is a pool.
+        /// \returns The maximum node size for which is a free list.
+        /// This is the value passed to it in the constructor.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT
         {
             return pools_.max_node_size();
         }
 
-        /// \brief Returns the capacity available in the pool for a given node size.
-        /// \details This is the amount of nodes available inside the given pool.
+        /// \returns The amount of nodes available in the free list for nodes of given size
+        /// as defined over the \c BucketDistribution.
+        /// This is the number of nodes that can be allocated without the free list requesting more memory from the arena.
+        /// \note Array allocations may lead to a growth even if the capacity is big enough.
         std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             return pools_.get(node_size).capacity();
         }
 
-        /// \brief Returns the capacity available outside the pools.
-        /// \details This is the amount of memory that can be given to the pools after they are exhausted.
+        /// \returns The amount of memory available in the arena not inside the free lists.
+        /// This is the number of bytes that can be inserted into the free lists
+        /// without requesting more memory from the implementation allocator.
+        /// \note Array allocations may lead to a growth even if the capacity is big enough.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(stack_.end() - stack_.top());
         }
 
-        /// \brief Returns the size of the next memory block.
-        /// \details This is the new capacity after \ref capacity() is exhausted.<br>
-        /// This is also the maximum array size.
-        /// \note Especially if debug fences are involved, there is no guarantee
-        /// that the resulting capacity after grow is as big as this value;
-        /// it is just an upper bound.
+        /// \returns The size of the next memory block after the free list gets empty and the arena grows.
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return block_list_.next_block_size();
         }
 
-        /// \brief Returns the \ref allocator_type.
+        /// \returns A reference to the implementation allocator used for managing the arena.
+        /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
             return block_list_.get_allocator();
@@ -205,17 +253,16 @@ namespace foonathan { namespace memory
         free_list_array pools_;
     };
 
-    /// \brief A bucket allocator.
-    /// \details It is a typedef \ref memory_pool_collection with \ref identity_buckets.
+    /// An alias for \ref memory_pool_collection using the \ref identity_buckets policy
+    /// and a \c PoolType defaulting to \ref node_pool.
     /// \ingroup memory
     template <class PoolType = node_pool, class ImplAllocator = default_allocator>
     FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                              memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
 
-    /// \brief Specialization of the \ref allocator_traits for a \ref memory_pool_collection.
-    /// \details This allows passing a pool directly as allocator to container types.
-    /// \note This interface does leak checking, if you allocate through it, you need to deallocate.
-    /// Do not mix the two interfaces, e.g. allocate here and deallocate on the original interface!
+    /// Specialization of the \ref allocator_traits for \ref memory_pool_collection classes.
+    /// \note It is not allowed to mix calls through the specialization and through the member functions,
+    /// i.e. \ref memory_pool_collection::allocate_node() and this \c allocate_node().
     /// \ingroup memory
     template <class Pool, class BucketDist, class RawAllocator>
     class allocator_traits<memory_pool_collection<Pool, BucketDist, RawAllocator>>
@@ -224,16 +271,23 @@ namespace foonathan { namespace memory
         using allocator_type = memory_pool_collection<Pool, BucketDist, RawAllocator>;
         using is_stateful = std::true_type;
 
+        /// \returns The result of \ref memory_pool_collection::allocate_node().
+        /// \throws Anything thrown by the pool allocation function
+        /// or \ref bad_allocation_size if \c size / \c alignment exceeds \ref max_node_size() / the suitable alignment value,
+        /// i.e. the node is over-aligned.
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
             detail::check_allocation_size(size, max_node_size(state), state.info());
-            detail::check_allocation_size(alignment, max_alignment(state), state.info());
+            detail::check_allocation_size(alignment, detail::alignment_for(size), state.info());
             auto mem = state.allocate_node(size);
             state.on_allocate(size);
             return mem;
         }
 
+        /// \returns The result of \ref memory_pool_collection::allocate_array().
+        /// \throws Anything thrown by the pool allocation function.
+        /// \requires The \ref memory_pool_collection has to support array allocations.
         static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
@@ -242,6 +296,7 @@ namespace foonathan { namespace memory
             return allocate_array(Pool{}, state, count, size);
         }
 
+        /// \effects Calls \ref memory_pool_collection::deallocate_node().
         static void deallocate_node(allocator_type &state,
                     void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
@@ -249,28 +304,31 @@ namespace foonathan { namespace memory
             state.on_deallocate(size);
         }
 
+        /// \effects Calls \ref memory_pool_collection::deallocate_array().
+        /// \requires The \ref memory_pool_collection has to support array allocations.
         static void deallocate_array(allocator_type &state,
                     void *array, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             deallocate_array(Pool{}, state, array, count, size);
         }
 
-        /// \brief Maximum size of a node is the maximum pool collections node size.
+        /// \returns The maximum size of each node which is \ref memory_pool_collection::max_node_size().
         static std::size_t max_node_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return state.max_node_size();
         }
 
-        /// \brief Maximum size of an array is the capacity in the next block of the pool.
+        /// \returns An upper bound on the maximum array size which is \ref memory_pool::next_capacity().
         static std::size_t max_array_size(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
             return state.next_capacity();
         }
 
-        /// \brief Maximum alignment is \c std::min(max_node_size(), alignof(std::max_align_t).
+        /// \returns Just \c alignof(std::max_align_t) since the actual maximum alignment depends on the node size,
+        /// the nodes must not be over-aligned.
         static std::size_t max_alignment(const allocator_type &state) FOONATHAN_NOEXCEPT
         {
-            return std::min(state.max_node_size(), detail::max_alignment);
+            return detail::max_alignment;
         }
 
     private:

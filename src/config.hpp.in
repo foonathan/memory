@@ -9,73 +9,17 @@
 #include <cstddef>
 
 //=== version ===//
-/// \brief Major version.
-/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION_MAJOR ${FOONATHAN_MEMORY_VERSION_MAJOR}
-
-/// \brief Minor version.
-/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION_MINOR ${FOONATHAN_MEMORY_VERSION_MINOR}
-
-/// \brief Total version number of the form Mmm.
-/// \ingroup memory
 #define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
 //=== options ===//
 #define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
-
-/// \brief Whether or not the \ref allocator_reference is threadsafe by default.
-/// \details This is \c true by default, change it via the CMake option \c FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
-
-/// \brief Whether or not assertions (similar to assert macro) are enabled.
-/// \details These are all checks not handled via the others, including checking pre- and postconditions.
-/// It is enabled by default in Debug mode only, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_ASSERT.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_ASSERT
-
-/// \brief Whether or not the allocators fill their memory with magic values.
-/// \details This is useful for debugging purposes.<br>
-/// It is enabled by default in debug modes only, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_FILL.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_FILL
-
-/// \brief The amount of memory used as fence to help catching overflow errors.
-/// \details The allocators ensure that the specified amount of bytes will be in front and after of memory blocks,
-/// this is useful for debugging purposes.<br>
-/// It is \c 0 by default (disabling it) for all build types except Debug where it is 8,
-/// change it via the CMake variable \c FOONATHAN_MEMORY_DEBUG_FENCE.<br>
-/// \note It has no effect if \ref FOONATHAN_MEMORY_DEBUG_FILL is disabled.
-/// \ingroup memory
 #define FOONATHAN_MEMORY_DEBUG_FENCE ${FOONATHAN_MEMORY_DEBUG_FENCE}
-
-/// \brief Whether or not leak checking is active.
-/// \details It checks whether at program exit for stateless allocators/in the destructor for stateful
-/// all allocated memory blocks have been released.<br>
-/// It is enabled by default in debug modes only, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_LEAK_CHECK.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-
-/// \brief Whether or not the validity of the pointers are checked by the dealloction functions.
-/// \details It checks if a pointer was really allocated by the allocator, if possible.<br>
-/// It is enabled by default in debug modes only, change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_POINTER_CHECK.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
-
-/// \brief Wheter or not checking for double deallocation is active.
-/// \details It checks whether a pointer has already been freed previously.<br>
-/// Since it can be expensive, it is enabled by default in Debug build type only,
-/// change it via the CMake option \c FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECk.
-/// \note If \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is disabled
-/// this option makes no sense, if enabled, it makes the code slower without any benefit,
-/// since the actual call to the handler on failure is disabled.
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
-
-/// \brief Whether or not everything is in namespace foonathan::memory.
-/// \details If off, a namespace alias memory is provided that is a shortcut for foonathan::memory.<br>
-/// It is off by default, change it via the CMake option \ref FOONATHAN_MEMORY_NAMESPACE_PREFIX.
-/// \note Changing this option breaks \c using \c namespace \c foonathan!
-/// \ingroup memory
 #cmakedefine01 FOONATHAN_MEMORY_NAMESPACE_PREFIX

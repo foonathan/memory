@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_SMART_PTR_HPP_INCLUDED
 
 /// \file
-/// \brief Smart pointer creators using \ref concept::RawAllocator.
+/// \c std::make_unique() / \c std::make_shared() replacement allocating memory through a \concept{concept_rawallocator,RawAllocator}.
 /// \note Only available on a hosted implementation.
 
 #include "config.hpp"
@@ -82,12 +82,18 @@ namespace foonathan { namespace memory
         }
     } // namespace detail
 
-    /// \brief A \c std::unique_ptr that has a deleter using a \c RawAllocator.
+    /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
+    /// It is an alias template using \ref allocator_deleter as \c Deleter class.
     /// \ingroup memory
     template <typename T, class RawAllocator>
     FOONATHAN_ALIAS_TEMPLATE(unique_ptr, std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
 
-    /// \brief Creates an object wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
+    /// Creates a \c std::unique_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// \effects Allocates memory for the given type using the allocator
+    /// and creates a new object inside it passing the given arguments to its constructor.
+    /// \returns A \c std::unique_ptr owning that memory.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
     auto allocate_unique(RawAllocator &&alloc, Args &&... args)
@@ -98,7 +104,13 @@ namespace foonathan { namespace memory
                                         detail::forward<Args>(args)...);
     }
 
-    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// Creates a \c std::unique_ptr using a type-erased \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is the same as the other overload but stores the reference to the allocator type-erased inside the \c std::unique_ptr.
+    /// \effects Allocates memory for the given type using the allocator
+    /// and creates a new object inside it passing the given arguments to its constructor.
+    /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that memory.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
     auto allocate_unique(any_allocator, RawAllocator &&alloc, Args &&... args)
@@ -109,7 +121,11 @@ namespace foonathan { namespace memory
                                         detail::forward<Args>(args)...);
     }
 
-    /// \brief Creates an array wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
+    /// Creates a \c std::unique_ptr owning an array using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// \effects Allocates memory for an array of given size and value initializes each element inside of it.
+    /// \returns A \c std::unique_ptr owning that array.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator>
     auto allocate_unique(RawAllocator &&alloc, std::size_t size)
@@ -120,7 +136,12 @@ namespace foonathan { namespace memory
                     (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
     }
 
-    /// \brief Same as above, but deleter uses a type-erased allocator.
+    /// Creates a \c std::unique_ptr owning an array using a type-erased \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is the same as the other overload but stores the reference to the allocator type-erased inside the \c std::unique_ptr.
+    /// \effects Allocates memory for an array of given size and value initializes each element inside of it.
+    /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that array.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator>
     auto allocate_unique(any_allocator, RawAllocator &&alloc, std::size_t size)
@@ -131,7 +152,12 @@ namespace foonathan { namespace memory
                     (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
     }
 
-    /// \brief Creates an object wrapped in a \c std::shared_ptr using a \ref concept::RawAllocator.
+    /// Creates a \c std::shared_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is similar to \c std::allocate_shared but uses a \c RawAllocator (and thus also supports any \c Allocator).
+    /// \effects Calls \ref std_allocator::make_std_allocator to wrap the allocator and forwards to \c std::allocate_shared.
+    /// \returns A \c std::shared_ptr created using \c std::allocate_shared.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the shared pointer,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
     std::shared_ptr<T> allocate_shared(RawAllocator &&alloc, Args &&... args)

@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_HEAP_ALLOCATOR_HPP_INCLUDED
 
 /// \file
-/// \brief A heap allocator.
+/// Class \ref foonathan::memory::heap_allocator and related functions.
 
 #include <type_traits>
 
@@ -25,21 +25,29 @@ namespace foonathan { namespace memory
     } // namespace detail
 #endif
 
-    /// @{
-    /// \brief Wrapper around \c std::heap_alloc/heap_dealloc.
-    /// \details Simply calls the corresponding function from the standard library.
-    /// \note It has no implementation for a freestanding implementation,
-    /// since the implementation isn't required to provide \c std::heap_alloc/heap_dealloc.
-    /// You need to provide your own.
-    /// \ingroup memory
+    /// Allocates heap memory.
+    /// This function is used by the \ref heap_allocator to allocate the heap memory.
+    /// It is not defined on a freestanding implementation, a definition must be provided by the library user.
+    /// \requiredbe This function shall return a block of uninitialized memory that is aligned for \c max_align_t and has the given size.
+    /// The size parameter will not be zero.
+    /// It shall return a \c nullptr if no memory is available.
+    /// It must be thread safe.
+    /// \defaultbe On a hosted implementation this function simply calls \c std::malloc.
     void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
-    void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
-    /// @}
 
-    /// \brief A \ref concept::RawAllocator that allocates memory via \c std::heap_alloc/heap_dealloc.
-    /// \details It calls the wrapper functions instead the actual library functions,
-    /// this allows using it on a freestanding implementation where they may not be defined,
-    /// but an implementation of the wrapper.
+    /// Deallocates heap memory.
+    /// This function is used by the \ref heap_allocator to allocate the heap memory.
+    /// It is not defined on a freestanding implementation, a definition must be provided by the library user.
+    /// \requiredbe This function gets a pointer from a previous call to \ref heap_alloc with the same size.
+    /// It shall free the memory.
+    /// The pointer will not be zero.
+    /// It must be thread safe.
+    /// \defaultbe On a freestanding implementation this function simply calls \c std::free.
+    void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
+
+    /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.
+    /// It uses the two functions \ref heap_alloc and \ref heap_dealloc for the allocation,
+    /// which default to \c std::malloc and \c std::free.
     /// \ingroup memory
     class heap_allocator
     {
@@ -55,18 +63,18 @@ namespace foonathan { namespace memory
             return *this;
         }
 
-        /// \brief Allocates raw memory from the heap.
-        /// \details If it fails, it behaves like \c ::operator \c new
-        /// (retry in loop calling \c std::new_handler, etc.),
-        /// but if the new handler is \c null, it calls the \ref out_of_memory_handler
-        /// prior to throwing \c std::bad_alloc (or in this case \ref out_of_memory).
+        /// \effects A \concept{concept_rawallocator,RawAllocator} allocation function.
+        /// It uses \ref heap_alloc.
+        /// \returns A pointer to a \concept{concept_node,node}, it will never be \c nullptr.
+        /// \throws An exception of type \ref out_of_memory or whatever is thrown by its handler if \ref heap_alloc returns a \c nullptr.
         void* allocate_node(std::size_t size, std::size_t alignment);
 
-        /// \brief Deallocates raw memory.
+        /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
+        /// It uses \ref heap_dealloc.
         void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
-        /// \brief Maximum node size.
-        /// \details It forwards to \c std::allocator<char>::max_size().
+        /// \returns The maximum node size by forwaring to \c std::allocator<char>::max_size()
+        /// or the maximum value on a freestanding implementation.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 }} // namespace foonathan::memory
