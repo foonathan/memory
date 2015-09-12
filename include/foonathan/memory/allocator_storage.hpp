@@ -84,14 +84,20 @@ namespace foonathan { namespace memory
             FOONATHAN_SFINAE(new storage_policy(other.get_allocator())))
         : storage_policy(other.get_allocator()) {}
 
-#ifdef DOXYGEN
         /// @{
         /// \effects Moves the \c allocator_storage object.
         /// A moved-out \c allocator_storage object must still store a valid allocator object.
-        allocator_storage(allocator_storage &&) FOONATHAN_NOEXCEPT = default;
-        allocator_storage& operator=(allocator_storage &&) FOONATHAN_NOEXCEPT = default;
+        allocator_storage(allocator_storage &&other) FOONATHAN_NOEXCEPT
+        : storage_policy(detail::move(other)),
+          detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>(detail::move(other)) {}
+
+        allocator_storage& operator=(allocator_storage &&other) FOONATHAN_NOEXCEPT
+        {
+            storage_policy::operator=(detail::move(other));
+            detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>::operator=(detail::move(other));
+            return *this;
+        }
         /// @}
-#endif
 
         /// @{
         /// \effects Copies the \c allocator_storage object.
@@ -161,13 +167,13 @@ namespace foonathan { namespace memory
         /// depends on the \c StoragePolicy.
         /// \note This does not lock the \c Mutex.
         auto get_allocator() FOONATHAN_NOEXCEPT
-        -> decltype(storage_policy::get_allocator())
+        -> decltype(std::declval<storage_policy>().get_allocator())
         {
             return storage_policy::get_allocator();
         }
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(storage_policy::get_allocator())
+        -> decltype(std::declval<const storage_policy>().get_allocator())
         {
             return storage_policy::get_allocator();
         }

@@ -50,7 +50,7 @@ int main()
 
     // use the allocator as usual
     // decltype(tracked_pool) can be used below, too
-    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>> set({}, tracked_pool);
+    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>> set(std::less<int>(), tracked_pool);
 
     set.insert(1);
     set.insert(2);

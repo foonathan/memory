@@ -67,16 +67,24 @@ namespace foonathan { namespace memory
         /// regardless of properly deallocated back to the implementation allocator.
         ~memory_pool() FOONATHAN_NOEXCEPT = default;
 
-#ifdef DOXYGEN
         /// @{
         /// \effects Moving a \ref memory_pool object transfers ownership over the free list,
         /// i.e. the moved from pool is completely empty and the new one has all its memory.
         /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
         /// even when passing it memory that was previously allocated by this object.
-        memory_pool(memory_pool &&) FOONATHAN_NOEXCEPT = default;
-        memory_pool& operator=(memory_pool &&) FOONATHAN_NOEXCEPT = default;
+        memory_pool(memory_pool &&other) FOONATHAN_NOEXCEPT
+        : detail::leak_checker<memory_pool<node_pool, default_allocator>>(detail::move(other)),
+          block_list_(detail::move(other.block_list_)),
+          free_list_(detail::move(other.free_list_)){}
+
+        memory_pool& operator=(memory_pool &&other) FOONATHAN_NOEXCEPT
+        {
+            detail::leak_checker<memory_pool<node_pool, default_allocator>>::operator=(detail::move(other));
+            block_list_ = std::move(other.block_list_);
+            block_list_ = std::move(other.block_list_);
+            free_list_ = std::move(other.free_list_);
+        }
         /// @}
-#endif
 
         /// \effects Allocates a single \concept{concept_node,node} by removing it from the free list.
         /// If the free list is empty, a new memory block will be allocated and put onto it.

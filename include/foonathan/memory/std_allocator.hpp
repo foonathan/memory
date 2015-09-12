@@ -106,8 +106,8 @@ namespace foonathan { namespace memory
         template <typename U>
         std_allocator(std_allocator<U, RawAllocator, Mutex> &alloc) FOONATHAN_NOEXCEPT
         : alloc_reference(alloc.get_allocator()) {}
-		/// @}
-        
+        /// @}
+
         //=== allocation/deallocation ===//
         /// \effects Allocates memory using the underlying \concept{concept_rawallocator,RawAllocator}.
         /// If \c n is \c 1, it will call <tt>allocate_node(sizeof(T), alignof(T))</tt>,
@@ -157,10 +157,16 @@ namespace foonathan { namespace memory
         /// For stateless allocators: A temporary constructed allocator.
         /// \note This does not lock the \c Mutex.
         auto get_allocator() FOONATHAN_NOEXCEPT
-        -> FOONATHAN_AUTO_RETURN(alloc_reference::get_allocator())
+        -> decltype(std::declval<alloc_reference>().get_allocator())
+        {
+            return alloc_reference::get_allocator();
+        }
 
         auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> FOONATHAN_AUTO_RETURN(alloc_reference::get_allocator())
+        -> decltype(std::declval<const alloc_reference>().get_allocator())
+        {
+            return alloc_reference::get_allocator();
+        }
         /// @}
 
         /// @{
@@ -169,10 +175,16 @@ namespace foonathan { namespace memory
         /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
         /// \requires The result of \ref get_allocator() must not be a temporary, otherwise the body of this function will not compile.
         auto lock() FOONATHAN_NOEXCEPT
-        -> FOONATHAN_AUTO_RETURN(alloc_reference::lock())
+        -> decltype(std::declval<alloc_reference>().lock())
+        {
+            return alloc_reference::lock();
+        }
 
         auto lock() const FOONATHAN_NOEXCEPT
-        -> FOONATHAN_AUTO_RETURN(alloc_reference::lock())
+         -> decltype(std::declval<const alloc_reference>().lock())
+        {
+            return alloc_reference::lock();
+        }
         /// @}.
 
     private:

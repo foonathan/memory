@@ -41,11 +41,6 @@ namespace foonathan { namespace memory
         // if Allocator has a type ::value_type, assume std_allocator and rebind to char,
         // by first trying ::rebind, then manual as in Alloc<T, Args> if this Alloc is Alloc<U, Args>.
         // everything else returns the type as-is
-    #if FOONATHAN_HOSTED_IMPLEMENTATION
-        template <class Allocator>
-        auto allocator_type(std_concept, FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
-        -> typename std::allocator_traits<Allocator>::template rebind_alloc<char>&;
-    #else
         // we need to simulate the behavior of std::allocator_traits::rebind_alloc
         template <class Allocator>
         auto rebind_impl(int)
@@ -67,7 +62,6 @@ namespace foonathan { namespace memory
         template <class Allocator>
         auto allocator_type(std_concept, FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
         -> decltype(rebind_impl<Allocator>(0));
-    #endif
 
         template <class Allocator>
         Allocator& allocator_type(error);

@@ -77,16 +77,27 @@ namespace foonathan { namespace memory
         /// regardless of properly deallocated back to the implementation allocator.
         ~memory_pool_collection() FOONATHAN_NOEXCEPT = default;
 
-#ifdef DOXYGEN
         /// @{
         /// \effects Moving a \ref memory_pool_collection object transfers ownership over the free lists,
         /// i.e. the moved from pool is completely empty and the new one has all its memory.
         /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
         /// even when passing it memory that was previously allocated by this object.
-        memory_pool_collection(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
-        memory_pool_collection& operator=(memory_pool_collection &&) FOONATHAN_NOEXCEPT = default;
+        memory_pool_collection(memory_pool_collection &&other) FOONATHAN_NOEXCEPT
+        : detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>(detail::move(other)),
+          block_list_(detail::move(other.block_list_)),
+          stack_(detail::move(other.stack_)),
+          pools_(detail::move(other.pools_))
+        {}
+
+        memory_pool_collection& operator=(memory_pool_collection &&other) FOONATHAN_NOEXCEPT
+        {
+            detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>::operator=(detail::move(other));
+            block_list_ = detail::move(other.block_list_);
+            stack_ = detail::move(other.stack_);
+            pools_ = detail::move(other.pools_);
+            return *this;
+        }
         /// @}
-#endif
 
         /// \brief Allocates a node of given size.
         /// \details It selects the smallest node pool with sufficient size,
@@ -326,7 +337,7 @@ namespace foonathan { namespace memory
 
         /// \returns Just \c alignof(std::max_align_t) since the actual maximum alignment depends on the node size,
         /// the nodes must not be over-aligned.
-        static std::size_t max_alignment(const allocator_type &state) FOONATHAN_NOEXCEPT
+        static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
             return detail::max_alignment;
         }

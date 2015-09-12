@@ -115,10 +115,28 @@ namespace foonathan { namespace memory
         using is_stateful = std::integral_constant<bool,
                             traits::is_stateful::value || !std::is_empty<Tracker>::value>;
 
+        /// @{
         /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
-        /// It will embedd both objects.
-        explicit tracked_allocator(tracker t = {}, allocator_type&& allocator = {})
+        /// It will embed both objects.
+        explicit tracked_allocator(tracker t = {})
+        : tracker(detail::move(t)) {}
+
+        tracked_allocator(tracker t, allocator_type&& allocator)
         : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
+        /// @}
+
+        /// @{
+        /// \effects Moving moves both the tracker and the allocator.
+        tracked_allocator(tracked_allocator &&other) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(other)), allocator_type(detail::move(other)) {}
+
+        tracked_allocator& operator=(tracked_allocator &&other) FOONATHAN_NOEXCEPT
+        {
+            tracker::operator=(detail::move(other));
+            allocator_type::operator=(detail::move(other));
+            return *this;
+        }
+        /// @}
 
         /// \effects Calls <tt>Tracker::on_node_allocation()</tt> and forwards to the allocator.
         /// \returns The result of <tt>allocate_node()</tt>
@@ -198,7 +216,9 @@ namespace foonathan { namespace memory
         }
         /// @}
 
+#ifdef DOXYGEN
     private:
+#endif
         template <class ImplRawAllocator, typename ... Args>
         tracked_allocator(tracker t, ImplRawAllocator impl,
                         Args&&... args)
