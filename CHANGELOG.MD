@@ -1,3 +1,16 @@
+0.4
+---
+* polished up the interface, many breaking changes in the form of renaming and new header files
+* added unified error handling facilities and handler functions in case exceptions are not supported
+* improved old allocator adapters by introducing allocator_storage template
+* improved allocator_traits making them more powerful and able to handle Allcoator types directly
+* added type-erased allocator storage
+* added node-size debugger that obtains information about the container node sizes
+* most parts now work on a freestanding implementation
+* used foonathan/compatibility for CMake compatibility checks
+* added miscellaneous tiny features all over the place
+* many internal changes and bugfixes
+
 0.3
 ---
 * added debugging options such as memory filling and deallocation and leak check

@@ -8,6 +8,7 @@ add_executable(foonathan_memory_profiling profiling.cpp)
 target_link_libraries(foonathan_memory_profiling foonathan_memory)
 target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
+comp_target_features(foonathan_memory_profiling PUBLIC CPP11)
 
 
 file(DOWNLOAD
@@ -19,7 +20,7 @@ file(DOWNLOAD
 
 list(GET status 0 status_code)
 list(GET status 1 status_string)
-if(NOT status_code EQUAL 0)
+if((NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp) AND (NOT status_code EQUAL 0))
     message(FATAL_ERROR "error downloading catch: ${status_string}"
                         "${log}")
 else()
@@ -36,15 +37,17 @@ set(tests
         detail/free_list_array.cpp
         detail/memory_stack.cpp
         aligned_allocator.cpp
-        pool_allocator.cpp
-        pool_collection.cpp
-        stack_allocator.cpp)
+        allocator_traits.cpp
+        memory_pool.cpp
+        memory_pool_collection.cpp
+        memory_stack.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)
 target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
+comp_target_features(foonathan_memory_test PUBLIC CPP11)
 
 enable_testing()
 add_test(NAME test COMMAND foonathan_memory_test)

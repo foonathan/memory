@@ -6,166 +6,34 @@
 #define FOONATHAN_MEMORY_SMART_PTR_HPP_INCLUDED
 
 /// \file
-/// \brief Smart pointer deleter and creators using \ref concept::RawAllocator.
+/// \c std::make_unique() / \c std::make_shared() replacement allocating memory through a \concept{concept_rawallocator,RawAllocator}.
+/// \note Only available on a hosted implementation.
+
+#include "config.hpp"
+#if !FOONATHAN_HOSTED_IMPLEMENTATION
+    #error "This header is only available for a hosted implementation."
+#endif
 
 #include <memory>
 
-#include "allocator_adapter.hpp"
+#include "deleter.hpp"
+#include "std_allocator.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \brief A deleter class that calls the appropriate deallocate function.
-    /// \details It stores an \ref allocator_reference. It does not call any destrucotrs.
-    /// \ingroup memory
-    template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator : allocator_reference<RawAllocator>
-    {
-    public:
-        using raw_allocator = RawAllocator;
-        using value_type = Type;
-
-        /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator>(std::move(alloc)) {}
-
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls \ref allocator_traits::deallocate_node, but no destructors.
-        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
-        {
-            this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
-        }
-
-        /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
-        {
-            return this->allocator_reference<raw_allocator>::get_allocator();
-        }
-    };
-
-    /// \brief Specialization of \ref raw_allocator_deallocator for arrays.
-    /// \ingroup memory
-    template <typename Type, class RawAllocator>
-    class raw_allocator_deallocator<Type[], RawAllocator> : allocator_reference<RawAllocator>
-    {
-    public:
-        using raw_allocator = RawAllocator;
-        using value_type = Type;
-
-        /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        raw_allocator_deallocator(allocator_reference<raw_allocator> alloc,
-                            std::size_t size) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator>(std::move(alloc)),
-          size_(size) {}
-
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls \ref allocator_traits::deallocate_array, but no destructors.
-        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
-        {
-            this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
-        }
-
-        /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
-        {
-            return this->allocator_reference<raw_allocator>::get_allocator();
-        }
-
-        /// \brief Returns the array size.
-        std::size_t array_size() const FOONATHAN_NOEXCEPT
-        {
-            return size_;
-        }
-
-    private:
-        std::size_t size_;
-    };
-
-    /// \brief A deleter class that calls the appropriate destructors and deallocate function.
-    /// \details It stores an \ref allocator_reference. It calls destructors.
-    /// \ingroup memory
-    template <typename Type, class RawAllocator>
-    class raw_allocator_deleter : allocator_reference<RawAllocator>
-    {
-    public:
-        using raw_allocator = RawAllocator;
-        using value_type = Type;
-
-        /// \brief Creates it giving it the allocator used for deallocation.
-        raw_allocator_deleter(allocator_reference<raw_allocator> alloc) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator>(std::move(alloc)) {}
-
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls the destructor and \ref allocator_traits::deallocate_node.
-        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
-        {
-            pointer->~value_type();
-            this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
-        }
-
-        /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
-        {
-            return this->allocator_reference<raw_allocator>::get_allocator();
-        }
-    };
-
-    /// \brief Specialization of \ref raw_allocator_deleter for arrays.
-    /// \ingroup memory
-    template <typename Type, class RawAllocator>
-    class raw_allocator_deleter<Type[], RawAllocator> : allocator_reference<RawAllocator>
-    {
-    public:
-        using raw_allocator = RawAllocator;
-        using value_type = Type;
-
-        /// \brief Creates it giving it the allocator used for deallocation and the array size.
-        raw_allocator_deleter(allocator_reference<raw_allocator> alloc,
-                            std::size_t size) FOONATHAN_NOEXCEPT
-        : allocator_reference<RawAllocator>(std::move(alloc)),
-          size_(size) {}
-
-        /// \brief Deallocates the memory via the stored allocator.
-        /// \details It calls the destructors and \ref allocator_traits::deallocate_array.
-        void operator()(value_type *pointer) FOONATHAN_NOEXCEPT
-        {
-            for (auto cur = pointer; cur != pointer + size_; ++cur)
-                cur->~value_type();
-            this->deallocate_array(pointer, size_, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
-        }
-
-        /// \brief Returns a reference to the stored allocator.
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> decltype(std::declval<allocator_reference<raw_allocator>>().get_allocator())
-        {
-            return this->allocator_reference<raw_allocator>::get_allocator();
-        }
-
-        /// \brief Returns the array size.
-        std::size_t array_size() const FOONATHAN_NOEXCEPT
-        {
-            return size_;
-        }
-
-    private:
-        std::size_t size_;
-    };
-
     namespace detail
     {
         template <typename T, class RawAllocator, typename ... Args>
         auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
-        -> std::unique_ptr<T, raw_allocator_deleter<T, RawAllocator>>
+        -> std::unique_ptr<T, allocator_deleter<T, RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T, raw_allocator_deallocator<T, RawAllocator>>;
+            using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator>>;
 
             auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc});
             // call constructor
-            ::new(memory) T(std::forward<Args>(args)...);
+            ::new(memory) T(detail::forward<Args>(args)...);
             // pass ownership to return value using a deleter that calls destructor
             return {result.release(), {alloc}};
         }
@@ -174,17 +42,18 @@ namespace foonathan { namespace memory
         void construct(std::true_type, T *cur, T *end, Args&&... args)
         {
             for (; cur != end; ++cur)
-                ::new(static_cast<void*>(cur)) T(std::forward<Args>(args)...);
+                ::new(static_cast<void*>(cur)) T(detail::forward<Args>(args)...);
         }
 
         template <typename T, typename ... Args>
         void construct(std::false_type, T *begin, T *end, Args&&... args)
         {
+        #if FOONATHAN_HAS_EXCEPTION_SUPPORT
             auto cur = begin;
             try
             {
                 for (; cur != end; ++cur)
-                    ::new(static_cast<void*>(cur)) T(std::forward<Args>(args)...);
+                    ::new(static_cast<void*>(cur)) T(detail::forward<Args>(args)...);
             }
             catch (...)
             {
@@ -192,58 +61,108 @@ namespace foonathan { namespace memory
                     el->~T();
                 throw;
             }
+        #else
+            construct(std::true_type{}, begin, end, detail::forward<Args>(args)...);
+        #endif
         }
 
         template <typename T, class RawAllocator>
         auto allocate_array_unique(std::size_t size, allocator_reference<RawAllocator> alloc)
-        -> std::unique_ptr<T[], raw_allocator_deleter<T[], RawAllocator>>
+        -> std::unique_ptr<T[], allocator_deleter<T[], RawAllocator>>
         {
-            using raw_ptr = std::unique_ptr<T[], raw_allocator_deallocator<T[], RawAllocator>>;
+            using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator>>;
 
             auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
             // raw_ptr deallocates memory in case of constructor exception
             raw_ptr result(static_cast<T*>(memory), {alloc, size});
-            construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT(T())>{},
+            construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT_OP(T())>{},
                     result.get(), result.get() + size);
             // pass ownership to return value using a deleter that calls destructor
             return {result.release(), {alloc, size}};
         }
     } // namespace detail
 
-    /// \brief Creates an object wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
-    /// \ingroup memory
-    template <typename T, class RawAllocator, typename ... Args>
-    auto raw_allocate_unique(RawAllocator &&alloc, Args&&... args)
-    -> typename std::enable_if
-    <
-        !std::is_array<T>::value,
-        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
-    >::type
-    {
-        return detail::allocate_unique<T>(make_allocator_reference(std::forward<RawAllocator>(alloc)),
-                                        std::forward<Args>(args)...);
-    }
-
-    /// \brief Creates an array wrapped in a \c std::unique_ptr using a \ref concept::RawAllocator.
+    /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
+    /// It is an alias template using \ref allocator_deleter as \c Deleter class.
     /// \ingroup memory
     template <typename T, class RawAllocator>
-    auto raw_allocate_unique(RawAllocator &&alloc, std::size_t size)
-    -> typename std::enable_if
-    <
-        std::is_array<T>::value,
-        std::unique_ptr<T, raw_allocator_deleter<T, typename std::decay<RawAllocator>::type>>
-    >::type
-    {
-        return detail::allocate_array_unique<typename std::remove_extent<T>::type>
-                    (size, make_allocator_reference(std::forward<RawAllocator>(alloc)));
-    }
+    FOONATHAN_ALIAS_TEMPLATE(unique_ptr, std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
 
-    /// \brief Creates an object wrapped in a \c std::shared_ptr using a \ref concept::RawAllocator.
+    /// Creates a \c std::unique_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// \effects Allocates memory for the given type using the allocator
+    /// and creates a new object inside it passing the given arguments to its constructor.
+    /// \returns A \c std::unique_ptr owning that memory.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
     /// \ingroup memory
     template <typename T, class RawAllocator, typename ... Args>
-    std::shared_ptr<T> raw_allocate_shared(RawAllocator &&alloc, Args&&... args)
+    auto allocate_unique(RawAllocator &&alloc, Args &&... args)
+    -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
+                        std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
     {
-        return std::allocate_shared<T>(make_std_allocator<T>(std::forward<RawAllocator>(alloc)), std::forward<Args>(args)...);
+        return detail::allocate_unique<T>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
+                                        detail::forward<Args>(args)...);
+    }
+
+    /// Creates a \c std::unique_ptr using a type-erased \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is the same as the other overload but stores the reference to the allocator type-erased inside the \c std::unique_ptr.
+    /// \effects Allocates memory for the given type using the allocator
+    /// and creates a new object inside it passing the given arguments to its constructor.
+    /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that memory.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
+    /// \ingroup memory
+    template <typename T, class RawAllocator, typename ... Args>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, Args &&... args)
+    -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
+                        std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_unique<T, any_allocator>(make_allocator_reference(detail::forward<RawAllocator>(alloc)),
+                                        detail::forward<Args>(args)...);
+    }
+
+    /// Creates a \c std::unique_ptr owning an array using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// \effects Allocates memory for an array of given size and value initializes each element inside of it.
+    /// \returns A \c std::unique_ptr owning that array.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    auto allocate_unique(RawAllocator &&alloc, std::size_t size)
+    -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
+                              std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
+    {
+        return detail::allocate_array_unique<typename std::remove_extent<T>::type>
+                    (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
+    }
+
+    /// Creates a \c std::unique_ptr owning an array using a type-erased \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is the same as the other overload but stores the reference to the allocator type-erased inside the \c std::unique_ptr.
+    /// \effects Allocates memory for an array of given size and value initializes each element inside of it.
+    /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that array.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
+    /// \ingroup memory
+    template <typename T, class RawAllocator>
+    auto allocate_unique(any_allocator, RawAllocator &&alloc, std::size_t size)
+    -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
+                              std::unique_ptr<T, allocator_deleter<T, any_allocator>>)
+    {
+        return detail::allocate_array_unique<typename std::remove_extent<T>::type, any_allocator>
+                    (size, make_allocator_reference(detail::forward<RawAllocator>(alloc)));
+    }
+
+    /// Creates a \c std::shared_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
+    /// It is similar to \c std::allocate_shared but uses a \c RawAllocator (and thus also supports any \c Allocator).
+    /// \effects Calls \ref std_allocator::make_std_allocator to wrap the allocator and forwards to \c std::allocate_shared.
+    /// \returns A \c std::shared_ptr created using \c std::allocate_shared.
+    /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the shared pointer,
+    /// the caller has to ensure that the object lives as long as the smart pointer.
+    /// \ingroup memory
+    template <typename T, class RawAllocator, typename ... Args>
+    std::shared_ptr<T> allocate_shared(RawAllocator &&alloc, Args &&... args)
+    {
+        return std::allocate_shared<T>(make_std_allocator<T>(detail::forward<RawAllocator>(alloc)), detail::forward<Args>(args)...);
     }
 }} // namespace foonathan::memory
 

@@ -4,49 +4,76 @@
 
 #include "new_allocator.hpp"
 
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <memory>
+#endif
+
 #include "debugging.hpp"
+#include "error.hpp"
 
 using namespace foonathan::memory;
 
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-#include <atomic>
+    #include <atomic>
 
-namespace
-{
-    std::size_t init_counter = 0u, alloc_counter = 0u;
-}
+    namespace
+    {
+        std::size_t init_counter = 0u, alloc_counter = 0u;
 
-detail::new_allocator_leak_checker_initializer_t::new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-{
-    ++init_counter;
-}
+        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
+        {
+            alloc_counter += size;
+        }
 
-detail::new_allocator_leak_checker_initializer_t::~new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-{
-    if (--init_counter == 0u && alloc_counter != 0u)
-        get_leak_handler()("foonathan::memory::new_allocator", nullptr, alloc_counter);
-}
+        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
+        {
+            alloc_counter -= size;
+        }
+    }
+
+    detail::new_allocator_leak_checker_initializer_t::new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    {
+        ++init_counter;
+    }
+
+    detail::new_allocator_leak_checker_initializer_t::~new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    {
+        if (--init_counter == 0u && alloc_counter != 0u)
+            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr}, alloc_counter);
+    }
+#else
+    namespace
+    {
+        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
+        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
+    }
 #endif
 
 void* new_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto mem = static_cast<char*>(::operator new(size + 2 * detail::debug_fence_size));
-    detail::debug_fill(mem, detail::debug_fence_size, debug_magic::fence_memory);
-    mem += detail::debug_fence_size;
-    detail::debug_fill(mem, size, debug_magic::new_memory);
-    detail::debug_fill(mem + size, detail::debug_fence_size, debug_magic::fence_memory);
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    alloc_counter += size;
-#endif
-    return mem;
+    auto mem = detail::try_allocate([](std::size_t size)
+                                    {
+                                        return ::operator new(size,
+                                                              std::nothrow);
+                                    }, size + 2 * detail::debug_fence_size,
+                                    {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", this});
+    on_alloc(size);
+    return detail::debug_fill_new(mem, size);
 }
 
 void new_allocator::deallocate_node(void* node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
-    detail::debug_fill(node, size, debug_magic::freed_memory);
-    auto memory = static_cast<char*>(node) - detail::debug_fence_size;
+    auto memory = detail::debug_fill_free(node, size);
     ::operator delete(memory);
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    alloc_counter -= size;
+
+    on_dealloc(size);
+}
+
+std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+{
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    return std::allocator<char>().max_size();
+#else
+    return -1;
 #endif
 }

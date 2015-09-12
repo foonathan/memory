@@ -2,14 +2,14 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "pool_allocator.hpp"
+#include "memory_pool.hpp"
 
 #include <algorithm>
 #include <catch.hpp>
 #include <random>
 #include <vector>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
@@ -25,7 +25,7 @@ TEST_CASE("memory_pool", "[pool]")
         REQUIRE(pool.node_size() >= 4u);
         REQUIRE(pool.capacity() <= 100u);
         REQUIRE(pool.next_capacity() >= 100u);
-        REQUIRE(&pool.get_impl_allocator().get_allocator() == &alloc);
+        REQUIRE(&pool.get_allocator().get_allocator() == &alloc);
         REQUIRE(alloc.no_allocated() == 1u);
 
         SECTION("normal alloc/dealloc")
@@ -52,7 +52,7 @@ TEST_CASE("memory_pool", "[pool]")
             REQUIRE(pool.capacity() == 0u);
 
             ptrs.push_back(pool.allocate_node());
-            REQUIRE(pool.capacity() >= 100u - pool.node_size());
+            REQUIRE(pool.capacity() >= capacity - pool.node_size());
             REQUIRE(alloc.no_allocated() == 2u);
 
             std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});

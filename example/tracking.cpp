@@ -1,0 +1,65 @@
+// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+// this example shows how to track allocations
+// see http://foonathan.github.io/doc/memory/md_doc_adapters_storage.html for further details
+
+#include <iostream>
+
+#include <memory/container.hpp> // set, set_node_size
+#include <memory/memory_pool.hpp> // memory_pool
+#include <memory/tracking.hpp> // make_tracked_allocator
+
+// namespace alias for easier access
+// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
+// it is already provided in each header file, so unnecessary in real application code
+namespace memory = foonathan::memory;
+
+int main()
+{
+    // tracker class that logs internal behavior of the allocator
+    struct tracker
+    {
+        void on_node_allocation(void *mem, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            std::clog << this << " node allocated: ";
+            std::clog << mem << " (" << size << ") " << '\n';
+        }
+
+        void on_array_allocation(void *mem, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            std::clog << this << " array allocated: ";
+            std::clog << mem << " (" << count << " * " << size << ") " << '\n';
+        }
+
+        void on_node_deallocation(void *ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            std::clog << this << " node deallocated: " << ptr << " \n";
+        }
+
+        void on_array_deallocation(void *ptr, std::size_t, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            std::clog << this << " array deallocated: " << ptr << " \n";
+        }
+    };
+
+    // create a tracked memory_pool to see what kind of allocations are made
+    // this can also take an already existing allocator
+    auto tracked_pool = memory::make_tracked_allocator(tracker{}, memory::memory_pool<>(memory::set_node_size<int>::value, 4096u));
+
+    // use the allocator as usual
+    // decltype(tracked_pool) can be used below, too
+    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>> set(std::less<int>(), tracked_pool);
+
+    set.insert(1);
+    set.insert(2);
+    set.insert(3);
+    set.insert(1);
+
+    for (auto i : set)
+        std::clog << i << ' ';
+    std::clog << '\n';
+
+    set.erase(2);
+}

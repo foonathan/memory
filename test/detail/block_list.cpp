@@ -6,7 +6,7 @@
 
 #include <catch.hpp>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 #include "../test_allocator.hpp"
 
 using namespace foonathan::memory;
@@ -19,7 +19,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
 
     SECTION("push/pop/top")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         void *mem = memory;
         auto offset = list.push(mem, 1024);
         REQUIRE(offset == block_list_impl::impl_offset());
@@ -37,7 +37,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     }
     SECTION("multiple lists")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         void *mem = memory;
         list.push(mem, 1024);
 
@@ -50,7 +50,7 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(list.empty());
     }
 
-    char a[1024], b[1024], c[1024];
+    alignas(max_alignment) char a[1024], b[1024], c[1024];
     void* mem = a;
     list.push(mem, 1024);
     mem = b;
@@ -70,27 +70,27 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
     }
     SECTION("move")
     {
-        char memory[1024];
+        alignas(max_alignment) char memory[1024];
         mem = memory;
         list.push(mem, 1024);
 
-        auto another_list = std::move(list);
+        auto another_list = detail::move(list);
         REQUIRE(!another_list.empty());
         REQUIRE(list.empty());
         REQUIRE(another_list.top().memory == mem);
 
-        char memory2[1024];
+        alignas(max_alignment) char memory2[1024];
         mem = memory2;
         another_list.push(mem, 1024);
         REQUIRE(another_list.top().memory == mem);
 
-        char memory3[1024];
+        alignas(max_alignment) char memory3[1024];
         mem = memory3;
         list.push(mem, 1024);
         REQUIRE(!list.empty());
         REQUIRE(list.top().memory == mem);
 
-        list = std::move(another_list);
+        list = detail::move(another_list);
         REQUIRE(another_list.empty());
         REQUIRE(!list.empty());
         REQUIRE(list.pop().memory == memory2);
@@ -144,7 +144,7 @@ TEST_CASE("detail::block_list", "[detail][core]")
             a.allocate();
         REQUIRE(a.size() == 10u);
         REQUIRE(alloc.no_allocated() == 10u);
-        auto b = std::move(a);
+        auto b = detail::move(a);
         REQUIRE(a.size() == 0u);
         REQUIRE(b.size() == 10u);
         for (std::size_t i = 0u; i != 10u; ++i)
@@ -155,7 +155,7 @@ TEST_CASE("detail::block_list", "[detail][core]")
         a.allocate();
         a.allocate();
         REQUIRE(a.size() == 2u);
-        b = std::move(a);
+        b = detail::move(a);
         REQUIRE(b.size() == 2u);
         REQUIRE(a.size() == 0u);
     }

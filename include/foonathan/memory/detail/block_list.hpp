@@ -6,9 +6,11 @@
 #define FOONATHAN_MEMORY_DETAIL_BLOCK_LIST_HPP_INCLUDED
 
 #include <cstddef>
-#include <utility>
 
 #include "align.hpp"
+#include "utility.hpp"
+#include "../allocator_traits.hpp"
+#include "../config.hpp"
 #include "../debugging.hpp"
 
 namespace foonathan { namespace memory
@@ -53,14 +55,14 @@ namespace foonathan { namespace memory
 
             block_list_impl& operator=(block_list_impl &&other) FOONATHAN_NOEXCEPT
             {
-                block_list_impl tmp(std::move(other));
+                block_list_impl tmp(detail::move(other));
                 swap(*this, tmp);
                 return *this;
             }
 
             friend void swap(block_list_impl &a, block_list_impl &b) FOONATHAN_NOEXCEPT
             {
-                std::swap(a.head_, b.head_);
+                detail::adl_swap(a.head_, b.head_);
             }
 
             // inserts a new memory block, returns the size needed for the implementation
@@ -93,19 +95,21 @@ namespace foonathan { namespace memory
         // acts like a stack, new memory blocks are pushed
         // and can be popped in lifo order
         template <class RawAllocator>
-        class block_list : RawAllocator
+        class block_list : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
+            using traits = allocator_traits<RawAllocator>;
+            using allocator = typename traits::allocator_type;
             static FOONATHAN_CONSTEXPR auto growth_factor = 2u;
         public:
             // gives it an initial block size and allocates it
             // the blocks get large and large the more are needed
             block_list(std::size_t block_size,
-                    RawAllocator allocator)
-            : RawAllocator(std::move(allocator)), size_(0u), cur_block_size_(block_size) {}
+                    allocator &&alloc)
+            : allocator(detail::move(alloc)), size_(0u), cur_block_size_(block_size) {}
 
             block_list(block_list &&other) FOONATHAN_NOEXCEPT
-            : RawAllocator(std::move(other)),
-              used_(std::move(other.used_)), free_(std::move(other.free_)),
+            : allocator(detail::move(other)),
+              used_(detail::move(other.used_)), free_(detail::move(other.free_)),
               size_(other.size_), cur_block_size_(other.cur_block_size_)
             {
                 other.size_ = 0u;
@@ -117,24 +121,23 @@ namespace foonathan { namespace memory
                 while (!used_.empty())
                 {
                     auto block = used_.pop();
-                    get_allocator().
-                        deallocate_node(block.memory, block.size, detail::max_alignment);
+                    traits::deallocate_array(get_allocator(), block.memory,
+                                  block.size, 1, detail::max_alignment);
                 }
             }
 
             block_list& operator=(block_list &&other) FOONATHAN_NOEXCEPT
             {
-                using std::swap;
-                block_list tmp(std::move(other));
-                swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
-                swap(used_, tmp.used_);
-                swap(free_, tmp.free_);
-                swap(size_, tmp.size_);
-                swap(cur_block_size_, other.cur_block_size_);
+                block_list tmp(detail::move(other));
+                adl_swap(static_cast<RawAllocator&>(*this), static_cast<RawAllocator&>(tmp));
+                adl_swap(used_, tmp.used_);
+                adl_swap(free_, tmp.free_);
+                adl_swap(size_, tmp.size_);
+                adl_swap(cur_block_size_, other.cur_block_size_);
                 return *this;
             }
 
-            RawAllocator& get_allocator() FOONATHAN_NOEXCEPT
+            allocator& get_allocator() FOONATHAN_NOEXCEPT
             {
                 return *this;
             }
@@ -146,8 +149,8 @@ namespace foonathan { namespace memory
             {
                 if (free_.empty())
                 {
-                    auto memory = get_allocator().
-                        allocate_node(cur_block_size_, detail::max_alignment);
+                    auto memory = traits::allocate_array(get_allocator(),
+                                                cur_block_size_, 1, detail::max_alignment);
                     ++size_;
                     auto size = cur_block_size_ - used_.push(memory, cur_block_size_);
                     cur_block_size_ *= growth_factor;
@@ -192,8 +195,8 @@ namespace foonathan { namespace memory
                 while (!free_.empty())
                 {
                     auto block = free_.pop();
-                    get_allocator().
-                        deallocate_node(block.memory, block.size, detail::max_alignment);
+                    traits::deallocate_array(get_allocator(), block.memory,
+                                             block.size, 1, detail::max_alignment);
                 }
             }
 

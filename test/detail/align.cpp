@@ -26,3 +26,26 @@ TEST_CASE("detail::align_offset", "[detail][core]")
     ptr = reinterpret_cast<void*>(1025);
     REQUIRE(align_offset(ptr, 16) == 15u);
 }
+
+TEST_CASE("detail::is_aligned", "[detail][core]")
+{
+    auto ptr = reinterpret_cast<void*>(0);
+    REQUIRE(is_aligned(ptr, 1));
+    REQUIRE(is_aligned(ptr, 8));
+    REQUIRE(is_aligned(ptr, 16));
+    ptr = reinterpret_cast<void*>(1);
+    REQUIRE(is_aligned(ptr, 1));
+    REQUIRE(!is_aligned(ptr, 16));
+    ptr = reinterpret_cast<void*>(8);
+    REQUIRE(is_aligned(ptr, 1));
+    REQUIRE(is_aligned(ptr, 4));
+    REQUIRE(is_aligned(ptr, 8));
+    REQUIRE(!is_aligned(ptr, 16));
+    ptr = reinterpret_cast<void*>(16);
+    REQUIRE(is_aligned(ptr, 1));
+    REQUIRE(is_aligned(ptr, 8));
+    REQUIRE(is_aligned(ptr, 16));
+    ptr = reinterpret_cast<void*>(1025);
+    REQUIRE(is_aligned(ptr, 1));
+    REQUIRE(!is_aligned(ptr, 16));
+}

@@ -11,11 +11,11 @@
 #include <random>
 #include <vector>
 
-#include "allocator_adapter.hpp"
+#include "allocator_storage.hpp"
 #include "heap_allocator.hpp"
 #include "new_allocator.hpp"
-#include "pool_allocator.hpp"
-#include "stack_allocator.hpp"
+#include "memory_pool.hpp"
+#include "memory_stack.hpp"
 
 namespace memory = foonathan::memory;
 
@@ -184,8 +184,8 @@ void benchmark_node(std::initializer_list<std::size_t> counts,
     for (auto count : counts)
         for (auto size : node_sizes)
         {
-            heap_allocator heap_alloc;
-            new_allocator new_alloc;
+            auto heap_alloc = make_allocator_adapter(heap_allocator{});
+            auto new_alloc = make_allocator_adapter(new_allocator{});
             auto small_alloc = make_allocator_adapter(
                     memory_pool<small_node_pool>{size, count * size * 2});
             auto node_alloc = make_allocator_adapter(
@@ -234,8 +234,8 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
             {
                 auto mem_needed = count * node_size * array_size * 2;
 
-                heap_allocator heap_alloc;
-                new_allocator new_alloc;
+                auto heap_alloc = make_allocator_adapter(heap_allocator{});
+                auto new_alloc = make_allocator_adapter(new_allocator{});
                 auto node_alloc = make_allocator_adapter(memory_pool<node_pool>{node_size, mem_needed});
                 auto array_alloc = make_allocator_adapter(memory_pool<array_pool>{node_size, mem_needed});
                 auto stack_alloc = make_allocator_adapter(memory_stack<>{mem_needed});

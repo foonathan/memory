@@ -5,9 +5,12 @@
 #ifndef FOONATHAN_MEMORY_TEMPORARY_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_TEMPORARY_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+/// Class \ref foonathan::memory::temporary_allocator and related functions.
+
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "stack_allocator.hpp"
+#include "memory_stack.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -23,32 +26,45 @@ namespace foonathan { namespace memory
         } temporary_allocator_dtor;
     } // namespace detail
 
-    /// \brief A memory allocator for temporary allocations.
-    /// \details It is similar to \c alloca() but portable.
-    /// It uses a \c thread_local \ref memory_stack<> for the allocation.<br>
-    /// It is no \ref concept::RawAllocator, but the \ref allocator_traits are specialized for it.<br>
+    /// A stateful \concept{concept_rawallocator,RawAllocator} that handles temporary allocations.
+    /// It works similar to \c alloca() but uses a thread local \ref memory_stack for the allocations,
+    /// instead of the actual program stack.
+    /// This avoids the stack overflow error and is portable,
+    /// with a similar speed.
+    /// All allocations done in the scope of the allocator object are automatically freed when the object is destroyed.
     /// \ingroup memory
     class temporary_allocator
     {
     public:
-        /// \brief The type of the growth tracker.
-        /// \details It gets called when the internal \ref memory_stack<> needs to grow.
+        /// The type of the handler called when the internal \ref memory_stack grows.
         /// It gets the size of the new block that will be allocated.
-        /// If this function doesn't return, growth is prevented but the allocator unusable.<br>
-        /// Each thread has its own internal stack and thus own tracker.
+        /// \requiredbe The handler shall log the growth, throw an exception or aborts the program.
+        /// If this function does not return, the growth is prevented but the allocator unusable until memory is freed.
+        /// \defaultbe The default handler does nothing.
         using growth_tracker = void(*)(std::size_t size);
 
-        /// \brief Exchanges the \ref growth_tracker.
+        /// \effects Sets \c h as the new \ref growth_tracker.
+        /// A \c nullptr sets the default \ref growth_tracker.
+        /// Each thread has its own, separate tracker.
+        /// \returns The previous \ref growth_tracker. This is never \c nullptr.
         static growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT;
 
-        temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT;
+        /// \returns The current \ref growth_tracker. This is never \c nullptr.
+        static growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT;
+
+        /// \effects Unwinds the \ref memory_stack to the point where it was upon creation.
         ~temporary_allocator() FOONATHAN_NOEXCEPT;
 
+        /// @{
+        /// \effects Makes the destination allocator object the active allocator.
+        /// Allocation must only be done from the active allocator object.
+        temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT;
         temporary_allocator& operator=(temporary_allocator &&other) FOONATHAN_NOEXCEPT;
+        /// @}
 
-        /// \brief Allocates temporary memory of given size and alignment.
-        /// \details It will be deallocated when the allocator goes out of scope.<br>
-        /// For that reason, allocation must be made from the most recent created allocator.
+        /// \effects Allocates memory from the internal \ref memory_stack by forwarding to it.
+        /// \returns The result of \ref memory_stack::allocate().
+        /// \requires This function must be called on the active allocator object.
         void* allocate(std::size_t size, std::size_t alignment);
 
     private:
@@ -62,19 +78,23 @@ namespace foonathan { namespace memory
         friend temporary_allocator make_temporary_allocator(std::size_t size) FOONATHAN_NOEXCEPT;
     };
 
-    /// \brief Creates a new \ref temporary_allocator.
-    /// \details This is the only way to create to avoid accidental creation not on the stack.<br>
-    /// The internal stack allocator will only be created in a thread if there is at least one call to this function.
-    /// If it is the call that actually creates it, the stack has the initial size passed to it.
-    /// The stack will be destroyed when the current thread ends, so there is - no growth needed - only one heap allocation per thread.
+    /// \effects Creates a new \ref temporary_allocator object and makes it the active object.
+    /// If this is the first call of this function in a thread it will create the internal \ref memory_stack with the given size.
+    /// If there is never a call to this function in a thread, it will never be created.
+    /// If this is not the first call, the size parameter will be ignored.
+    /// The internal stack will be destroyed when the current thread ends.
+    /// Without growth there will be at most one heap allocation per thread.
+    /// \returns A new \ref temporary_allocator object that is the active object.
+    /// \requires The result must be stored on the program stack.
     /// \relates temporary_allocator
     inline temporary_allocator make_temporary_allocator(std::size_t size = 4096u) FOONATHAN_NOEXCEPT
     {
         return {size};
     }
 
-    /// \brief Specialization of the \ref allocator_traits for \ref temporary_allocator.
-    /// \details This allows passing a pool directly as allocator to container types.
+    /// Specialization of the \ref allocator_traits for \ref temporary_allocator classes.
+    /// \note It is not allowed to mix calls through the specialization and through the member functions,
+    /// i.e. \ref temporary_allocator::allocate() and this \c allocate_node().
     /// \ingroup memory
     template <>
     class allocator_traits<temporary_allocator>
@@ -83,23 +103,24 @@ namespace foonathan { namespace memory
         using allocator_type = temporary_allocator;
         using is_stateful = std::true_type;
 
-        /// @{
-        /// \brief Allocation function forward to the temporary allocator for array and node.
+        /// \returns The result of \ref temporary_allocator::allocate().
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
-            assert(size <= max_node_size(state) && "invalid node size");
+            detail::check_allocation_size(size, max_node_size(state),
+                {FOONATHAN_MEMORY_LOG_PREFIX "::temporary_allocator", &state});
             return state.allocate(size, alignment);
         }
 
+        /// \returns The result of \ref temporary_allocator::allocate().
         static void* allocate_array(allocator_type &state, std::size_t count,
                                 std::size_t size, std::size_t alignment)
         {
             return allocate_node(state, count * size, alignment);
         }
-        /// @}
 
         /// @{
-        /// \brief Deallocation functions do nothing, everything is freed on scope exit.
+        /// \effects Does nothing besides bookmarking for leak checking, if that is enabled.
+        /// Actual deallocation will be done automatically if the allocator object goes out of scope.
         static void deallocate_node(const allocator_type &,
                     void *, std::size_t, std::size_t) FOONATHAN_NOEXCEPT {}
 
@@ -108,7 +129,7 @@ namespace foonathan { namespace memory
         /// @}
 
         /// @{
-        /// \brief The maximum size is the equivalent of the capacity left in the next block of the internal \ref memory_stack<>.
+        /// \returns The maximum size which is \ref memory_stack::next_capacity() of the internal stack.
         static std::size_t max_node_size(const allocator_type &state) FOONATHAN_NOEXCEPT;
 
         static std::size_t max_array_size(const allocator_type &state) FOONATHAN_NOEXCEPT
@@ -117,7 +138,8 @@ namespace foonathan { namespace memory
         }
         /// @}
 
-        /// \brief There is no maximum alignment (except indirectly through \ref max_node_size()).
+        /// \returns The maximum possible value since there is no alignment restriction
+        /// (except indirectly through \ref memory_stack::next_capacity()).
         static std::size_t max_alignment(const allocator_type &) FOONATHAN_NOEXCEPT
         {
             return std::size_t(-1);
