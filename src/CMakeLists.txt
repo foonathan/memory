@@ -23,6 +23,7 @@ set(header
         ${header_path}/deleter.hpp
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
+        ${header_path}/malloc_allocator.hpp
         ${header_path}/memory_pool.hpp
         ${header_path}/memory_pool_collection.hpp
         ${header_path}/memory_pool_type.hpp
@@ -44,6 +45,7 @@ set(src
         debugging.cpp
         error.cpp
         heap_allocator.cpp
+        malloc_allocator.cpp
         new_allocator.cpp
         temporary_allocator.cpp)
 

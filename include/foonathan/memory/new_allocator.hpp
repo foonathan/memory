@@ -50,10 +50,10 @@ namespace foonathan { namespace memory
         void* allocate_node(std::size_t size, std::size_t alignment);
 
         /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
-        /// It uses <tt>operator delete</tt>
+        /// It uses <tt>operator delete</tt>.
         void deallocate_node(void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
-        /// \returns The maximum node size by forwaring to \c std::allocator<char>::max_size()
+        /// \returns The maximum node size by forwarding to \c std::allocator<char>::max_size()
         /// or the maximum value on a freestanding implementation.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
