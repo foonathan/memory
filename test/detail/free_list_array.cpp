@@ -8,6 +8,7 @@
 
 #include "detail/free_list.hpp"
 #include "detail/small_free_list.hpp"
+#include "static_allocator.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -32,8 +33,8 @@ TEST_CASE("detail::log2_access_policy", "[detail][pool]")
 
 TEST_CASE("detail::free_list_array", "[detail][pool]")
 {
-    alignas(max_alignment) char memory[1024];
-    detail::fixed_memory_stack stack(memory, 1024);
+    static_allocator_storage<1024> memory;
+    detail::fixed_memory_stack stack(&memory, 1024);
     SECTION("power of two max size, small list")
     {
         using array = detail::free_list_array<detail::small_free_memory_list,

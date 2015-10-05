@@ -7,6 +7,7 @@
 #include <catch.hpp>
 
 #include "allocator_storage.hpp"
+#include "static_allocator.hpp"
 #include "../test_allocator.hpp"
 
 using namespace foonathan::memory;
@@ -19,11 +20,11 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
 
     SECTION("push/pop/top")
     {
-        alignas(max_alignment) char memory[1024];
-        void *mem = memory;
+        static_allocator_storage<1024> memory;
+        void *mem = &memory;
         auto offset = list.push(mem, 1024);
         REQUIRE(offset == block_list_impl::impl_offset());
-        auto diff = static_cast<char*>(mem) - memory;
+        auto diff = static_cast<char*>(mem) - reinterpret_cast<char*>(&memory);
         REQUIRE(diff == offset);
         REQUIRE(!list.empty());
 
@@ -33,12 +34,12 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
 
         block = list.pop();
         REQUIRE(block.size == 1024);
-        REQUIRE(block.memory == static_cast<void*>(memory));
+        REQUIRE(block.memory == static_cast<void*>(&memory));
     }
     SECTION("multiple lists")
     {
-        alignas(max_alignment) char memory[1024];
-        void *mem = memory;
+        static_allocator_storage<1024> memory;
+        void *mem = &memory;
         list.push(mem, 1024);
 
         block_list_impl another_list;
@@ -50,28 +51,28 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(list.empty());
     }
 
-    alignas(max_alignment) char a[1024], b[1024], c[1024];
-    void* mem = a;
+    static_allocator_storage<1024> a, b, c;
+    void* mem = &a;
     list.push(mem, 1024);
-    mem = b;
+    mem = &b;
     list.push(mem, 1024);
-    mem = c;
+    mem = &c;
     list.push(mem, 1024);
 
     SECTION("multiple pop")
     {
         auto block = list.pop();
-        REQUIRE(block.memory == static_cast<void*>(c));
+        REQUIRE(block.memory == static_cast<void*>(&c));
         block = list.pop();
-        REQUIRE(block.memory == static_cast<void*>(b));
+        REQUIRE(block.memory == static_cast<void*>(&b));
         block = list.pop();
-        REQUIRE(block.memory == static_cast<void*>(a));
+        REQUIRE(block.memory == static_cast<void*>(&a));
         REQUIRE(list.empty());
     }
     SECTION("move")
     {
-        alignas(max_alignment) char memory[1024];
-        mem = memory;
+        static_allocator_storage<1024> memory;
+        mem = &memory;
         list.push(mem, 1024);
 
         auto another_list = detail::move(list);
@@ -79,13 +80,13 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         REQUIRE(list.empty());
         REQUIRE(another_list.top().memory == mem);
 
-        alignas(max_alignment) char memory2[1024];
-        mem = memory2;
+        static_allocator_storage<1024> memory2;
+        mem = &memory2;
         another_list.push(mem, 1024);
         REQUIRE(another_list.top().memory == mem);
 
-        alignas(max_alignment) char memory3[1024];
-        mem = memory3;
+        static_allocator_storage<1024> memory3;
+        mem = &memory3;
         list.push(mem, 1024);
         REQUIRE(!list.empty());
         REQUIRE(list.top().memory == mem);
@@ -93,9 +94,9 @@ TEST_CASE("detail::block_list_impl", "[detail][core]")
         list = detail::move(another_list);
         REQUIRE(another_list.empty());
         REQUIRE(!list.empty());
-        REQUIRE(list.pop().memory == memory2);
-        REQUIRE(list.pop().memory == memory);
-        REQUIRE(list.pop().memory == c);
+        REQUIRE(list.pop().memory == reinterpret_cast<char*>(&memory2));
+        REQUIRE(list.pop().memory == reinterpret_cast<char*>(&memory));
+        REQUIRE(list.pop().memory == reinterpret_cast<char*>(&c));
     }
 }
 

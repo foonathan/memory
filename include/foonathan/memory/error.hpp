@@ -112,7 +112,7 @@ namespace foonathan { namespace memory
         std::size_t amount_;
     };
 
-    /// The exception class thrown if a size or alignemnt parameter in an allocation function exceeds the supported maximum.
+    /// The exception class thrown if a size or alignment parameter in an allocation function exceeds the supported maximum.
     /// It is derived from \c std::bad_alloc.
     /// This is either a node size, an array size or an alignment value.
     /// Throwing can be prohibited by the handler function.

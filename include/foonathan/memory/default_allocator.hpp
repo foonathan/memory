@@ -11,6 +11,7 @@
 #include "config.hpp"
 #include "heap_allocator.hpp"
 #include "new_allocator.hpp"
+#include "static_allocator.hpp"
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include "malloc_allocator.hpp"
@@ -23,7 +24,7 @@ namespace foonathan { namespace memory
     /// They get an implementation allocator that will be used for their internal allocation,
     /// this type is the default value.
     /// \requiredbe Its type can be changed via the CMake option \c FOONATHAN_MEMORY_DEFAULT_ALLCOATOR,
-    /// but it must be one of the following: \ref heap_allocator, \ref new_allocator, \ref malloc_allocator.
+    /// but it must be one of the following: \ref heap_allocator, \ref new_allocator, \ref malloc_allocator, \ref static_allocator.
     /// \defaultbe The default is \ref heap_allocator.
     /// \ingroup memory
     using default_allocator = FOONATHAN_IMPL_DEFINED(FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR);

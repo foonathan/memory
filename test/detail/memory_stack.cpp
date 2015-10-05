@@ -7,6 +7,7 @@
 #include <catch.hpp>
 
 #include "detail/align.hpp"
+#include "static_allocator.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -19,10 +20,10 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
 
     SECTION("allocate")
     {
-        alignas(max_alignment) char memory[1024];
-        stack = {memory, 1024};
-        REQUIRE(stack.top() == memory);
-        REQUIRE(stack.end() == memory + 1024);
+        static_allocator_storage<1024> memory;
+        stack = {&memory, 1024};
+        REQUIRE(stack.top() == reinterpret_cast<char*>(&memory));
+        REQUIRE(stack.end() == reinterpret_cast<char*>(&memory) + 1024);
 
         SECTION("alignment for allocate")
         {
@@ -45,16 +46,16 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
         SECTION("allocate/unwind")
         {
             REQUIRE(stack.allocate(10u, 1u));
-            auto diff = std::size_t(stack.top() - memory);
+            auto diff = std::size_t(stack.top() - reinterpret_cast<char*>(&memory));
             REQUIRE(diff == 2 * debug_fence_size + 10u);
 
             REQUIRE(stack.allocate(16u, 1u));
-            auto diff2 = std::size_t(stack.top() - memory);
+            auto diff2 = std::size_t(stack.top() - reinterpret_cast<char*>(&memory));
             REQUIRE(diff2 == 2 * debug_fence_size + 16u + diff);
 
-            stack.unwind(memory + diff);
-            REQUIRE(stack.top() == memory + diff);
-            REQUIRE(stack.end() == memory + 1024);
+            stack.unwind(reinterpret_cast<char*>(&memory) + diff);
+            REQUIRE(stack.top() == reinterpret_cast<char*>(&memory) + diff);
+            REQUIRE(stack.end() == reinterpret_cast<char*>(&memory) + 1024);
 
             auto top = stack.top();
             REQUIRE(!stack.allocate(1024, 1));
@@ -63,15 +64,15 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
     }
     SECTION("move")
     {
-        alignas(max_alignment) char memory[1024];
+        static_allocator_storage<1024> memory;
 
-        fixed_memory_stack other(memory, memory + 1024);
-        REQUIRE(other.top() == memory);
-        REQUIRE(other.end() == memory + 1024);
+        fixed_memory_stack other(reinterpret_cast<char*>(&memory), reinterpret_cast<char*>(&memory) + 1024);
+        REQUIRE(other.top() == reinterpret_cast<char*>(&memory));
+        REQUIRE(other.end() == reinterpret_cast<char*>(&memory) + 1024);
 
         stack = detail::move(other);
-        REQUIRE(stack.top() == memory);
-        REQUIRE(stack.end() == memory + 1024);
+        REQUIRE(stack.top() == reinterpret_cast<char*>(&memory));
+        REQUIRE(stack.end() == reinterpret_cast<char*>(&memory) + 1024);
 
         REQUIRE(!other.allocate(10, 1));
         REQUIRE(stack.allocate(10, 1));

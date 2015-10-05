@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "detail/align.hpp"
+#include "static_allocator.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -63,8 +64,8 @@ void check_list(FreeList &list, void *memory, std::size_t size)
 template <class FreeList>
 void check_move(FreeList &list)
 {
-    alignas(max_alignment) char memory[1024];
-    list.insert(memory, 1024);
+    static_allocator_storage<1024> memory;
+    list.insert(&memory, 1024);
 
     auto ptr = list.allocate();
     REQUIRE(ptr);
@@ -79,8 +80,8 @@ void check_move(FreeList &list)
 
     list2.deallocate(ptr);
 
-    alignas(max_alignment) char memory2[1024];
-    list.insert(memory2, 1024);
+    static_allocator_storage<1024> memory2;
+    list.insert(&memory2, 1024);
     REQUIRE(!list.empty());
     REQUIRE(list.capacity() <= 1024 / list.node_size());
 
@@ -109,20 +110,22 @@ TEST_CASE("free_memory_list", "[detail][pool]")
 
     SECTION("normal insert")
     {
-        alignas(max_alignment) char memory[1024];
-        check_list(list, memory, 1024);
+        static_allocator_storage<1024> memory;
+        check_list(list, &memory, 1024);
     }
     SECTION("uneven insert")
     {
-        alignas(max_alignment) char memory[1023]; // not dividable
-        check_list(list, memory, 1023);
+        static_allocator_storage<1023> memory; // not dividable
+        check_list(list, &memory, 1023);
     }
     SECTION("multiple insert")
     {
-        alignas(max_alignment) char a[1024], b[100], c[1337];
-        check_list(list, a, 1024);
-        check_list(list, b, 100);
-        check_list(list, c, 1337);
+        static_allocator_storage<1024> a;
+        static_allocator_storage<100> b;
+        static_allocator_storage<1337> c;
+        check_list(list, &a, 1024);
+        check_list(list, &b, 100);
+        check_list(list, &c, 1337);
     }
     check_move(list);
 }
@@ -167,24 +170,26 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
 
     SECTION("normal insert")
     {
-        alignas(max_alignment) char memory[1024];
-        check_list(list, memory, 1024);
+        static_allocator_storage<1024> memory;
+        check_list(list, &memory, 1024);
         use_list_array(list);
     }
     SECTION("uneven insert")
     {
-        alignas(max_alignment) char memory[1023]; // not dividable
-        check_list(list, memory, 1023);
+        static_allocator_storage<1023> memory; // not dividable
+        check_list(list, &memory, 1023);
         use_list_array(list);
     }
     SECTION("multiple insert")
     {
-        alignas(max_alignment) char a[1024], b[100], c[1337];
-        check_list(list, a, 1024);
+        static_allocator_storage<1024> a;
+        static_allocator_storage<100> b;
+        static_allocator_storage<1337> c;
+        check_list(list, &a, 1024);
         use_list_array(list);
-        check_list(list, b, 100);
+        check_list(list, &b, 100);
         use_list_array(list);
-        check_list(list, c, 1337);
+        check_list(list, &c, 1337);
         use_list_array(list);
     }
     check_move(list);
@@ -199,25 +204,27 @@ TEST_CASE("small_free_memory_list", "[detail][pool]")
 
     SECTION("normal insert")
     {
-        alignas(max_alignment) char memory[1024];
-        check_list(list, memory, 1024);
+        static_allocator_storage<1024> memory;
+        check_list(list, &memory, 1024);
     }
     SECTION("uneven insert")
     {
-        alignas(max_alignment) char memory[1023]; // not dividable
-        check_list(list, memory, 1023);
+        static_allocator_storage<1023> memory; // not dividable
+        check_list(list, &memory, 1023);
     }
     SECTION("big insert")
     {
-        alignas(max_alignment) char memory[4096]; // should use multiple chunks
-        check_list(list, memory, 4096);
+        static_allocator_storage<4096> memory; // should use multiple chunks
+        check_list(list, &memory, 4096);
     }
     SECTION("multiple insert")
     {
-        alignas(max_alignment) char a[1024], b[100], c[1337];
-        check_list(list, a, 1024);
-        check_list(list, b, 100);
-        check_list(list, c, 1337);
+        static_allocator_storage<1024> a;
+        static_allocator_storage<100> b;
+        static_allocator_storage<1337> c;
+        check_list(list, &a, 1024);
+        check_list(list, &b, 100);
+        check_list(list, &c, 1337);
     }
     check_move(list);
 }
