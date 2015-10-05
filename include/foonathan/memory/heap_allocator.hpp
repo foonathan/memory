@@ -32,7 +32,7 @@ namespace foonathan { namespace memory
     /// The size parameter will not be zero.
     /// It shall return a \c nullptr if no memory is available.
     /// It must be thread safe.
-    /// \defaultbe On a hosted implementation this function simply calls \c std::malloc.
+    /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::malloc is used as fallback.
     void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
 
     /// Deallocates heap memory.
@@ -42,7 +42,7 @@ namespace foonathan { namespace memory
     /// It shall free the memory.
     /// The pointer will not be zero.
     /// It must be thread safe.
-    /// \defaultbe On a freestanding implementation this function simply calls \c std::free.
+    /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::free is used as fallback.
     void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
 
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.
@@ -73,7 +73,7 @@ namespace foonathan { namespace memory
         /// It uses \ref heap_dealloc.
         void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
-        /// \returns The maximum node size by forwaring to \c std::allocator<char>::max_size()
+        /// \returns The maximum node size by forwarding to \c std::allocator<char>::max_size(), an OS specific facility
         /// or the maximum value on a freestanding implementation.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };

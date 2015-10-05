@@ -49,7 +49,35 @@ using namespace foonathan::memory;
     }
 #endif
 
-#if FOONATHAN_HOSTED_IMPLEMENTATION
+#ifdef _WIN32
+    #include <malloc.h>
+    #include <windows.h>
+
+    namespace
+    {
+        HANDLE get_process_heap() FOONATHAN_NOEXCEPT
+        {
+            static auto heap = GetProcessHeap();
+            return heap;
+        }
+
+        std::size_t max_size() FOONATHAN_NOEXCEPT
+        {
+            return _HEAP_MAXREQ;
+        }
+    }
+
+    void* foonathan::memory::heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT
+    {
+        return HeapAlloc(get_process_heap(), 0, size);
+    }
+
+    void foonathan::memory::heap_dealloc(void *ptr, std::size_t) FOONATHAN_NOEXCEPT
+    {
+        HeapFree(get_process_heap(), 0, ptr);
+    }
+
+#elif FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdlib>
     #include <memory>
 
@@ -71,7 +99,7 @@ using namespace foonathan::memory;
         }
     }
 #else
-    // no implemenetation for heap_alloc/heap_dealloc
+    // no implementation for heap_alloc/heap_dealloc
 
     namespace
     {
