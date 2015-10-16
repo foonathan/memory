@@ -35,6 +35,7 @@ set(header
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp
+        ${header_path}/virtual_memory.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
@@ -48,7 +49,8 @@ set(src
         heap_allocator.cpp
         malloc_allocator.cpp
         new_allocator.cpp
-        temporary_allocator.cpp)
+        temporary_allocator.cpp
+        virtual_memory.cpp)
 
 add_library(foonathan_memory ${header} ${src})
 
