@@ -4,7 +4,7 @@
 
 There are the following variables available to configure it:
 
-* `FOONATHAN_MEMORY_DEFAULT_ALLOCATOR`: The default allocator used by the higher level allocator classes. One of the low level stateless allocators (see \ref foonathan::memory::default_allocator). Default is `heap_allocator`.
+* `FOONATHAN_MEMORY_DEFAULT_ALLOCATOR`: The default allocator used by the higher level allocator classes. One of the low level allocators (see \ref foonathan::memory::default_allocator). Default is `heap_allocator`.
 * `FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE`: Whether or not the `allocator_reference` is thread safe by default. Default is `ON`.
 * `FOONATHAN_MEMORY_DEBUG_*`: specifies debugging options such as pointer check in `deallocate()` or filling newly allocated memory with values. All of them are enabled in `Debug` builds by default, the faster ones in `RelWithDebInfo` and none in `Release`. See [debugging](md_doc_debug_error.html#debugging) for a detailed description.
 
