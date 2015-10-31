@@ -46,7 +46,7 @@ namespace foonathan { namespace memory
         }
 
         /// \effects A \concept{concept_rawallocator,RawAllocator} allocation function.
-        /// It uses the <tt>std::malloc()</tt> for the allocation.
+        /// It uses <tt>std::malloc()</tt> for the allocation.
         /// \returns A pointer to a \concept{concept_node,node}, it will never be \c nullptr.
         /// \throws An exception of type \ref out_of_memory or whatever is thrown by its handler if the allocation fails.
         void* allocate_node(std::size_t size, std::size_t alignment);

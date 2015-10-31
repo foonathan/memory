@@ -4,14 +4,51 @@
 
 #include "virtual_memory.hpp"
 
+#include "debugging.hpp"
 #include "error.hpp"
 
 using namespace foonathan::memory;
 
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    #include <atomic>
+
+    namespace
+    {
+        std::size_t init_counter = 0u, alloc_counter = 0u;
+
+        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
+        {
+            alloc_counter += size;
+        }
+
+        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
+        {
+            alloc_counter -= size;
+        }
+    }
+
+    detail::virtual_memory_allocator_leak_checker_initializer_t::virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    {
+        ++init_counter;
+    }
+
+    detail::virtual_memory_allocator_leak_checker_initializer_t::~virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    {
+        if (--init_counter == 0u && alloc_counter != 0u)
+            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, alloc_counter);
+    }
+#else
+    namespace
+    {
+        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
+        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
+    }
+#endif
+
 #if defined(_WIN32)
     #include <windows.h>
 
-    namespace
+namespace
     {
         std::size_t get_page_size() FOONATHAN_NOEXCEPT
         {
@@ -110,3 +147,47 @@ using namespace foonathan::memory;
 #else
     #warning "virtual memory functions not available on your platform, define your own"
 #endif
+
+namespace
+{
+    std::size_t calc_no_pages(std::size_t size) FOONATHAN_NOEXCEPT
+    {
+        auto div = size / virtual_memory_page_size;
+        auto rest = size % virtual_memory_page_size;
+
+        return div + (rest != 0u) + (detail::debug_fence_size ? 2u : 1u);
+    }
+}
+
+void *virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
+{
+    auto no_pages = calc_no_pages(size);
+    auto pages = virtual_memory_reserve(no_pages);
+    if (!pages || !virtual_memory_commit(pages, no_pages))
+        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", this},
+                                      no_pages * virtual_memory_page_size));
+    on_alloc(size);
+
+    return detail::debug_fill_new(pages, size, virtual_memory_page_size);
+}
+
+void virtual_memory_allocator::deallocate_node(void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+{
+    auto pages = detail::debug_fill_free(node, size, virtual_memory_page_size);
+
+    on_dealloc(size);
+
+    auto no_pages = calc_no_pages(size);
+    virtual_memory_decommit(pages, no_pages);
+    virtual_memory_release(pages, no_pages);
+}
+
+std::size_t virtual_memory_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+{
+    return std::size_t(-1);
+}
+
+std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
+{
+    return virtual_memory_page_size;
+}
