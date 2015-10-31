@@ -105,6 +105,7 @@
     #define FOONATHAN_MEMORY_DEBUG_FILL 1
 
     /// The size of the fence memory, it has no effect if \ref FOONATHAN_MEMORY_DEBUG_FILL is \c false.
+    /// \note For most allocators, the actual value doesn't matter and they use appropriate defaults to ensure alignment etc.
     /// \ingroup memory
     #define FOONATHAN_MEMORY_DEBUG_FENCE 1
 

@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 
+#include "detail/align.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 
@@ -53,17 +54,20 @@ using namespace foonathan::memory;
 
 void* malloc_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto memory = std::malloc(size + 2 * detail::debug_fence_size);
+    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
+
+    auto memory = std::malloc(actual_size);
     if (!memory)
         FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::malloc_allocator", this},
-                                      size + 2 * detail::debug_fence_size));
+                                      actual_size));
     on_alloc(size);
-    return detail::debug_fill_new(memory, size);
+
+    return detail::debug_fill_new(memory, size, detail::max_alignment);
 }
 
 void malloc_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
-    auto memory = detail::debug_fill_free(ptr, size);
+    auto memory = detail::debug_fill_free(ptr, size, detail::max_alignment);
     std::free(memory);
 
     on_dealloc(size);

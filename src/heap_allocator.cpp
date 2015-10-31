@@ -52,8 +52,9 @@ using namespace foonathan::memory;
 #ifdef _WIN32
     #include <malloc.h>
     #include <windows.h>
+#include <detail/align.hpp>
 
-    namespace
+namespace
     {
         HANDLE get_process_heap() FOONATHAN_NOEXCEPT
         {
@@ -112,18 +113,23 @@ using namespace foonathan::memory;
 
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto memory = memory::heap_alloc(size + 2 * detail::debug_fence_size);
+    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
+
+    auto memory = memory::heap_alloc(actual_size);
     if (!memory)
         FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
-                                      size + 2 * detail::debug_fence_size));
+                                      actual_size));
     on_alloc(size);
-    return detail::debug_fill_new(memory, size);
+
+    return detail::debug_fill_new(memory, size, detail::max_alignment);
 }
 
 void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
-    auto memory = detail::debug_fill_free(ptr, size);
-    memory::heap_dealloc(memory, size);
+    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
+
+    auto memory = detail::debug_fill_free(ptr, size, detail::max_alignment);
+    memory::heap_dealloc(memory, actual_size);
 
     on_dealloc(size);
 }
