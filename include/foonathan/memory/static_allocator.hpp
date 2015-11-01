@@ -24,8 +24,11 @@ namespace foonathan { namespace memory
     template <std::size_t Size>
     struct static_allocator_storage
     {
-        typename std::aligned_storage<1, detail::max_alignment>::type storage[Size];
+        typename std::aligned_storage<Size, detail::max_alignment>::type storage;
     };
+
+    static_assert(sizeof(static_allocator_storage<1024>) == 1024, "");
+    static_assert(FOONATHAN_ALIGNOF(static_allocator_storage<1024>) == detail::max_alignment, "");
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that uses a fixed sized storage for the allocations.
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
