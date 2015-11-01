@@ -42,7 +42,9 @@ namespace foonathan { namespace memory
 
         // maximum alignment value
         FOONATHAN_CONSTEXPR std::size_t max_alignment = FOONATHAN_ALIGNOF(foonathan_memory_comp::max_align_t);
+#if FOONATHAN_HAS_CONSTEXPR
         static_assert(is_valid_alignment(max_alignment), "ehm..?");
+#endif
 
         // returns the minimum alignment required for a node of given size
         inline std::size_t alignment_for(std::size_t size) FOONATHAN_NOEXCEPT
