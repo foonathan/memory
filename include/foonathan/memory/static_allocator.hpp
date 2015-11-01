@@ -22,7 +22,10 @@ namespace foonathan { namespace memory
     /// \note It is not allowed to access the memory of the storage.
     /// \ingroup memory
     template <std::size_t Size>
-    FOONATHAN_ALIAS_TEMPLATE(static_allocator_storage, typename std::aligned_storage<1, detail::max_alignment>::type[Size]);
+    struct static_allocator_storage
+    {
+        typename std::aligned_storage<1, detail::max_alignment>::type storage[Size];
+    };
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that uses a fixed sized storage for the allocations.
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
