@@ -23,16 +23,19 @@ set(header
         ${header_path}/deleter.hpp
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
+        ${header_path}/malloc_allocator.hpp
         ${header_path}/memory_pool.hpp
         ${header_path}/memory_pool_collection.hpp
         ${header_path}/memory_pool_type.hpp
         ${header_path}/memory_stack.hpp
         ${header_path}/new_allocator.hpp
         ${header_path}/smart_ptr.hpp
+        ${header_path}/static_allocator.hpp
         ${header_path}/std_allocator.hpp
         ${header_path}/temporary_allocator.hpp
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp
+        ${header_path}/virtual_memory.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
@@ -44,8 +47,10 @@ set(src
         debugging.cpp
         error.cpp
         heap_allocator.cpp
+        malloc_allocator.cpp
         new_allocator.cpp
-        temporary_allocator.cpp)
+        temporary_allocator.cpp
+        virtual_memory.cpp)
 
 add_library(foonathan_memory ${header} ${src})
 

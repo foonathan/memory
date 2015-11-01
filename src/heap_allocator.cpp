@@ -6,6 +6,7 @@
 
 #include <new>
 
+#include "detail/align.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 
@@ -49,7 +50,36 @@ using namespace foonathan::memory;
     }
 #endif
 
-#if FOONATHAN_HOSTED_IMPLEMENTATION
+#ifdef _WIN32
+    #include <malloc.h>
+    #include <windows.h>
+#include <detail/align.hpp>
+
+namespace
+    {
+        HANDLE get_process_heap() FOONATHAN_NOEXCEPT
+        {
+            static auto heap = GetProcessHeap();
+            return heap;
+        }
+
+        std::size_t max_size() FOONATHAN_NOEXCEPT
+        {
+            return _HEAP_MAXREQ;
+        }
+    }
+
+    void* foonathan::memory::heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT
+    {
+        return HeapAlloc(get_process_heap(), 0, size);
+    }
+
+    void foonathan::memory::heap_dealloc(void *ptr, std::size_t) FOONATHAN_NOEXCEPT
+    {
+        HeapFree(get_process_heap(), 0, ptr);
+    }
+
+#elif FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdlib>
     #include <memory>
 
@@ -71,7 +101,7 @@ using namespace foonathan::memory;
         }
     }
 #else
-    // no implemenetation for heap_alloc/heap_dealloc
+    // no implementation for heap_alloc/heap_dealloc
 
     namespace
     {
@@ -84,18 +114,23 @@ using namespace foonathan::memory;
 
 void* heap_allocator::allocate_node(std::size_t size, std::size_t)
 {
-    auto memory = memory::heap_alloc(size + 2 * detail::debug_fence_size);
+    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
+
+    auto memory = memory::heap_alloc(actual_size);
     if (!memory)
         FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
-                                      size + 2 * detail::debug_fence_size));
+                                      actual_size));
     on_alloc(size);
-    return detail::debug_fill_new(memory, size);
+
+    return detail::debug_fill_new(memory, size, detail::max_alignment);
 }
 
 void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
 {
-    auto memory = detail::debug_fill_free(ptr, size);
-    memory::heap_dealloc(memory, size);
+    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
+
+    auto memory = detail::debug_fill_free(ptr, size, detail::max_alignment);
+    memory::heap_dealloc(memory, actual_size);
 
     on_dealloc(size);
 }
