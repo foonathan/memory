@@ -6,6 +6,7 @@
 
 #include <new>
 
+#include "detail/align.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 
