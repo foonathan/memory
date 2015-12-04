@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-#include "block_list.hpp"
+#include "../config.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -23,9 +23,6 @@ namespace foonathan { namespace memory
             // gives it a memory block
             fixed_memory_stack(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
             : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
-
-            fixed_memory_stack(block_info info) FOONATHAN_NOEXCEPT
-            : fixed_memory_stack(info.memory, info.size) {}
 
             // gives it a current and end pointer
             fixed_memory_stack(char *cur, const char *end) FOONATHAN_NOEXCEPT

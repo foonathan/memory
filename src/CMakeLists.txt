@@ -24,6 +24,7 @@ set(header
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
         ${header_path}/malloc_allocator.hpp
+        ${header_path}/memory_arena.hpp
         ${header_path}/memory_pool.hpp
         ${header_path}/memory_pool_collection.hpp
         ${header_path}/memory_pool_type.hpp

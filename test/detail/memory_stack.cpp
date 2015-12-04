@@ -7,6 +7,8 @@
 #include <catch.hpp>
 
 #include "detail/align.hpp"
+#include "detail/utility.hpp"
+#include "debugging.hpp"
 #include "static_allocator.hpp"
 
 using namespace foonathan::memory;

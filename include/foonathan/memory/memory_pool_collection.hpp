@@ -69,7 +69,7 @@ namespace foonathan { namespace memory
                     allocator_type alloc = allocator_type())
         : leak_checker(info().name),
           block_list_(block_size, detail::move(alloc)),
-          stack_(block_list_.allocate()),
+          stack_(allocate_block()),
           pools_(stack_, max_node_size)
         {}
 
@@ -234,6 +234,12 @@ namespace foonathan { namespace memory
             return block_list_.next_block_size() / pools_.size();
         }
 
+        detail::fixed_memory_stack allocate_block()
+        {
+            auto block = block_list_.allocate();
+            return detail::fixed_memory_stack(block.memory, block.size);
+        }
+
         void reserve_impl(typename pool_type::type &pool, std::size_t capacity)
         {
             auto mem = stack_.allocate(capacity, detail::max_alignment);
@@ -250,7 +256,9 @@ namespace foonathan { namespace memory
                         pool.insert(stack_.top() + offset, remaining - offset);
                     }
                 }
-                stack_ = detail::fixed_memory_stack(block_list_.allocate());
+                // get new block
+                stack_ = allocate_block();
+
                 // allocate ensuring alignment
                 mem = stack_.allocate(capacity, detail::max_alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
