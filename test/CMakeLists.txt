@@ -39,6 +39,7 @@ set(tests
         aligned_allocator.cpp
         allocator_traits.cpp
         default_allocator.cpp
+        memory_arena.cpp
         memory_pool.cpp
         memory_pool_collection.cpp
         memory_stack.cpp)

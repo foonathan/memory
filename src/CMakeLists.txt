@@ -49,6 +49,7 @@ set(src
         error.cpp
         heap_allocator.cpp
         malloc_allocator.cpp
+        memory_arena.cpp
         new_allocator.cpp
         temporary_allocator.cpp
         virtual_memory.cpp)
