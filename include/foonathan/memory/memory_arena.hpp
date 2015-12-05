@@ -32,14 +32,14 @@ namespace foonathan { namespace memory
         {
         public:
             memory_block_stack() FOONATHAN_NOEXCEPT
-            : head_(nullptr) {}
+            : head_(nullptr), tail_(nullptr) {}
 
             ~memory_block_stack() FOONATHAN_NOEXCEPT {}
 
             memory_block_stack(memory_block_stack &&other) FOONATHAN_NOEXCEPT
-            : head_(other.head_)
+            : head_(other.head_), tail_(other.tail_)
             {
-                other.head_ = nullptr;
+                other.head_ = other.tail_ = nullptr;
             }
 
             memory_block_stack& operator=(memory_block_stack &&other) FOONATHAN_NOEXCEPT
@@ -52,6 +52,7 @@ namespace foonathan { namespace memory
             friend void swap(memory_block_stack &a, memory_block_stack &b) FOONATHAN_NOEXCEPT
             {
                 detail::adl_swap(a.head_, b.head_);
+                detail::adl_swap(a.tail_, b.tail_);
             }
 
             // the raw allocated block returned from an allocator
@@ -66,20 +67,17 @@ namespace foonathan { namespace memory
             // pops a memory block and returns the original block
             allocated_mb pop() FOONATHAN_NOEXCEPT;
 
-            // steals the top block from another stack
+            // steals the top block from another stack and inserts it at the bottom
             void steal_top(memory_block_stack &other) FOONATHAN_NOEXCEPT;
 
             // returns the last pushed() inserted memory block
             inserted_mb top() const FOONATHAN_NOEXCEPT;
 
-            bool empty() const FOONATHAN_NOEXCEPT
-            {
-                return head_ == nullptr;
-            }
+            bool empty() const FOONATHAN_NOEXCEPT;
 
         private:
             struct node;
-            node *head_;
+            node *head_, *tail_; // top node, bottom node
         };
     } // namespace detail
 }} // namespace foonathan::memory

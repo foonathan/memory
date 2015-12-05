@@ -74,13 +74,13 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
         REQUIRE(stack.empty());
 
         auto block = other.pop();
-        REQUIRE(block.memory == static_cast<void*>(&memory));
-        block = other.pop();
-        REQUIRE(block.memory == static_cast<void*>(&a));
+        REQUIRE(block.memory == static_cast<void*>(&c));
         block = other.pop();
         REQUIRE(block.memory == static_cast<void*>(&b));
         block = other.pop();
-        REQUIRE(block.memory == static_cast<void*>(&c));
+        REQUIRE(block.memory == static_cast<void*>(&a));
+        block = other.pop();
+        REQUIRE(block.memory == static_cast<void*>(&memory));
     }
     SECTION("move")
     {
