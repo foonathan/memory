@@ -45,9 +45,9 @@ namespace foonathan { namespace memory
         static FOONATHAN_CONSTEXPR std::size_t min_node_size = FOONATHAN_IMPL_DEFINED(free_list::min_element_size);
 
         /// \effects Creates it by specifying the size each \concept{concept_node,node} will have,
-        /// the initial block size for the arena and other constructor arguments for the block allocator.
+        /// the initial block size for the arena and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
         /// If the \c node_size is less than the \c min_node_size, the \c min_node_size will be the actual node size.
-        /// It will allocate an initial memory block with given size from the block allocator
+        /// It will allocate an initial memory block with given size from the \concept{concept_blockallocator,BlockAllocator}
         /// and puts it onto the free list.
         /// \requires \c node_size must be a valid \concept{concept_node,node size}
         /// and \c block_size must be a non-zero value.
@@ -62,7 +62,7 @@ namespace foonathan { namespace memory
         }
 
         /// \effects Destroys the \ref memory_pool by returning all memory blocks,
-        /// regardless of properly deallocated back to the block allocator.
+        /// regardless of properly deallocated back to the \concept{concept_blockallocator,BlockAllocator}.
         ~memory_pool() FOONATHAN_NOEXCEPT = default;
 
         /// @{
@@ -88,7 +88,7 @@ namespace foonathan { namespace memory
         /// The new block size will be \ref next_capacity() big.
         /// \returns A node of size \ref node_size() suitable aligned,
         /// i.e. suitable for any type where <tt>sizeof(T) < node_size()</tt>.
-        /// \throws Anything thrown by the used block allocator's allocation function if a growth is needed.
+        /// \throws Anything thrown by the used \concept{concept_blockallocator,BlockAllocator}'s allocation function if a growth is needed.
         void* allocate_node()
         {
             if (free_list_.empty())
@@ -101,7 +101,7 @@ namespace foonathan { namespace memory
         /// Depending on the \c PoolType this can be a slow operation or not allowed at all.
         /// This can sometimes lead to a growth, even if technically there is enough continuous memory on the free list.
         /// \returns An array of \c n nodes of size \ref node_size() suitable aligned.
-        /// \throws Anything thrown by the used block allocator's allocation function if a growth is needed,
+        /// \throws Anything thrown by the used \concept{concept_blockallocator,BlockAllocator}'s allocation function if a growth is needed,
         /// or \ref bad_allocation_size if <tt>n * node_size()</tt> is too big.
         /// \requires The \c PoolType must support array allocations, otherwise the body of this function will not compile.
         /// \c n must be valid \concept{concept_array,array count}.
@@ -154,7 +154,7 @@ namespace foonathan { namespace memory
             return arena_.next_block_size();
         }
 
-        /// \returns A reference to the block allocator used for managing the arena.
+        /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
         /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {

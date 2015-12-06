@@ -54,7 +54,7 @@ namespace foonathan { namespace memory
     public:
         using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
 
-        /// \effects Creates it with a given initial block size and and other constructor arguments for the block allocator.
+        /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
         /// It will allocate the first block and sets the top to its beginning.
         template <typename ... Args>
         explicit memory_stack(std::size_t block_size,
@@ -68,10 +68,10 @@ namespace foonathan { namespace memory
         /// \effects Allocates a memory block of given size and alignment.
         /// It simply moves the top marker.
         /// If there is not enough space on the current memory block,
-        /// a new one will be allocated by the block allocator or taken from a cache
+        /// a new one will be allocated by the \concept{concept_blockallocator,BlockAllocator} or taken from a cache
         /// and used for the allocation.
         /// \returns A \concept{concept_node,node} with given size and alignment.
-        /// \throws Anything thrown by the block allocator on growth
+        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} on growth
         /// or \ref bad_allocation_size if \c size is too big.
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
@@ -133,7 +133,7 @@ namespace foonathan { namespace memory
             }
         }
 
-        /// \effects \ref unwind() does not actually do any deallocation of blocks on the block allocator,
+        /// \effects \ref unwind() does not actually do any deallocation of blocks on the \concept{concept_blockallocator,BlockAllocator},
         /// unused memory is stored in a cache for later reuse.
         /// This function clears that cache.
         void shrink_to_fit() FOONATHAN_NOEXCEPT
@@ -143,7 +143,7 @@ namespace foonathan { namespace memory
 
         /// \returns The amount of memory remaining in the current block.
         /// This is the number of bytes that are available for allocation
-        /// before the cache or block allocator needs to be used.
+        /// before the cache or \concept{concept_blockallocator,BlockAllocator} needs to be used.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(stack_.end() - stack_.top());
@@ -158,7 +158,7 @@ namespace foonathan { namespace memory
             return arena_.next_block_size();
         }
 
-        /// \returns A reference to the block allocator used for managing the arena.
+        /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
         /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {

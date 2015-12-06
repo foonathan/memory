@@ -33,7 +33,7 @@ namespace foonathan { namespace memory
     /// A stateful \concept{concept_rawallocator,RawAllocator} that uses a fixed sized storage for the allocations.
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
     /// Deallocations are not supported, memory cannot be marked as freed.<br>
-    /// Its main use is as a block allocator in memory arenas.
+    /// Its main use is as a \concept{concept_blockallocator,BlockAllocator} in memory arenas.
     /// Create a \ref static_allocator_storage of the block size of the arena onto the stack
     /// and pass it to the arena.
     /// This will create an arena of fixed size whose memory is created on the stack and which cannot grow.

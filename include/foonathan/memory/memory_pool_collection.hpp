@@ -59,7 +59,7 @@ namespace foonathan { namespace memory
         using bucket_distribution = BucketDistribution;
 
         /// \effects Creates it by giving it the maximum node size it should be able to allocate,
-        /// the size of the initial memory block and other constructor arguments for the block allocator.
+        /// the size of the initial memory block and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
         /// The \c BucketDistribution controls how many free lists are created,
         /// but unlike in \ref memory_pool all free lists are initially empty and the first memory block queued.
         /// \requires \c max_node_size must be a valid \concept{concept_node,node} size
@@ -74,7 +74,7 @@ namespace foonathan { namespace memory
         {}
 
         /// \effects Destroys the \ref memory_pool_collection by returning all memory blocks,
-        /// regardless of properly deallocated back to the block allocator.
+        /// regardless of properly deallocated back to the \concept{concept_blockallocator,BlockAllocator}.
         ~memory_pool_collection() FOONATHAN_NOEXCEPT = default;
 
         /// @{
@@ -103,12 +103,12 @@ namespace foonathan { namespace memory
         /// It first finds the appropriate free list as defined in the \c BucketDistribution.
         /// If it is empty, it will use an implementation defined amount of memory from the arena
         /// and inserts it in it.
-        /// If the arena is empty too, it will request a new memory block from the block allocator
+        /// If the arena is empty too, it will request a new memory block from the \concept{concept_blockallocator,BlockAllocator}
         /// of size \ref next_capacity() and puts part of it onto this free list.
         /// Then it removes a node from it.
         /// \returns A \concept{concept_node,node} of given size suitable aligned,
         /// i.e. suitable for any type where <tt>sizeof(T) < node_size</tt>.
-        /// \throws Anything thrown by the block allocator if a growth is needed.
+        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed.
         /// \requires \c node_size must be a valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
         void* allocate_node(std::size_t node_size)
         {
@@ -123,7 +123,7 @@ namespace foonathan { namespace memory
         /// This can sometimes lead to a growth on the free list, even if technically there is enough continuous memory on the free list.
         /// Otherwise has the same behavior as \ref allocate_node().
         /// \returns An array of \c n nodes of size \c node_size suitable aligned.
-        /// \throws Anything thrown by the used block allocator's allocation function if a growth is needed,
+        /// \throws Anything thrown by the used \concept{concept_blockallocator,BlockAllocator}'s allocation function if a growth is needed,
         /// or \ref bad_allocation_size if <tt>n * node_size()</tt> is too big.
         /// \requires The \c PoolType must support array allocations, otherwise the body of this function will not compile.
         /// \c count must be valid \concept{concept_array,array count} and
@@ -168,9 +168,9 @@ namespace foonathan { namespace memory
 
         /// \effects Inserts more memory on the free list for nodes of given size.
         /// It will try to put \c capacity bytes from the arena onto the free list defined over the \c BucketDistribution,
-        /// if the arena is empty, a new memory block is requested from the block allocator
+        /// if the arena is empty, a new memory block is requested from the \concept{concept_blockallocator,BlockAllocator}
         /// and it will be used.
-        /// \throws Anything thrown by the block allocator if a growth is needed.
+        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed.
         /// \requires \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size(),
         /// \c capacity must be less than \ref next_capacity().
         void reserve(std::size_t node_size, std::size_t capacity)
@@ -197,7 +197,7 @@ namespace foonathan { namespace memory
 
         /// \returns The amount of memory available in the arena not inside the free lists.
         /// This is the number of bytes that can be inserted into the free lists
-        /// without requesting more memory from the block allocator.
+        /// without requesting more memory from the \concept{concept_blockallocator,BlockAllocator}.
         /// \note Array allocations may lead to a growth even if the capacity is big enough.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
@@ -213,7 +213,7 @@ namespace foonathan { namespace memory
             return arena_.next_block_size();
         }
 
-        /// \returns A reference to the block allocator used for managing the arena.
+        /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
         /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
