@@ -9,6 +9,7 @@
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "debugging.hpp"
+#include "default_allocator.hpp"
 #include "error.hpp"
 
 namespace foonathan { namespace memory
@@ -205,7 +206,7 @@ namespace foonathan { namespace memory
         std::size_t no_used_, no_cached_;
     };
 
-    template <class RawAllocator>
+    template <class RawAllocator = default_allocator>
     class growing_block_allocator
     : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
@@ -258,6 +259,36 @@ namespace foonathan { namespace memory
         std::size_t block_size_;
         float growth_factor_;
     };
+
+    namespace detail
+    {
+        template <class BlockAlloc, typename ... Args>
+        BlockAlloc make_block_allocator(int,
+            decltype(std::declval<BlockAlloc>().allocate_block(), std::size_t()) block_size,
+            Args&&... args)
+        {
+            return BlockAlloc(block_size, detail::forward<Args>(args)...);
+        }
+
+        template <class RawAlloc>
+        growing_block_allocator<RawAlloc> make_block_allocator(short,
+            std::size_t block_size, RawAlloc alloc = RawAlloc(), float fac = 2.f,
+            FOONATHAN_SFINAE(std::declval<RawAlloc>().allocate_node(1, 1)))
+        {
+            return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc), fac);
+        }
+    } // namespace detail
+
+    template <class BlockOrRawAllocator>
+    using make_block_allocator_t
+        = decltype(detail::make_block_allocator<BlockOrRawAllocator>(0,
+                        0, std::declval<BlockOrRawAllocator>()));
+
+    template <class BlockOrRawAllocator, typename ... Args>
+    make_block_allocator_t<BlockOrRawAllocator> make_block_allocator(std::size_t block_size, Args&&... args)
+    {
+        return detail::make_block_allocator(0, block_size, detail::forward<Args>(args)...);
+    }
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED

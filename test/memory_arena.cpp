@@ -174,3 +174,10 @@ TEST_CASE("memory_arena", "[arena]")
     REQUIRE(arena.size() == 1u);
     REQUIRE(arena.capacity() == 1u);
 }
+
+static_assert(std::is_same<growing_block_allocator<>,
+                           foonathan::memory::make_block_allocator_t<growing_block_allocator<>>
+                          >::value, "");
+static_assert(std::is_same<growing_block_allocator<>,
+                           foonathan::memory::make_block_allocator_t<default_allocator>
+                          >::value, "");
