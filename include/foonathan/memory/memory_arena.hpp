@@ -111,7 +111,7 @@ namespace foonathan { namespace memory
 
         memory_arena(memory_arena &&other) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(other)),
-          used_(detail::move(other)), cached_(detail::move(other)),
+          used_(detail::move(other.used_)), cached_(detail::move(other.cached_)),
           no_used_(other.no_used_), no_cached_(other.no_cached_)
         {
             other.no_used_ = other.no_cached_ = 0;
@@ -155,6 +155,11 @@ namespace foonathan { namespace memory
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
             return block;
+        }
+
+        memory_block current_block() const FOONATHAN_NOEXCEPT
+        {
+            return used_.top();
         }
 
         void deallocate_block() FOONATHAN_NOEXCEPT
