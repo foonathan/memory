@@ -26,6 +26,11 @@ namespace foonathan { namespace memory
         : memory_block(begin, static_cast<char*>(end) - static_cast<char*>(begin)) {}
     };
 
+#if !defined(DOXYGEN)
+    template <class BlockAllocator>
+    class memory_arena;
+#endif
+
     namespace detail
     {
         // stores memory block in an intrusive linked list and allows LIFO access
@@ -82,11 +87,16 @@ namespace foonathan { namespace memory
             struct node;
             node *head_;
         };
+
+        template <class BlockAllocator>
+        using is_nested_arena = is_instantiation_of<memory_arena, BlockAllocator>;
     } // namespace detail
 
     template <class BlockAllocator>
     class memory_arena : FOONATHAN_EBO(BlockAllocator)
     {
+        static_assert(!is_nested_arena<BlockAllocator>::value,
+                      "memory_arena must not be instantiated with itself");
     public:
         using allocator_type = BlockAllocator;
 
