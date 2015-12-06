@@ -7,6 +7,7 @@
 
 #include "detail/utility.hpp"
 #include "config.hpp"
+#include "debugging.hpp"
 #include "error.hpp"
 
 namespace foonathan { namespace memory
@@ -148,13 +149,17 @@ namespace foonathan { namespace memory
                 --no_cached_;
             }
             ++no_used_;
-            return used_.top();
+            auto block = used_.top();
+            detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
+            return block;
         }
 
         void deallocate_block() FOONATHAN_NOEXCEPT
         {
             --no_used_;
             ++no_cached_;
+            auto block = used_.top();
+            detail::debug_fill(block.memory, block.size, debug_magic::internal_freed_memory);
             cached_.steal_top(used_);
         }
 

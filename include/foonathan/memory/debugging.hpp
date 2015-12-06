@@ -27,6 +27,8 @@ namespace foonathan { namespace memory
     {
         /// Marks internal memory used by the allocator - "allocated block".
         internal_memory = 0xAB,
+        /// Marks internal memory currently not used by the allocator - "freed block".
+        internal_freed_memory = 0xFB,
         /// Marks allocated, but not yet used memory - "clean memory".
         new_memory = 0xCD,
         /// Marks freed memory - "dead memory".
