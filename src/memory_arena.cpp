@@ -7,7 +7,6 @@
 #include <new>
 
 #include "detail/align.hpp"
-#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;

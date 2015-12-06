@@ -99,3 +99,77 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
         REQUIRE(block.memory == static_cast<void*>(&b));
     }
 }
+
+template <std::size_t N>
+struct test_block_allocator
+{
+    static_allocator_storage<1024> blocks[N];
+    std::size_t i = 0;
+
+    ~test_block_allocator()
+    {
+        REQUIRE(i == 0u);
+    }
+
+    memory_block allocate_block()
+    {
+        REQUIRE(i < N);
+        return {&blocks[i++], 1024};
+    }
+
+    void deallocate_block(memory_block b)
+    {
+        REQUIRE(static_cast<void*>(&blocks[i - 1]) == b.memory);
+        --i;
+    }
+
+    std::size_t next_block_size() const
+    {
+        return 1024;
+    }
+};
+
+TEST_CASE("memory_arena", "[arena]")
+{
+    test_block_allocator<10> alloc;
+    memory_arena<decltype(alloc)> arena(alloc);
+    REQUIRE(arena.get_allocator().i == 0u);
+    REQUIRE(arena.size() == 0u);
+    REQUIRE(arena.capacity() == 0u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 1u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 1u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 2u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.deallocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 2u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.deallocate_block();
+    arena.deallocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 0u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.shrink_to_fit();
+    REQUIRE(arena.get_allocator().i == 0u);
+    REQUIRE(arena.size() == 0u);
+    REQUIRE(arena.capacity() == 0u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 1u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 1u);
+}
