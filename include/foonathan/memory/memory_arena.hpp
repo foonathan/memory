@@ -6,6 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED
 
 #include "detail/utility.hpp"
+#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
@@ -96,7 +97,7 @@ namespace foonathan { namespace memory
     template <class BlockAllocator>
     class memory_arena : FOONATHAN_EBO(BlockAllocator)
     {
-        static_assert(!is_nested_arena<BlockAllocator>::value,
+        static_assert(!detail::is_nested_arena<BlockAllocator>::value,
                       "memory_arena must not be instantiated with itself");
     public:
         using allocator_type = BlockAllocator;
@@ -201,6 +202,60 @@ namespace foonathan { namespace memory
     private:
         detail::memory_block_stack used_, cached_;
         std::size_t no_used_, no_cached_;
+    };
+
+    template <class RawAllocator>
+    class growing_block_allocator
+    : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
+    {
+        using traits = allocator_traits<RawAllocator>;
+    public:
+        using allocator_type = typename traits::allocator_type;
+
+        growing_block_allocator(std::size_t block_size,
+                                allocator_type alloc = allocator_type(),
+                                float growth_factor = 2.f) FOONATHAN_NOEXCEPT
+        : allocator_type(detail::move(alloc)),
+          block_size_(block_size), growth_factor_(growth_factor) {}
+
+        memory_block allocate_block()
+        {
+            auto memory = traits::allocate_array(get_allocator(), block_size_,
+                                                 1, detail::max_alignment);
+            memory_block block(memory, block_size_);
+            block_size_ *= growth_factor_;
+            return block;
+        }
+
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+        {
+            traits::deallocate_array(get_allocator(), block.memory,
+                                    block.size, 1, detail::max_alignment);
+        }
+
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return block_size_;
+        }
+
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        float growth_factor() const FOONATHAN_NOEXCEPT
+        {
+            return growth_factor_;
+        }
+
+        void set_growth_factor(float f) FOONATHAN_NOEXCEPT
+        {
+            growth_factor_ = f;
+        }
+
+    private:
+        std::size_t block_size_;
+        float growth_factor_;
     };
 }} // namespace foonathan::memory
 
