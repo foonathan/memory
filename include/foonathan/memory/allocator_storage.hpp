@@ -62,7 +62,7 @@ namespace foonathan { namespace memory
         /// otherwise this constructor does not participate in overload resolution.
         template <class Alloc,
             // MSVC seems to ignore access rights in SFINAE below
-            // use this to prevent this constructor being chosen instead of move for types inheriting from it, e.g. detail::block_list
+            // use this to prevent this constructor being chosen instead of move for types inheriting from it
             FOONATHAN_REQUIRES((!std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value))>
         allocator_storage(Alloc &&alloc,
             FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))

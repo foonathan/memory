@@ -7,7 +7,6 @@
 set(header_path ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 set(header
         ${header_path}/detail/align.hpp
-        ${header_path}/detail/block_list.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/memory_stack.hpp
@@ -40,7 +39,6 @@ set(header
         ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
-        detail/block_list.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
         detail/memory_stack.cpp

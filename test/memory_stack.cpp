@@ -16,15 +16,14 @@ TEST_CASE("memory_stack", "[stack]")
     test_allocator alloc;
     memory_stack<allocator_reference<test_allocator>> stack(100, alloc);
     REQUIRE(alloc.no_allocated() == 1u);
-    REQUIRE(stack.capacity() == 100 - detail::block_list_impl::impl_offset());
+    REQUIRE(stack.capacity() <= 100);
     auto capacity = stack.capacity();
 
     SECTION("empty unwind")
     {
         auto m = stack.top();
         stack.unwind(m);
-        REQUIRE(capacity ==
-                100 - detail::block_list_impl::impl_offset());
+        REQUIRE(capacity <= 100);
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }

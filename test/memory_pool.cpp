@@ -14,7 +14,7 @@
 
 using namespace foonathan::memory;
 
-// don't test actual node allocationg, but the connection between block_list and the implementation
+// don't test actual node allocationg, but the connection between arena and the implementation
 // so only  test for memory_pool<node_pool>
 TEST_CASE("memory_pool", "[pool]")
 {
@@ -25,7 +25,6 @@ TEST_CASE("memory_pool", "[pool]")
         REQUIRE(pool.node_size() >= 4u);
         REQUIRE(pool.capacity() <= 100u);
         REQUIRE(pool.next_capacity() >= 100u);
-        REQUIRE(&pool.get_allocator().get_allocator() == &alloc);
         REQUIRE(alloc.no_allocated() == 1u);
 
         SECTION("normal alloc/dealloc")
