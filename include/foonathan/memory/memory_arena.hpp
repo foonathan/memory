@@ -334,6 +334,72 @@ namespace foonathan { namespace memory
         float growth_factor_;
     };
 
+    /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
+    /// It can be used to prevent higher-level allocators from expanding.
+    /// The one block allocation is performed through the \c allocate_array() function of the given \concept{concept_rawallocator,RawAllocator}.
+    /// \ingroup memory
+    template <class RawAllocator = default_allocator>
+    class fixed_block_allocator
+    : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
+    {
+        using traits = allocator_traits<RawAllocator>;
+    public:
+        using allocator_type = typename traits::allocator_type;
+
+        /// \effects Creates it by passing it the size of the block and the allocator object.
+        /// \requires \c block_size must be greater than 0,
+        explicit fixed_block_allocator(std::size_t block_size,
+                                      allocator_type alloc = allocator_type()) FOONATHAN_NOEXCEPT
+        : allocator_type(detail::move(alloc)),
+          block_size_(block_size), first_(true)
+        {}
+
+        /// \effects Allocates a new memory block or throws an exception if there was already one allocation.
+        /// \returns The new \ref memory_block.
+        /// \throws Anything thrown by the \c allocate_array() function of the \concept{concept_rawallocator,RawAllocator} or \ref out_of_memory() if this is not the first call.
+        memory_block allocate_block()
+        {
+            if (first_)
+            {
+                auto mem = traits::allocate_array(get_allocator(), block_size_,
+                                                  1, detail::max_alignment);
+                first_ = false;
+                return {mem, block_size_};
+            }
+            FOONATHAN_THROW(out_of_memory(info(), block_size_));
+        }
+
+        /// \effects Deallocates the previously allocated memory block.
+        /// It also resets and allows a new call again.
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+        {
+            detail::check_pointer(!first_, info(), block.memory);
+            traits::deallocate_array(get_allocator(), block.memory,
+                                     block.size, 1, detail::max_alignment);
+            first_ = true;
+        }
+
+        /// \returns The size of the next block which is either the initial size or \c 0.
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return first_ ? block_size_ : 0u;
+        }
+
+        /// \returns A reference to the used \concept{concept_rawallocator,RawAllocator} object.
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+    private:
+        allocator_info info() const FOONATHAN_NOEXCEPT
+        {
+            return {FOONATHAN_MEMORY_LOG_PREFIX "::fixed_block_allocator", this};
+        }
+
+        std::size_t block_size_;
+        bool first_;
+    };
     namespace detail
     {
         template <class BlockAlloc, typename ... Args>
