@@ -106,6 +106,8 @@ struct test_block_allocator
     static_allocator_storage<1024> blocks[N];
     std::size_t i = 0;
 
+    test_block_allocator(std::size_t) {}
+
     ~test_block_allocator()
     {
         REQUIRE(i == 0u);
@@ -131,8 +133,7 @@ struct test_block_allocator
 
 TEST_CASE("memory_arena", "[arena]")
 {
-    test_block_allocator<10> alloc;
-    memory_arena<decltype(alloc)> arena(alloc);
+    memory_arena<test_block_allocator<10>> arena(1024);
     REQUIRE(arena.get_allocator().i == 0u);
     REQUIRE(arena.size() == 0u);
     REQUIRE(arena.capacity() == 0u);

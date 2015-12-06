@@ -102,8 +102,9 @@ namespace foonathan { namespace memory
     public:
         using allocator_type = BlockAllocator;
 
-        explicit memory_arena(allocator_type allocator = allocator_type{}) FOONATHAN_NOEXCEPT
-        : allocator_type(detail::move(allocator)),
+        template <typename ... Args>
+        explicit memory_arena(std::size_t block_size, Args&&... args) FOONATHAN_NOEXCEPT
+        : allocator_type(block_size, detail::forward<Args>(args)...),
           no_used_(0u), no_cached_(0u)
         {}
 
