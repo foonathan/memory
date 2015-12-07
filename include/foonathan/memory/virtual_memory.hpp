@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015 Jonathan MÃ¼ller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,7 +8,9 @@
 #include <cstddef>
 #include <type_traits>
 
+#include "detail/utility.hpp"
 #include "config.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -95,6 +97,91 @@ namespace foonathan { namespace memory
 
         /// \returns The maximum alignment which is the same as the \ref virtual_memory_page_size.
         std::size_t max_alignment() const FOONATHAN_NOEXCEPT;
+    };
+
+    struct memory_block;
+    struct allocator_info;
+
+    /// A \concept{concept_blockallocator,BlockAllocator} that reserves virtual memory and commits it part by part.
+    /// It is similar to \ref memory_stack but does not support growing and uses virtual memory,
+    /// also meant for big blocks not small allocations.
+    /// \ingroup memory
+    class virtual_block_allocator
+    {
+    public:
+        /// \effects Creates it giving it the block size and the total number of blocks it can allocate.
+        /// It reserves enough virtual memory for <tt>block_size * no_blocks</tt>.
+        /// \requires \c block_size must be non-zero and a multiple of the \ref virtual_memory_page_size.
+        /// \c no_blocks must be bigger than \c 1.
+        /// \throws \ref out_of_memory if it cannot reserve the virtual memory.
+        explicit virtual_block_allocator(std::size_t block_size, std::size_t no_blocks);
+
+        /// \effects Releases the reserved virtual memory.
+        ~virtual_block_allocator() FOONATHAN_NOEXCEPT;
+
+        /// @{
+        /// \effects Moves the block allocator, it transfers ownership over the reserved area.
+        /// This does not invalidate any memory blocks.
+        virtual_block_allocator(virtual_block_allocator &&other) FOONATHAN_NOEXCEPT
+        : begin_(other.begin_), cur_(other.cur_), end_(other.end_),
+          block_size_(other.block_size_)
+        {
+            other.begin_ = other.cur_ = other.end_ = nullptr;
+            other.block_size_ = 0;
+        }
+
+        virtual_block_allocator& operator=(virtual_block_allocator &&other) FOONATHAN_NOEXCEPT
+        {
+            virtual_block_allocator tmp(detail::move(other));
+            swap(*this, tmp);
+            return *this;
+        }
+        /// @}
+
+        /// \effects Swaps the ownership over the reserved memory.
+        /// This does not invalidate any memory blocks.
+        friend void swap(virtual_block_allocator &a, virtual_block_allocator &b) FOONATHAN_NOEXCEPT
+        {
+            detail::adl_swap(a.begin_, b.begin_);
+            detail::adl_swap(a.cur_, b.cur_);
+            detail::adl_swap(a.end_, b.end_);
+            detail::adl_swap(a.block_size_, b.block_size_);
+        }
+
+        /// \effects Allocates a new memory block by committing the next \ref next_block_size() number of bytes.
+        /// \returns The \ref memory_block committed.
+        /// \throws \ref out_of_memory if it cannot commit the memory or the \ref capacity() is exhausted.
+        memory_block allocate_block();
+
+        /// \effects Deallocates the last allocated memory block by decommitting it.
+        /// This block will be returned again on the next call to \ref allocate_block().
+        /// \requires \c block must be the current top block of the memory,
+        /// this is guaranteed by \ref memory_arena.
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT;
+
+        /// \returns The next block size, this is the block size of the constructor.
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return block_size_;
+        }
+
+        /// \returns The number of blocks already committed.
+        std::size_t size() const FOONATHAN_NOEXCEPT
+        {
+            return (cur_ - begin_) / block_size_;
+        }
+
+        /// \returns The number of total blocks that can be committed.
+        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        {
+            return (end_ - begin_) / block_size_;
+        }
+
+    private:
+        allocator_info info() FOONATHAN_NOEXCEPT;
+
+        char *begin_, *cur_, *end_;
+        std::size_t block_size_;
     };
 }} // namespace foonathan::memory
 

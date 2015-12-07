@@ -6,6 +6,7 @@
 
 #include "debugging.hpp"
 #include "error.hpp"
+#include "memory_arena.hpp"
 
 using namespace foonathan::memory;
 
@@ -48,7 +49,7 @@ using namespace foonathan::memory;
 #if defined(_WIN32)
     #include <windows.h>
 
-namespace
+    namespace
     {
         std::size_t get_page_size() FOONATHAN_NOEXCEPT
         {
@@ -190,4 +191,51 @@ std::size_t virtual_memory_allocator::max_node_size() const FOONATHAN_NOEXCEPT
 std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
 {
     return virtual_memory_page_size;
+}
+
+virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::size_t no_blocks)
+: block_size_(block_size)
+{
+    FOONATHAN_MEMORY_ASSERT(block_size % virtual_memory_page_size == 0u);
+    FOONATHAN_MEMORY_ASSERT(no_blocks > 0);
+    auto total_size = block_size_ * no_blocks;
+    auto no_pages = total_size / virtual_memory_page_size;
+
+    begin_ = static_cast<char*>(virtual_memory_reserve(no_pages));
+    if (!begin_)
+        FOONATHAN_THROW(out_of_memory(info(), total_size));
+    cur_ = begin_;
+    end_ = begin_ + total_size;
+}
+
+virtual_block_allocator::~virtual_block_allocator() FOONATHAN_NOEXCEPT
+{
+    virtual_memory_release(begin_, (end_ - begin_) / virtual_memory_page_size);
+#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    if (cur_ != begin_)
+        get_leak_handler()(info(), cur_ - begin_);
+#endif
+}
+
+memory_block virtual_block_allocator::allocate_block()
+{
+    if (end_ - cur_ < block_size_)
+        FOONATHAN_THROW(out_of_memory(info(), block_size_));
+    auto mem = virtual_memory_commit(cur_, block_size_ / virtual_memory_page_size);
+    if (!mem)
+        FOONATHAN_THROW(out_of_memory(info(), block_size_));
+    cur_ += block_size_;
+    return {mem, block_size_};
+}
+
+void virtual_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+{
+    detail::check_pointer(static_cast<char*>(block.memory) == cur_ - block_size_, info(), block.memory);
+    cur_ -= block_size_;
+    virtual_memory_decommit(cur_, block_size_);
+}
+
+allocator_info virtual_block_allocator::info() FOONATHAN_NOEXCEPT
+{
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::virtual_block_allocator", this};
 }
