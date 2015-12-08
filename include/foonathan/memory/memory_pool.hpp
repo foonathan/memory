@@ -196,7 +196,7 @@ namespace foonathan { namespace memory
             free_list_.deallocate(ptr, n * node_size);
         }
 
-        memory_arena<allocator_type> arena_;
+        memory_arena<allocator_type, false> arena_;
         free_list free_list_;
 
         friend allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;

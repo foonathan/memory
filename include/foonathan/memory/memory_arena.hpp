@@ -39,7 +39,7 @@ namespace foonathan { namespace memory
     };
 
 #if !defined(DOXYGEN)
-    template <class BlockAllocator>
+    template <class BlockAllocator, bool Cached = true>
     class memory_arena;
 #endif
 
@@ -103,8 +103,81 @@ namespace foonathan { namespace memory
             node *head_;
         };
 
-        template <class BlockAllocator>
-        using is_nested_arena = is_instantiation_of<memory_arena, BlockAllocator>;
+        template <bool Cached>
+        class memory_arena_cache;
+
+        template <>
+        class memory_arena_cache<true>
+        {
+        protected:
+            bool empty() const FOONATHAN_NOEXCEPT
+            {
+                return cached_.empty();
+            }
+
+            bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
+            {
+                if (cached_.empty())
+                    return false;
+                used.steal_top(cached_);
+                return true;
+            }
+
+            template <class BlockAllocator>
+            void do_deallocate_block(BlockAllocator &, detail::memory_block_stack &used,
+                                  std::size_t &) FOONATHAN_NOEXCEPT
+            {
+                cached_.steal_top(used);
+            }
+
+            template <class BlockAllocator>
+            void do_shrink_to_fit(BlockAllocator &alloc, std::size_t &no) FOONATHAN_NOEXCEPT
+            {
+                detail::memory_block_stack to_dealloc;
+                // pop from cache and push to temporary stack
+                // this revers order
+                while (!cached_.empty())
+                    to_dealloc.steal_top(cached_);
+                // now dealloc everything
+                while (!to_dealloc.empty())
+                {
+                    alloc.deallocate_block(to_dealloc.pop());
+                    --no;
+                }
+            }
+
+        private:
+            detail::memory_block_stack cached_;
+        };
+
+        template <>
+        class memory_arena_cache<false>
+        {
+        protected:
+            bool empty() const FOONATHAN_NOEXCEPT
+            {
+                return true;
+            }
+
+            bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
+            {
+                return false;
+            }
+
+            template <class BlockAllocator>
+            void do_deallocate_block(BlockAllocator &alloc, detail::memory_block_stack &used,
+                                  std::size_t &no) FOONATHAN_NOEXCEPT
+            {
+                alloc.deallocate_block(used.pop());
+                --no;
+            }
+
+            template <class BlockAllocator>
+            void do_shrink_to_fit(BlockAllocator &, std::size_t &) FOONATHAN_NOEXCEPT
+            {
+
+            }
+        };
     } // namespace detail
 
     /// A memory arena that manages huge memory blocks for a higher-level allocator.
@@ -113,14 +186,17 @@ namespace foonathan { namespace memory
     /// It uses a \concept{concept_blockallocator,BlockAllocator} for the allocation of those blocks.
     /// The memory blocks in use are put onto a stack like structure, deallocation will pop from the top,
     /// so it is only possible to deallocate the last allocated block of the arena.
+    /// By default, blocks are not really deallocated but stored in a cache.
+    /// This can be disabled with the second template parameter.
     /// \ingroup memory
-    template <class BlockAllocator>
-    class memory_arena : FOONATHAN_EBO(BlockAllocator)
+    template <class BlockAllocator, bool Cached /* = true */>
+    class memory_arena
+    : FOONATHAN_EBO(BlockAllocator), FOONATHAN_EBO(detail::memory_arena_cache<Cached>)
     {
-        static_assert(!detail::is_nested_arena<BlockAllocator>::value,
-                      "memory_arena must not be instantiated with itself");
+        using cache = detail::memory_arena_cache<Cached>;
     public:
         using allocator_type = BlockAllocator;
+        using is_cached = std::integral_constant<bool, Cached>;
 
         /// \effects Creates it by giving it the size and other arguments for the \concept{concept_blockallocator,BlockAllocator}.
         /// It forwards these arguments to its constructor.
@@ -128,15 +204,15 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the constructor of the \c BlockAllocator.
         template <typename ... Args>
         explicit memory_arena(std::size_t block_size, Args&&... args)
-        : allocator_type(block_size, detail::forward<Args>(args)...),          no_allocated_(0u)
+        : allocator_type(block_size, detail::forward<Args>(args)...),
+          no_allocated_(0u)
         {}
 
         /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.
         ~memory_arena() FOONATHAN_NOEXCEPT
         {
-            // push all cached to used_ to reverse order
-            while (!cached_.empty())
-                used_.steal_top(cached_);
+            // clear cache
+            shrink_to_fit();
             // now deallocate everything
             while (!used_.empty())
                 allocator_type::deallocate_block(used_.pop());
@@ -149,7 +225,8 @@ namespace foonathan { namespace memory
         /// This does not invalidate any memory blocks.
         memory_arena(memory_arena &&other) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(other)),
-          used_(detail::move(other.used_)), cached_(detail::move(other.cached_)),
+          cache(detail::move(other)),
+          used_(detail::move(other.used_)),
           no_allocated_(other.no_allocated_)
         {
             other.no_allocated_ = 0;
@@ -167,25 +244,25 @@ namespace foonathan { namespace memory
         /// This does not invalidate any memory blocks.
         friend void swap(memory_arena &a, memory_arena &b) FOONATHAN_NOEXCEPT
         {
+            detail::adl_swap(static_cast<allocator_type&>(a), static_cast<allocator_type&>(b));
+            detail::adl_swap(static_cast<cache&>(a), static_cast<cache&>(b));
             detail::adl_swap(a.used_, b.used_);
             detail::adl_swap(a.cached_, b.cached_);
             detail::adl_swap(a.no_allocated_, b.no_allocated_);
         }
 
         /// \effects Allocates a new memory block.
-        /// It first uses a cache of previously deallocated blocks,
+        /// It first uses a cache of previously deallocated blocks, if caching is enabled,
         /// if it is empty, allocates a new one.
         /// \returns The new \ref memory_block.
         /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} allocation function.
         memory_block allocate_block()
         {
-            if (cached_.empty())
+            if (!this->take_from_cache(used_))
             {
                 used_.push(allocator_type::allocate_block());
                 ++no_allocated_;
             }
-            else
-                used_.steal_top(cached_);
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
             return block;
@@ -200,30 +277,21 @@ namespace foonathan { namespace memory
 
         /// \effects Deallocates the current memory block.
         /// The current memory block is the block on top of the stack of blocks.
-        /// It does not really deallocate it but puts it onto a cache for later use,
+        /// If caching is enabled, it does not really deallocate it but puts it onto a cache for later use,
         /// use \ref shrink_to_fit() to purge that cache.
         void deallocate_block() FOONATHAN_NOEXCEPT
         {
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_freed_memory);
-            cached_.steal_top(used_);
+            this->do_deallocate_block(get_allocator(), used_, no_allocated_);
         }
 
         /// \effects Purges the cache of unused memory blocks by returning them.
         /// The memory blocks will be deallocated in reversed order of allocation.
+        /// Does nothing if caching is disabled.
         void shrink_to_fit() FOONATHAN_NOEXCEPT
         {
-            detail::memory_block_stack to_dealloc;
-            // pop from cache and push to temporary stack
-            // this revers order
-            while (!cached_.empty())
-                to_dealloc.steal_top(cached_);
-            // now dealloc everything
-            while (!to_dealloc.empty())
-            {
-                allocator_type::deallocate_block(to_dealloc.pop());
-                --no_allocated_;
-            }
+            this->do_shrink_to_fit(get_allocator(), no_allocated_);
         }
 
         /// \returns The capacity_left of the arena, i.e. how many blocks are used and cached.
@@ -236,7 +304,7 @@ namespace foonathan { namespace memory
         /// It is always smaller or equal to the \ref capacity_left().
         std::size_t size() const FOONATHAN_NOEXCEPT
         {
-            return cached_.empty() ? no_allocated_ : used_.size();
+            return this->empty() ? no_allocated_ : used_.size();
         }
 
         /// \returns The size of the next memory block,
@@ -255,7 +323,7 @@ namespace foonathan { namespace memory
         }
 
     private:
-        detail::memory_block_stack used_, cached_;
+        detail::memory_block_stack used_;
         std::size_t no_allocated_;
     };
 

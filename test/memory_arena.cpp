@@ -131,7 +131,7 @@ struct test_block_allocator
     }
 };
 
-TEST_CASE("memory_arena", "[arena]")
+TEST_CASE("memory_arena w/ caching", "[arena]")
 {
     memory_arena<test_block_allocator<10>> arena(1024);
     REQUIRE(arena.get_allocator().i == 0u);
@@ -165,6 +165,45 @@ TEST_CASE("memory_arena", "[arena]")
     REQUIRE(arena.capacity() == 2u);
 
     arena.shrink_to_fit();
+    REQUIRE(arena.get_allocator().i == 0u);
+    REQUIRE(arena.size() == 0u);
+    REQUIRE(arena.capacity() == 0u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 1u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 1u);
+}
+
+TEST_CASE("memory_arena w/o caching", "[arena]")
+{
+    memory_arena<test_block_allocator<10>, false> arena(1024);
+    REQUIRE(arena.get_allocator().i == 0u);
+    REQUIRE(arena.size() == 0u);
+    REQUIRE(arena.capacity() == 0u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 1u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 1u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 2u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.deallocate_block();
+    REQUIRE(arena.get_allocator().i == 1u);
+    REQUIRE(arena.size() == 1u);
+    REQUIRE(arena.capacity() == 1u);
+
+    arena.allocate_block();
+    REQUIRE(arena.get_allocator().i == 2u);
+    REQUIRE(arena.size() == 2u);
+    REQUIRE(arena.capacity() == 2u);
+
+    arena.deallocate_block();
+    arena.deallocate_block();
     REQUIRE(arena.get_allocator().i == 0u);
     REQUIRE(arena.size() == 0u);
     REQUIRE(arena.capacity() == 0u);

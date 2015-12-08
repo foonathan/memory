@@ -269,7 +269,7 @@ namespace foonathan { namespace memory
             pool.insert(mem, capacity);
         }
 
-        memory_arena<allocator_type> arena_;
+        memory_arena<allocator_type, false> arena_;
         detail::fixed_memory_stack stack_;
         free_list_array pools_;
     };
