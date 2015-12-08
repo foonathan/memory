@@ -164,7 +164,7 @@ namespace foonathan { namespace memory
                 return 0u;
             }
 
-            bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
+            bool take_from_cache(detail::memory_block_stack &) FOONATHAN_NOEXCEPT
             {
                 return false;
             }
@@ -360,7 +360,7 @@ namespace foonathan { namespace memory
             auto memory = traits::allocate_array(get_allocator(), block_size_,
                                                  1, detail::max_alignment);
             memory_block block(memory, block_size_);
-            block_size_ *= growth_factor();
+            block_size_ = std::size_t(block_size_ * growth_factor());
             return block;
         }
 
@@ -474,8 +474,7 @@ namespace foonathan { namespace memory
 
         template <class RawAlloc>
         growing_block_allocator<RawAlloc> make_block_allocator(short,
-            std::size_t block_size, RawAlloc alloc = RawAlloc(),
-            FOONATHAN_SFINAE(std::declval<RawAlloc>().allocate_node(1, 1)))
+            std::size_t block_size, RawAlloc alloc = RawAlloc())
         {
             return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc));
         }
