@@ -50,7 +50,7 @@ namespace foonathan { namespace memory
         /// i.e. the object must not have been passed to a constructor before.
         template <std::size_t Size>
         static_allocator(static_allocator_storage<Size> &storage) FOONATHAN_NOEXCEPT
-        : stack_(&storage, Size) {}
+        : stack_(&storage), end_(stack_.top() + Size) {}
 
         /// \effects A \concept{concept_rawallocator,RawAllocator} allocation function.
         /// It uses the specified \ref static_allocator_storage.
@@ -65,7 +65,7 @@ namespace foonathan { namespace memory
         /// \returns The maximum node size which is the capacity remaining inside the \ref static_allocator_storage.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT
         {
-            return stack_.end() - stack_.top();
+            return end_ - stack_.top();
         }
 
         /// \returns The maximum possible value since there is no alignment restriction
@@ -79,6 +79,7 @@ namespace foonathan { namespace memory
         allocator_info info() const FOONATHAN_NOEXCEPT;
 
         detail::fixed_memory_stack stack_;
+        const char *end_;
     };
 
     struct memory_block;

@@ -32,8 +32,8 @@ namespace foonathan { namespace memory
             char *top;
             const char *end;
 
-            stack_marker(std::size_t i, const detail::fixed_memory_stack &s) FOONATHAN_NOEXCEPT
-            : index(i), top(s.top()), end(s.end()) {}
+            stack_marker(std::size_t i, const detail::fixed_memory_stack &s, const char *end) FOONATHAN_NOEXCEPT
+            : index(i), top(s.top()), end(end) {}
 
             template <class Impl>
             friend class memory::memory_stack;
@@ -77,11 +77,11 @@ namespace foonathan { namespace memory
         void* allocate(std::size_t size, std::size_t alignment)
         {
             detail::check_allocation_size(size, next_capacity(), info());
-            auto mem = stack_.allocate(size, alignment);
+            auto mem = stack_.allocate(block_end(), size, alignment);
             if (!mem)
             {
                 allocate_block();
-                mem = stack_.allocate(size, alignment);
+                mem = stack_.allocate(block_end(), size, alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
             }
             return mem;
@@ -95,7 +95,7 @@ namespace foonathan { namespace memory
         /// \returns A marker to the current top of the stack.
         marker top() const FOONATHAN_NOEXCEPT
         {
-            return {arena_.size() - 1, stack_};
+            return {arena_.size() - 1, stack_, block_end()};
         }
 
         /// \effects Unwinds the stack to a certain marker position.
@@ -124,7 +124,7 @@ namespace foonathan { namespace memory
 
                 // mark memory from new top to end of the block as freed
                 detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
-                stack_ = {m.top, m.end};
+                stack_ = detail::fixed_memory_stack(m.top);
             }
             else // same index
             {
@@ -146,7 +146,7 @@ namespace foonathan { namespace memory
         /// before the cache or \concept{concept_blockallocator,BlockAllocator} needs to be used.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            return std::size_t(stack_.end() - stack_.top());
+            return std::size_t(block_end() - stack_.top());
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
@@ -173,8 +173,13 @@ namespace foonathan { namespace memory
 
         void allocate_block()
         {
-            auto block = arena_.allocate_block();
-            stack_ = detail::fixed_memory_stack(block.memory, block.size);
+            stack_ = detail::fixed_memory_stack(arena_.allocate_block().memory);
+        }
+
+        const char* block_end() const FOONATHAN_NOEXCEPT
+        {
+            auto block = arena_.current_block();
+            return static_cast<const char*>(block.memory) + block.size;
         }
 
         memory_arena<allocator_type> arena_;

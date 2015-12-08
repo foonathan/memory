@@ -70,7 +70,7 @@ namespace foonathan { namespace memory
         : leak_checker(info().name),
           arena_(block_size, detail::forward<Args>(args)...),
           stack_(allocate_block()),
-          pools_(stack_, max_node_size)
+          pools_(stack_, block_end(), max_node_size)
         {}
 
         /// \effects Destroys the \ref memory_pool_collection by returning all memory blocks,
@@ -201,7 +201,7 @@ namespace foonathan { namespace memory
         /// \note Array allocations may lead to a growth even if the capacity is big enough.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            return std::size_t(stack_.end() - stack_.top());
+            return std::size_t(block_end() - stack_.top());
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
@@ -233,17 +233,22 @@ namespace foonathan { namespace memory
 
         detail::fixed_memory_stack allocate_block()
         {
-            auto block = arena_.allocate_block();
-            return detail::fixed_memory_stack(block.memory, block.size);
+            return detail::fixed_memory_stack(arena_.allocate_block().memory);
+        }
+
+        const char* block_end() const FOONATHAN_NOEXCEPT
+        {
+            auto block = arena_.current_block();
+            return static_cast<const char*>(block.memory) + block.size;
         }
 
         void reserve_impl(typename pool_type::type &pool, std::size_t capacity)
         {
-            auto mem = stack_.allocate(capacity, detail::max_alignment);
+            auto mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
             if (!mem)
             {
                 // insert rest
-                if (auto remaining = std::size_t(stack_.end() - stack_.top()))
+                if (auto remaining = std::size_t(block_end() - stack_.top()))
                 {
                     auto offset = detail::align_offset(stack_.top(), detail::max_alignment);
                     if (offset < remaining)
@@ -257,7 +262,7 @@ namespace foonathan { namespace memory
                 stack_ = allocate_block();
 
                 // allocate ensuring alignment
-                mem = stack_.allocate(capacity, detail::max_alignment);
+                mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
             }
             // insert new

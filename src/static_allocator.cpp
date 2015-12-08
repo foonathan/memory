@@ -11,7 +11,7 @@ using namespace foonathan::memory;
 
 void* static_allocator::allocate_node(std::size_t size, std::size_t alignment)
 {
-    auto mem = stack_.allocate(size, alignment);
+    auto mem = stack_.allocate(end_, size, alignment);
     if (!mem)
         FOONATHAN_THROW(out_of_memory(info(), size));
     return mem;

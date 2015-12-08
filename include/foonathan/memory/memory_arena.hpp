@@ -128,8 +128,7 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the constructor of the \c BlockAllocator.
         template <typename ... Args>
         explicit memory_arena(std::size_t block_size, Args&&... args)
-        : allocator_type(block_size, detail::forward<Args>(args)...),
-          no_allocated_(0u)
+        : allocator_type(block_size, detail::forward<Args>(args)...),          no_allocated_(0u)
         {}
 
         /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.

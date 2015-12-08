@@ -18,15 +18,11 @@ namespace foonathan { namespace memory
         {
         public:
             fixed_memory_stack() FOONATHAN_NOEXCEPT
-            : fixed_memory_stack(nullptr, nullptr) {}
+            : fixed_memory_stack(nullptr) {}
 
-            // gives it a memory block
-            fixed_memory_stack(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
-            : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
-
-            // gives it a current and end pointer
-            fixed_memory_stack(char *cur, const char *end) FOONATHAN_NOEXCEPT
-            : cur_(cur), end_(end) {}
+            // gives it the current pointer, the end pointer must be maintained seperataly
+            explicit fixed_memory_stack(void *memory) FOONATHAN_NOEXCEPT
+            : cur_(static_cast<char*>(memory)) {}
 
             fixed_memory_stack(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT;
 
@@ -36,7 +32,7 @@ namespace foonathan { namespace memory
 
             // allocates memory by advancing the stack, returns nullptr if insufficient
             // debug: mark memory as new_memory, put fence in front and back
-            void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
+            void* allocate(const char *end, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
 
             // unwindws the stack to a certain older position
             // debug: marks memory from new top to old top as freed
@@ -49,15 +45,8 @@ namespace foonathan { namespace memory
                 return cur_;
             }
 
-            // returns the end of the stack
-            const char* end() const FOONATHAN_NOEXCEPT
-            {
-                return end_;
-            }
-
         private:
             char *cur_;
-            const char *end_;
         };
     } // namespace detail
 }} // namespace foonathan::memory
