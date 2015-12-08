@@ -28,11 +28,6 @@ const std::size_t memory_block_stack::node::div_alignment = sizeof(memory_block_
 const std::size_t memory_block_stack::node::mod_offset = sizeof(memory_block_stack::node) % max_alignment != 0u;
 const std::size_t memory_block_stack::node::offset = (div_alignment + mod_offset) * max_alignment;
 
-namespace
-{
-
-}
-
 void memory_block_stack::push(allocated_mb block) FOONATHAN_NOEXCEPT
 {
     FOONATHAN_MEMORY_ASSERT(is_aligned(block.memory, max_alignment));
@@ -63,4 +58,12 @@ memory_block_stack::inserted_mb memory_block_stack::top() const FOONATHAN_NOEXCE
     FOONATHAN_MEMORY_ASSERT(head_);
     auto mem = static_cast<void*>(head_);
     return {static_cast<char*>(mem) + node::offset, head_->usable_size};
+}
+
+std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
+{
+    std::size_t res = 0u;
+    for (auto cur = head_; cur; cur = cur->prev)
+        ++res;
+    return res;
 }

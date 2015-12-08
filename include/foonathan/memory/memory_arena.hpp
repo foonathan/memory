@@ -95,6 +95,9 @@ namespace foonathan { namespace memory
                 return head_ == nullptr;
             }
 
+            // O(n) size
+            std::size_t size() const FOONATHAN_NOEXCEPT;
+
         private:
             struct node;
             node *head_;
@@ -126,7 +129,7 @@ namespace foonathan { namespace memory
         template <typename ... Args>
         explicit memory_arena(std::size_t block_size, Args&&... args)
         : allocator_type(block_size, detail::forward<Args>(args)...),
-          no_used_(0u), no_cached_(0u)
+          no_allocated_(0u)
         {}
 
         /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.
@@ -146,11 +149,11 @@ namespace foonathan { namespace memory
         /// which is empty after that.
         /// This does not invalidate any memory blocks.
         memory_arena(memory_arena &&other) FOONATHAN_NOEXCEPT
-                : allocator_type(detail::move(other)),
-                  used_(detail::move(other.used_)), cached_(detail::move(other.cached_)),
-                  no_used_(other.no_used_), no_cached_(other.no_cached_)
+        : allocator_type(detail::move(other)),
+          used_(detail::move(other.used_)), cached_(detail::move(other.cached_)),
+          no_allocated_(other.no_allocated_)
         {
-            other.no_used_ = other.no_cached_ = 0;
+            other.no_allocated_ = 0;
         }
 
         memory_arena& operator=(memory_arena &&other) FOONATHAN_NOEXCEPT
@@ -167,8 +170,7 @@ namespace foonathan { namespace memory
         {
             detail::adl_swap(a.used_, b.used_);
             detail::adl_swap(a.cached_, b.cached_);
-            detail::adl_swap(a.no_used_, b.no_used_);
-            detail::adl_swap(a.no_cached_, b.no_cached_);
+            detail::adl_swap(a.no_allocated_, b.no_allocated_);
         }
 
         /// \effects Allocates a new memory block.
@@ -178,14 +180,13 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} allocation function.
         memory_block allocate_block()
         {
-            if (capacity() == size())
-                used_.push(allocator_type::allocate_block());
-            else
+            if (cached_.empty())
             {
-                used_.steal_top(cached_);
-                --no_cached_;
+                used_.push(allocator_type::allocate_block());
+                ++no_allocated_;
             }
-            ++no_used_;
+            else
+                used_.steal_top(cached_);
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
             return block;
@@ -204,8 +205,6 @@ namespace foonathan { namespace memory
         /// use \ref shrink_to_fit() to purge that cache.
         void deallocate_block() FOONATHAN_NOEXCEPT
         {
-            --no_used_;
-            ++no_cached_;
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_freed_memory);
             cached_.steal_top(used_);
@@ -222,23 +221,23 @@ namespace foonathan { namespace memory
                 to_dealloc.steal_top(cached_);
             // now dealloc everything
             while (!to_dealloc.empty())
+            {
                 allocator_type::deallocate_block(to_dealloc.pop());
-            no_cached_ = 0u;
+                --no_allocated_;
+            }
         }
 
         /// \returns The capacity of the arena, i.e. how many blocks are used and cached.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            FOONATHAN_MEMORY_ASSERT(bool(no_cached_) != cached_.empty());
-            return no_cached_ + no_used_;
+            return no_allocated_;
         }
 
         /// \returns The size of the arena, i.e. how many blocks are in use.
         /// It is always smaller or equal to the \ref capacity().
         std::size_t size() const FOONATHAN_NOEXCEPT
         {
-            FOONATHAN_MEMORY_ASSERT(bool(no_used_) != used_.empty());
-            return no_used_;
+            return cached_.empty() ? no_allocated_ : used_.size();
         }
 
         /// \returns The size of the next memory block,
@@ -258,7 +257,7 @@ namespace foonathan { namespace memory
 
     private:
         detail::memory_block_stack used_, cached_;
-        std::size_t no_used_, no_cached_;
+        std::size_t no_allocated_;
     };
 
     /// A \concept{concept_blockallocator,BlockAllocator} that uses a given \concept{concept_rawallocator,RawAllocator} for allocating the blocks.
