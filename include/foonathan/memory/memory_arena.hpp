@@ -264,23 +264,26 @@ namespace foonathan { namespace memory
     /// It calls the \c allocate_array() function with a node of size \c 1 and maximum alignment on the used allocator for the block allocation.
     /// The size of the next memory block will grow by a given factor after each allocation,
     /// allowing an amortized constant allocation time in the higher level allocator.
+    /// The factor can be given as rational in the template parameter, default is \c 2.
     /// \ingroup memory
-    template <class RawAllocator = default_allocator>
+    template <class RawAllocator = default_allocator,
+              unsigned Num = 2, unsigned Den = 1>
     class growing_block_allocator
     : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
+        static_assert(float(Num) / Den >= 1.0, "invalid growth factor");
+
         using traits = allocator_traits<RawAllocator>;
     public:
         using allocator_type = typename traits::allocator_type;
 
         /// \effects Creates it by giving it the initial block size, the allocator object and the growth factor.
         /// By default, it uses a default-constructed allocator object and a growth factor of \c 2.
-        /// \requires \c block_size must be greater than 0, and the \c factor not less than \c 1.
+        /// \requires \c block_size must be greater than 0.
         explicit growing_block_allocator(std::size_t block_size,
-                                         allocator_type alloc = allocator_type(),
-                                         float growth_factor = 2.f) FOONATHAN_NOEXCEPT
+                                         allocator_type alloc = allocator_type()) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(alloc)),
-          block_size_(block_size), growth_factor_(growth_factor) {}
+          block_size_(block_size) {}
 
         /// \effects Allocates a new memory block and increases the block size for the next allocation.
         /// \returns The new \ref memory_block.
@@ -290,7 +293,7 @@ namespace foonathan { namespace memory
             auto memory = traits::allocate_array(get_allocator(), block_size_,
                                                  1, detail::max_alignment);
             memory_block block(memory, block_size_);
-            block_size_ *= growth_factor_;
+            block_size_ *= growth_factor();
             return block;
         }
 
@@ -318,19 +321,12 @@ namespace foonathan { namespace memory
         /// \returns The growth factor.
         float growth_factor() const FOONATHAN_NOEXCEPT
         {
-            return growth_factor_;
-        }
-
-        /// \effects Sets the growth factor to a new value.
-        /// \requires \c f must not be lass than \c 1.
-        void set_growth_factor(float f) FOONATHAN_NOEXCEPT
-        {
-            growth_factor_ = f;
+            static FOONATHAN_CONSTEXPR auto factor = float(Num) / Den;
+            return factor;
         }
 
     private:
         std::size_t block_size_;
-        float growth_factor_;
     };
 
     /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
@@ -350,7 +346,7 @@ namespace foonathan { namespace memory
         explicit fixed_block_allocator(std::size_t block_size,
                                       allocator_type alloc = allocator_type()) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(alloc)),
-          block_size_(block_size), first_(true)
+          block_size_(block_size)
         {}
 
         /// \effects Allocates a new memory block or throws an exception if there was already one allocation.
@@ -358,11 +354,11 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the \c allocate_array() function of the \concept{concept_rawallocator,RawAllocator} or \ref out_of_memory() if this is not the first call.
         memory_block allocate_block()
         {
-            if (first_)
+            if (block_size_)
             {
                 auto mem = traits::allocate_array(get_allocator(), block_size_,
                                                   1, detail::max_alignment);
-                first_ = false;
+                block_size_ = 0u;
                 return {mem, block_size_};
             }
             FOONATHAN_THROW(out_of_memory(info(), block_size_));
@@ -372,16 +368,16 @@ namespace foonathan { namespace memory
         /// It also resets and allows a new call again.
         void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
         {
-            detail::check_pointer(!first_, info(), block.memory);
+            detail::check_pointer(block_size_ == 0u, info(), block.memory);
             traits::deallocate_array(get_allocator(), block.memory,
                                      block.size, 1, detail::max_alignment);
-            first_ = true;
+            block_size_ = block.size;
         }
 
         /// \returns The size of the next block which is either the initial size or \c 0.
         std::size_t next_block_size() const FOONATHAN_NOEXCEPT
         {
-            return first_ ? block_size_ : 0u;
+            return block_size_;
         }
 
         /// \returns A reference to the used \concept{concept_rawallocator,RawAllocator} object.
@@ -397,8 +393,8 @@ namespace foonathan { namespace memory
         }
 
         std::size_t block_size_;
-        bool first_;
     };
+
     namespace detail
     {
         template <class BlockAlloc, typename ... Args>
@@ -411,10 +407,10 @@ namespace foonathan { namespace memory
 
         template <class RawAlloc>
         growing_block_allocator<RawAlloc> make_block_allocator(short,
-            std::size_t block_size, RawAlloc alloc = RawAlloc(), float fac = 2.f,
+            std::size_t block_size, RawAlloc alloc = RawAlloc(),
             FOONATHAN_SFINAE(std::declval<RawAlloc>().allocate_node(1, 1)))
         {
-            return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc), fac);
+            return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc));
         }
     } // namespace detail
 
