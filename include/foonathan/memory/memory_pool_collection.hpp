@@ -167,12 +167,12 @@ namespace foonathan { namespace memory
         }
 
         /// \effects Inserts more memory on the free list for nodes of given size.
-        /// It will try to put \c capacity bytes from the arena onto the free list defined over the \c BucketDistribution,
+        /// It will try to put \c capacity_left bytes from the arena onto the free list defined over the \c BucketDistribution,
         /// if the arena is empty, a new memory block is requested from the \concept{concept_blockallocator,BlockAllocator}
         /// and it will be used.
         /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed.
         /// \requires \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size(),
-        /// \c capacity must be less than \ref next_capacity().
+        /// \c capacity_left must be less than \ref next_capacity().
         void reserve(std::size_t node_size, std::size_t capacity)
         {
             auto& pool = pools_.get(node_size);
@@ -189,7 +189,7 @@ namespace foonathan { namespace memory
         /// \returns The amount of nodes available in the free list for nodes of given size
         /// as defined over the \c BucketDistribution.
         /// This is the number of nodes that can be allocated without the free list requesting more memory from the arena.
-        /// \note Array allocations may lead to a growth even if the capacity is big enough.
+        /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
         std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             return pools_.get(node_size).capacity();
@@ -198,7 +198,7 @@ namespace foonathan { namespace memory
         /// \returns The amount of memory available in the arena not inside the free lists.
         /// This is the number of bytes that can be inserted into the free lists
         /// without requesting more memory from the \concept{concept_blockallocator,BlockAllocator}.
-        /// \note Array allocations may lead to a growth even if the capacity is big enough.
+        /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(block_end() - stack_.top());
@@ -206,7 +206,7 @@ namespace foonathan { namespace memory
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {

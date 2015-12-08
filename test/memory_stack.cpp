@@ -16,8 +16,8 @@ TEST_CASE("memory_stack", "[stack]")
     test_allocator alloc;
     memory_stack<allocator_reference<test_allocator>> stack(100, alloc);
     REQUIRE(alloc.no_allocated() == 1u);
-    REQUIRE(stack.capacity() <= 100);
-    auto capacity = stack.capacity();
+    REQUIRE(stack.capacity_left() <= 100);
+    auto capacity = stack.capacity_left();
 
     SECTION("empty unwind")
     {
@@ -30,7 +30,7 @@ TEST_CASE("memory_stack", "[stack]")
     SECTION("normal allocation/unwind")
     {
         stack.allocate(10, 1);
-        REQUIRE(stack.capacity() == capacity - 10 - 2 * detail::debug_fence_size);
+        REQUIRE(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
 
         auto m = stack.top();
 
@@ -38,7 +38,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(detail::align_offset(memory, 16) == 0u);
 
         stack.unwind(m);
-        REQUIRE(stack.capacity() ==
+        REQUIRE(stack.capacity_left() ==
                 capacity - 10 - 2 * detail::debug_fence_size);
 
         REQUIRE(stack.allocate(10, 16) == memory);

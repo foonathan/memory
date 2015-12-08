@@ -137,17 +137,17 @@ namespace foonathan { namespace memory
             return free_list_.node_size();
         }
 
-        /// \effects Returns the total amount of byts remaining on the free list.
+        /// \effects Returns the total amount of bytes remaining on the free list.
         /// Divide it by \ref node_size() to get the number of nodes that can be allocated without growing the arena.
-        /// \note Array allocations may lead to a growth even if the capacity is big enough.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        /// \note Array allocations may lead to a growth even if the capacity_left left is big enough.
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
             return free_list_.capacity() * node_size();
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
@@ -186,7 +186,7 @@ namespace foonathan { namespace memory
                 mem = free_list_.allocate(n * node_size);
                 if (!mem)
                     FOONATHAN_THROW(bad_allocation_size(info(),
-                                                        n * node_size, capacity()));
+                                                        n * node_size, capacity_left()));
             }
             return mem;
         }

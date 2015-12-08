@@ -144,14 +144,14 @@ namespace foonathan { namespace memory
         /// \returns The amount of memory remaining in the current block.
         /// This is the number of bytes that are available for allocation
         /// before the cache or \concept{concept_blockallocator,BlockAllocator} needs to be used.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(block_end() - stack_.top());
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {

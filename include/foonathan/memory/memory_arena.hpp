@@ -226,14 +226,14 @@ namespace foonathan { namespace memory
             }
         }
 
-        /// \returns The capacity of the arena, i.e. how many blocks are used and cached.
+        /// \returns The capacity_left of the arena, i.e. how many blocks are used and cached.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return no_allocated_;
         }
 
         /// \returns The size of the arena, i.e. how many blocks are in use.
-        /// It is always smaller or equal to the \ref capacity().
+        /// It is always smaller or equal to the \ref capacity_left().
         std::size_t size() const FOONATHAN_NOEXCEPT
         {
             return cached_.empty() ? no_allocated_ : used_.size();

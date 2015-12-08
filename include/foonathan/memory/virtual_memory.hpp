@@ -152,7 +152,7 @@ namespace foonathan { namespace memory
 
         /// \effects Allocates a new memory block by committing the next \ref next_block_size() number of bytes.
         /// \returns The \ref memory_block committed.
-        /// \throws \ref out_of_memory if it cannot commit the memory or the \ref capacity() is exhausted.
+        /// \throws \ref out_of_memory if it cannot commit the memory or the \ref capacity_left() is exhausted.
         memory_block allocate_block();
 
         /// \effects Deallocates the last allocated memory block by decommitting it.
