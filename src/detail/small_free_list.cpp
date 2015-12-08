@@ -234,7 +234,7 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
     auto info = allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
 
     // memory was never managed by this list
-    check_pointer(dealloc_chunk, info, memory);
+    check_pointer(bool(dealloc_chunk), info, memory);
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk));
     // memory is not at the right position
     check_pointer(offset % node_fence_size() == 0, info, memory);

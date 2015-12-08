@@ -347,6 +347,7 @@ namespace foonathan { namespace memory
                                     std::size_t, std::size_t)
         {
             FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
+            return nullptr;
         }
 
         static void* allocate_array(std::true_type, allocator_type &state,

@@ -522,7 +522,7 @@ ordered_free_memory_list::list_impl::pos
 bool ordered_free_memory_list::list_impl::empty() const FOONATHAN_NOEXCEPT
 {
     FOONATHAN_MEMORY_ASSERT(bool(first_) == bool(last_));
-    return !first_;
+    return !bool(first_);
 }
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
