@@ -201,20 +201,15 @@ virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::si
     auto total_size = block_size_ * no_blocks;
     auto no_pages = total_size / virtual_memory_page_size;
 
-    begin_ = static_cast<char*>(virtual_memory_reserve(no_pages));
-    if (!begin_)
+    cur_ = static_cast<char*>(virtual_memory_reserve(no_pages));
+    if (!cur_)
         FOONATHAN_THROW(out_of_memory(info(), total_size));
-    cur_ = begin_;
-    end_ = begin_ + total_size;
+    end_ = cur_ + total_size;
 }
 
 virtual_block_allocator::~virtual_block_allocator() FOONATHAN_NOEXCEPT
 {
-    virtual_memory_release(begin_, (end_ - begin_) / virtual_memory_page_size);
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    if (cur_ != begin_)
-        get_leak_handler()(info(), cur_ - begin_);
-#endif
+    virtual_memory_release(cur_, (end_ - cur_) / virtual_memory_page_size);
 }
 
 memory_block virtual_block_allocator::allocate_block()

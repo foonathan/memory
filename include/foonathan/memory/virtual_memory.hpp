@@ -126,10 +126,10 @@ namespace foonathan { namespace memory
         /// \effects Moves the block allocator, it transfers ownership over the reserved area.
         /// This does not invalidate any memory blocks.
         virtual_block_allocator(virtual_block_allocator &&other) FOONATHAN_NOEXCEPT
-        : begin_(other.begin_), cur_(other.cur_), end_(other.end_),
+        : cur_(other.cur_), end_(other.end_),
           block_size_(other.block_size_)
         {
-            other.begin_ = other.cur_ = other.end_ = nullptr;
+            other.cur_ = other.end_ = nullptr;
             other.block_size_ = 0;
         }
 
@@ -145,7 +145,6 @@ namespace foonathan { namespace memory
         /// This does not invalidate any memory blocks.
         friend void swap(virtual_block_allocator &a, virtual_block_allocator &b) FOONATHAN_NOEXCEPT
         {
-            detail::adl_swap(a.begin_, b.begin_);
             detail::adl_swap(a.cur_, b.cur_);
             detail::adl_swap(a.end_, b.end_);
             detail::adl_swap(a.block_size_, b.block_size_);
@@ -168,22 +167,16 @@ namespace foonathan { namespace memory
             return block_size_;
         }
 
-        /// \returns The number of blocks already committed.
-        std::size_t size() const FOONATHAN_NOEXCEPT
+        /// \returns The number of blocks that can be committed until it runs out of memory.
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
-            return (cur_ - begin_) / block_size_;
-        }
-
-        /// \returns The number of total blocks that can be committed.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
-        {
-            return (end_ - begin_) / block_size_;
+            return (end_ - cur_) / block_size_;
         }
 
     private:
         allocator_info info() FOONATHAN_NOEXCEPT;
 
-        char *begin_, *cur_, *end_;
+        char *cur_, *end_;
         std::size_t block_size_;
     };
 }} // namespace foonathan::memory
