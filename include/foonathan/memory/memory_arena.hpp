@@ -110,11 +110,15 @@ namespace foonathan { namespace memory
         class memory_arena_cache<true>
         {
         protected:
-            bool empty() const FOONATHAN_NOEXCEPT
+            bool cache_empty() const FOONATHAN_NOEXCEPT
             {
                 return cached_.empty();
             }
 
+            std::size_t cache_size() const FOONATHAN_NOEXCEPT
+            {
+                return cached_.size();
+            }
             bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
             {
                 if (cached_.empty())
@@ -124,14 +128,13 @@ namespace foonathan { namespace memory
             }
 
             template <class BlockAllocator>
-            void do_deallocate_block(BlockAllocator &, detail::memory_block_stack &used,
-                                  std::size_t &) FOONATHAN_NOEXCEPT
+            void do_deallocate_block(BlockAllocator &, detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
             {
                 cached_.steal_top(used);
             }
 
             template <class BlockAllocator>
-            void do_shrink_to_fit(BlockAllocator &alloc, std::size_t &no) FOONATHAN_NOEXCEPT
+            void do_shrink_to_fit(BlockAllocator &alloc) FOONATHAN_NOEXCEPT
             {
                 detail::memory_block_stack to_dealloc;
                 // pop from cache and push to temporary stack
@@ -140,10 +143,7 @@ namespace foonathan { namespace memory
                     to_dealloc.steal_top(cached_);
                 // now dealloc everything
                 while (!to_dealloc.empty())
-                {
                     alloc.deallocate_block(to_dealloc.pop());
-                    --no;
-                }
             }
 
         private:
@@ -154,9 +154,14 @@ namespace foonathan { namespace memory
         class memory_arena_cache<false>
         {
         protected:
-            bool empty() const FOONATHAN_NOEXCEPT
+            bool cache_empty() const FOONATHAN_NOEXCEPT
             {
                 return true;
+            }
+
+            std::size_t cache_size() const FOONATHAN_NOEXCEPT
+            {
+                return 0u;
             }
 
             bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
@@ -165,15 +170,13 @@ namespace foonathan { namespace memory
             }
 
             template <class BlockAllocator>
-            void do_deallocate_block(BlockAllocator &alloc, detail::memory_block_stack &used,
-                                  std::size_t &no) FOONATHAN_NOEXCEPT
+            void do_deallocate_block(BlockAllocator &alloc, detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
             {
                 alloc.deallocate_block(used.pop());
-                --no;
             }
 
             template <class BlockAllocator>
-            void do_shrink_to_fit(BlockAllocator &, std::size_t &) FOONATHAN_NOEXCEPT
+            void do_shrink_to_fit(BlockAllocator&) FOONATHAN_NOEXCEPT
             {
 
             }
@@ -204,8 +207,7 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the constructor of the \c BlockAllocator.
         template <typename ... Args>
         explicit memory_arena(std::size_t block_size, Args&&... args)
-        : allocator_type(block_size, detail::forward<Args>(args)...),
-          no_allocated_(0u)
+        : allocator_type(block_size, detail::forward<Args>(args)...)
         {}
 
         /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.
@@ -226,11 +228,8 @@ namespace foonathan { namespace memory
         memory_arena(memory_arena &&other) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(other)),
           cache(detail::move(other)),
-          used_(detail::move(other.used_)),
-          no_allocated_(other.no_allocated_)
-        {
-            other.no_allocated_ = 0;
-        }
+          used_(detail::move(other.used_))
+        {}
 
         memory_arena& operator=(memory_arena &&other) FOONATHAN_NOEXCEPT
         {
@@ -247,8 +246,6 @@ namespace foonathan { namespace memory
             detail::adl_swap(static_cast<allocator_type&>(a), static_cast<allocator_type&>(b));
             detail::adl_swap(static_cast<cache&>(a), static_cast<cache&>(b));
             detail::adl_swap(a.used_, b.used_);
-            detail::adl_swap(a.cached_, b.cached_);
-            detail::adl_swap(a.no_allocated_, b.no_allocated_);
         }
 
         /// \effects Allocates a new memory block.
@@ -259,10 +256,8 @@ namespace foonathan { namespace memory
         memory_block allocate_block()
         {
             if (!this->take_from_cache(used_))
-            {
                 used_.push(allocator_type::allocate_block());
-                ++no_allocated_;
-            }
+
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
             return block;
@@ -283,7 +278,7 @@ namespace foonathan { namespace memory
         {
             auto block = used_.top();
             detail::debug_fill(block.memory, block.size, debug_magic::internal_freed_memory);
-            this->do_deallocate_block(get_allocator(), used_, no_allocated_);
+            this->do_deallocate_block(get_allocator(), used_);
         }
 
         /// \effects Purges the cache of unused memory blocks by returning them.
@@ -291,20 +286,26 @@ namespace foonathan { namespace memory
         /// Does nothing if caching is disabled.
         void shrink_to_fit() FOONATHAN_NOEXCEPT
         {
-            this->do_shrink_to_fit(get_allocator(), no_allocated_);
+            this->do_shrink_to_fit(get_allocator());
         }
 
-        /// \returns The capacity_left of the arena, i.e. how many blocks are used and cached.
+        /// \returns The capacity of the arena, i.e. how many blocks are used and cached.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
-            return no_allocated_;
+            return size() + cache_size();
+        }
+
+        /// \returns The size of the cache, i.e. how many blocks can be allocated without allocation.
+        std::size_t cache_size() const FOONATHAN_NOEXCEPT
+        {
+            return cache::cache_size();
         }
 
         /// \returns The size of the arena, i.e. how many blocks are in use.
         /// It is always smaller or equal to the \ref capacity_left().
         std::size_t size() const FOONATHAN_NOEXCEPT
         {
-            return this->empty() ? no_allocated_ : used_.size();
+            return used_.size();
         }
 
         /// \returns The size of the next memory block,
@@ -324,7 +325,6 @@ namespace foonathan { namespace memory
 
     private:
         detail::memory_block_stack used_;
-        std::size_t no_allocated_;
     };
 
     /// A \concept{concept_blockallocator,BlockAllocator} that uses a given \concept{concept_rawallocator,RawAllocator} for allocating the blocks.
