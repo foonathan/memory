@@ -6,12 +6,13 @@
 #define FOONATHAN_MEMORY_STATIC_ALLOCATOR_HPP_INCLUDED
 
 /// \file
-/// Class \ref foonathan::memory::static_allocator and \ref foonathan::memory::static_allocator_storage.
+/// Allocators using a static, fixed-sized storage.
 
 #include <type_traits>
 
 #include "detail/align.hpp"
 #include "detail/memory_stack.hpp"
+#include "detail/utility.hpp"
 #include "config.hpp"
 
 namespace foonathan { namespace memory
@@ -30,14 +31,11 @@ namespace foonathan { namespace memory
     static_assert(sizeof(static_allocator_storage<1024>) == 1024, "");
     static_assert(FOONATHAN_ALIGNOF(static_allocator_storage<1024>) == detail::max_alignment, "");
 
+    struct allocator_info;
+
     /// A stateful \concept{concept_rawallocator,RawAllocator} that uses a fixed sized storage for the allocations.
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
     /// Deallocations are not supported, memory cannot be marked as freed.<br>
-    /// Its main use is as a \concept{concept_blockallocator,BlockAllocator} in memory arenas.
-    /// Create a \ref static_allocator_storage of the block size of the arena onto the stack
-    /// and pass it to the arena.
-    /// This will create an arena of fixed size whose memory is created on the stack and which cannot grow.
-    /// It thus allows to have complex containers like \c std::unordered_map located on the program stack.
     /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocators.
     /// \ingroup memory
     class static_allocator
@@ -58,13 +56,7 @@ namespace foonathan { namespace memory
         /// It uses the specified \ref static_allocator_storage.
         /// \returns A pointer to a \concept{concept_node,node}, it will never be \c nullptr.
         /// \throws An exception of type \ref out_of_memory or whatever is thrown by its handler if the storage is exhausted.
-        void* allocate_node(std::size_t size, std::size_t alignment)
-        {
-            auto mem = stack_.allocate(size, alignment);
-            if (!mem)
-                FOONATHAN_THROW(out_of_memory(info(), size));
-            return mem;
-        }
+        void* allocate_node(std::size_t size, std::size_t alignment);
 
         /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
         /// It does nothing, deallocation is not supported by this allocator.
@@ -84,12 +76,88 @@ namespace foonathan { namespace memory
         }
 
     private:
-        allocator_info info() const FOONATHAN_NOEXCEPT
-        {
-            return {FOONATHAN_MEMORY_LOG_PREFIX "::static_allocator", this};
-        }
+        allocator_info info() const FOONATHAN_NOEXCEPT;
 
         detail::fixed_memory_stack stack_;
+    };
+
+    struct memory_block;
+
+    /// A \concept{concept_blockallocator,BlockAllocator} that allocates the blocks from a fixed size storage.
+    /// It works on a \ref static_allocator_storage and uses it for all allocations,
+    /// deallocations are only allowed in reversed order which is guaranteed by \ref memory_arena.
+    /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocators.
+    /// \ingroup memory
+    class static_block_allocator
+    {
+    public:
+        /// \effects Creates it by passing it the block size and a \ref static_allocator_storage by reference.
+        /// It will take the address of the storage and use it to allocate \c block_size'd blocks.
+        /// \requires The storage object must live as long as the allocator object.
+        /// It must not be shared between multiple allocators,
+        /// i.e. the object must not have been passed to a constructor before.
+        /// The size of the \ref static_allocator_storage must be a multiple of the (non-null) block size.
+        template <std::size_t Size>
+        static_block_allocator(std::size_t block_size,
+                               static_allocator_storage<Size> &storage) FOONATHAN_NOEXCEPT
+        : cur_(static_cast<char*>(static_cast<void*>(&storage))),
+          end_(cur_ + Size),
+          block_size_(block_size)
+        {
+            FOONATHAN_MEMORY_ASSERT(block_size <= Size);
+            FOONATHAN_MEMORY_ASSERT(Size % block_size == 0u);
+        }
+
+        ~static_block_allocator() FOONATHAN_NOEXCEPT = default;
+
+        /// @{
+        /// \effects Moves the block allocator, it transfers ownership over the \ref static_allocator_storage.
+        /// This does not invalidate any memory blocks.
+        static_block_allocator(static_block_allocator &&other) FOONATHAN_NOEXCEPT
+        : cur_(other.cur_), end_(other.end_), block_size_(other.block_size_)
+        {
+            other.cur_ = other.end_ = nullptr;
+            other.block_size_ = 0;
+        }
+
+        static_block_allocator& operator=(static_block_allocator &&other) FOONATHAN_NOEXCEPT
+        {
+            static_block_allocator tmp(detail::move(other));
+            swap(*this, tmp);
+            return *this;
+        }
+        /// @}
+
+        /// \effects Swaps the ownership over the \ref static_allocator_storage.
+        /// This does not invalidate any memory blocks.
+        friend void swap(static_block_allocator &a, static_block_allocator &b) FOONATHAN_NOEXCEPT
+        {
+            detail::adl_swap(a.cur_, b.cur_);
+            detail::adl_swap(a.end_, b.end_);
+            detail::adl_swap(a.block_size_, b.block_size_);
+        }
+
+        /// \effects Allocates a new block by returning the \ref next_block_size() bytes.
+        /// \returns The new memory block.
+        memory_block allocate_block();
+
+        /// \effects Deallocates the last memory block by marking the block as free again.
+        /// This block will be returned again by the next call to \ref allocate_block().
+        /// \requires \c block must be the current top block of the memory,
+        /// this is guaranteed by \ref memory_arena.
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT;
+
+        /// \returns The next block size, this is the size passed to the constructor.
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return block_size_;
+        }
+
+    private:
+        allocator_info info() const FOONATHAN_NOEXCEPT;
+
+        char *cur_, *end_;
+        std::size_t block_size_;
     };
 }} // namespace foonathan::memory
 

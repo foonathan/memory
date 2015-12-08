@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_VIRTUAL_MEMORY_HPP_INCLUDED
 #define FOONATHAN_MEMORY_VIRTUAL_MEMORY_HPP_INCLUDED
 
+/// \file
+/// Virtual memory api and (low-level) allocator classes.
+
 #include <cstddef>
 #include <type_traits>
 

@@ -49,6 +49,7 @@ set(src
         malloc_allocator.cpp
         memory_arena.cpp
         new_allocator.cpp
+        static_allocator.cpp
         temporary_allocator.cpp
         virtual_memory.cpp)
 
