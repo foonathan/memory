@@ -12,7 +12,7 @@ comp_target_features(foonathan_memory_profiling PUBLIC CPP11)
 
 
 file(DOWNLOAD
-    https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp
+    https://raw.githubusercontent.com/philsquared/Catch/master/single_include/catch.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/catch.downloaded
     SHOW_PROGESS
     STATUS status
