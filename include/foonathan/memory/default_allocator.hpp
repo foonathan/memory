@@ -20,9 +20,9 @@
 
 namespace foonathan { namespace memory
 {
-    /// The default \concept{concept_rawallocator,RawAllocator} that will be used as implementation allocator in memory arenas.
+    /// The default \concept{concept_rawallocator,RawAllocator} that will be used as \concept{concept_blockallocator,BlockAllocator} in memory arenas.
     /// Arena allocators like \ref memory_stack or \ref memory_pool allocate memory by subdividing a huge block.
-    /// They get an implementation allocator that will be used for their internal allocation,
+    /// They get a \concept{concept_blockallocator,BlockAllocator} that will be used for their internal allocation,
     /// this type is the default value.
     /// \requiredbe Its type can be changed via the CMake option \c FOONATHAN_MEMORY_DEFAULT_ALLCOATOR,
     /// but it must be one of the following: \ref heap_allocator, \ref new_allocator, \ref malloc_allocator, \ref static_allocator, \ref virtual_memory_allocator.

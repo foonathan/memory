@@ -32,13 +32,13 @@ set(tests
         test_allocator.hpp
         test.cpp
         detail/align.cpp
-        detail/block_list.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
         detail/memory_stack.cpp
         aligned_allocator.cpp
         allocator_traits.cpp
         default_allocator.cpp
+        memory_arena.cpp
         memory_pool.cpp
         memory_pool_collection.cpp
         memory_stack.cpp)

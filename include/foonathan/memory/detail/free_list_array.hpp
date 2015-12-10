@@ -31,12 +31,13 @@ namespace foonathan { namespace memory
             // all lists are initially empty
             // actual number is calculated via policy
             // memory is taken from fixed_memory_stack, it must be sufficient
-            free_list_array(fixed_memory_stack &stack,
+            free_list_array(fixed_memory_stack &stack, const char *end,
                             std::size_t max_node_size) FOONATHAN_NOEXCEPT
             : no_elements_(AccessPolicy::index_from_size(max_node_size)
                            - min_size_index + 1)
             {
-                array_ = static_cast<FreeList*>(stack.allocate(no_elements_ * sizeof(FreeList),
+                array_ = static_cast<FreeList*>(stack.allocate(end,
+                                                               no_elements_ * sizeof(FreeList),
                                                                FOONATHAN_ALIGNOF(FreeList)));
                 FOONATHAN_MEMORY_ASSERT(array_);
                 for (std::size_t i = 0u; i != no_elements_; ++i)

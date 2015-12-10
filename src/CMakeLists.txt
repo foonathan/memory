@@ -7,7 +7,6 @@
 set(header_path ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 set(header
         ${header_path}/detail/align.hpp
-        ${header_path}/detail/block_list.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/memory_stack.hpp
@@ -24,6 +23,7 @@ set(header
         ${header_path}/error.hpp
         ${header_path}/heap_allocator.hpp
         ${header_path}/malloc_allocator.hpp
+        ${header_path}/memory_arena.hpp
         ${header_path}/memory_pool.hpp
         ${header_path}/memory_pool_collection.hpp
         ${header_path}/memory_pool_type.hpp
@@ -39,7 +39,6 @@ set(header
         ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
-        detail/block_list.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
         detail/memory_stack.cpp
@@ -48,7 +47,9 @@ set(src
         error.cpp
         heap_allocator.cpp
         malloc_allocator.cpp
+        memory_arena.cpp
         new_allocator.cpp
+        static_allocator.cpp
         temporary_allocator.cpp
         virtual_memory.cpp)
 

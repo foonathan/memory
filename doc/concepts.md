@@ -77,14 +77,6 @@ Most of the time stateless allocators are also empty types, although this is not
 (*note:* it does not make much sense for them to be not-empty, since the values of the member variables is not required to be the same.)
 An additional requirement for stateless allocator is that they have a default constructor.
 
-Some allocator types manage huge memory block and return part of it in their allocation functions, i.e. memory arenas.
-The used memory block is managed by an allocator itself.
-Such an allocator is called an *implementation allocator*.
-It is simply a normal `RawAllocator` but embedded inside another one and primarily used in it.
-They are often low-level allocators that are specialized for huge allocations.
-The allocator using the implementation allocator often only needs a memory block of given size.
-It is recommended to use the array version there, i.e. to call `allocate_array(size, 1, alignment)`.
-
 Access to a `RawAllocator` is only done via the class [allocator_traits].
 It can be specialized for own `RawAllocator` types.
 The requirements for such a specialization are shown in the following table,
@@ -159,6 +151,52 @@ struct min_raw_allocator
 *Note*: If a RawAllocator provides a member function for allocation/deallocation, it is not allowed to mix those two interfaces,
 i.e. allocate memory through the traits and deallocate through the member function or vice-versa.
 It is completely allowed that those functions do completely different things.
+
+## <a name="concept_blockallocator"></a>BlockAllocator
+
+Some allocator types manage huge memory blocks and returns part of them in their allocation functions.
+Such huge memory blocks are managed by a memory arena, implemented in the class [memory_arena].
+
+The size and the allocation of the memory blocks is controlled by a `BlockAllocator`.
+It is responsible to allocate and deallocate those blocks. It must be nothrow moveable and a valid base class, i.e. not `final`. In addition, it must provide the following:
+
+Expression|Semantics
+----------|---------
+`BlockAllocator(block_size, args)`|Creates a `BlockAllocator` by giving it a non-zero initial block size and optionally multiple further arguments.
+`alloc.allocate_block()`|Returns a new [memory_block] object that is the next memory block.
+`alloc.deallocate_block(block)`|Deallocates a `memory_block`. Deallocation will be done in reverse order.
+`calloc.next_block_size()`|Returns the size of the `memory_block` in the next allocation.
+
+The alignments of the allocated memory blocks must be the maximum alignment.
+
+This is a sample `BlockAllocator` that uses `new` for the allocation:
+
+```cpp
+class block_allocator
+{
+public:
+    block_allocator(std::size_t block_size)
+    : block_size_(block_size) {}
+    
+    memory_block allocate_block()
+    {
+        auto mem = ::operator new(block_size_);
+        return {mem, block_size_};
+    }
+    
+    void deallocate_block(memory_block b)
+    {
+        ::operator delete(b.memory);
+    }
+    
+    std::size_t next_block_size() const
+    {
+        return block_size_;    
+    }
+    
+private:
+    std::size_t block_size_;    
+};
 
 ## <a name="concept_storagepolicy"></a>StoragePolicy
 
@@ -261,4 +299,6 @@ struct tracker
 
 [allocator_storage]: \ref foonathan::memory::allocator_storage
 [allocator_traits]: \ref foonathan::memory::allocator_traits
+[memory_arena]: \ref foonathan::memory::memory_arena
+[memory_block]: \ref foonathan::memory::memory_block
 [tracked_allocator]: \ref foonathan::memory::tracked_allocator
