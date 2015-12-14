@@ -25,7 +25,7 @@
 // as long as it is not the TestType, the actual value_type of the container.
 template <typename T, typename TestType>
 class node_size_debugger
-        : public std::allocator<T>
+: public std::allocator<T>
 {
 public:
     template <typename Other>
@@ -59,17 +59,6 @@ private:
 
     template <typename U, typename TT>
     friend class node_size_debugger;
-};
-
-// can be used as less<> or equal_to<>, since result doesn't matter
-struct compare
-{
-    template <typename T>
-    bool operator()(const T &, const T &) const
-    {
-        // result doesn't matter
-        return true;
-    }
 };
 
 struct hash
@@ -129,7 +118,7 @@ struct debug_set
     template <typename T>
     std::size_t debug()
     {
-        std::set<T, compare, node_size_debugger<T, T>> set;
+        std::set<T, std::less<T>, node_size_debugger<T, T>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -147,7 +136,7 @@ struct debug_multiset
     template <typename T>
     std::size_t debug()
     {
-        std::multiset<T, compare, node_size_debugger<T, T>> set;
+        std::multiset<T, std::less<T>, node_size_debugger<T, T>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -165,7 +154,7 @@ struct debug_unordered_set
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_set<T, hash, compare, node_size_debugger<T, T>> set;
+        std::unordered_set<T, hash, std::equal_to<T>, node_size_debugger<T, T>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -183,7 +172,7 @@ struct debug_unordered_multiset
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multiset<T, hash, compare, node_size_debugger<T, T>> set;
+        std::unordered_multiset<T, hash, std::equal_to<T>, node_size_debugger<T, T>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -201,7 +190,7 @@ struct debug_map
     template <typename T>
     std::size_t debug()
     {
-        std::map<T, T, compare, node_size_debugger<T, T>> map;
+        std::map<T, T, std::less<T>, node_size_debugger<T, T>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -219,7 +208,7 @@ struct debug_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::multimap<T, T, compare, node_size_debugger<T, T>> map;
+        std::multimap<T, T, std::less<T>, node_size_debugger<T, T>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -237,7 +226,7 @@ struct debug_unordered_map
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_map<T, T, hash, compare, node_size_debugger<T, T>> map;
+        std::unordered_map<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -255,7 +244,7 @@ struct debug_unordered_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multimap<T, T, hash, compare, node_size_debugger<T, T>> map;
+        std::unordered_multimap<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
