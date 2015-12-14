@@ -24,6 +24,7 @@
 
 #if !defined(DOXYGEN)
     #define COMP_IN_PARENT_HEADER
+    #include "comp/alignas.hpp"
     #include "comp/alignof.hpp"
     #include "comp/constexpr.hpp"
     #include "comp/noexcept.hpp"

@@ -25,7 +25,12 @@ namespace foonathan { namespace memory
     template <std::size_t Size>
     struct static_allocator_storage
     {
+    #ifdef _MSC_VER
+        // note: MSVC ignores alignment of std::aligned_storage
+        FOONATHAN_ALIGNAS(8) char storage[Size];
+    #else
         typename std::aligned_storage<Size, detail::max_alignment>::type storage;
+    #endif
     };
 
     static_assert(sizeof(static_allocator_storage<1024>) == 1024, "");
