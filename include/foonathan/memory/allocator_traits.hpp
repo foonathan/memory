@@ -232,11 +232,18 @@ namespace foonathan { namespace memory
         }
     } // namespace traits_detail
 
+    /// Traits class that checks whether or not a standard \c Allocator can be used as \concept{concept_rawallocator,RawAllocator}.
+    /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
+    /// it cannot be used since it would not be called.<br>
+    /// Specialize it for custom \c Allocator types to override this check.
+    /// \ingroup memory
     template <class Allocator>
     struct allocator_is_raw_allocator
-    : traits_detail::check_standard_allocator<Allocator>::valid
+    : FOONATHAN_EBO(traits_detail::check_standard_allocator<Allocator>::valid)
     {};
 
+    /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
+    /// \ingroup memory
     template <typename T>
     struct allocator_is_raw_allocator<std::allocator<T>>
     : std::true_type

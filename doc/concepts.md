@@ -133,6 +133,8 @@ then a type `alloc<T, Args...>` will be rebound to `alloc<char, Args...>`.
 If the parameter does not provide a member function `allocate_node`, it will try and call the allocation function required by the `Allocator` concept,
 i.e. `static_cast<void*>(alloc.allocate(size)`, likewise for `deallocate_node` which will call forward to the deallocation function `alloc.deallocate(static_cast<char*>(node), size)`.
 This enables the usage of any type modelling the `Allocator` concept where a `RawAllocator` is expected.
+It is only enabled, however, if the `Allocator` does not provide custom `construct()`/`destroy()` function since they would never be called.
+The checking can be overriden by specializing the traits class [allocator_is_raw_allocator](\ref foonathan::memory::allocator_is_raw_allocator).
 
 For exposition, this is the minimum required interface for a `RawAllocator` without an appropriate specialization:
 
