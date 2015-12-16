@@ -23,6 +23,28 @@ namespace foonathan { namespace memory
 {
     namespace traits_detail // use seperate namespace to avoid name clashes
     {
+        template <class Allocator>
+        std::true_type has_construct(int, FOONATHAN_SFINAE(std::declval<Allocator>().construct(std::declval<typename Allocator::pointer>(),
+                                                      std::declval<typename Allocator::value_type>())));
+
+        template <class Allocator>
+        std::false_type has_construct(short);
+
+        template <class Allocator>
+        std::true_type has_destroy(int, FOONATHAN_SFINAE(std::declval<Allocator>().destroy(std::declval<typename Allocator::pointer>())));
+
+        template <class Allocator>
+        std::false_type has_destroy(short);
+
+        template <class Allocator>
+        struct check_standard_allocator
+        {
+            using custom_construct = decltype(has_construct<Allocator>(0));
+            using custom_destroy   = decltype(has_destroy<Allocator>(0));
+
+            using valid = std::integral_constant<bool, !custom_construct::value && !custom_destroy::value>;
+        };
+
         // full_concept has the best conversion rank, error the lowest
         // used to give priority to the functions
         struct error {};
@@ -217,6 +239,8 @@ namespace foonathan { namespace memory
     template <class Allocator>
     class allocator_traits
     {
+        static_assert(traits_detail::check_standard_allocator<Allocator>::valid::value,
+                "Allocator has custom construct()/destroy() function, they will not be used by RawAllocator");
     public:
         using allocator_type = typename std::decay<decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
         using is_stateful = decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
