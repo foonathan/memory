@@ -29,12 +29,10 @@ int main()
     // list_node_size<int>::value is the size of each node of a std::list
     memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
 
-    std::cout << sizeof(pool) << '\n';
-
     // alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
     // std_allocator stores a reference to a RawAllocator and provides the Allocator interface
-    memory::list<int, memory::memory_pool<>> list(pool);
+    memory::list<int, std::allocator<char>> list(std::allocator<char>{});
     list.push_back(3);
     list.push_back(2);
     list.push_back(1);

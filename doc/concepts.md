@@ -126,13 +126,17 @@ Expression|RawAllocator|Fallback
 `traits::max_array_size(calloc)` | `calloc.max_array_size()` | `traits::max_node_size(calloc)`
 `traits::max_alignment(calloc)` | `calloc.max_alignment()` | `alignof(std::max_align_t)`
 
-To allow usage of types modelling the `Allocator` concept, there is an additional behavior when selecting the fallback.
+To allow rebinding required for traditional `Allocator`s, there is an additional behavior when selecting the fallback.
 If the parameter of the `allocator_traits` contains a typedef `value_type`, `traits::allocator_type` will rebind the type to `char`.
 This is done in the same way `std::allocator_traits` does it, i.e. first try to access the `rebind` member struct,
 then a type `alloc<T, Args...>` will be rebound to `alloc<char, Args...>`.
 If the parameter does not provide a member function `allocate_node`, it will try and call the allocation function required by the `Allocator` concept,
 i.e. `static_cast<void*>(alloc.allocate(size)`, likewise for `deallocate_node` which will call forward to the deallocation function `alloc.deallocate(static_cast<char*>(node), size)`.
+
 This enables the usage of any type modelling the `Allocator` concept where a `RawAllocator` is expected.
+It is only enabled, however, if the `Allocator` does not provide custom `construct()`/`destroy()` function since they would never be called.
+The checking can be overriden by specializing the traits class [allocator_is_raw_allocator](\ref foonathan::memory::allocator_is_raw_allocator).
+Note that it does *not* use the `std::allocator_traits` but calls the functions directly enabling only the `Allocator` classes that do not have specialized the traits template.
 
 For exposition, this is the minimum required interface for a `RawAllocator` without an appropriate specialization:
 

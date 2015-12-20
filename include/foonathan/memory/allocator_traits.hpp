@@ -23,6 +23,28 @@ namespace foonathan { namespace memory
 {
     namespace traits_detail // use seperate namespace to avoid name clashes
     {
+        template <class Allocator>
+        std::true_type has_construct(int, FOONATHAN_SFINAE(std::declval<Allocator>().construct(std::declval<typename Allocator::pointer>(),
+                                                      std::declval<typename Allocator::value_type>())));
+
+        template <class Allocator>
+        std::false_type has_construct(short);
+
+        template <class Allocator>
+        std::true_type has_destroy(int, FOONATHAN_SFINAE(std::declval<Allocator>().destroy(std::declval<typename Allocator::pointer>())));
+
+        template <class Allocator>
+        std::false_type has_destroy(short);
+
+        template <class Allocator>
+        struct check_standard_allocator
+        {
+            using custom_construct = decltype(has_construct<Allocator>(0));
+            using custom_destroy   = decltype(has_destroy<Allocator>(0));
+
+            using valid = std::integral_constant<bool, !custom_construct::value && !custom_destroy::value>;
+        };
+
         // full_concept has the best conversion rank, error the lowest
         // used to give priority to the functions
         struct error {};
@@ -210,6 +232,23 @@ namespace foonathan { namespace memory
         }
     } // namespace traits_detail
 
+    /// Traits class that checks whether or not a standard \c Allocator can be used as \concept{concept_rawallocator,RawAllocator}.
+    /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
+    /// it cannot be used since it would not be called.<br>
+    /// Specialize it for custom \c Allocator types to override this check.
+    /// \ingroup memory
+    template <class Allocator>
+    struct allocator_is_raw_allocator
+    : FOONATHAN_EBO(traits_detail::check_standard_allocator<Allocator>::valid)
+    {};
+
+    /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
+    /// \ingroup memory
+    template <typename T>
+    struct allocator_is_raw_allocator<std::allocator<T>>
+    : std::true_type
+    {};
+
     /// The default specialization of the allocator_traits for a \concept{concept_rawallocator,RawAllocator}.
     /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
     /// Any specialization must provide the same interface.
@@ -217,6 +256,8 @@ namespace foonathan { namespace memory
     template <class Allocator>
     class allocator_traits
     {
+        static_assert(allocator_is_raw_allocator<Allocator>::value,
+                "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
     public:
         using allocator_type = typename std::decay<decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
         using is_stateful = decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
