@@ -19,6 +19,10 @@ Simply run:
 
 If you later want to update your local copy to the latest version, simply run: `git submodule update --recursive --remote`.
 
+*Note: Run this command also if you get an error message during CMake 
+telling you that a newer version of compatibility is required. This will 
+update the compatibility submodule to its newest version.*
+
 ## 2. CMake Setup
 
 I am assuming that there is a local copy of the library source files under the path `ext/memory`.

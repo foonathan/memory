@@ -89,6 +89,11 @@ It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer version
 
 4. You need to activate C++11 at your target, if not already done, you can use [foonathan/compatibility] already available through `add_subdirectory()` and call `comp_target_features(your_target PUBLIC CPP11)`.
 
+*Note: If during CMake you see an error message that compatibility is 
+not on the newest version, run `git submodule update 
+--recursive --remote` to force the compatiblity submodule of memory to 
+update to the latest version.*
+
 See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
 
 ## Documentation
