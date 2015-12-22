@@ -102,6 +102,53 @@ namespace foonathan { namespace memory
             return !traits_type::is_stateful::value || this == &other;
         }
     };
+
+    template <>
+    class allocator_traits<memory_resource*>
+    {
+    public:
+        using allocator_type = memory_resource*;
+        using is_stateful = std::true_type;
+
+        static void* allocate_node(memory_resource *res,
+                                   std::size_t size, std::size_t alignment)
+        {
+            return res->allocate(size, alignment);
+        }
+
+        static void* allocate_array(memory_resource *res, std::size_t count,
+                                   std::size_t size, std::size_t alignment)
+        {
+            return res->allocate(count * size, alignment);
+        }
+
+        static void deallocate_node(memory_resource *res,
+                                   void *p, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            res->deallocate(p, size, alignment);
+        }
+
+        static void deallocate_array(memory_resource *res, void *p, std::size_t count,
+                                    std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            res->deallocate(p, count * size, alignment);
+        }
+
+        static std::size_t max_node_size(const memory_resource *) FOONATHAN_NOEXCEPT
+        {
+            return std::size_t(-1);
+        }
+
+        static std::size_t max_array_size(const memory_resource *) FOONATHAN_NOEXCEPT
+        {
+            return std::size_t(-1);
+        }
+
+        static std::size_t max_alignment(const memory_resource *) FOONATHAN_NOEXCEPT
+        {
+            return std::size_t(-1);
+        }
+    };
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_RESOURCE_ADAPTER_HPP_INCLUDED
