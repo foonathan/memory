@@ -8,7 +8,6 @@
 #include "detail/align.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
-#include "allocator_traits.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -104,58 +103,41 @@ namespace foonathan { namespace memory
         }
     };
 
-    template <>
-    class allocator_traits<memory_resource*>
+    class memory_resource_allocator
     {
     public:
-        using allocator_type = memory_resource*;
-        using is_stateful = std::true_type;
+        memory_resource_allocator(memory_resource *ptr) FOONATHAN_NOEXCEPT
+        : ptr_(ptr) {}
 
-        static void* allocate_node(memory_resource *res,
-                                   std::size_t size, std::size_t alignment)
+        void* allocate_node(std::size_t size, std::size_t alignment)
         {
-            return res->allocate(size, alignment);
+            return ptr_->allocate(size, alignment);
         }
 
-        static void* allocate_array(memory_resource *res, std::size_t count,
-                                   std::size_t size, std::size_t alignment)
+        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
-            return res->allocate(count * size, alignment);
+            ptr_->deallocate(ptr, size, alignment);
         }
 
-        static void deallocate_node(memory_resource *res,
-                                   void *p, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            res->deallocate(p, size, alignment);
-        }
-
-        static void deallocate_array(memory_resource *res, void *p, std::size_t count,
-                                    std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            res->deallocate(p, count * size, alignment);
-        }
-
-        static std::size_t max_node_size(const memory_resource *) FOONATHAN_NOEXCEPT
+        std::size_t max_alignment() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(-1);
         }
 
-        static std::size_t max_array_size(const memory_resource *) FOONATHAN_NOEXCEPT
+        memory_resource* resource() const FOONATHAN_NOEXCEPT
         {
-            return std::size_t(-1);
+            return ptr_;
         }
 
-        static std::size_t max_alignment(const memory_resource *) FOONATHAN_NOEXCEPT
-        {
-            return std::size_t(-1);
-        }
+    private:
+        memory_resource *ptr_;
     };
 
     template <class RawAllocator>
     struct is_shared_allocator;
 
     template <>
-    struct is_shared_allocator<memory_resource*> : std::true_type {};
+    struct is_shared_allocator<memory_resource_allocator> : std::true_type {};
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_RESOURCE_ADAPTER_HPP_INCLUDED

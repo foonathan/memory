@@ -88,5 +88,5 @@ TEST_CASE("memory_resource_adapter", "[adapter]")
 }
 
 // compilation checks
-template class foonathan::memory::allocator_storage<reference_storage<memory_resource*>, no_mutex>;
-template class foonathan::memory::allocator_traits<memory_resource*>;
+template class foonathan::memory::allocator_storage<reference_storage<memory_resource_allocator>, no_mutex>;
+template class foonathan::memory::allocator_traits<memory_resource_allocator>;
