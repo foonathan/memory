@@ -8,6 +8,7 @@
 #include "detail/align.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
+#include "allocator_traits.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -149,6 +150,12 @@ namespace foonathan { namespace memory
             return std::size_t(-1);
         }
     };
+
+    template <class RawAllocator>
+    struct is_shared_allocator;
+
+    template <>
+    struct is_shared_allocator<memory_resource*> : std::true_type {};
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_RESOURCE_ADAPTER_HPP_INCLUDED
