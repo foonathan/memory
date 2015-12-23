@@ -351,18 +351,20 @@ namespace foonathan { namespace memory
         // reference to shared: stores RawAllocator directly
         template <class RawAllocator>
         class reference_storage_impl<RawAllocator, reference_shared>
-        : RawAllocator
         {
         protected:
             reference_storage_impl(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
-            : RawAllocator(alloc) {}
+            : alloc_(alloc) {}
 
             using reference_type = RawAllocator;
 
             reference_type get_allocator() const FOONATHAN_NOEXCEPT
             {
-                return *this;
+                return alloc_;
             }
+
+        private:
+            RawAllocator alloc_;
         };
     } // namespace detail
 
