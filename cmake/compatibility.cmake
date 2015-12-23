@@ -15,6 +15,7 @@ add_library(_foonathan_comp_runner INTERFACE)
 comp_target_features(_foonathan_comp_runner INTERFACE
         cpp11_lang/alignas cpp11_lang/alignof cpp11_lang/constexpr cpp11_lang/noexcept cpp11_lang/thread_local
         cpp11_lib/max_align_t cpp11_lib/get_new_handler
+        ts/pmr
         env/exception_support env/hosted_implementation env/threading_support
         PREFIX "FOONATHAN_" NAMESPACE "foonathan_memory_comp"
         CMAKE_PATH "${_foonathan_comp_dest_dir}"

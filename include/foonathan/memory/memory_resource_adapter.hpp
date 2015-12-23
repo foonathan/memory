@@ -8,46 +8,15 @@
 #include "detail/align.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
+#include "allocator_traits.hpp"
+
+#define COMP_IN_PARENT_HEADER
+#include "comp/pmr.hpp"
+#undef COMP_IN_PARENT_HEADER
 
 namespace foonathan { namespace memory
 {
-    class memory_resource
-    {
-    public:
-        virtual ~memory_resource() FOONATHAN_NOEXCEPT {}
-
-        void* allocate(std::size_t bytes, std::size_t alignment = detail::max_alignment)
-        {
-            return do_allocate(bytes, alignment);
-        }
-
-        void deallocate(void* p, std::size_t bytes, std::size_t alignment = detail::max_alignment)
-        {
-            do_deallocate(p, bytes, alignment);
-        }
-
-        bool is_equal(const memory_resource& other) const FOONATHAN_NOEXCEPT
-        {
-            return do_is_equal(other);
-        }
-
-    protected:
-        virtual void* do_allocate(std::size_t bytes, std::size_t alignment) = 0;
-
-        virtual void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) = 0;
-
-        virtual bool do_is_equal(const memory_resource& other) const FOONATHAN_NOEXCEPT = 0;
-    };
-
-    bool operator==(const memory_resource& a, const memory_resource& b) FOONATHAN_NOEXCEPT
-    {
-        return &a == &b || a.is_equal(b);
-    }
-
-    bool operator!=(const memory_resource& a, const memory_resource& b) FOONATHAN_NOEXCEPT
-    {
-        return !(a == b);
-    }
+    using memory_resource = foonathan_memory_comp::memory_resource;
 
     template <class RawAllocator>
     class memory_resource_adapter
