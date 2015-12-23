@@ -11,12 +11,12 @@
 #include "allocator_traits.hpp"
 
 #define COMP_IN_PARENT_HEADER
-#include "comp/pmr.hpp"
+#include FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE_HEADER
 #undef COMP_IN_PARENT_HEADER
 
 namespace foonathan { namespace memory
 {
-    using memory_resource = foonathan_memory_comp::memory_resource;
+    using memory_resource = FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE;
 
     template <class RawAllocator>
     class memory_resource_adapter
