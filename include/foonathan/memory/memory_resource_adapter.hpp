@@ -55,7 +55,7 @@ namespace foonathan { namespace memory
     : public memory_resource, FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
     public:
-        using allocator_type = allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
         memory_resource_adapter(allocator_type &&other) FOONATHAN_NOEXCEPT
         : allocator_type(detail::move(other)) {}
@@ -75,7 +75,7 @@ namespace foonathan { namespace memory
 
         void* do_allocate(std::size_t bytes, std::size_t alignment) override
         {
-            auto max = traits_type::max_node_size();
+            auto max = traits_type::max_node_size(*this);
             if (bytes <= max)
                 return traits_type::allocate_node(*this, bytes, alignment);
             auto div = bytes / max;
@@ -86,7 +86,7 @@ namespace foonathan { namespace memory
 
         void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override
         {
-            auto max = traits_type::max_node_size();
+            auto max = traits_type::max_node_size(*this);
             if (bytes <= max)
                 traits_type::deallocate_node(*this, p, bytes, alignment);
             else
