@@ -176,13 +176,13 @@ namespace foonathan { namespace memory
         /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
         auto lock() FOONATHAN_NOEXCEPT
 
-        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(get_allocator(), std::declval<actual_mutex&>())))
+        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(std::declval<storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
         {
             return detail::lock_allocator(get_allocator(), static_cast<actual_mutex&>(*this));
         }
 
         auto lock() const FOONATHAN_NOEXCEPT
-        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(get_allocator(), std::declval<actual_mutex&>())))
+        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(std::declval<const storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
         {
             return detail::lock_allocator(get_allocator(), static_cast<actual_mutex&>(*this));
         }
