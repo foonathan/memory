@@ -155,9 +155,7 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \effects Forwards to the \c StoragePolicy.
-        /// \returns For stateful allocators: A (\c const) reference to the stored allocator.
-        /// For stateless allocators: Either a (\c const) reference to the stored allocator or a temporary constructed allocator,
-        /// depends on the \c StoragePolicy.
+        /// \returns Returns a reference to the stored allocator.
         /// \note This does not lock the \c Mutex.
         auto get_allocator() FOONATHAN_NOEXCEPT
         -> decltype(std::declval<storage_policy>().get_allocator())
@@ -176,17 +174,17 @@ namespace foonathan { namespace memory
         /// \returns A proxy object that acts like a pointer to the stored allocator.
         /// It cannot be reassigned to point to another allocator object and only moving is supported, which is destructive.
         /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
-        /// \requires The result of \ref get_allocator() must not be a temporary, otherwise the body of this function will not compile.
-        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<allocator_type, actual_mutex>)
-            lock() FOONATHAN_NOEXCEPT
+        auto lock() FOONATHAN_NOEXCEPT
+
+        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(std::declval<storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
         {
-            return {get_allocator(), *this};
+            return detail::lock_allocator(get_allocator(), static_cast<actual_mutex&>(*this));
         }
 
-        FOONATHAN_IMPL_DEFINED(detail::locked_allocator<const allocator_type, actual_mutex>)
-            lock() const FOONATHAN_NOEXCEPT
+        auto lock() const FOONATHAN_NOEXCEPT
+        -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(std::declval<const storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
         {
-            return {get_allocator(), *this};
+            return detail::lock_allocator(get_allocator(), static_cast<actual_mutex&>(*this));
         }
         /// @}.
     };
@@ -302,17 +300,27 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        // stores a pointer to an allocator
-        template <class RawAllocator, bool Stateful>
-        class reference_storage_impl
+        struct reference_stateful {};
+        struct reference_stateless {};
+        struct reference_shared {};
+
+        reference_stateful reference_type(std::true_type stateful, std::false_type shared);
+        reference_stateless reference_type(std::false_type stateful, std::true_type shared);
+        reference_stateless reference_type(std::false_type stateful, std::false_type shared);
+        reference_shared reference_type(std::true_type stateful, std::true_type shared);
+
+        template <class RawAllocator, class Tag>
+        class reference_storage_impl;
+
+        // reference to stateful: stores a pointer to an allocator
+        template <class RawAllocator>
+        class reference_storage_impl<RawAllocator, reference_stateful>
         {
         protected:
             reference_storage_impl(RawAllocator &allocator) FOONATHAN_NOEXCEPT
             : alloc_(&allocator) {}
 
-            using reference_type = RawAllocator&;
-
-            reference_type get_allocator() const FOONATHAN_NOEXCEPT
+            RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return *alloc_;
             }
@@ -321,44 +329,72 @@ namespace foonathan { namespace memory
             RawAllocator *alloc_;
         };
 
-        // doesn't store anything for stateless allocators
-        // construct an instance on the fly
+        // reference to stateless: store in static storage
         template <class RawAllocator>
-        class reference_storage_impl<RawAllocator, false>
+        class reference_storage_impl<RawAllocator, reference_stateless>
         {
         protected:
             reference_storage_impl(const RawAllocator &) FOONATHAN_NOEXCEPT {}
 
-            using reference_type = RawAllocator;
-
-            reference_type get_allocator() const FOONATHAN_NOEXCEPT
+            RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
             {
-                return {};
+                static RawAllocator alloc;
+                return alloc;
             }
         };
+
+        // reference to shared: stores RawAllocator directly
+        template <class RawAllocator>
+        class reference_storage_impl<RawAllocator, reference_shared>
+        {
+        protected:
+            reference_storage_impl(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
+            : alloc_(alloc) {}
+
+            RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+            {
+                return alloc_;
+            }
+
+        private:
+            mutable RawAllocator alloc_;
+        };
     } // namespace detail
+
+    /// Specifies whether or not a \concept{concept_rawallocator,RawAllocator} has shared semantics.
+    /// It is shared, if - like \ref allocator_reference - if multiple objects refer to the same internal allocator and if it can be copied.
+    /// This sharing is stateful, however, stateless allocators are not considered shared in the meaning of this traits. <br>
+    /// If a \c RawAllocator is shared, it will be directly embedded inside \ref reference_storage since it already provides \ref allocator_reference like semantics, so there is no need to add them manually,<br>
+    /// Specialize it for your own types, if they provide sharing semantics and can be copied.
+    /// \note This makes no guarantess about the lifetime of the shared object, the sharing allocators can either own or refer to a shared object.
+    /// \ingroup memory
+    template <class RawAllocator>
+    struct is_shared_allocator : std::false_type {};
 
     /// A \concept{concept_storagepolicy,StoragePolicy} that stores a reference to an allocator.
     /// For stateful allocators it only stores a pointer to an allocator object and copying/moving only copies the pointer.
     /// For stateless allocators it does not store anything, an allocator will be constructed as needed.
+    /// For allocators that are already shared (determined through \ref is_shared_allocator) it will store the allocator type directly.
     /// \note It does not take ownership over the allocator in the stateful case, the user has to ensure that the allocator object stays valid.
-    /// In the stateless case the lifetime does not matter.
+    /// In the other cases the lifetime does not matter.
     /// \ingroup memory
     template <class RawAllocator>
     class reference_storage
     : FOONATHAN_EBO(detail::reference_storage_impl<
         typename allocator_traits<RawAllocator>::allocator_type,
-        allocator_traits<RawAllocator>::is_stateful::value>)
+        decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
+                                        is_shared_allocator<RawAllocator>{}))>)
     {
         using storage = detail::reference_storage_impl<
-                            typename allocator_traits<RawAllocator>::allocator_type,
-                            allocator_traits<RawAllocator>::is_stateful::value>;
+                typename allocator_traits<RawAllocator>::allocator_type,
+                decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
+                                                is_shared_allocator<RawAllocator>{}))>;
     public:
         using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
-        /// \effects Creates it from a stateless allocator.
+        /// \effects Creates it from a stateless or shared allocator.
         /// It will not store anything, only creates the allocator as needed.
-        /// \requires The \c RawAllocator is stateless.
+        /// \requires The \c RawAllocator is stateless or shared.
         reference_storage(const allocator_type &alloc) FOONATHAN_NOEXCEPT
         : storage(alloc) {}
 
@@ -370,15 +406,13 @@ namespace foonathan { namespace memory
 
         /// @{
         /// \effects Copies the \c allocator_reference object.
-        /// Only copies the pointer to it.
+        /// Only copies the pointer to it in the stateful case.
         reference_storage(const reference_storage &) FOONATHAN_NOEXCEPT = default;
         reference_storage& operator=(const reference_storage &)FOONATHAN_NOEXCEPT = default;
         /// @}
 
-        /// \returns The reference to the allocator for stateful allocators.
-        /// For stateless it returns a default-constructed temporary object.
-        auto get_allocator() const FOONATHAN_NOEXCEPT
-        -> typename storage::reference_type
+        /// \returns Returns a reference to the allocator.
+        allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             return storage::get_allocator();
         }
@@ -509,23 +543,15 @@ namespace foonathan { namespace memory
         }
         /// @}
 
-        /// @{
         /// \returns A reference to the allocator.
         /// The actual type is implementation-defined since it is the base class used in the type-erasure,
         /// but it provides the full \concept{concept_rawallocator,RawAllocator} member functions.
         /// \note There is no way to access any custom member functions of the allocator type.
-        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
         {
             auto mem = static_cast<void*>(&storage_);
             return *static_cast<base_allocator*>(mem);
         }
-
-        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
-        {
-            auto mem = static_cast<const void*>(&storage_);
-            return *static_cast<const base_allocator*>(mem);
-        }
-        /// @}
 
     protected:
         // basic_allocator is trivially destructible
@@ -537,11 +563,14 @@ namespace foonathan { namespace memory
         : public base_allocator,
           private detail::reference_storage_impl<
                   typename allocator_traits<RawAllocator>::allocator_type,
-                  allocator_traits<RawAllocator>::is_stateful::value>
+                  decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
+                                                  is_shared_allocator<RawAllocator>{}))>
         {
             using traits = allocator_traits<RawAllocator>;
-            using storage = detail::reference_storage_impl<typename allocator_traits<RawAllocator>::allocator_type,
-                                                            allocator_traits<RawAllocator>::is_stateful::value>;
+            using storage = detail::reference_storage_impl<
+                    typename allocator_traits<RawAllocator>::allocator_type,
+                    decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
+                                                    is_shared_allocator<RawAllocator>{}))>;
         public:
             // non stateful
             basic_allocator(const RawAllocator &alloc) FOONATHAN_NOEXCEPT
@@ -552,8 +581,7 @@ namespace foonathan { namespace memory
             : storage(alloc) {}
 
         private:
-            auto get() const FOONATHAN_NOEXCEPT
-            -> typename storage::reference_type
+            typename traits::allocator_type& get() const FOONATHAN_NOEXCEPT
             {
                 return storage::get_allocator();
             }
@@ -598,7 +626,7 @@ namespace foonathan { namespace memory
         using default_instantiation = basic_allocator<base_allocator>;
         using storage = std::aligned_storage<sizeof(default_instantiation),
                 FOONATHAN_ALIGNOF(default_instantiation)>::type;
-        storage storage_;
+        mutable storage storage_;
     };
 
     /// An alias template for \ref allocator_storage using the \ref reference_storage policy with a given \c Mutex.

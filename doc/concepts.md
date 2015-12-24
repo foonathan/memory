@@ -215,7 +215,7 @@ Expression|Semantics
 ----------|---------
 `StoragePolicy::allocator_type` | The type of the allocator being stored as determinted through the [allocator_traits]. For a type-erased storage, it can be the type-erased base class.
 `StoragePolicy(args)` | Creates the `StoragePolicy`. `args` can be anything. It is used to create the allocator.
-`policy.get_allocator()` | Returns a reference to the `allocator_type`. Must not throw. Returns a `const` reference, if `policy` is `const`. Can return a default constructed allocator as a temporary if stateless allocator types are stored.
+`policy.get_allocator()` | Returns a reference to the `allocator_type`. Must not throw. May return a `const` reference, if `policy` is `const`.
 
 For exposition, this is a sample `StoragePolicy`.
 Note that it is not required to be a template, although it does not make much sense otherwise.

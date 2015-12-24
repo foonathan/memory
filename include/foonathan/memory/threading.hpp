@@ -140,6 +140,12 @@ namespace foonathan { namespace memory
             Mutex *mutex_; // don't use unqiue_lock to avoid dependency
             Alloc *alloc_;
         };
+
+        template <class Alloc, class Mutex>
+        locked_allocator<Alloc, Mutex> lock_allocator(Alloc &a, Mutex &m)
+        {
+            return {a, m};
+        }
     } // namespace detail
 }} // namespace foonathan::memory
 

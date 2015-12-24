@@ -41,6 +41,7 @@ set(tests
         memory_arena.cpp
         memory_pool.cpp
         memory_pool_collection.cpp
+        memory_resource_adapter.cpp
         memory_stack.cpp)
 
 add_executable(foonathan_memory_test ${tests})

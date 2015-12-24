@@ -27,6 +27,7 @@ set(header
         ${header_path}/memory_pool.hpp
         ${header_path}/memory_pool_collection.hpp
         ${header_path}/memory_pool_type.hpp
+        ${header_path}/memory_resource_adapter.hpp
         ${header_path}/memory_stack.hpp
         ${header_path}/new_allocator.hpp
         ${header_path}/smart_ptr.hpp
