@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 #include "../config.hpp"
 #include "../error.hpp"
@@ -40,6 +41,70 @@ namespace foonathan { namespace memory
             return address % alignment == 0u;
         }
 
+#define FOONATHAN_DETAIL_LOG2TABLE_16(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+#define FOONATHAN_DETAIL_LOG2TABLE_32(n) FOONATHAN_DETAIL_LOG2TABLE_16(n), FOONATHAN_DETAIL_LOG2TABLE_16(n)
+#define FOONATHAN_DETAIL_LOG2TABLE_64(n) FOONATHAN_DETAIL_LOG2TABLE_32(n), FOONATHAN_DETAIL_LOG2TABLE_32(n)
+#define FOONATHAN_DETAIL_LOG2TABLE_128(n) FOONATHAN_DETAIL_LOG2TABLE_64(n), FOONATHAN_DETAIL_LOG2TABLE_64(n)
+
+        namespace 
+        {
+            FOONATHAN_CONSTEXPR std::int16_t log2table[] = { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 
+                                                             FOONATHAN_DETAIL_LOG2TABLE_16(4), 
+                                                             FOONATHAN_DETAIL_LOG2TABLE_32(5),
+                                                             FOONATHAN_DETAIL_LOG2TABLE_64(6),
+                                                             FOONATHAN_DETAIL_LOG2TABLE_128(7) };
+
+            // All this static_if stuff is just to avoid UB by checking std::size_t width
+			// before shifting.
+            using size_t32 = std::true_type;
+            using size_t64 = std::false_type;
+            using size_tcond = std::integral_constant<bool, (sizeof(std::size_t) <= 4)>;
+
+            template<typename Cond>
+            struct log2_static_if
+            {
+                static FOONATHAN_CONSTEXPR_FNC std::int16_t apply(std::uint32_t value)
+                {
+                    return (value >> 24) ?
+                            24 + log2table[value >> 24]
+                    : ((value >> 16) ?
+                            16 + log2table[value >> 16]
+                    : ((value >> 8) ?
+                            8 + log2table[value >> 8]
+                    : log2table[value]
+                    ));
+                }
+            };
+
+            template<>
+            struct log2_static_if<size_t64>
+            {
+                static FOONATHAN_CONSTEXPR_FNC std::int16_t apply(std::uint64_t value)
+                {
+                    return (value >> 56) ?
+                        56 + log2table[value >> 56]
+                    : ((value >> 48) ?
+                        48 + log2table[value >> 48]
+                    : ((value >> 40) ?
+                        40 + log2table[value >> 40]
+                    : ((value >> 32) ?
+                        32 + log2table[value >> 32]
+                    : log2_static_if<size_t32>::apply(static_cast<std::uint32_t>(value))
+                    )));
+                }
+            };
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t log2(std::size_t value)
+            {
+                return log2_static_if<size_tcond>::apply(value);
+            }
+        }
+
+        FOONATHAN_CONSTEXPR_FNC std::size_t lastest_pow2(std::size_t value)
+        {
+            return 1 << (log2(value));
+        }
+
         // maximum alignment value
         FOONATHAN_CONSTEXPR std::size_t max_alignment = FOONATHAN_ALIGNOF(foonathan_memory_comp::max_align_t);
 #if FOONATHAN_HAS_CONSTEXPR
@@ -51,13 +116,8 @@ namespace foonathan { namespace memory
         {
             if (size >= max_alignment)
                 return max_alignment;
-            // otherwise use the next power of two
-            // I'm lazy, assume max_alignment won't be bigger than 16
-            static_assert(detail::max_alignment <= 16u, "I am sorry, lookup table doesn't got that far :(");
-            // maps size to next bigger power of two
-            static FOONATHAN_CONSTEXPR std::size_t next_power_of_two[] = {0, 1, 2, 2, 4, 4, 4, 4,
-                                                                          8, 8, 8, 8, 8, 8, 8, 8};
-            return next_power_of_two[size];
+
+            return lastest_pow2(size);
         }
     } // namespace detail
 }} // namespace foonathan::memory
