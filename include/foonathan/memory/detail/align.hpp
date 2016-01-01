@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -46,10 +46,10 @@ namespace foonathan { namespace memory
 #define FOONATHAN_DETAIL_LOG2TABLE_64(n) FOONATHAN_DETAIL_LOG2TABLE_32(n), FOONATHAN_DETAIL_LOG2TABLE_32(n)
 #define FOONATHAN_DETAIL_LOG2TABLE_128(n) FOONATHAN_DETAIL_LOG2TABLE_64(n), FOONATHAN_DETAIL_LOG2TABLE_64(n)
 
-        namespace 
+        namespace
         {
-            FOONATHAN_CONSTEXPR std::int16_t log2table[] = { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 
-                                                             FOONATHAN_DETAIL_LOG2TABLE_16(4), 
+            FOONATHAN_CONSTEXPR std::int16_t log2table[] = { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+                                                             FOONATHAN_DETAIL_LOG2TABLE_16(4),
                                                              FOONATHAN_DETAIL_LOG2TABLE_32(5),
                                                              FOONATHAN_DETAIL_LOG2TABLE_64(6),
                                                              FOONATHAN_DETAIL_LOG2TABLE_128(7) };
