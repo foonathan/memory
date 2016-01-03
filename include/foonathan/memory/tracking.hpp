@@ -15,90 +15,6 @@
 
 namespace foonathan { namespace memory
 {
-    /// A \concept{concept_rawallocator,RawAllocator} adapter that tracks an implementation allocator.
-    /// It wraps a \c RawAllocator that will be used as implementation allocator inside an arena.
-    /// Any allocation and deallocation will forward to the growth and shrinking functions of the \concept{concept_tracker,deep tracker}.
-    /// The class can then be passed as implementation allocator to an arena.
-    /// \note It is recommended to use this class only with \ref tracked_allocator::make_deeply_tracked_allocator.
-    /// \ingroup memory
-    template <class Tracker, class ImplRawAllocator>
-    class tracked_impl_allocator
-    : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
-    {
-        using traits = allocator_traits<ImplRawAllocator>;
-    public:
-        using allocator_type = typename traits::allocator_type ;
-        using tracker = Tracker;
-
-        using is_stateful = std::true_type;
-
-        /// \effects Takes a \concept{concept_tracker,deep tracker} and the \concept{concept_rawallocator,RawAllocator}
-        /// and wraps it.
-        /// It will only store a pointer to the \c Trakcer to allow it being shared with the higher-level arena
-        /// it is embedded in.
-        tracked_impl_allocator(tracker &t, allocator_type allocator = {})
-        : t_(&t),
-          allocator_type(detail::move(allocator)) {}
-
-        /// @{
-        /// \effects Forwards to the allocation function of the implementation allocator
-        /// and calls the <tt>Tracker::on_allocator_growth()</tt> function.
-        /// \returns The result of the implementation allocator function.
-        void* allocate_node(std::size_t size, std::size_t alignment)
-        {
-            auto mem = traits::allocate_node(*this, size, alignment);
-            t_->on_allocator_growth(mem, size);
-            return mem;
-        }
-
-        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
-        {
-            auto mem = traits::allocate_array(*this, count, size, alignment);
-            t_->on_allocator_growth(mem, size * count);
-            return mem;
-        }
-        /// @}
-
-        /// @{
-        /// \effects Forwards to the deallocation function of the implementation allocator
-        /// after caling the <tt>Tracker::on_allocator_shrinking()</tt> function.
-        void deallocate_node(void *ptr,
-                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            t_->on_allocator_shrinking(ptr, size);
-            traits::deallocate_node(*this, ptr, size, alignment);
-        }
-
-        void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
-        {
-            t_->on_allocator_shrinking(ptr, size * count);
-            traits::deallocate_array(*this, ptr, count, size, alignment);
-        }
-        /// @}
-
-        /// @{
-        /// \returns The result of the corresponding function the implementation allocator.
-        std::size_t max_node_size() const
-        {
-            return traits::max_node_size(*this);
-        }
-
-        std::size_t max_array_size() const
-        {
-            return traits::max_array_size(*this);
-        }
-
-        std::size_t max_alignment() const
-        {
-            return traits::max_alignment(*this);
-        }
-        /// @}
-
-    private:
-        Tracker *t_;
-    };
-
     /// A \concept{concept_rawallocator,RawAllocator} adapter that tracks another allocator using a \concept{concept_tracker,tracker}.
     /// It wraps another \c RawAllocator and calls the tracker function before forwarding to it.
     /// The class can then be used anywhere a \c RawAllocator is required and the memory usage will be tracked.
@@ -215,17 +131,6 @@ namespace foonathan { namespace memory
             return *this;
         }
         /// @}
-
-#ifdef DOXYGEN
-    private:
-#endif
-        template <class ImplRawAllocator, typename ... Args>
-        tracked_allocator(tracker t, ImplRawAllocator impl,
-                        Args&&... args)
-        : tracker(detail::move(t)),
-          allocator_type(detail::forward<Args>(args)...,
-                tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
-        {}
     };
 
     /// \effects Takes a \concept{concept_rawallocator,RawAllocator} and wraps it with a \concept{concept_tracker,tracker}.
@@ -236,19 +141,6 @@ namespace foonathan { namespace memory
     -> tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>
     {
         return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
-    }
-
-    /// \effects Takes a \concept{concept_tracker,deep tracker}, a \concept{concept_rawallocator,RawAllocator} and constructor arguments
-    /// and creates a new \ref tracked_allocator that will track a new allocator object created with the constructor arguments
-    /// and an implementation allocator that is the passed allocator wrapped in \ref tracked_impl_allocator with the same tracker.
-    /// It assumes that the implementation allocator is the last constructor argument.
-    /// \returns A \ref tracked_allocator that deeply tracks the given allocator type.
-    /// \relates tracked_allocator
-    template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
-    auto make_deeply_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
-    -> tracked_allocator<Tracker, RawAllocator<tracked_impl_allocator<Tracker, ImplRawAllocator>>>
-    {
-        return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
     }
 }} // namespace foonathan::memory
 
