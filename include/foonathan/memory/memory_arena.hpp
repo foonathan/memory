@@ -43,6 +43,18 @@ namespace foonathan { namespace memory
     class memory_arena;
 #endif
 
+    /// @{
+    /// Controls the caching of \ref memory_arena.
+    /// By default, deallocated blocks are put onto a cache, so they can be reused later;
+    /// this tag value enable/disable it..<br>
+    /// This can be useful, e.g. if there will never be blocks available for deallocation.
+    /// The (tiny) overhead for the cache can then be disabled.
+    /// An example is \ref memory_pool.
+    /// \ingroup memory
+    FOONATHAN_CONSTEXPR bool cached_arena = true;
+    FOONATHAN_CONSTEXPR bool uncached_arena = false;
+    /// @}
+
     namespace detail
     {
         // stores memory block in an intrusive linked list and allows LIFO access
@@ -107,7 +119,7 @@ namespace foonathan { namespace memory
         class memory_arena_cache;
 
         template <>
-        class memory_arena_cache<true>
+        class memory_arena_cache<cached_arena>
         {
         protected:
             bool cache_empty() const FOONATHAN_NOEXCEPT
@@ -151,7 +163,7 @@ namespace foonathan { namespace memory
         };
 
         template <>
-        class memory_arena_cache<false>
+        class memory_arena_cache<uncached_arena>
         {
         protected:
             bool cache_empty() const FOONATHAN_NOEXCEPT
@@ -190,7 +202,9 @@ namespace foonathan { namespace memory
     /// The memory blocks in use are put onto a stack like structure, deallocation will pop from the top,
     /// so it is only possible to deallocate the last allocated block of the arena.
     /// By default, blocks are not really deallocated but stored in a cache.
-    /// This can be disabled with the second template parameter.
+    /// This can be disabled with the second template parameter,
+    /// passing it \ref uncached_arena (or \c false) disables it,
+    /// \ref cached_arena (or \c true) enables it explicitly.
     /// \ingroup memory
     template <class BlockAllocator, bool Cached /* = true */>
     class memory_arena
