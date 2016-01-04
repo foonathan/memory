@@ -12,10 +12,124 @@
 
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
+#include "error.hpp"
 #include "memory_arena.hpp"
 
 namespace foonathan { namespace memory
 {
+    namespace detail
+    {
+        template <class Tracker, class BlockAllocator>
+        class deeply_tracked_block_allocator;
+
+        template <class Tracker, class BlockAllocator>
+        void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator> &alloc, Tracker &t) FOONATHAN_NOEXCEPT
+        {
+            alloc.tracker_ = &t;
+        }
+
+        template <class Allocator, class Tracker>
+        void set_tracker(Allocator &, Tracker &) {}
+
+        // used with deeply_tracked_allocator
+        template <class Tracker, class BlockAllocator>
+        class deeply_tracked_block_allocator
+        : FOONATHAN_EBO(BlockAllocator)
+        {
+        public:
+            template <typename ... Args>
+            deeply_tracked_block_allocator(std::size_t block_size, Args&&... args)
+            : BlockAllocator(block_size, detail::forward<Args>(args)...),
+              tracker_(nullptr) {}
+
+            memory_block allocate_block()
+            {
+                FOONATHAN_MEMORY_ASSERT(tracker_);
+                auto block = BlockAllocator::allocate_block();
+                tracker_->on_allocator_growth(block.memory, block.size);
+                return block;
+            }
+
+            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(tracker_);
+                tracker_->on_allocator_shrinking(block.memory, block.size);
+                BlockAllocator::deallocate_block(block);
+            }
+
+            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            {
+                return BlockAllocator::next_block_size();
+            }
+
+        private:
+            Tracker *tracker_;
+
+            friend void set_tracker<>(deeply_tracked_block_allocator &, Tracker &) FOONATHAN_NOEXCEPT;
+        };
+    } // namespace detail
+
+    template <class Tracker, class BlockOrRawAllocator>
+    class tracked_block_allocator
+    : FOONATHAN_EBO(Tracker, make_block_allocator_t<BlockOrRawAllocator>)
+    {
+    public:
+        using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
+        using tracker = Tracker;
+
+        explicit tracked_block_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)) {}
+
+        tracked_block_allocator(tracker t, allocator_type &&alloc) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)), allocator_type(detail::move(alloc)) {}
+
+        template <typename ... Args>
+        tracked_block_allocator(std::size_t block_size, tracker t, Args&&... args)
+        : tracker(detail::move(t)), allocator_type(block_size, detail::forward<Args>(args)...) {}
+
+        memory_block allocate_block()
+        {
+            auto block = allocator_type::allocate_block();
+            this->on_allocator_growth(block.memory, block.size);
+            return block;
+        }
+
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+        {
+            this->on_allocator_shrinking(block.memory, block.size);
+            allocator_type::deallocate_block(block);
+        }
+
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return allocator_type::next_block_size();
+        }
+
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        tracker& get_tracker() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const tracker& get_tracker() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+    };
+
+    template <class Tracker, class BlockOrRawAllocator>
+    using deeply_tracked_block_allocator
+    = FOONATHAN_IMPL_DEFINED(detail::deeply_tracked_block_allocator<Tracker, make_block_allocator_t<BlockOrRawAllocator>>);
+
     /// A \concept{concept_rawallocator,RawAllocator} adapter that tracks another allocator using a \concept{concept_tracker,tracker}.
     /// It wraps another \c RawAllocator and calls the tracker function before forwarding to it.
     /// The class can then be used anywhere a \c RawAllocator is required and the memory usage will be tracked.
@@ -36,21 +150,28 @@ namespace foonathan { namespace memory
         /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
         /// It will embed both objects.
         explicit tracked_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(t)) {}
+        : tracked_allocator(detail::move(t), allocator_type{}) {}
 
         tracked_allocator(tracker t, allocator_type&& allocator) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
+        : tracker(detail::move(t)), allocator_type(detail::move(allocator))
+        {
+            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
+        }
         /// @}
 
         /// @{
         /// \effects Moving moves both the tracker and the allocator.
         tracked_allocator(tracked_allocator &&other) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(other)), allocator_type(detail::move(other)) {}
+        : tracker(detail::move(other)), allocator_type(detail::move(other))
+        {
+            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
+        }
 
         tracked_allocator& operator=(tracked_allocator &&other) FOONATHAN_NOEXCEPT
         {
             tracker::operator=(detail::move(other));
             allocator_type::operator=(detail::move(other));
+            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
             return *this;
         }
         /// @}
@@ -143,63 +264,6 @@ namespace foonathan { namespace memory
     {
         return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
-
-    template <class Tracker, class BlockOrRawAllocator>
-    class tracked_block_allocator
-    : FOONATHAN_EBO(Tracker, make_block_allocator_t<BlockOrRawAllocator>)
-    {
-    public:
-        using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
-        using tracker = Tracker;
-
-        explicit tracked_block_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(t)) {}
-
-        tracked_block_allocator(tracker t, allocator_type &&alloc) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(t)), allocator_type(detail::move(alloc)) {}
-
-        template <typename ... Args>
-        tracked_block_allocator(std::size_t block_size, tracker t, Args&&... args)
-        : tracker(detail::move(t)), allocator_type(block_size, detail::forward<Args>(args)...) {}
-
-        memory_block allocate_block()
-        {
-            auto block = allocator_type::allocate_block();
-            this->on_allocator_growth(block.memory, block.size);
-            return block;
-        }
-
-        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
-        {
-            this->on_allocator_shrinking(block.memory, block.size);
-            allocator_type::deallocate_block(block);
-        }
-
-        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
-        {
-            return allocator_type::next_block_size();
-        }
-
-        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        tracker& get_tracker() FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        const tracker& get_tracker() const FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-    };
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_TRACKING_HPP_INCLUDED
