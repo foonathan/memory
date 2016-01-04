@@ -12,6 +12,7 @@
 
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
+#include "memory_arena.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -34,10 +35,10 @@ namespace foonathan { namespace memory
         /// @{
         /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
         /// It will embed both objects.
-        explicit tracked_allocator(tracker t = {})
+        explicit tracked_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
         : tracker(detail::move(t)) {}
 
-        tracked_allocator(tracker t, allocator_type&& allocator)
+        tracked_allocator(tracker t, allocator_type&& allocator) FOONATHAN_NOEXCEPT
         : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
         /// @}
 
@@ -142,6 +143,63 @@ namespace foonathan { namespace memory
     {
         return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
+
+    template <class Tracker, class BlockOrRawAllocator>
+    class tracked_block_allocator
+    : FOONATHAN_EBO(Tracker, make_block_allocator_t<BlockOrRawAllocator>)
+    {
+    public:
+        using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
+        using tracker = Tracker;
+
+        explicit tracked_block_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)) {}
+
+        tracked_block_allocator(tracker t, allocator_type &&alloc) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)), allocator_type(detail::move(alloc)) {}
+
+        template <typename ... Args>
+        tracked_block_allocator(std::size_t block_size, tracker t, Args&&... args)
+        : tracker(detail::move(t)), allocator_type(block_size, detail::forward<Args>(args)...) {}
+
+        memory_block allocate_block()
+        {
+            auto block = allocator_type::allocate_block();
+            this->on_allocator_growth(block.memory, block.size);
+            return block;
+        }
+
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+        {
+            this->on_allocator_shrinking(block.memory, block.size);
+            allocator_type::deallocate_block(block);
+        }
+
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return allocator_type::next_block_size();
+        }
+
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        tracker& get_tracker() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const tracker& get_tracker() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+    };
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_TRACKING_HPP_INCLUDED
