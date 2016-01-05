@@ -349,11 +349,11 @@ namespace foonathan { namespace memory
                                     std::declval<typename allocator_traits<T>::allocator_type&>(), nullptr, 0, 0)),
                        traits_detail::error> {};
 
-        template <typename T, bool DefaultTraits>
+        template <typename T, class DefaultTraits>
         struct is_raw_allocator : std::true_type {};
 
         template <typename T>
-        struct is_raw_allocator<T, true>
+        struct is_raw_allocator<T, std::integral_constant<bool, true>>
         : std::integral_constant<bool,
             allocator_is_raw_allocator<T>::value
             && !(has_invalid_alloc_function<T>::value || has_invalid_dealloc_function<T>::value)> {};
@@ -364,7 +364,7 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename T>
     struct is_raw_allocator
-    : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(std::declval<T&>()))::value>
+    : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(std::declval<T&>()))>
     {};
 }} // namespace foonathan::memory
 

@@ -41,18 +41,20 @@ namespace foonathan { namespace memory
     namespace detail
     {
         template <class BlockAllocator>
-        std::true_type is_block_allocator_impl(BlockAllocator &,
-           FOONATHAN_SFINAE(std::declval<memory_block&>() = std::declval<BlockAllocator>().allocate_block()),
-           FOONATHAN_SFINAE(std::declval<std::size_t&>() = std::declval<BlockAllocator>().next_block_size()),
+        std::true_type is_block_allocator_impl(int,
+           FOONATHAN_SFINAE(std::declval<memory_block&>() = std::declval<BlockAllocator&>().allocate_block()),
+           FOONATHAN_SFINAE(std::declval<std::size_t&>() = std::declval<BlockAllocator&>().next_block_size()),
            FOONATHAN_SFINAE(std::declval<BlockAllocator>().deallocate_block(memory_block{})));
-        std::false_type is_block_allocator_impl(...);
+
+        template <typename T>
+        std::false_type is_block_allocator_impl(short);
     } // namespace detail
 
     /// Traits that check whether a type models concept \concept{concept_blockallocator,BlockAllocator}.
     /// \ingroup memory
     template <typename T>
     struct is_block_allocator
-    : decltype(detail::is_block_allocator_impl(std::declval<T&>())) {};
+    : decltype(detail::is_block_allocator_impl<T>(0)) {};
 
 #if !defined(DOXYGEN)
     template <class BlockAllocator, bool Cached = true>
