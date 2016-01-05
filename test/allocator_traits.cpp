@@ -8,8 +8,38 @@
 
 #include <type_traits>
 #include <memory/allocator_traits.hpp>
+#include <memory/heap_allocator.hpp>
 
 using namespace foonathan::memory;
+
+static_assert(is_raw_allocator<std::allocator<char>>::value, "");
+static_assert(allocator_is_raw_allocator<std::allocator<char>>::value, "");
+static_assert(is_raw_allocator<std::allocator<int>>::value, "");
+static_assert(allocator_is_raw_allocator<std::allocator<int>>::value, "");
+static_assert(is_raw_allocator<heap_allocator>::value, "");
+static_assert(!is_raw_allocator<int>::value, "");
+
+template <typename T>
+struct std_allocator_construct
+{
+    using value_type = T;
+    using pointer = T;
+
+    void construct(pointer, T) {}
+};
+
+static_assert(!allocator_is_raw_allocator<std_allocator_construct<int>>::value, "");
+static_assert(!is_raw_allocator<std_allocator_construct<int>>::value, "");
+
+struct raw_allocator_specialized {};
+
+namespace foonathan { namespace memory
+{
+    template <>
+    struct allocator_traits<raw_allocator_specialized> {};
+}} // namespace foonathan::memory
+
+static_assert(is_raw_allocator<raw_allocator_specialized>::value, "");
 
 template <class Allocator, class Type, bool Stateful>
 void test_type_statefulness()
@@ -118,6 +148,8 @@ TEST_CASE("allocator_traits", "[core]")
         }
     };
 
+    static_assert(is_raw_allocator<min_raw_allocator>::value, "");
+
     struct standard_allocator
     {
         using value_type = char;
@@ -136,6 +168,8 @@ TEST_CASE("allocator_traits", "[core]")
         }
     };
 
+    static_assert(is_raw_allocator<standard_allocator>::value, "");
+
     SECTION("node")
     {
         // minimum interface works
@@ -152,6 +186,8 @@ TEST_CASE("allocator_traits", "[core]")
 
         struct both_alloc : min_raw_allocator, standard_allocator
         {};
+
+        static_assert(is_raw_allocator<both_alloc>::value, "");
 
         // raw is preferred over standard
         both_alloc both;
@@ -198,6 +234,8 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(array.dealloc_array);
 
         struct array_node : min_raw_allocator, array_raw {};
+        static_assert(is_raw_allocator<array_node>::value, "");
+
         // array works over node
         array_node array2;
         test_array(array2);

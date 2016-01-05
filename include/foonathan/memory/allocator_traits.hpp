@@ -21,17 +21,21 @@
 
 namespace foonathan { namespace memory
 {
-    namespace traits_detail // use seperate namespace to avoid name clashes
+    namespace detail
     {
         template <class Allocator>
-        std::true_type has_construct(int, FOONATHAN_SFINAE(std::declval<Allocator>().construct(std::declval<typename Allocator::pointer>(),
-                                                      std::declval<typename Allocator::value_type>())));
+        std::true_type has_construct(int,
+            FOONATHAN_SFINAE(std::declval<Allocator>().
+                construct(std::declval<typename Allocator::pointer>(),
+                          std::declval<typename Allocator::value_type>())));
 
         template <class Allocator>
         std::false_type has_construct(short);
 
         template <class Allocator>
-        std::true_type has_destroy(int, FOONATHAN_SFINAE(std::declval<Allocator>().destroy(std::declval<typename Allocator::pointer>())));
+        std::true_type has_destroy(int,
+               FOONATHAN_SFINAE(std::declval<Allocator>().
+                   destroy(std::declval<typename Allocator::pointer>())));
 
         template <class Allocator>
         std::false_type has_destroy(short);
@@ -44,7 +48,27 @@ namespace foonathan { namespace memory
 
             using valid = std::integral_constant<bool, !custom_construct::value && !custom_destroy::value>;
         };
+    } // namespace detail
 
+    /// Traits class that checks whether or not a standard \c Allocator can be used as \concept{concept_rawallocator,RawAllocator}.
+    /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
+    /// it cannot be used since it would not be called.<br>
+    /// Specialize it for custom \c Allocator types to override this check.
+    /// \ingroup memory
+    template <class Allocator>
+    struct allocator_is_raw_allocator
+    : FOONATHAN_EBO(detail::check_standard_allocator<Allocator>::valid)
+    {};
+
+    /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
+    /// \ingroup memory
+    template <typename T>
+    struct allocator_is_raw_allocator<std::allocator<T>>
+    : std::true_type
+    {};
+
+    namespace traits_detail // use seperate namespace to avoid name clashes
+    {
         // full_concept has the best conversion rank, error the lowest
         // used to give priority to the functions
         struct error {};
@@ -133,12 +157,12 @@ namespace foonathan { namespace memory
         -> FOONATHAN_AUTO_RETURN(static_cast<void*>(alloc.allocate(size)))
 
         template <class Allocator>
-        void* allocate_node(error, Allocator &,
+        error allocate_node(error, Allocator &,
                            std::size_t, std::size_t)
         {
             static_assert(invalid_allocator_concept<Allocator>::error,
                           "type does not provide: void* allocate_node(std::size_t, std::size_t)");
-            return nullptr;
+            return {};
         }
 
         //=== deallocate_node() ===//
@@ -156,10 +180,11 @@ namespace foonathan { namespace memory
         -> FOONATHAN_AUTO_RETURN_TYPE(alloc.deallocate(static_cast<char*>(ptr), size), void)
 
         template <class Allocator>
-        void deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
+        error deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
         {
             static_assert(invalid_allocator_concept<Allocator>::error,
                           "type does not provide: void deallocate_node(void*, std::size_t, std::size_t)");
+            return error{};
         }
 
         //=== allocate_array() ===//
@@ -232,23 +257,6 @@ namespace foonathan { namespace memory
         }
     } // namespace traits_detail
 
-    /// Traits class that checks whether or not a standard \c Allocator can be used as \concept{concept_rawallocator,RawAllocator}.
-    /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
-    /// it cannot be used since it would not be called.<br>
-    /// Specialize it for custom \c Allocator types to override this check.
-    /// \ingroup memory
-    template <class Allocator>
-    struct allocator_is_raw_allocator
-    : FOONATHAN_EBO(traits_detail::check_standard_allocator<Allocator>::valid)
-    {};
-
-    /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
-    /// \ingroup memory
-    template <typename T>
-    struct allocator_is_raw_allocator<std::allocator<T>>
-    : std::true_type
-    {};
-
     /// The default specialization of the allocator_traits for a \concept{concept_rawallocator,RawAllocator}.
     /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
     /// Any specialization must provide the same interface.
@@ -256,8 +264,6 @@ namespace foonathan { namespace memory
     template <class Allocator>
     class allocator_traits
     {
-        static_assert(allocator_is_raw_allocator<Allocator>::value,
-                "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
     public:
         using allocator_type = typename std::decay<decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
         using is_stateful = decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
@@ -265,6 +271,8 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type& state,
                                 std::size_t size, std::size_t alignment)
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             return traits_detail::allocate_node(traits_detail::full_concept{},
                                                 state, size, alignment);
         }
@@ -272,6 +280,8 @@ namespace foonathan { namespace memory
         static void* allocate_array(allocator_type& state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             return traits_detail::allocate_array(traits_detail::full_concept{},
                                                  state, count, size, alignment);
         }
@@ -279,6 +289,8 @@ namespace foonathan { namespace memory
         static void deallocate_node(allocator_type& state,
                     void *node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             traits_detail::deallocate_node(traits_detail::full_concept{},
                                            state, node, size, alignment);
         }
@@ -286,25 +298,74 @@ namespace foonathan { namespace memory
         static void deallocate_array(allocator_type& state, void *array, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             traits_detail::deallocate_array(traits_detail::full_concept{},
                                             state, array, count, size, alignment);
         }
 
         static std::size_t max_node_size(const allocator_type &state)
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             return traits_detail::max_node_size(traits_detail::full_concept{}, state);
         }
 
         static std::size_t max_array_size(const allocator_type &state)
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             return traits_detail::max_array_size(traits_detail::full_concept{}, state);
         }
 
         static std::size_t max_alignment(const allocator_type &state)
         {
+            static_assert(allocator_is_raw_allocator<Allocator>::value,
+                          "Allocator cannot be used as RawAllocator because it provides custom construct()/destroy()");
             return traits_detail::max_alignment(traits_detail::full_concept{}, state);
         }
+
+    #if !defined(DOXYGEN)
+        using foonathan_memory_default_traits = std::true_type;
+    #endif
     };
+
+    namespace detail
+    {
+        template <class RawAllocator>
+        typename allocator_traits<RawAllocator>::foonathan_memory_default_traits
+            alloc_uses_default_traits(RawAllocator&);
+        std::false_type alloc_uses_default_traits(...);
+
+        template <typename T>
+        struct has_invalid_alloc_function
+        : std::is_same<decltype(traits_detail::allocate_node(traits_detail::full_concept{},
+                                    std::declval<typename allocator_traits<T>::allocator_type&>(), 0, 0)),
+                       traits_detail::error> {};
+
+        template <typename T>
+        struct has_invalid_dealloc_function
+        : std::is_same<decltype(traits_detail::deallocate_node(traits_detail::full_concept{},
+                                    std::declval<typename allocator_traits<T>::allocator_type&>(), nullptr, 0, 0)),
+                       traits_detail::error> {};
+
+        template <typename T, bool DefaultTraits>
+        struct is_raw_allocator : std::true_type {};
+
+        template <typename T>
+        struct is_raw_allocator<T, true>
+        : std::integral_constant<bool,
+            allocator_is_raw_allocator<T>::value
+            && !(has_invalid_alloc_function<T>::value || has_invalid_dealloc_function<T>::value)> {};
+    } // namespace detail
+
+    /// Traits that check whether a type models concept \concept{concept_rawallocator,RawAllocator}.<br>
+    /// It must either provide the necessary functions for the default traits specialization or has specialized it.
+    /// \ingroup memory
+    template <typename T>
+    struct is_raw_allocator
+    : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(std::declval<T&>()))::value>
+    {};
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED
