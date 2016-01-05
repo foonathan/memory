@@ -261,16 +261,14 @@ Expression|Semantics
 `tracker.on_array_allocation(array, count, size, alignment)` | Same as the [node](#concept_node) version, but for [arrays](#concept_array).
 `tracker.on_array_deallocation(array, count, size, alignment)` | Same the [node](#concept_node) version, but for [arrays](#concept_array).
 
-A *deep tracker* also tracks an implementation allocator of another allocator
+A *deep tracker* also tracks a [BlockAllocator](#concept_block_allocator) of another allocator
 and thus allows monitoring the often more expensive big allocations done by it.
 Such a `Tracker` must provide the following additional functions:
 
 Expression|Semantics
 ----------|---------
-`tracker.on_allocator_growth(memory, size)` | Gets called after the implementation allocator has allocated the passed memory block of given size.
-`tracker.on_allocator_shrinkage(memory, size)` | Gets called before a given memory block of the implementation allocator will be deallocated.
-
-The above functions do not distinguish between [nodes](#concept_node) or [arrays](#concept_array).
+`tracker.on_allocator_growth(memory, size)` | Gets called after the block allocator has allocated the passed memory block of given size.
+`tracker.on_allocator_shrinkage(memory, size)` | Gets called before a given memory block of the block allocator will be deallocated.
 
 For exposition, this is a sample `Tracker`:
 
