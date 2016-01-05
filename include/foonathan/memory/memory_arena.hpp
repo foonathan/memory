@@ -38,6 +38,24 @@ namespace foonathan { namespace memory
         : memory_block(begin, static_cast<char*>(end) - static_cast<char*>(begin)) {}
     };
 
+    namespace detail
+    {
+        template <class BlockAllocator>
+        std::true_type is_block_allocator_impl(int,
+           FOONATHAN_SFINAE(std::declval<memory_block&>() = std::declval<BlockAllocator&>().allocate_block()),
+           FOONATHAN_SFINAE(std::declval<std::size_t&>() = std::declval<BlockAllocator&>().next_block_size()),
+           FOONATHAN_SFINAE(std::declval<BlockAllocator>().deallocate_block(memory_block{})));
+
+        template <typename T>
+        std::false_type is_block_allocator_impl(short);
+    } // namespace detail
+
+    /// Traits that check whether a type models concept \concept{concept_blockallocator,BlockAllocator}.
+    /// \ingroup memory
+    template <typename T>
+    struct is_block_allocator
+    : decltype(detail::is_block_allocator_impl<T>(0)) {};
+
 #if !defined(DOXYGEN)
     template <class BlockAllocator, bool Cached = true>
     class memory_arena;
@@ -210,6 +228,7 @@ namespace foonathan { namespace memory
     class memory_arena
     : FOONATHAN_EBO(BlockAllocator), FOONATHAN_EBO(detail::memory_arena_cache<Cached>)
     {
+        static_assert(is_block_allocator<BlockAllocator>::value, "BlockAllocator is not a BlockAllocator!");
         using cache = detail::memory_arena_cache<Cached>;
     public:
         using allocator_type = BlockAllocator;
@@ -478,17 +497,17 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        template <class BlockAlloc, typename ... Args>
-        BlockAlloc make_block_allocator(int,
-            decltype(std::declval<BlockAlloc>().allocate_block(), std::size_t()) block_size,
-            Args&&... args)
+        template <class BlockAllocator, typename ... Args>
+        BlockAllocator make_block_allocator(std::true_type,
+                                            std::size_t block_size, Args&&... args)
         {
-            return BlockAlloc(block_size, detail::forward<Args>(args)...);
+            return BlockAllocator(block_size, detail::forward<Args>(args)...);
         }
 
         template <class RawAlloc>
-        growing_block_allocator<RawAlloc> make_block_allocator(short,
-            std::size_t block_size, RawAlloc alloc = RawAlloc())
+        auto make_block_allocator(std::false_type,
+                                  std::size_t block_size, RawAlloc alloc = RawAlloc())
+        -> growing_block_allocator<RawAlloc>
         {
             return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc));
         }
@@ -500,8 +519,9 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class BlockOrRawAllocator>
     using make_block_allocator_t
-        = decltype(detail::make_block_allocator<BlockOrRawAllocator>(0,
-                        0, std::declval<BlockOrRawAllocator>()));
+        = typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
+                                    BlockOrRawAllocator,
+                                    growing_block_allocator<BlockOrRawAllocator>>::type;
 
     /// Helper function make a \concept{concept_blockallocator,BlockAllocator}.
     /// \returns A \concept{concept_blockallocator,BlockAllocator} of the given type created with the given arguments.
@@ -509,7 +529,7 @@ namespace foonathan { namespace memory
     template <class BlockOrRawAllocator, typename ... Args>
     make_block_allocator_t<BlockOrRawAllocator> make_block_allocator(std::size_t block_size, Args&&... args)
     {
-        return detail::make_block_allocator(0, block_size, detail::forward<Args>(args)...);
+        return detail::make_block_allocator(is_block_allocator<BlockOrRawAllocator>{}, block_size, detail::forward<Args>(args)...);
     }
 }} // namespace foonathan::memory
 

@@ -29,15 +29,17 @@ A little bit more semantics provides the alias [thread_safe_allocator] it synchr
 The [StoragePolicy] [reference_storage] stores a pointer to an allocator object.
 Although it stores a pointer, it always references an object, i.e. it is never `null`.
 
-It provides two slightly different semantics depending on whether or not the allocator is stateful:
+It provides three slightly different semantics depending on whether or not the allocator is stateful:
 
 * For stateful allocator, it takes a reference to it. Then it will store a pointer to the given allocator.
 It does not take ownership, i.e. the passed allocator object must live longer than the reference to it!
 
-* For stateless allocators, it does not actually store anything. They are default-constructed as needed by `get_allocator()`.
-This means that they don't actually depend on the lifetime of the given allocator and also can take temporaries.
+* For stateless allocators, it uses a `static` object in order to return a reference in `get_allocator()`.
+But this means that they don't actually depend on the lifetime of the given allocator and also can take temporaries.
 
-In either case, the class is nothrow copyable and never actually moves the allocator, just copies the pointer.
+* For special allocators that already provide reference semantics (determinted through traits specialization), it behaves like a [direct_storage] policy.
+
+In either case, the class is nothrow copyable and never actually moves the referred allocator, just copies the pointer.
 A copy of a [reference_storage] references the same allocator as the origin.
 
 The alias [allocator_reference] uses this storage policy with the [default_mutex].
