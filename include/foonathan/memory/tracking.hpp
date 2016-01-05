@@ -23,13 +23,13 @@ namespace foonathan { namespace memory
         class deeply_tracked_block_allocator;
 
         template <class Tracker, class BlockAllocator>
-        void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator> &alloc, Tracker &t) FOONATHAN_NOEXCEPT
+        void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator> &alloc, Tracker *t) FOONATHAN_NOEXCEPT
         {
-            alloc.tracker_ = &t;
+            alloc.tracker_ = t;
         }
 
         template <class Allocator, class Tracker>
-        void set_tracker(Allocator &, Tracker &) {}
+        void set_tracker(Allocator &, Tracker *) {}
 
         // used with deeply_tracked_allocator
         template <class Tracker, class BlockAllocator>
@@ -44,16 +44,16 @@ namespace foonathan { namespace memory
 
             memory_block allocate_block()
             {
-                FOONATHAN_MEMORY_ASSERT(tracker_);
                 auto block = BlockAllocator::allocate_block();
-                tracker_->on_allocator_growth(block.memory, block.size);
+                if (tracker_) // on first call tracker_ is nullptr
+                    tracker_->on_allocator_growth(block.memory, block.size);
                 return block;
             }
 
             void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
             {
-                FOONATHAN_MEMORY_ASSERT(tracker_);
-                tracker_->on_allocator_shrinking(block.memory, block.size);
+                if (tracker_) // on last call tracker_ is nullptr again
+                    tracker_->on_allocator_shrinking(block.memory, block.size);
                 BlockAllocator::deallocate_block(block);
             }
 
@@ -65,7 +65,7 @@ namespace foonathan { namespace memory
         private:
             Tracker *tracker_;
 
-            friend void set_tracker<>(deeply_tracked_block_allocator &, Tracker &) FOONATHAN_NOEXCEPT;
+            friend void set_tracker<>(deeply_tracked_block_allocator &, Tracker*) FOONATHAN_NOEXCEPT;
         };
     } // namespace detail
 
@@ -155,23 +155,28 @@ namespace foonathan { namespace memory
         tracked_allocator(tracker t, allocator_type&& allocator) FOONATHAN_NOEXCEPT
         : tracker(detail::move(t)), allocator_type(detail::move(allocator))
         {
-            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
         }
         /// @}
+
+        ~tracked_allocator() FOONATHAN_NOEXCEPT
+        {
+            detail::set_tracker(get_allocator().get_allocator(), static_cast<tracker*>(nullptr));
+        }
 
         /// @{
         /// \effects Moving moves both the tracker and the allocator.
         tracked_allocator(tracked_allocator &&other) FOONATHAN_NOEXCEPT
         : tracker(detail::move(other)), allocator_type(detail::move(other))
         {
-            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
         }
 
         tracked_allocator& operator=(tracked_allocator &&other) FOONATHAN_NOEXCEPT
         {
             tracker::operator=(detail::move(other));
             allocator_type::operator=(detail::move(other));
-            detail::set_tracker(get_allocator().get_allocator(), get_tracker());
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
             return *this;
         }
         /// @}
