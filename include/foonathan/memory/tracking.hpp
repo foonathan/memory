@@ -264,6 +264,49 @@ namespace foonathan { namespace memory
     {
         return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
+
+    namespace detail
+    {
+        template <typename T, bool Block>
+        struct is_block_or_raw_allocator_impl
+        : std::true_type {};
+
+        template <typename T>
+        struct is_block_or_raw_allocator_impl<T, false>
+        : memory::is_raw_allocator<T> {};
+
+        template <typename T>
+        struct is_block_or_raw_allocator
+        : is_block_or_raw_allocator_impl<T, memory::is_block_allocator<T>::value> {};
+
+        template <class RawAllocator, class BlockAllocator>
+        struct rebind_block_allocator;
+
+        template <template <typename...> class RawAllocator, typename ... Args, class OtherBlockAllocator>
+        struct rebind_block_allocator<RawAllocator<Args...>, OtherBlockAllocator>
+        {
+            using type = RawAllocator<typename std::conditional<is_block_or_raw_allocator<Args>::value,
+                                                                OtherBlockAllocator, Args>::type...>;
+        };
+
+        template <class Tracker, class RawAllocator>
+        using deeply_tracked_block_allocator_for
+            = memory::deeply_tracked_block_allocator<Tracker, typename RawAllocator::allocator_type>;
+
+        template <class Tracker, class RawAllocator>
+        using rebound_allocator
+            = typename rebind_block_allocator<RawAllocator, deeply_tracked_block_allocator_for<Tracker, RawAllocator>>::type;
+    } // namespace detail
+
+    template <class Tracker, class RawAllocator>
+    using deeply_tracked_allocator = tracked_allocator<Tracker, detail::rebound_allocator<Tracker, RawAllocator>>;
+
+    template <class RawAllocator, class Tracker, typename ... Args>
+    auto make_deeply_tracked_allocator(Tracker t, Args&&... args)
+    -> deeply_tracked_allocator<Tracker, RawAllocator>
+    {
+        return deeply_tracked_allocator<Tracker, RawAllocator>(detail::move(t), {detail::forward<Args>(args)...});
+    }
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_TRACKING_HPP_INCLUDED
