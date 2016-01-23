@@ -22,22 +22,11 @@
     #undef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 #endif
 
-#if !defined(DOXYGEN)
-    #define COMP_IN_PARENT_HEADER
-    #include "comp/alignas.hpp"
-    #include "comp/alignof.hpp"
-    #include "comp/constexpr.hpp"
-    #include "comp/noexcept.hpp"
-    #include "comp/thread_local.hpp"
-
-    #include "comp/get_new_handler.hpp"
-    #include "comp/max_align_t.hpp"
-
-    #include "comp/exception_support.hpp"
-    #include "comp/hosted_implementation.hpp"
-    #include "comp/threading_support.hpp"
-    #undef COMP_IN_PARENT_HEADER
-#endif
+// general compatibility headers
+#include FOONATHAN_CONSTEXPR_HEADER
+#include FOONATHAN_NOEXCEPT_HEADER
+#include FOONATHAN_EXCEPTION_SUPPORT_HEADER
+#include FOONATHAN_HOSTED_IMPLEMENTATION_HEADER
 
 // namespace prefix
 #if !FOONATHAN_MEMORY_NAMESPACE_PREFIX

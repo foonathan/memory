@@ -9,6 +9,10 @@
 #include <cstdint>
 #include <type_traits>
 
+#include FOONATHAN_ALIGNAS_HEADER
+#include FOONATHAN_ALIGNOF_HEADER
+#include FOONATHAN_MAX_ALIGN_T_HEADER
+
 #include "../config.hpp"
 #include "../error.hpp"
 
@@ -106,7 +110,7 @@ namespace foonathan { namespace memory
         }
 
         // maximum alignment value
-        FOONATHAN_CONSTEXPR std::size_t max_alignment = FOONATHAN_ALIGNOF(foonathan_memory_comp::max_align_t);
+        FOONATHAN_CONSTEXPR std::size_t max_alignment = FOONATHAN_ALIGNOF(foonathan_comp::max_align_t);
 #if FOONATHAN_HAS_CONSTEXPR
         static_assert(is_valid_alignment(max_alignment), "ehm..?");
 #endif

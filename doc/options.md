@@ -6,7 +6,7 @@ There are the following variables available to configure it:
 
 * `FOONATHAN_MEMORY_DEFAULT_ALLOCATOR`: The default allocator used by the higher level allocator classes. One of the low level allocators (see \ref foonathan::memory::default_allocator). Default is `heap_allocator`.
 * `FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE`: Whether or not the `allocator_reference` is thread safe by default. Default is `ON`.
-* `FOONATHAN_MEMORY_MEMORY_RESOURCE` and `FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER`: Specify th memory resource class used. The first one is the full name including namespace, the second one the header (including `"..."` or `<...>` that needs to be included for it. Default is `foonathan_memory_comp::memory_resource` and `"comp/memory_resource.hpp"` to use the version of foonathan/compatibility.
+* `FOONATHAN_MEMORY_MEMORY_RESOURCE` and `FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER`: Specify th memory resource class used. The first one is the full name including namespace, the second one the header (including `"..."` or `<...>` that needs to be included for it. Default is `foonathan_comp::memory_resource` and `"foonathan/memory_resource.hpp"` to use the version of foonathan/compatibility.
 * `FOONATHAN_MEMORY_DEBUG_*`: specifies debugging options such as pointer check in `deallocate()` or filling newly allocated memory with values. All of them are enabled in `Debug` builds by default, the faster ones in `RelWithDebInfo` and none in `Release`. See [debugging](md_doc_debug_error.html#debugging) for a detailed description.
 
 * `FOONATHAN_HAS_*`: specifies compatibility options, that is, whether a certain C++ feature is available under your compiler. They are automatically detected by CMake, so there is usually no need to change them.

@@ -11,6 +11,8 @@
     #include <cstdio>
 #endif
 
+#include FOONATHAN_GET_NEW_HANDLER_HEADER
+
 using namespace foonathan::memory;
 
 namespace
@@ -101,7 +103,7 @@ void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std:
         if (memory)
             return memory;
 
-        auto handler = foonathan_memory_comp::get_new_handler();
+        auto handler = foonathan_comp::get_new_handler();
         if (handler)
         {
             FOONATHAN_TRY

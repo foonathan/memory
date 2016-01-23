@@ -7,6 +7,7 @@
 
 #include <cstddef>
 
+#include "align.hpp"
 #include "utility.hpp"
 #include "../config.hpp"
 

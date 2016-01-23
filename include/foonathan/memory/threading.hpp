@@ -14,6 +14,8 @@
 #include "allocator_traits.hpp"
 #include "config.hpp"
 
+#include FOONATHAN_MUTEX_HEADER
+
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <mutex>
 #endif
@@ -37,7 +39,7 @@ namespace foonathan { namespace memory
         {}
     };
 
-#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HAS_THREADING_SUPPORT
+#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HAS_MUTEX
     using default_mutex = std::mutex;
 #else
     /// The default \c Mutex type used as default template paremeter in, e.g. \ref allocator_reference.

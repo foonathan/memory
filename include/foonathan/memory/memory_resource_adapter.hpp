@@ -14,9 +14,7 @@
 #include "allocator_traits.hpp"
 #include "error.hpp"
 
-#define COMP_IN_PARENT_HEADER
 #include FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE_HEADER
-#undef COMP_IN_PARENT_HEADER
 
 namespace foonathan { namespace memory
 {

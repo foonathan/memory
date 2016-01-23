@@ -8,6 +8,8 @@
 /// \file
 /// Class \ref foonathan::memory::temporary_allocator and related functions.
 
+#include FOONATHAN_THREAD_LOCAL_HEADER
+
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "memory_stack.hpp"

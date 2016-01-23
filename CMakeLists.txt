@@ -43,9 +43,9 @@ set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
     "whether or not allocator_reference is thread safe by default" ON)
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "\"comp/pmr.hpp\"" CACHE STRING
+set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "\"foonathan/pmr.hpp\"" CACHE STRING
     "the header of the memory_resource class used")
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE foonathan_memory_comp::memory_resource CACHE STRING
+set(FOONATHAN_MEMORY_MEMORY_RESOURCE foonathan_comp::memory_resource CACHE STRING
     "the memory_resource class used")
 
 # calculates default values for build_* options
