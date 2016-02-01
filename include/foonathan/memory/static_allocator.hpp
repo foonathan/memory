@@ -13,6 +13,7 @@
 #include "detail/align.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/utility.hpp"
+#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "error.hpp"
 
@@ -88,6 +89,7 @@ namespace foonathan { namespace memory
         const char *end_;
     };
 
+    extern template class allocator_traits<static_allocator>;
     struct memory_block;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that allocates the blocks from a fixed size storage.

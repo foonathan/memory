@@ -139,3 +139,5 @@ std::size_t heap_allocator::max_node_size() const FOONATHAN_NOEXCEPT
 {
     return max_size();
 }
+
+template class allocator_traits<heap_allocator>;

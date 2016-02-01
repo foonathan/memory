@@ -80,3 +80,5 @@ std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
     return -1;
 #endif
 }
+
+template class allocator_traits<new_allocator>;

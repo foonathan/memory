@@ -11,6 +11,7 @@
 #include <type_traits>
 
 #include "config.hpp"
+#include "allocator_traits.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -77,6 +78,8 @@ namespace foonathan { namespace memory
         /// or the maximum value on a freestanding implementation.
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
+
+    extern template class allocator_traits<heap_allocator>;
 }} // namespace foonathan::memory
 
 #endif // PORTAL_MEMORY_HEAP_ALLOCATOR_HPP_INCLUDED
