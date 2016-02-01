@@ -68,8 +68,15 @@ std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
     return res;
 }
 
+template class memory_arena<static_block_allocator, true>;
+template class memory_arena<static_block_allocator, false>;
+template class memory_arena<virtual_block_allocator, true>;
+template class memory_arena<virtual_block_allocator, false>;
+
 template class growing_block_allocator<>;
-template class memory_arena<growing_block_allocator<>>;
+template class memory_arena<growing_block_allocator<>, true>;
+template class memory_arena<growing_block_allocator<>, false>;
 
 template class fixed_block_allocator<>;
-template class memory_arena<fixed_block_allocator<>>;
+template class memory_arena<fixed_block_allocator<>, true>;
+template class memory_arena<fixed_block_allocator<>, false>;

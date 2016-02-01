@@ -360,6 +360,11 @@ namespace foonathan { namespace memory
         detail::memory_block_stack used_;
     };
 
+    extern template class memory_arena<static_block_allocator, true>;
+    extern template class memory_arena<static_block_allocator, false>;
+    extern template class memory_arena<virtual_block_allocator, true>;
+    extern template class memory_arena<virtual_block_allocator, false>;
+
     /// A \concept{concept_blockallocator,BlockAllocator} that uses a given \concept{concept_rawallocator,RawAllocator} for allocating the blocks.
     /// It calls the \c allocate_array() function with a node of size \c 1 and maximum alignment on the used allocator for the block allocation.
     /// The size of the next memory block will grow by a given factor after each allocation,
@@ -430,7 +435,8 @@ namespace foonathan { namespace memory
     };
 
     extern template class growing_block_allocator<>;
-    extern template class memory_arena<growing_block_allocator<>>;
+    extern template class memory_arena<growing_block_allocator<>, true>;
+    extern template class memory_arena<growing_block_allocator<>, false>;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
     /// It can be used to prevent higher-level allocators from expanding.
@@ -499,7 +505,8 @@ namespace foonathan { namespace memory
     };
 
     extern template class fixed_block_allocator<>;
-    extern template class memory_arena<fixed_block_allocator<>>;
+    extern template class memory_arena<fixed_block_allocator<>, true>;
+    extern template class memory_arena<fixed_block_allocator<>, false>;
 
     namespace detail
     {
