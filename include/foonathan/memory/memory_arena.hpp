@@ -429,6 +429,9 @@ namespace foonathan { namespace memory
         std::size_t block_size_;
     };
 
+    extern template class growing_block_allocator<>;
+    extern template class memory_arena<growing_block_allocator<>>;
+
     /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
     /// It can be used to prevent higher-level allocators from expanding.
     /// The one block allocation is performed through the \c allocate_array() function of the given \concept{concept_rawallocator,RawAllocator}.
@@ -494,6 +497,9 @@ namespace foonathan { namespace memory
 
         std::size_t block_size_;
     };
+
+    extern template class fixed_block_allocator<>;
+    extern template class memory_arena<fixed_block_allocator<>>;
 
     namespace detail
     {

@@ -188,6 +188,8 @@ namespace foonathan { namespace memory
         friend allocator_traits<memory_stack<BlockOrRawAllocator>>;
     };
 
+    extern template class memory_stack<>;
+
     /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
@@ -250,6 +252,8 @@ namespace foonathan { namespace memory
             return std::size_t(-1);
         }
     };
+
+    extern template class allocator_traits<memory_stack<>>;
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED

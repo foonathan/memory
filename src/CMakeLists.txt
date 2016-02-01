@@ -51,6 +51,9 @@ set(src
         heap_allocator.cpp
         malloc_allocator.cpp
         memory_arena.cpp
+        memory_pool.cpp
+        memory_pool_collection.cpp
+        memory_stack.cpp
         new_allocator.cpp
         static_allocator.cpp
         temporary_allocator.cpp

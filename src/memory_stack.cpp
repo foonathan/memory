@@ -1,0 +1,10 @@
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#include "memory_stack.hpp"
+
+using namespace foonathan::memory;
+
+template class memory_stack<>;
+template class allocator_traits<memory_stack<>>;
