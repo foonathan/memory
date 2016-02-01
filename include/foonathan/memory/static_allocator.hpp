@@ -14,6 +14,7 @@
 #include "detail/memory_stack.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {

@@ -40,8 +40,10 @@ set(header
         ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
 
 set(src
+        detail/align.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
+        detail/ilog2.hpp
         detail/memory_stack.cpp
         detail/small_free_list.cpp
         debugging.cpp

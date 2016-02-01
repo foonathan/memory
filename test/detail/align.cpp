@@ -49,3 +49,18 @@ TEST_CASE("detail::is_aligned", "[detail][core]")
     REQUIRE(is_aligned(ptr, 1));
     REQUIRE(!is_aligned(ptr, 16));
 }
+
+TEST_CASE("detail::alignment_for", "[detail][core]")
+{
+    static_assert(max_alignment >= 8, "test case not working");
+    REQUIRE(alignment_for(1) == 1);
+    REQUIRE(alignment_for(2) == 2);
+    REQUIRE(alignment_for(3) == 2);
+    REQUIRE(alignment_for(4) == 4);
+    REQUIRE(alignment_for(5) == 4);
+    REQUIRE(alignment_for(6) == 4);
+    REQUIRE(alignment_for(7) == 4);
+    REQUIRE(alignment_for(8) == 8);
+    REQUIRE(alignment_for(9) == 8);
+    REQUIRE(alignment_for(100) == max_alignment);
+}

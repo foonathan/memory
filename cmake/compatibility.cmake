@@ -14,6 +14,7 @@ comp_target_features(_foonathan_comp_runner INTERFACE
         cpp11_lib/get_new_handler cpp11_lib/max_align_t cpp11_lib/mutex
         ts/pmr
         env/exception_support env/hosted_implementation
+        ext/clz
         PREFIX "FOONATHAN_" NAMESPACE "foonathan_comp"
         NOFLAGS)
 
