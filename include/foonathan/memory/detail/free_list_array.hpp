@@ -65,6 +65,7 @@ namespace foonathan { namespace memory
 
                 other.array_ = nullptr;
                 other.no_elements_ = 0u;
+                return *this;
             }
 
             // access free list for given size

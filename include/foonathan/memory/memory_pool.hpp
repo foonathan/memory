@@ -80,6 +80,7 @@ namespace foonathan { namespace memory
             detail::leak_checker<memory_pool<node_pool, default_allocator>>::operator=(detail::move(other));
             arena_ = detail::move(other.arena_);
             free_list_ = detail::move(other.free_list_);
+            return *this;
         }
         /// @}
 
