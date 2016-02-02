@@ -63,7 +63,7 @@ namespace foonathan { namespace memory
 
         /// \effects Destroys the \ref memory_pool by returning all memory blocks,
         /// regardless of properly deallocated back to the \concept{concept_blockallocator,BlockAllocator}.
-        ~memory_pool() FOONATHAN_NOEXCEPT = default;
+        ~memory_pool() FOONATHAN_NOEXCEPT {}
 
         /// @{
         /// \effects Moving a \ref memory_pool object transfers ownership over the free list,
@@ -80,6 +80,7 @@ namespace foonathan { namespace memory
             detail::leak_checker<memory_pool<node_pool, default_allocator>>::operator=(detail::move(other));
             arena_ = detail::move(other.arena_);
             free_list_ = detail::move(other.free_list_);
+            return *this;
         }
         /// @}
 
@@ -107,8 +108,7 @@ namespace foonathan { namespace memory
         /// \c n must be valid \concept{concept_array,array count}.
         void* allocate_array(std::size_t n)
         {
-            static_assert(pool_type::value,
-                        "does not support array allocations");
+            FOONATHAN_MEMORY_ASSERT_MSG(pool_type::value, "does not support array allocations");
             return allocate_array(n, node_size());
         }
 
@@ -125,8 +125,7 @@ namespace foonathan { namespace memory
         /// i.e. either this allocator object or a new object created by moving this to it.
         void deallocate_array(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
         {
-            static_assert(pool_type::value,
-                        "does not support array allocations");
+            FOONATHAN_MEMORY_ASSERT_MSG(pool_type::value, "does not support array allocations");
             deallocate_array(ptr, n, node_size());
         }
 
@@ -201,6 +200,12 @@ namespace foonathan { namespace memory
 
         friend allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class memory_pool<node_pool>;
+    extern template class memory_pool<array_pool>;
+    extern template class memory_pool<small_node_pool>;
+#endif
 
     template <class Type, class Alloc>
     FOONATHAN_CONSTEXPR std::size_t memory_pool<Type, Alloc>::min_node_size;
@@ -307,6 +312,12 @@ namespace foonathan { namespace memory
             state.on_deallocate(count * size);
         }
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<memory_pool<node_pool>>;
+    extern template class allocator_traits<memory_pool<array_pool>>;
+    extern template class allocator_traits<memory_pool<small_node_pool>>;
+#endif
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED

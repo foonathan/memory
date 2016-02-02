@@ -78,4 +78,8 @@ std::size_t malloc_allocator::max_node_size() const FOONATHAN_NOEXCEPT
     return std::allocator<char>().max_size();
 }
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class foonathan::memory::allocator_traits<malloc_allocator>;
 #endif
+
+#endif // FOONATHAN_HOSTED_IMPLEMENTATION

@@ -13,6 +13,7 @@
 #include "detail/align.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/utility.hpp"
+#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "error.hpp"
 
@@ -87,6 +88,10 @@ namespace foonathan { namespace memory
         detail::fixed_memory_stack stack_;
         const char *end_;
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<static_allocator>;
+#endif
 
     struct memory_block;
 

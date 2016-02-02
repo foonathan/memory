@@ -16,6 +16,8 @@
     #error "This header is only available for a hosted implementation."
 #endif
 
+#include "allocator_traits.hpp"
+
 namespace foonathan { namespace memory
 {
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
@@ -58,6 +60,10 @@ namespace foonathan { namespace memory
         /// \returns The maximum node size by forwarding to \c std::allocator<char>::max_size().
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<malloc_allocator>;
+#endif
 }} // namespace foonathan::memory
 
 #endif //FOONATHAN_MEMORY_MALLOC_ALLOCATOR_HPP_INCLUDED

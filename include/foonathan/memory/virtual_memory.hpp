@@ -12,6 +12,7 @@
 #include <type_traits>
 
 #include "detail/utility.hpp"
+#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "error.hpp"
 
@@ -102,8 +103,11 @@ namespace foonathan { namespace memory
         std::size_t max_alignment() const FOONATHAN_NOEXCEPT;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<virtual_memory_allocator>;
+#endif
+
     struct memory_block;
-    struct allocator_info;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that reserves virtual memory and commits it part by part.
     /// It is similar to \ref memory_stack but does not support growing and uses virtual memory,

@@ -22,6 +22,10 @@ allocator_info static_allocator::info() const FOONATHAN_NOEXCEPT
     return {FOONATHAN_MEMORY_LOG_PREFIX "::static_allocator", this};
 }
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class foonathan::memory::allocator_traits<static_allocator>;
+#endif
+
 memory_block static_block_allocator::allocate_block()
 {
     if (cur_ + block_size_ > end_)

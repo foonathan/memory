@@ -47,6 +47,8 @@ set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "\"foonathan/pmr.hpp\"" CACHE STRING
     "the header of the memory_resource class used")
 set(FOONATHAN_MEMORY_MEMORY_RESOURCE foonathan_comp::memory_resource CACHE STRING
     "the memory_resource class used")
+option(FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    "whether or not common template instantiations are already provided by the library" ON)
 
 # calculates default values for build_* options
 if(COMP_HAS_HOSTED_IMPLEMENTATION AND (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))

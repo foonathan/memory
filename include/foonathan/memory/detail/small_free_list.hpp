@@ -86,8 +86,17 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
+            // must not be called
+            void* allocate(std::size_t) FOONATHAN_NOEXCEPT
+            {
+                return nullptr;
+            }
+
             // deallocates the node previously allocated via allocate()
             void deallocate(void *node) FOONATHAN_NOEXCEPT;
+
+            // must not be called
+            void deallocate(void *, std::size_t) FOONATHAN_NOEXCEPT {}
 
             // hint for allocate() to be prepared to allocate n nodes
             // it searches for a chunk that has n nodes free

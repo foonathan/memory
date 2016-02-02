@@ -5,7 +5,6 @@
 #include "virtual_memory.hpp"
 
 #include "debugging.hpp"
-#include "error.hpp"
 #include "memory_arena.hpp"
 
 using namespace foonathan::memory;
@@ -192,6 +191,10 @@ std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
 {
     return virtual_memory_page_size;
 }
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class foonathan::memory::allocator_traits<virtual_memory_allocator>;
+#endif
 
 virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::size_t no_blocks)
 : block_size_(block_size)

@@ -130,7 +130,7 @@ namespace foonathan { namespace memory
         /// \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
-            static_assert(PoolType::value, "array allocations not supported");
+            FOONATHAN_MEMORY_ASSERT_MSG(PoolType::value, "array allocations not supported");
             detail::check_allocation_size(count * node_size, next_capacity(),
                                           info());
             auto& pool = pools_.get(node_size);
@@ -161,7 +161,7 @@ namespace foonathan { namespace memory
         /// i.e. either this allocator object or a new object created by moving this to it.
         void deallocate_array(void *ptr, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            static_assert(PoolType::value, "array allocations not supported");
+            FOONATHAN_MEMORY_ASSERT_MSG(PoolType::value, "array allocations not supported");
             auto& pool = pools_.get(node_size);
             pool.deallocate(ptr, count * node_size);
         }
@@ -272,7 +272,19 @@ namespace foonathan { namespace memory
         memory_arena<allocator_type, false> arena_;
         detail::fixed_memory_stack stack_;
         free_list_array pools_;
+
+        friend allocator_traits<memory_pool_collection>;
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class memory_pool_collection<node_pool, identity_buckets>;
+    extern template class memory_pool_collection<array_pool, identity_buckets>;
+    extern template class memory_pool_collection<small_node_pool, identity_buckets>;
+
+    extern template class memory_pool_collection<node_pool, log2_buckets>;
+    extern template class memory_pool_collection<array_pool, log2_buckets>;
+    extern template class memory_pool_collection<small_node_pool, log2_buckets>;
+#endif
 
     /// An alias for \ref memory_pool_collection using the \ref identity_buckets policy
     /// and a \c PoolType defaulting to \ref node_pool.
@@ -381,6 +393,16 @@ namespace foonathan { namespace memory
             state.on_deallocate(count * size);
         }
     };
-}} // namespace foonathan::portal
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<memory_pool_collection<node_pool, identity_buckets>>;
+    extern template class allocator_traits<memory_pool_collection<array_pool, identity_buckets>>;
+    extern template class allocator_traits<memory_pool_collection<small_node_pool, identity_buckets>>;
+
+    extern template class allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
+    extern template class allocator_traits<memory_pool_collection<array_pool, log2_buckets>>;
+    extern template class allocator_traits<memory_pool_collection<small_node_pool, log2_buckets>>;
+#endif
+}} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
