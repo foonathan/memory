@@ -7,11 +7,11 @@
 using namespace foonathan::memory;
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class memory_pool<node_pool>;
-    template class memory_pool<array_pool>;
-    template class memory_pool<small_node_pool>;
+    template class foonathan::memory::memory_pool<node_pool>;
+    template class foonathan::memory::memory_pool<array_pool>;
+    template class foonathan::memory::memory_pool<small_node_pool>;
 
-    template class allocator_traits<memory_pool<node_pool>>;
-    template class allocator_traits<memory_pool<array_pool>>;
-    template class allocator_traits<memory_pool<small_node_pool>>;
+    template class foonathan::memory::allocator_traits<memory_pool<node_pool>>;
+    template class foonathan::memory::allocator_traits<memory_pool<array_pool>>;
+    template class foonathan::memory::allocator_traits<memory_pool<small_node_pool>>;
 #endif

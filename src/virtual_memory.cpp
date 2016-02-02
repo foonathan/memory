@@ -193,7 +193,7 @@ std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class allocator_traits<virtual_memory_allocator>;
+    template class foonathan::memory::allocator_traits<virtual_memory_allocator>;
 #endif
 
 virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::size_t no_blocks)

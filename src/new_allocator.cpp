@@ -82,5 +82,5 @@ std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class allocator_traits<new_allocator>;
+    template class foonathan::memory::allocator_traits<new_allocator>;
 #endif

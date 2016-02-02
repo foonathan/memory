@@ -69,16 +69,16 @@ std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class memory_arena<static_block_allocator, true>;
-    template class memory_arena<static_block_allocator, false>;
-    template class memory_arena<virtual_block_allocator, true>;
-    template class memory_arena<virtual_block_allocator, false>;
+    template class foonathan::memory::memory_arena<static_block_allocator, true>;
+    template class foonathan::memory::memory_arena<static_block_allocator, false>;
+    template class foonathan::memory::memory_arena<virtual_block_allocator, true>;
+    template class foonathan::memory::memory_arena<virtual_block_allocator, false>;
 
-    template class growing_block_allocator<>;
-    template class memory_arena<growing_block_allocator<>, true>;
-    template class memory_arena<growing_block_allocator<>, false>;
+    template class foonathan::memory::growing_block_allocator<>;
+    template class foonathan::memory::memory_arena<growing_block_allocator<>, true>;
+    template class foonathan::memory::memory_arena<growing_block_allocator<>, false>;
 
-    template class fixed_block_allocator<>;
-    template class memory_arena<fixed_block_allocator<>, true>;
-    template class memory_arena<fixed_block_allocator<>, false>;
+    template class foonathan::memory::fixed_block_allocator<>;
+    template class foonathan::memory::memory_arena<fixed_block_allocator<>, true>;
+    template class foonathan::memory::memory_arena<fixed_block_allocator<>, false>;
 #endif
