@@ -59,7 +59,9 @@ namespace foonathan { namespace memory
         std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class allocator_traits<new_allocator>;
+#endif
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_NEW_ALLOCATOR_HPP_INCLUDED

@@ -103,7 +103,10 @@ namespace foonathan { namespace memory
         std::size_t max_alignment() const FOONATHAN_NOEXCEPT;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class allocator_traits<virtual_memory_allocator>;
+#endif
+
     struct memory_block;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that reserves virtual memory and commits it part by part.

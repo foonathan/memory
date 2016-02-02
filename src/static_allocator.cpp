@@ -22,7 +22,9 @@ allocator_info static_allocator::info() const FOONATHAN_NOEXCEPT
     return {FOONATHAN_MEMORY_LOG_PREFIX "::static_allocator", this};
 }
 
-template class allocator_traits<static_allocator>;
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class allocator_traits<static_allocator>;
+#endif
 
 memory_block static_block_allocator::allocate_block()
 {

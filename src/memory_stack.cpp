@@ -6,5 +6,7 @@
 
 using namespace foonathan::memory;
 
-template class memory_stack<>;
-template class allocator_traits<memory_stack<>>;
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class memory_stack<>;
+    template class allocator_traits<memory_stack<>>;
+#endif

@@ -6,10 +6,12 @@
 
 using namespace foonathan::memory;
 
-template class memory_pool<node_pool>;
-template class memory_pool<array_pool>;
-template class memory_pool<small_node_pool>;
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class memory_pool<node_pool>;
+    template class memory_pool<array_pool>;
+    template class memory_pool<small_node_pool>;
 
-template class allocator_traits<memory_pool<node_pool>>;
-template class allocator_traits<memory_pool<array_pool>>;
-template class allocator_traits<memory_pool<small_node_pool>>;
+    template class allocator_traits<memory_pool<node_pool>>;
+    template class allocator_traits<memory_pool<array_pool>>;
+    template class allocator_traits<memory_pool<small_node_pool>>;
+#endif

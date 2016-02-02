@@ -276,6 +276,7 @@ namespace foonathan { namespace memory
         friend allocator_traits<memory_pool_collection>;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class memory_pool_collection<node_pool, identity_buckets>;
     extern template class memory_pool_collection<array_pool, identity_buckets>;
     extern template class memory_pool_collection<small_node_pool, identity_buckets>;
@@ -283,6 +284,7 @@ namespace foonathan { namespace memory
     extern template class memory_pool_collection<node_pool, log2_buckets>;
     extern template class memory_pool_collection<array_pool, log2_buckets>;
     extern template class memory_pool_collection<small_node_pool, log2_buckets>;
+#endif
 
     /// An alias for \ref memory_pool_collection using the \ref identity_buckets policy
     /// and a \c PoolType defaulting to \ref node_pool.
@@ -392,6 +394,7 @@ namespace foonathan { namespace memory
         }
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class allocator_traits<memory_pool_collection<node_pool, identity_buckets>>;
     extern template class allocator_traits<memory_pool_collection<array_pool, identity_buckets>>;
     extern template class allocator_traits<memory_pool_collection<small_node_pool, identity_buckets>>;
@@ -399,6 +402,7 @@ namespace foonathan { namespace memory
     extern template class allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
     extern template class allocator_traits<memory_pool_collection<array_pool, log2_buckets>>;
     extern template class allocator_traits<memory_pool_collection<small_node_pool, log2_buckets>>;
-}} // namespace foonathan::portal
+#endif
+}} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED

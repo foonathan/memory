@@ -192,7 +192,9 @@ std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
     return virtual_memory_page_size;
 }
 
-template class allocator_traits<virtual_memory_allocator>;
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class allocator_traits<virtual_memory_allocator>;
+#endif
 
 virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::size_t no_blocks)
 : block_size_(block_size)
@@ -235,6 +237,3 @@ allocator_info virtual_block_allocator::info() FOONATHAN_NOEXCEPT
 {
     return {FOONATHAN_MEMORY_LOG_PREFIX "::virtual_block_allocator", this};
 }
-
-template class memory_arena<virtual_block_allocator, true>;
-template class memory_arena<virtual_block_allocator, false>;

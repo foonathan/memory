@@ -89,7 +89,10 @@ namespace foonathan { namespace memory
         const char *end_;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class allocator_traits<static_allocator>;
+#endif
+
     struct memory_block;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that allocates the blocks from a fixed size storage.

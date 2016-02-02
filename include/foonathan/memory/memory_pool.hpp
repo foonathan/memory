@@ -200,9 +200,11 @@ namespace foonathan { namespace memory
         friend allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class memory_pool<node_pool>;
     extern template class memory_pool<array_pool>;
     extern template class memory_pool<small_node_pool>;
+#endif
 
     template <class Type, class Alloc>
     FOONATHAN_CONSTEXPR std::size_t memory_pool<Type, Alloc>::min_node_size;
@@ -310,9 +312,11 @@ namespace foonathan { namespace memory
         }
     };
 
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class allocator_traits<memory_pool<node_pool>>;
     extern template class allocator_traits<memory_pool<array_pool>>;
     extern template class allocator_traits<memory_pool<small_node_pool>>;
+#endif
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
