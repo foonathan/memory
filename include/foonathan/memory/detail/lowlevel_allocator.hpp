@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED
 
+#include <atomic>
+
 #include "../config.hpp"
 #include "../debugging.hpp"
 #include "align.hpp"
@@ -79,7 +81,7 @@ namespace foonathan { namespace memory
 
         private:
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-            static std::size_t no_checker_objects_, allocations_;
+            static std::atomic<std::size_t> no_checker_objects_, allocations_;
 
             static void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
             {
@@ -99,10 +101,10 @@ namespace foonathan { namespace memory
 
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
         template <class Functor>
-        std::size_t lowlevel_allocator<Functor>::no_checker_objects_ = 0;
+        std::atomic<std::size_t> lowlevel_allocator<Functor>::no_checker_objects_ = 0;
 
         template <class Functor>
-        std::size_t lowlevel_allocator<Functor>::allocations_ = 0;
+        std::atomic<std::size_t> lowlevel_allocator<Functor>::allocations_ = 0;
 #endif
     } // namespace detail
 }} // namespace foonathan::memory
