@@ -9,6 +9,7 @@ set(header
         ${header_path}/detail/align.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
+        ${header_path}/detail/lowlevel_allocator.hpp
         ${header_path}/detail/memory_stack.hpp
         ${header_path}/detail/small_free_list.hpp
         ${header_path}/detail/utility.hpp

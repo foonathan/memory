@@ -12,50 +12,11 @@
 
 using namespace foonathan::memory;
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    #include <atomic>
-
-    namespace
-    {
-        std::size_t init_counter = 0u, alloc_counter = 0u;
-
-        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter += size;
-        }
-
-        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter -= size;
-        }
-    }
-
-    detail::heap_allocator_leak_checker_initializer_t::
-        heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        ++init_counter;
-    }
-
-    detail::heap_allocator_leak_checker_initializer_t::
-        ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr}, alloc_counter);
-    }
-#else
-    namespace
-    {
-        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
-        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
-    }
-#endif
-
 #ifdef _WIN32
     #include <malloc.h>
     #include <windows.h>
-#include <detail/align.hpp>
 
-namespace
+    namespace
     {
         HANDLE get_process_heap() FOONATHAN_NOEXCEPT
         {
@@ -112,30 +73,7 @@ namespace
     }
 #endif
 
-void* heap_allocator::allocate_node(std::size_t size, std::size_t)
-{
-    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
-
-    auto memory = memory::heap_alloc(actual_size);
-    if (!memory)
-        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
-                                      actual_size));
-    on_alloc(size);
-
-    return detail::debug_fill_new(memory, size, detail::max_alignment);
-}
-
-void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
-{
-    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
-
-    auto memory = detail::debug_fill_free(ptr, size, detail::max_alignment);
-    memory::heap_dealloc(memory, actual_size);
-
-    on_dealloc(size);
-}
-
-std::size_t heap_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+std::size_t detail::heap_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 {
     return max_size();
 }
