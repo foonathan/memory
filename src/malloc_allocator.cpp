@@ -11,10 +11,9 @@
 
     using namespace foonathan::memory;
 
-    const allocator_info& detail::malloc_allocator_impl::info() FOONATHAN_NOEXCEPT
+    allocator_info detail::malloc_allocator_impl::info() FOONATHAN_NOEXCEPT
     {
-        static allocator_info info(FOONATHAN_MEMORY_LOG_PREFIX "::malloc_allocator", nullptr);
-        return info;
+        return {FOONATHAN_MEMORY_LOG_PREFIX "::malloc_allocator", nullptr};
     }
 
     #if FOONATHAN_MEMORY_EXTERN_TEMPLATE

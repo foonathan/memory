@@ -31,7 +31,7 @@ namespace foonathan { namespace memory
     {
         struct malloc_allocator_impl
         {
-            static const allocator_info& info() FOONATHAN_NOEXCEPT;
+            static allocator_info info() FOONATHAN_NOEXCEPT;
 
             static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {

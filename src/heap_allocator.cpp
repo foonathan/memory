@@ -69,10 +69,9 @@ using namespace foonathan::memory;
     }
 #endif
 
-const allocator_info& detail::heap_allocator_impl::info() FOONATHAN_NOEXCEPT
+allocator_info detail::heap_allocator_impl::info() FOONATHAN_NOEXCEPT
 {
-    static allocator_info info(FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr);
-    return info;
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr};
 }
 
 std::size_t detail::heap_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
