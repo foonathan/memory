@@ -46,12 +46,13 @@ namespace foonathan { namespace memory
     /// Leak checking can be controlled via the option \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
     /// and only affects calls through the \ref allocator_traits, not direct calls.
     /// The handler gets the \ref allocator_info and the amount of memory leaked.
+    /// This can also be negative, meaning that more memory has been freed than allocated.
     /// \requiredbe A leak handler shall log the leak, abort the program, do nothing or anything else that seems appropriate.
     /// It must not throw any exceptions since it is called in the cleanup process.
     /// \defaultbe On a hosted implementation it logs the leak to \c stderr and returns, continuing execution.
     /// On a freestanding implementation it does nothing.
     /// \ingroup memory
-    using leak_handler = void(*)(const allocator_info &info, std::size_t amount);
+    using leak_handler = void(*)(const allocator_info &info, std::ptrdiff_t amount);
 
     /// Exchanges the \ref leak_handler.
     /// \effects Sets \c h as the new \ref leak_handler in an atomic operation.
