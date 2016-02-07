@@ -7,7 +7,15 @@
 
     #include "malloc_allocator.hpp"
 
+    #include "error.hpp"
+
     using namespace foonathan::memory;
+
+    const allocator_info& detail::malloc_allocator_impl::info() FOONATHAN_NOEXCEPT
+    {
+        static allocator_info info(FOONATHAN_MEMORY_LOG_PREFIX "::malloc_allocator", nullptr);
+        return info;
+    }
 
     #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
         template class foonathan::memory::allocator_traits<malloc_allocator>;

@@ -7,6 +7,7 @@
 #include <new>
 
 #include "detail/align.hpp"
+#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
@@ -67,6 +68,12 @@ std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
         ++res;
     return res;
 }
+
+allocator_info detail::fixed_block_allocator_info(void *obj)
+{
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::fixed_block_allocator", obj};
+}
+
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     template class foonathan::memory::memory_arena<static_block_allocator, true>;

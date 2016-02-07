@@ -10,10 +10,10 @@
 
 #include <type_traits>
 
+#include "detail/error_helpers.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
 
 namespace foonathan { namespace memory
 {

@@ -9,6 +9,7 @@
 
 #include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
+#include "detail/error_helpers.hpp"
 #include "detail/utility.hpp"
 #include "error.hpp"
 

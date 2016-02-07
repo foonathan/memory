@@ -6,9 +6,9 @@
 #define FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 
 #include "align.hpp"
+#include "error_helpers.hpp"
 #include "memory_stack.hpp"
 #include "../config.hpp"
-#include "../error.hpp"
 
 namespace foonathan { namespace memory
 {

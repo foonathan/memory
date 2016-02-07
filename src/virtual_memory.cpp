@@ -5,6 +5,7 @@
 #include "virtual_memory.hpp"
 
 #include "detail/debug_helpers.hpp"
+#include "error.hpp"
 #include "memory_arena.hpp"
 
 using namespace foonathan::memory;

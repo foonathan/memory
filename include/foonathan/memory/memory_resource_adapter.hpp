@@ -8,10 +8,10 @@
 /// \file
 /// Class \ref memory_resource_adapter and \ref memory_resource_allocator to allow usage of PMRs.
 
+#include "detail/error_helpers.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
 #include "allocator_traits.hpp"
-#include "error.hpp"
 
 #include FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE_HEADER
 
