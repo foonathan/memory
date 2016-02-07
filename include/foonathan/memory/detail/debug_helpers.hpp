@@ -62,6 +62,24 @@ namespace foonathan { namespace memory
 
         void debug_handle_memory_leak(const allocator_info &info, std::ptrdiff_t amount);
 
+        // does no leak checking, null overhead
+        template <class Handler>
+        class no_leak_checker
+        {
+        public:
+            no_leak_checker() FOONATHAN_NOEXCEPT {}
+            no_leak_checker(no_leak_checker &&) FOONATHAN_NOEXCEPT {}
+            ~no_leak_checker() FOONATHAN_NOEXCEPT {}
+
+            no_leak_checker& operator=(no_leak_checker &&) FOONATHAN_NOEXCEPT
+            {
+                return *this;
+            }
+
+            void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
+            void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
+        };
+
         // does leak checking per-object
         // leak is detected upon destructor
         template <class Handler>
@@ -160,7 +178,7 @@ namespace foonathan { namespace memory
         // call macro FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) in the header
         // when last counter gets destroyed, leak is detected
         template <class Handler>
-        class global_leak_checker
+        class global_leak_checker_impl
         {
         public:
             struct counter
@@ -179,11 +197,11 @@ namespace foonathan { namespace memory
                 }
             };
 
-            global_leak_checker() FOONATHAN_NOEXCEPT {}
-            global_leak_checker(global_leak_checker &&) FOONATHAN_NOEXCEPT {}
-            ~global_leak_checker() FOONATHAN_NOEXCEPT {}
+            global_leak_checker_impl() FOONATHAN_NOEXCEPT {}
+            global_leak_checker_impl(global_leak_checker_impl &&) FOONATHAN_NOEXCEPT {}
+            ~global_leak_checker_impl() FOONATHAN_NOEXCEPT {}
 
-            global_leak_checker& operator=(global_leak_checker &&) FOONATHAN_NOEXCEPT
+            global_leak_checker_impl& operator=(global_leak_checker_impl &&) FOONATHAN_NOEXCEPT
             {
                 return *this;
             }
@@ -203,44 +221,32 @@ namespace foonathan { namespace memory
             static std::atomic<std::ptrdiff_t> allocated_;
         };
 
+        template <class Handler>
+        std::atomic<std::size_t> global_leak_checker_impl<Handler>::no_counter_objects_(0u);
+
+        template <class Handler>
+        std::atomic<std::ptrdiff_t> global_leak_checker_impl<Handler>::allocated_(0);
+
     #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+        template <class Handler>
+        using global_leak_checker = global_leak_checker_impl<Handler>;
+
         #define FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) \
-            static foonathan::memory::detail::global_leak_checker<handler>::counter var_name
+                    static foonathan::memory::detail::global_leak_checker<handler>::counter var_name
     #else
+        template <class Handler>
+        using global_leak_checker = no_leak_checker<int>; // only one instantiation
+
         #define FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name)
     #endif
 
-        template <class Handler>
-        std::atomic<std::size_t> global_leak_checker<Handler>::no_counter_objects_(0u);
-
-        template <class Handler>
-        std::atomic<std::ptrdiff_t> global_leak_checker<Handler>::allocated_(0);
-
-        // does no leak checking, null overhead
-        template <class Handler>
-        class no_leak_checker
-        {
-        public:
-            no_leak_checker() FOONATHAN_NOEXCEPT {}
-            no_leak_checker(no_leak_checker &&) FOONATHAN_NOEXCEPT {}
-            ~no_leak_checker() FOONATHAN_NOEXCEPT {}
-
-            no_leak_checker& operator=(no_leak_checker &&) FOONATHAN_NOEXCEPT
-            {
-                return *this;
-            }
-
-            void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
-            void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
-        };
-
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+    #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
         template <class Handler>
         using default_leak_checker = object_leak_checker<Handler>;
-#else
+    #else
         template <class Handler>
         using default_leak_checker = no_leak_checker<int>; // only one instantiation
-#endif
+    #endif
     } // namespace detail
 }} // namespace foonathan::memory
 
