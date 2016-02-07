@@ -4,7 +4,7 @@
 
 #include "virtual_memory.hpp"
 
-#include "debugging.hpp"
+#include "detail/debug_helpers.hpp"
 #include "memory_arena.hpp"
 
 using namespace foonathan::memory;
@@ -228,7 +228,10 @@ memory_block virtual_block_allocator::allocate_block()
 
 void virtual_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
 {
-    detail::check_pointer(static_cast<char*>(block.memory) == cur_ - block_size_, info(), block.memory);
+    detail::debug_check_pointer([&]
+                                {
+                                    return static_cast<char*>(block.memory) == cur_ - block_size_;
+                                }, info(), block.memory);
     cur_ -= block_size_;
     virtual_memory_decommit(cur_, block_size_);
 }

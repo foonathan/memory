@@ -8,11 +8,12 @@
 /// \file
 /// Class \ref memory_arena and related functionality regarding \concept{concept_blockallocator,BlockAllocators}.
 
+#include "detail/debug_helpers.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "debugging.hpp"
 #include "default_allocator.hpp"
+#include "debugging.hpp"
 #include "error.hpp"
 
 namespace foonathan { namespace memory
@@ -481,7 +482,10 @@ namespace foonathan { namespace memory
         /// It also resets and allows a new call again.
         void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
         {
-            detail::check_pointer(block_size_ == 0u, info(), block.memory);
+            detail::debug_check_pointer([&]
+                                        {
+                                            return block_size_ == 0u;
+                                        }, info(), block.memory);
             traits::deallocate_array(get_allocator(), block.memory,
                                      block.size, 1, detail::max_alignment);
             block_size_ = block.size;

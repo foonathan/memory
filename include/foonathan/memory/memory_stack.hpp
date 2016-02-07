@@ -38,6 +38,14 @@ namespace foonathan { namespace memory
             template <class Impl>
             friend class memory::memory_stack;
         };
+
+        struct memory_stack_leak_handler
+        {
+            void operator()(std::ptrdiff_t amount)
+            {
+                get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_stack", this}, amount);
+            }
+        };
     } // namespace detail
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that provides stack-like (LIFO) allocations.
@@ -48,9 +56,8 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class BlockOrRawAllocator = default_allocator>
     class memory_stack
-    : FOONATHAN_EBO(detail::leak_checker<memory_stack<default_allocator>>)
+    : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_stack_leak_handler>)
     {
-        using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
         using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
 
@@ -59,8 +66,7 @@ namespace foonathan { namespace memory
         template <typename ... Args>
         explicit memory_stack(std::size_t block_size,
                         Args&&... args)
-        : leak_checker(info().name),
-          arena_(block_size, detail::forward<Args>(args)...)
+        : arena_(block_size, detail::forward<Args>(args)...)
         {
             allocate_block();
         }
@@ -108,7 +114,10 @@ namespace foonathan { namespace memory
         /// i.e. it must have been pointed below the top at all time.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            detail::check_pointer(m.index <= arena_.size() - 1, info(), m.top);
+            detail::debug_check_pointer([&]
+                                        {
+                                            return m.index <= arena_.size() - 1;
+                                        }, info(), m.top);
 
             if (std::size_t to_deallocate = (arena_.size() - 1) - m.index) // different index
             {
@@ -116,11 +125,11 @@ namespace foonathan { namespace memory
                 for (std::size_t i = 1; i != to_deallocate; ++i)
                     arena_.deallocate_block();
 
-            #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
-                auto cur = arena_.current_block();
-                detail::check_pointer(m.end == static_cast<char*>(cur.memory) + cur.size,
-                                      info(), m.top);
-            #endif
+                detail::debug_check_pointer([&]
+                                            {
+                                                auto cur = arena_.current_block();
+                                                return m.end == static_cast<char*>(cur.memory) + cur.size;
+                                            }, info(), m.top);
 
                 // mark memory from new top to end of the block as freed
                 detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
@@ -128,7 +137,10 @@ namespace foonathan { namespace memory
             }
             else // same index
             {
-                detail::check_pointer(stack_.top() >= m.top, info(), m.top);
+                detail::debug_check_pointer([&]
+                                            {
+                                                return stack_.top() >= m.top;
+                                            }, info(), m.top);
                 stack_.unwind(m.top);
             }
         }

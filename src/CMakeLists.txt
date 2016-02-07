@@ -7,6 +7,7 @@
 set(header_path ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 set(header
         ${header_path}/detail/align.hpp
+        ${header_path}/detail/debug_helpers.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/lowlevel_allocator.hpp
@@ -42,6 +43,7 @@ set(header
 
 set(src
         detail/align.cpp
+        detail/debug_helpers.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
         detail/ilog2.hpp

@@ -8,8 +8,8 @@
 #include <new>
 
 #include "detail/align.hpp"
+#include "detail/debug_helpers.hpp"
 #include "detail/utility.hpp"
-#include "debugging.hpp"
 #include "error.hpp"
 
 using namespace foonathan::memory;
@@ -226,22 +226,29 @@ void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 
 void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
 {
-    // don't use debug_fill_free here, need unsigned char*, not char*
-    debug_fill(memory, node_size(), debug_magic::freed_memory);
-    auto node_memory = static_cast<unsigned char*>(memory) - (debug_fence_size ? alignment() : 0u);
+    auto node_memory = static_cast<unsigned char*>(debug_fill_free(memory, node_size(), alignment()));
     auto dealloc_chunk = chunk_for(node_memory);
 
     auto info = allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
 
     // memory was never managed by this list
-    check_pointer(bool(dealloc_chunk), info, memory);
+    debug_check_pointer([&]
+                        {
+                            return bool(dealloc_chunk);
+                        }, info, memory);
+
     auto offset = static_cast<std::size_t>(node_memory - list_memory(dealloc_chunk));
+
     // memory is not at the right position
-    check_pointer(offset % node_fence_size() == 0, info, memory);
-#if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
+    debug_check_pointer([&]
+                        {
+                            return offset % node_fence_size() == 0u;
+                        }, info, memory);
     // double-free
-    check_pointer(!chunk_contains(dealloc_chunk, node_fence_size(), node_memory), info, memory);
-#endif
+    debug_check_pointer([&]
+                        {
+                            return !chunk_contains(dealloc_chunk, node_fence_size(), node_memory);
+                        }, info, memory);
 
     *node_memory = dealloc_chunk->first_node;
     dealloc_chunk->first_node = static_cast<unsigned char>(offset / node_fence_size());

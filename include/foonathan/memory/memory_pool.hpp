@@ -11,15 +11,26 @@
 #include <type_traits>
 
 #include "detail/align.hpp"
+#include "detail/debug_helpers.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "debugging.hpp"
 #include "error.hpp"
 #include "memory_arena.hpp"
 #include "memory_pool_type.hpp"
 
 namespace foonathan { namespace memory
 {
+    namespace detail
+    {
+        struct memory_pool_leak_handler
+        {
+            void operator()(std::ptrdiff_t amount)
+            {
+                get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool", this}, amount);
+            }
+        };
+    } // namespace detail
+
     /// A stateful \concept{concept_rawallocator,RawAllocator} that manages \concept{concept_node,nodes} of fixed size.
     /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator<default_allocator>,
     /// subdivides them in small nodes of given size and puts them onto a free list.
@@ -33,10 +44,10 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <typename PoolType = node_pool, class BlockOrRawAllocator = default_allocator>
     class memory_pool
-    : FOONATHAN_EBO(detail::leak_checker<memory_pool<node_pool, default_allocator>>)
+    : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_leak_handler>)
     {
         using free_list = typename PoolType::type;
-        using leak_checker = detail::leak_checker<memory_pool<node_pool, default_allocator>>;
+        using leak_checker = detail::default_leak_checker<detail::memory_pool_leak_handler>;
 
     public:
         using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
@@ -54,8 +65,7 @@ namespace foonathan { namespace memory
         template <typename ... Args>
         memory_pool(std::size_t node_size, std::size_t block_size,
                     Args&&... args)
-        : leak_checker(info().name),
-          arena_(block_size, detail::forward<Args>(args)...),
+        : arena_(block_size, detail::forward<Args>(args)...),
           free_list_(node_size)
         {
             allocate_block();
@@ -71,13 +81,13 @@ namespace foonathan { namespace memory
         /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
         /// even when passing it memory that was previously allocated by this object.
         memory_pool(memory_pool &&other) FOONATHAN_NOEXCEPT
-        : detail::leak_checker<memory_pool<node_pool, default_allocator>>(detail::move(other)),
+        : leak_checker(detail::move(other)),
           arena_(detail::move(other.arena_)),
           free_list_(detail::move(other.free_list_)){}
 
         memory_pool& operator=(memory_pool &&other) FOONATHAN_NOEXCEPT
         {
-            detail::leak_checker<memory_pool<node_pool, default_allocator>>::operator=(detail::move(other));
+            leak_checker::operator=(detail::move(other));
             arena_ = detail::move(other.arena_);
             free_list_ = detail::move(other.free_list_);
             return *this;

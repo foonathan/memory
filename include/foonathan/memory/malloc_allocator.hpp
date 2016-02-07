@@ -18,6 +18,7 @@
 
 #include "detail/lowlevel_allocator.hpp"
 #include "allocator_traits.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -47,7 +48,7 @@ namespace foonathan { namespace memory
         };
 
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-        lowlevel_allocator<malloc_allocator_impl>::leak_checker malloc_allocator_checker;
+        static lowlevel_allocator<malloc_allocator_impl>::leak_checker malloc_allocator_checker;
 #endif
     } // namespace detail
 

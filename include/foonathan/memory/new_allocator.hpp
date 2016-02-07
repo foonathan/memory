@@ -13,6 +13,7 @@
 #include "detail/lowlevel_allocator.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {

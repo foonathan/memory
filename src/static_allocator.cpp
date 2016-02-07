@@ -4,7 +4,7 @@
 
 #include "static_allocator.hpp"
 
-#include "debugging.hpp"
+#include "detail/debug_helpers.hpp"
 #include "memory_arena.hpp"
 
 using namespace foonathan::memory;
@@ -37,8 +37,10 @@ memory_block static_block_allocator::allocate_block()
 
 void static_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
 {
-    detail::check_pointer(static_cast<char*>(block.memory) + block.size == cur_,
-                          info(), block.memory);
+    detail::debug_check_pointer([&]
+                                {
+                                    return static_cast<char*>(block.memory) + block.size == cur_;
+                                }, info(), block.memory);
     cur_ -= block_size_;
 }
 

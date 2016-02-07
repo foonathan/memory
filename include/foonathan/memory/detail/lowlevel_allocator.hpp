@@ -8,8 +8,10 @@
 #include <atomic>
 
 #include "../config.hpp"
-#include "../debugging.hpp"
 #include "align.hpp"
+#include "debug_helpers.hpp"
+#include "../debugging.hpp"
+#include "../error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -101,10 +103,10 @@ namespace foonathan { namespace memory
 
 #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
         template <class Functor>
-        std::atomic<std::size_t> lowlevel_allocator<Functor>::no_checker_objects_ = 0;
+        std::atomic<std::size_t> lowlevel_allocator<Functor>::no_checker_objects_(0u);
 
         template <class Functor>
-        std::atomic<std::size_t> lowlevel_allocator<Functor>::allocations_ = 0;
+        std::atomic<std::size_t> lowlevel_allocator<Functor>::allocations_(0u);
 #endif
     } // namespace detail
 }} // namespace foonathan::memory
