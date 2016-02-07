@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdio>
@@ -14,17 +14,6 @@
 
 using namespace foonathan::memory;
 using namespace detail;
-
-void detail::check_allocation_size(std::size_t passed, std::size_t supported, const allocator_info &info)
-{
-    if (passed > supported)
-        FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
-}
-
-void detail::handle_out_of_memory(const allocator_info &info, std::size_t amount)
-{
-    FOONATHAN_THROW(out_of_memory(info, amount));
-}
 
 void detail::handle_failed_assert(const char *msg, const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT
 {

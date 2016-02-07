@@ -11,7 +11,7 @@
 #include <type_traits>
 
 #include "detail/align.hpp"
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"

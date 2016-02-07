@@ -8,9 +8,10 @@
 #include <type_traits>
 
 #include "../config.hpp"
+#include "../error.hpp"
 #include "align.hpp"
 #include "debug_helpers.hpp"
-#include "error_helpers.hpp"
+#include "assert.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -52,7 +53,7 @@ namespace foonathan { namespace memory
 
                 auto memory = Functor::allocate(actual_size, alignment);
                 if (!memory)
-                    handle_out_of_memory(Functor::info(), actual_size);
+                    FOONATHAN_THROW(out_of_memory(Functor::info(), actual_size));
 
                 this->on_allocate(actual_size);
 

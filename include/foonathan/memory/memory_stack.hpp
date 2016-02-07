@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 #include "detail/memory_stack.hpp"
 #include "config.hpp"
 #include "error.hpp"

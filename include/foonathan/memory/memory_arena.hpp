@@ -11,11 +11,12 @@
 #include <type_traits>
 
 #include "detail/debug_helpers.hpp"
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "default_allocator.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -481,7 +482,7 @@ namespace foonathan { namespace memory
                 block_size_ = 0u;
                 return {mem, block_size_};
             }
-            detail::handle_out_of_memory(detail::fixed_block_allocator_info(this), block_size_);
+            FOONATHAN_THROW(out_of_memory(detail::fixed_block_allocator_info(this), block_size_));
         }
 
         /// \effects Deallocates the previously allocated memory block.

@@ -180,6 +180,15 @@ namespace foonathan { namespace memory
         allocator_info info_;
         std::size_t passed_, supported_;
     };
+
+    namespace detail
+    {
+        inline void check_allocation_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
+        }
+    } // namespace detail
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_ERROR_HPP_INCLUDED

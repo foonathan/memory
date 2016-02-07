@@ -12,7 +12,7 @@
 
 #include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 

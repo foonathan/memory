@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 
 #include "align.hpp"
-#include "error_helpers.hpp"
+#include "assert.hpp"
 #include "memory_stack.hpp"
 #include "../config.hpp"
 
