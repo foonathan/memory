@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <type_traits>
 
+#include "detail/debug_helpers.hpp"
 #include "detail/utility.hpp"
 #include "config.hpp"
 
@@ -20,16 +21,15 @@
 
 namespace foonathan { namespace memory
 {
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
     namespace detail
     {
-        static struct virtual_memory_allocator_leak_checker_initializer_t
+        struct virtual_memory_allocator_leak_handler
         {
-            virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
-            ~virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
-        } virtual_memory_allocator_leak_checker_initializer;
+            void operator()(std::ptrdiff_t amount);
+        };
+
+        FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(virtual_memory_allocator_leak_handler, virtual_memory_allocator_leak_checker);
     } // namespace detail
-#endif
 
     /// The page size of the virtual memory.
     /// All virtual memory allocations must be multiple of this size.
@@ -71,6 +71,7 @@ namespace foonathan { namespace memory
     /// It does not prereserve any memory and will always reserve and commit combined.
     /// \ingroup memory
     class virtual_memory_allocator
+    : FOONATHAN_EBO(detail::global_leak_checker<detail::virtual_memory_allocator_leak_handler>)
     {
     public:
         using is_stateful = std::false_type;
