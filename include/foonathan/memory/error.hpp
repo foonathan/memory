@@ -129,13 +129,14 @@ namespace foonathan { namespace memory
         const char* what() const FOONATHAN_NOEXCEPT override;
     };
 
-    /// The exception class thrown if a size or alignment parameter in an allocation function exceeds the supported maximum.
+    /// The exception class thrown when an allocation size is bigger than the supported maximum.
+    /// This size is either the node, array or alignment parameter in a call to an allocation function.
+    /// If those exceed the supported maximum returned by \c max_node_size(), \c max_array_size() or \c max_alignment(),
+    /// one of its derived classes will be thrown or this class if in a situation where the type is unknown.
     /// It is derived from \c std::bad_alloc.
-    /// This is either a node size, an array size or an alignment value.
     /// Throwing can be prohibited by the handler function.
-    /// \note This exception can be thrown even if all parameters are less than the maximum
-    /// returned by \c max_node_size(), \c max_array_size() or \c max_alignment().
-    /// Those functions return an upper bound and not the actual supported maximum size,
+    /// \note Even if all parameters are less than the maximum, \ref out_of_memory or a similar exception can be thrown,
+    /// because the maximum functions return an upper bound and not the actual supported maximum size,
     /// since it always depends on fence memory, alignment buffer and the like.
     /// \ingroup memory
     class bad_allocation_size : public std::bad_alloc
@@ -196,6 +197,57 @@ namespace foonathan { namespace memory
     private:
         allocator_info info_;
         std::size_t passed_, supported_;
+    };
+
+    /// The exception class thrown when the node size exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_node_size().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory
+    class bad_node_size : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        bad_node_size(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
+    /// The exception class thrown when the array size exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_array_size().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory
+    class bad_array_size : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        bad_array_size(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
+    /// The exception class thrown when the alignment exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_alignment().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory
+    class bad_alignment : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        bad_alignment(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
     };
 
     namespace detail
