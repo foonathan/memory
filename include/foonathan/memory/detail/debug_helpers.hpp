@@ -136,57 +136,6 @@ namespace foonathan { namespace memory
             std::ptrdiff_t allocated_;
         };
 
-        // does leak checking per-class
-        // leak is detected when number of active objects per thread 0
-        // note: not feasible for stateless allocators!
-        template <class Handler>
-        class instance_leak_checker
-        : Handler
-        {
-        public:
-            instance_leak_checker() FOONATHAN_NOEXCEPT
-            {
-                ++no_objects_;
-            }
-
-            instance_leak_checker(instance_leak_checker &&other) FOONATHAN_NOEXCEPT
-            {
-                ++no_objects_;
-            }
-
-            ~instance_leak_checker() FOONATHAN_NOEXCEPT
-            {
-                --no_objects_;
-                if (no_objects_ == 0u && allocated_ != 0)
-                    this->operator()(allocated_);
-            }
-
-            instance_leak_checker& operator=(instance_leak_checker &&) FOONATHAN_NOEXCEPT
-            {
-                return *this;
-            }
-
-            void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocated_ += std::ptrdiff_t(size);
-            }
-
-            void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocated_ -= std::ptrdiff_t(size);
-            }
-
-        private:
-            static FOONATHAN_THREAD_LOCAL std::size_t no_objects_;
-            static FOONATHAN_THREAD_LOCAL std::ptrdiff_t allocated_;
-        };
-
-        template <class Handler>
-        FOONATHAN_THREAD_LOCAL std::size_t instance_leak_checker<Handler>::no_objects_ = 0u;
-
-        template <class Handler>
-        FOONATHAN_THREAD_LOCAL std::ptrdiff_t instance_leak_checker<Handler>::allocated_ = 0;
-
         // does leak checking on a global basis
         // call macro FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) in the header
         // when last counter gets destroyed, leak is detected
