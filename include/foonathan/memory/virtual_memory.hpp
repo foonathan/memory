@@ -12,9 +12,11 @@
 #include <type_traits>
 
 #include "detail/utility.hpp"
-#include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {
@@ -108,6 +110,7 @@ namespace foonathan { namespace memory
 #endif
 
     struct memory_block;
+    struct allocator_info;
 
     /// A \concept{concept_blockallocator,BlockAllocator} that reserves virtual memory and commits it part by part.
     /// It is similar to \ref memory_stack but does not support growing and uses virtual memory,

@@ -8,6 +8,8 @@
 /// \file
 /// Class \ref foonathan::memory::aligned_allocator and related functions.
 
+#include <type_traits>
+
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"

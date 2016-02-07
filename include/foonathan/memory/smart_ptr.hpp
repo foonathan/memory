@@ -15,7 +15,9 @@
 #endif
 
 #include <memory>
+#include <type_traits>
 
+#include "detail/utility.hpp"
 #include "deleter.hpp"
 #include "std_allocator.hpp"
 

@@ -35,7 +35,7 @@ using namespace foonathan::memory;
     detail::virtual_memory_allocator_leak_checker_initializer_t::~virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
     {
         if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, alloc_counter);
+            debug_handle_memory_leak({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, alloc_counter);
     }
 #else
     namespace

@@ -4,7 +4,14 @@
 
 #include "memory_pool.hpp"
 
+#include "debugging.hpp"
+
 using namespace foonathan::memory;
+
+void detail::memory_pool_leak_handler::operator()(std::ptrdiff_t amount)
+{
+    get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool", this}, amount);
+}
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     template class foonathan::memory::memory_pool<node_pool>;

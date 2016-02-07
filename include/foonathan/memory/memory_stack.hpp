@@ -12,8 +12,7 @@
 #include <type_traits>
 
 #include "detail/memory_stack.hpp"
-#include "allocator_traits.hpp"
-#include "debugging.hpp"
+#include "config.hpp"
 #include "error.hpp"
 #include "memory_arena.hpp"
 
@@ -41,10 +40,7 @@ namespace foonathan { namespace memory
 
         struct memory_stack_leak_handler
         {
-            void operator()(std::ptrdiff_t amount)
-            {
-                get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_stack", this}, amount);
-            }
+            void operator()(std::ptrdiff_t amount);
         };
     } // namespace detail
 
@@ -132,7 +128,7 @@ namespace foonathan { namespace memory
                                             }, info(), m.top);
 
                 // mark memory from new top to end of the block as freed
-                detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
+                detail::debug_fill_free(m.top, std::size_t(m.end - m.top), 0);
                 stack_ = detail::fixed_memory_stack(m.top);
             }
             else // same index
@@ -203,6 +199,9 @@ namespace foonathan { namespace memory
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     extern template class memory_stack<>;
 #endif
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,

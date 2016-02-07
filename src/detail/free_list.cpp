@@ -4,7 +4,6 @@
 
 #include "detail/free_list.hpp"
 
-#include <cstddef>
 #include <cstdint>
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION

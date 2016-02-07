@@ -4,10 +4,6 @@
 
 #include "heap_allocator.hpp"
 
-#include <new>
-
-#include "detail/align.hpp"
-#include "debugging.hpp"
 #include "error.hpp"
 
 using namespace foonathan::memory;
@@ -72,6 +68,11 @@ using namespace foonathan::memory;
         }
     }
 #endif
+
+allocator_info detail::heap_allocator_impl::info() FOONATHAN_NOEXCEPT
+{
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr};
+}
 
 std::size_t detail::heap_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 {

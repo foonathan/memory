@@ -12,7 +12,6 @@
 
 #include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
-#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "error.hpp"
 #include "memory_arena.hpp"
@@ -24,10 +23,7 @@ namespace foonathan { namespace memory
     {
         struct memory_pool_leak_handler
         {
-            void operator()(std::ptrdiff_t amount)
-            {
-                get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool", this}, amount);
-            }
+            void operator()(std::ptrdiff_t amount);
         };
     } // namespace detail
 
@@ -219,6 +215,9 @@ namespace foonathan { namespace memory
 
     template <class Type, class Alloc>
     FOONATHAN_CONSTEXPR std::size_t memory_pool<Type, Alloc>::min_node_size;
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref memory_pool classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,

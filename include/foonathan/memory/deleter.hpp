@@ -9,6 +9,8 @@
 /// \c Deleter classes using a \concept{concept_rawallocator,RawAllocator}.
 
 #include "allocator_storage.hpp"
+#include "config.hpp"
+#include "threading.hpp"
 
 namespace foonathan { namespace memory
 {

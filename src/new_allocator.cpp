@@ -11,7 +11,14 @@
 #include <new>
 #include FOONATHAN_GET_NEW_HANDLER_HEADER
 
+#include "error.hpp"
+
 using namespace foonathan::memory;
+
+allocator_info detail::new_allocator_impl::info() FOONATHAN_NOEXCEPT
+{
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr};
+}
 
 void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_NOEXCEPT
 {

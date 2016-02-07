@@ -5,11 +5,8 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 #define FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 
-#include <type_traits>
-
 #include "align.hpp"
 #include "memory_stack.hpp"
-
 #include "../config.hpp"
 #include "../error.hpp"
 

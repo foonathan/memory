@@ -15,13 +15,18 @@
 #endif
 
 #include <cstdlib>
+#include <memory>
 
 #include "detail/lowlevel_allocator.hpp"
-#include "allocator_traits.hpp"
-#include "error.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {
+    struct allocator_info;
+
     namespace detail
     {
         struct malloc_allocator_impl

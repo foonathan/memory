@@ -4,13 +4,13 @@
 
 #include "debugging.hpp"
 
-#include <atomic>
-#include <cstdlib>
-
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdio>
 #endif
 
+#include <atomic>
+
+#include "error.hpp"
 
 using namespace foonathan::memory;
 

@@ -8,15 +8,17 @@
 /// \file
 /// Class \ref foonathan::memory::heap_allocator and related functions.
 
-#include <type_traits>
-
 #include "detail/lowlevel_allocator.hpp"
-#include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {
+    struct allocator_info;
+
     /// Allocates heap memory.
     /// This function is used by the \ref heap_allocator to allocate the heap memory.
     /// It is not defined on a freestanding implementation, a definition must be provided by the library user.
@@ -41,10 +43,7 @@ namespace foonathan { namespace memory
     {
         struct heap_allocator_impl
         {
-            static allocator_info info() FOONATHAN_NOEXCEPT
-            {
-                return {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr};
-            }
+            static allocator_info info() FOONATHAN_NOEXCEPT;
 
             static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {

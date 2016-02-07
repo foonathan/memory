@@ -39,6 +39,9 @@ namespace foonathan { namespace memory
         void* debug_fill_free(void *memory,
                                std::size_t node_size, std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT;
 
+        // fills internal memory
+        void debug_fill_internal(void *memory, std::size_t size, bool free) FOONATHAN_NOEXCEPT;
+
         void debug_handle_invalid_ptr(const allocator_info &info, void *ptr);
 
         // validates given ptr by evaluating the Functor
@@ -56,6 +59,8 @@ namespace foonathan { namespace memory
             (void)info;
         #endif
         }
+
+        void debug_handle_memory_leak(const allocator_info &info, std::ptrdiff_t amount);
 
         // does leak checking per-object
         // leak is detected upon destructor

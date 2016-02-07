@@ -8,12 +8,13 @@
 /// \file
 /// Class \ref foonathan::memory::std_allocator and related classes and functions.
 
-#include <limits>
 #include <new>
+#include <type_traits>
 
 #include "detail/utility.hpp"
 #include "config.hpp"
 #include "allocator_storage.hpp"
+#include "threading.hpp"
 
 namespace foonathan { namespace memory
 {

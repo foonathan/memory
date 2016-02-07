@@ -8,12 +8,13 @@
 /// \file
 /// Class \ref memory_arena and related functionality regarding \concept{concept_blockallocator,BlockAllocators}.
 
+#include <type_traits>
+
 #include "detail/debug_helpers.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "default_allocator.hpp"
-#include "debugging.hpp"
 #include "error.hpp"
 
 namespace foonathan { namespace memory
@@ -293,7 +294,7 @@ namespace foonathan { namespace memory
                 used_.push(allocator_type::allocate_block());
 
             auto block = used_.top();
-            detail::debug_fill(block.memory, block.size, debug_magic::internal_memory);
+            detail::debug_fill_internal(block.memory, block.size, false);
             return block;
         }
 
@@ -311,7 +312,7 @@ namespace foonathan { namespace memory
         void deallocate_block() FOONATHAN_NOEXCEPT
         {
             auto block = used_.top();
-            detail::debug_fill(block.memory, block.size, debug_magic::internal_freed_memory);
+            detail::debug_fill_internal(block.memory, block.size, true);
             this->do_deallocate_block(get_allocator(), used_);
         }
 

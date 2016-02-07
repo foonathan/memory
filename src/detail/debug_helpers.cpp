@@ -70,6 +70,11 @@ using namespace detail;
 
         return pre_fence;
     }
+
+    void detail::debug_fill_internal(void *memory, std::size_t size, bool free) FOONATHAN_NOEXCEPT
+    {
+        debug_fill(memory, size, free ? debug_magic::internal_freed_memory : debug_magic::internal_memory);
+    }
 #else
     void detail::debug_fill(void *, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
 
@@ -87,9 +92,16 @@ using namespace detail;
     {
         return static_cast<char*>(memory);
     }
+
+    void detail::debug_fill_internal(void *, std::size_t, bool) FOONATHAN_NOEXCEPT {}
 #endif
 
 void detail::debug_handle_invalid_ptr(const allocator_info &info, void *ptr)
 {
     get_invalid_pointer_handler()(info, ptr);
+}
+
+void detail::debug_handle_memory_leak(const allocator_info &info, std::ptrdiff_t amount)
+{
+    get_leak_handler()(info, amount);
 }

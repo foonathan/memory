@@ -10,7 +10,6 @@
 
 #include <type_traits>
 
-#include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
 

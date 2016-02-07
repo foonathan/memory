@@ -8,11 +8,8 @@
 /// \file
 /// Class \ref foonathan::memory::tracked_allocator and related classes and functions.
 
-#include <cstddef>
-
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
-#include "error.hpp"
 #include "memory_arena.hpp"
 
 namespace foonathan { namespace memory

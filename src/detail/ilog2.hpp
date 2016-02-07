@@ -5,8 +5,6 @@
 #ifndef FOONATHAN_MEMORY_SRC_DETAIL_ILOG2_HPP_INCLUDED
 #define FOONATHAN_MEMORY_SRC_DETAIL_ILOG2_HPP_INCLUDED
 
-#include <cstdint>
-
 #include "config.hpp"
 
 #include FOONATHAN_CLZ_HEADER

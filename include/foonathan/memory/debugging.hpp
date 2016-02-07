@@ -8,17 +8,12 @@
 /// \file
 /// Debugging facilities.
 
-#include <type_traits>
-
 #include "config.hpp"
-#include "error.hpp"
-
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-    #include <cstring>
-#endif
 
 namespace foonathan { namespace memory
 {
+    struct allocator_info;
+
     /// The magic values that are used for debug filling.
     /// If \ref FOONATHAN_MEMORY_DEBUG_FILL is \c true, memory will be filled to help detect use-after-free or missing initialization errors.
     /// These are the constants for the different types.

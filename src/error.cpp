@@ -5,7 +5,6 @@
 #include "error.hpp"
 
 #include <atomic>
-#include <cstdlib>
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdio>

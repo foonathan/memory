@@ -5,12 +5,11 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED
 
-#include <atomic>
+#include <type_traits>
 
 #include "../config.hpp"
 #include "align.hpp"
 #include "debug_helpers.hpp"
-#include "../debugging.hpp"
 #include "../error.hpp"
 
 namespace foonathan { namespace memory
@@ -22,7 +21,7 @@ namespace foonathan { namespace memory
         {
             void operator()(std::ptrdiff_t amount)
             {
-                get_leak_handler()(Functor::info(), amount);
+                debug_handle_memory_leak(Functor::info(), amount);
             }
         };
 

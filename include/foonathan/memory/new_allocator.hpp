@@ -8,23 +8,22 @@
 /// \file
 /// Class \ref foonathan::memory::new_allocator.
 
-#include <type_traits>
-
 #include "detail/lowlevel_allocator.hpp"
-#include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {
+    struct allocator_info;
+
     namespace detail
     {
         struct new_allocator_impl
         {
-            static allocator_info info() FOONATHAN_NOEXCEPT
-            {
-                return {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr};
-            }
+            static allocator_info info() FOONATHAN_NOEXCEPT;
 
             static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT;
 

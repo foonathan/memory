@@ -13,7 +13,7 @@
 #include "detail/align.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/free_list_array.hpp"
-#include "allocator_traits.hpp"
+#include "config.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 #include "memory_arena.hpp"
@@ -25,10 +25,7 @@ namespace foonathan { namespace memory
     {
         struct memory_pool_collection_leak_handler
         {
-            void operator()(std::ptrdiff_t amount)
-            {
-                get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool_collection", this}, amount);
-            }
+            void operator()(std::ptrdiff_t amount);
         };
     } // namespace detail
 
@@ -301,6 +298,9 @@ namespace foonathan { namespace memory
     template <class PoolType = node_pool, class ImplAllocator = default_allocator>
     FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                              memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref memory_pool_collection classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
