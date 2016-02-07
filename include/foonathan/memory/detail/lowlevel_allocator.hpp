@@ -17,31 +17,25 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
+        template <class Functor>
+        struct lowlevel_allocator_leak_handler
+        {
+            void operator()(std::ptrdiff_t amount)
+            {
+                get_leak_handler()(Functor::info(), amount);
+            }
+        };
+
         // Functor controls low-level allocation:
-        // static allocator_info info();
+        // static allocator_info info()
         // static void* allocate(std::size_t size, std::size_t alignment);
         // static void deallocate(void *memory, std::size_t size, std::size_t alignment);
         // static std::size_t max_node_size();
         template <class Functor>
         class lowlevel_allocator
+        : global_leak_checker<lowlevel_allocator_leak_handler<Functor>>
         {
         public:
-            // create a file-local, thread-local object inside the header
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-            struct leak_checker
-            {
-                leak_checker() FOONATHAN_NOEXCEPT
-                {
-                    ++no_checker_objects_;
-                }
-
-                ~leak_checker() FOONATHAN_NOEXCEPT
-                {
-                    if (--no_checker_objects_ && allocations_ != 0u)
-                        get_leak_handler()(Functor::info(), allocations_);
-                }
-            };
-#endif
             using is_stateful = std::false_type;
 
             lowlevel_allocator() FOONATHAN_NOEXCEPT = default;
@@ -61,7 +55,7 @@ namespace foonathan { namespace memory
                 if (!memory)
                     FOONATHAN_THROW(out_of_memory(Functor::info(), actual_size));
 
-                on_allocate(actual_size);
+                this->on_allocate(actual_size);
 
                 return debug_fill_new(memory, size, max_alignment);
             }
@@ -73,41 +67,17 @@ namespace foonathan { namespace memory
                 auto memory = debug_fill_free(node, size, max_alignment);
                 Functor::deallocate(memory, actual_size, alignment);
 
-                on_deallocate(actual_size);
+                this->on_deallocate(actual_size);
             }
 
             std::size_t max_node_size() const FOONATHAN_NOEXCEPT
             {
                 return Functor::max_node_size();
             }
-
-        private:
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-            static std::atomic<std::size_t> no_checker_objects_, allocations_;
-
-            static void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocations_ += size;
-            }
-
-            static void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocations_ -= size;
-            }
-#else
-            static void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
-            static void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
-
-#endif
         };
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-        template <class Functor>
-        std::atomic<std::size_t> lowlevel_allocator<Functor>::no_checker_objects_(0u);
-
-        template <class Functor>
-        std::atomic<std::size_t> lowlevel_allocator<Functor>::allocations_(0u);
-#endif
+        #define FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(functor, var_name) \
+            FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(lowlevel_allocator_leak_handler<functor>, var_name)
     } // namespace detail
 }} // namespace foonathan::memory
 

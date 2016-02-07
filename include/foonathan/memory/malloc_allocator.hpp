@@ -47,9 +47,7 @@ namespace foonathan { namespace memory
             }
         };
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-        static lowlevel_allocator<malloc_allocator_impl>::leak_checker malloc_allocator_checker;
-#endif
+        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(malloc_allocator_impl, malloc_alloator_leak_checker);
     } // namespace detail
 
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using <tt>std::malloc()</tt>.

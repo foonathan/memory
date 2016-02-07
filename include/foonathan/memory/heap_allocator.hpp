@@ -59,9 +59,7 @@ namespace foonathan { namespace memory
             static std::size_t max_node_size() FOONATHAN_NOEXCEPT;
         };
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-        static lowlevel_allocator<heap_allocator_impl>::leak_checker heap_allocator_checker;
-#endif
+        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(heap_allocator_impl, heap_alloator_leak_checker);
     } // namespace detail
 
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.

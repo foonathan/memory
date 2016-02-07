@@ -152,7 +152,7 @@ namespace foonathan { namespace memory
         FOONATHAN_THREAD_LOCAL std::ptrdiff_t instance_leak_checker<Handler>::allocated_ = 0;
 
         // does leak checking on a global basis
-        // place one object of the nested type counter in the file-local scope of the header
+        // call macro FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) in the header
         // when last counter gets destroyed, leak is detected
         template <class Handler>
         class global_leak_checker
@@ -198,11 +198,18 @@ namespace foonathan { namespace memory
             static std::atomic<std::ptrdiff_t> allocated_;
         };
 
-        template <class Handler>
-        std::atomic<std::size_t> global_leak_checker<Handler>::no_counter_objects_ = 0;
+    #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
+        #define FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) \
+            static foonathan::memory::detail::global_leak_checker<handler>::counter var_name
+    #else
+        #define FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name)
+    #endif
 
         template <class Handler>
-        std::atomic<std::ptrdiff_t> global_leak_checker<Handler>::allocated_ = 0;
+        std::atomic<std::size_t> global_leak_checker<Handler>::no_counter_objects_(0u);
+
+        template <class Handler>
+        std::atomic<std::ptrdiff_t> global_leak_checker<Handler>::allocated_(0);
 
         // does no leak checking, null overhead
         template <class Handler>
