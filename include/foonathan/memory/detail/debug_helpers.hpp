@@ -60,6 +60,19 @@ namespace foonathan { namespace memory
         #endif
         }
 
+        // validates ptr by using a more expensive double-dealloc check
+        template <class Functor>
+        void debug_check_double_dealloc(Functor condition, const allocator_info &info, void *ptr)
+        {
+        #if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
+            debug_check_pointer(condition, info, ptr);
+        #else
+            (void)condition;
+            (void)info;
+            (void)ptr;
+        #endif
+        }
+
         void debug_handle_memory_leak(const allocator_info &info, std::ptrdiff_t amount);
 
         // does no leak checking, null overhead

@@ -245,10 +245,10 @@ void small_free_memory_list::deallocate(void *memory) FOONATHAN_NOEXCEPT
                             return offset % node_fence_size() == 0u;
                         }, info, memory);
     // double-free
-    debug_check_pointer([&]
-                        {
-                            return !chunk_contains(dealloc_chunk, node_fence_size(), node_memory);
-                        }, info, memory);
+    debug_check_double_dealloc([&]
+                                {
+                                    return !chunk_contains(dealloc_chunk, node_fence_size(), node_memory);
+                                }, info, memory);
 
     *node_memory = dealloc_chunk->first_node;
     dealloc_chunk->first_node = static_cast<unsigned char>(offset / node_fence_size());
