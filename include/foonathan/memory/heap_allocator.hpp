@@ -43,7 +43,7 @@ namespace foonathan { namespace memory
         {
             static allocator_info info() FOONATHAN_NOEXCEPT
             {
-                return {FOONATHAN_MEMORY_LOG_PREFIX "heap_allocator", nullptr};
+                return {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr};
             }
 
             static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
