@@ -47,7 +47,12 @@ out_of_memory::out_of_memory(const allocator_info& info, std::size_t amount)
 
 const char* out_of_memory::what() const FOONATHAN_NOEXCEPT
 {
-    return "out of memory";
+    return "low-level allocator is out of memory";
+}
+
+const char* out_of_fixed_memory::what() const FOONATHAN_NOEXCEPT
+{
+    return "fixed size allocator is out of memory";
 }
 
 namespace

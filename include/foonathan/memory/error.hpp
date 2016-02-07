@@ -112,6 +112,23 @@ namespace foonathan { namespace memory
         std::size_t amount_;
     };
 
+    /// A special case of \ref out_of_memory errors
+    /// thrown when a low-level allocator with a fixed size runs out of memory.
+    /// For example, thrown by \ref fixed_block_allocator or \ref static_allocator.<br>
+    /// It is derived from \ref out_of_memory but does not provide its own handler.
+    /// \ingroup memory
+    class out_of_fixed_memory : public out_of_memory
+    {
+    public:
+        /// \effects Just forwards to \ref out_of_memory.
+        out_of_fixed_memory(const allocator_info &info, std::size_t amount)
+        : out_of_memory(info, amount) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
     /// The exception class thrown if a size or alignment parameter in an allocation function exceeds the supported maximum.
     /// It is derived from \c std::bad_alloc.
     /// This is either a node size, an array size or an alignment value.
