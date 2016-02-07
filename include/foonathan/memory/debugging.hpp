@@ -8,17 +8,12 @@
 /// \file
 /// Debugging facilities.
 
-#include <type_traits>
-
 #include "config.hpp"
-#include "error.hpp"
-
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-    #include <cstring>
-#endif
 
 namespace foonathan { namespace memory
 {
+    struct allocator_info;
+
     /// The magic values that are used for debug filling.
     /// If \ref FOONATHAN_MEMORY_DEBUG_FILL is \c true, memory will be filled to help detect use-after-free or missing initialization errors.
     /// These are the constants for the different types.
@@ -46,12 +41,13 @@ namespace foonathan { namespace memory
     /// Leak checking can be controlled via the option \ref FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
     /// and only affects calls through the \ref allocator_traits, not direct calls.
     /// The handler gets the \ref allocator_info and the amount of memory leaked.
+    /// This can also be negative, meaning that more memory has been freed than allocated.
     /// \requiredbe A leak handler shall log the leak, abort the program, do nothing or anything else that seems appropriate.
     /// It must not throw any exceptions since it is called in the cleanup process.
     /// \defaultbe On a hosted implementation it logs the leak to \c stderr and returns, continuing execution.
     /// On a freestanding implementation it does nothing.
     /// \ingroup memory
-    using leak_handler = void(*)(const allocator_info &info, std::size_t amount);
+    using leak_handler = void(*)(const allocator_info &info, std::ptrdiff_t amount);
 
     /// Exchanges the \ref leak_handler.
     /// \effects Sets \c h as the new \ref leak_handler in an atomic operation.
@@ -109,158 +105,6 @@ namespace foonathan { namespace memory
     /// \returns The current \ref buffer_overflow_handler. This is never \c nullptr.
     /// \ingroup memory
     buffer_overflow_handler get_buffer_overflow_handler();
-
-    namespace detail
-    {
-    #if FOONATHAN_MEMORY_DEBUG_FILL
-        using debug_fill_enabled = std::true_type;
-        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = FOONATHAN_MEMORY_DEBUG_FENCE;
-
-        inline void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
-        {
-        #if FOONATHAN_HOSTED_IMPLEMENTATION
-            std::memset(memory, static_cast<int>(m), size);
-        #else
-            // do the naive loop :(
-            auto ptr = static_cast<unsigned char*>(memory);
-            for (std::size_t i = 0u; i != size; ++i)
-                *ptr++ = static_cast<unsigned char>(m);
-        #endif
-        }
-
-        // fills fence, new and fence
-        // returns after fence
-        inline void* debug_fill_new(void *memory, std::size_t node_size,
-                                    std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT
-        {
-            if (!debug_fence_size)
-                fence_size = 0u;
-            auto mem = static_cast<char*>(memory);
-            debug_fill(mem, fence_size, debug_magic::fence_memory);
-            mem += fence_size;
-            debug_fill(mem, node_size, debug_magic::new_memory);
-            debug_fill(mem + node_size, fence_size, debug_magic::fence_memory);
-            return mem;
-        }
-
-        // fills free memory and returns memory starting at fence
-        inline char* debug_fill_free(void *memory, std::size_t node_size,
-                                    std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT
-        {
-            if (!debug_fence_size)
-                fence_size = 0u;
-
-            debug_fill(memory, node_size, debug_magic::freed_memory);
-
-            auto pre_fence = static_cast<unsigned char*>(memory) - fence_size;
-            for (auto cur = pre_fence; cur != static_cast<unsigned char*>(memory); ++cur)
-                if (*cur != static_cast<unsigned char>(debug_magic::fence_memory))
-                    get_buffer_overflow_handler()(memory, node_size, cur);
-
-            auto end = static_cast<unsigned char*>(memory) + node_size;
-            auto post_fence = end + fence_size;
-            for (auto cur = end; cur != post_fence; ++cur)
-                if (*cur != static_cast<unsigned char>(debug_magic::fence_memory))
-                    get_buffer_overflow_handler()(memory, node_size, cur);
-
-            return static_cast<char*>(memory) - fence_size;
-        }
-    #else
-        using debug_fill_enabled = std::false_type;
-        FOONATHAN_CONSTEXPR std::size_t debug_fence_size = 0u;
-
-        // no need to use a macro, GCC will already completely remove the code on -O1
-        // this includes parameter calculations
-        inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
-
-        inline void* debug_fill_new(void *memory, std::size_t, std::size_t = 0u) FOONATHAN_NOEXCEPT
-        {
-            return memory;
-        }
-
-        inline char* debug_fill_free(void *memory, std::size_t, std::size_t = 0u) FOONATHAN_NOEXCEPT
-        {
-            return static_cast<char*>(memory);
-        }
-    #endif
-
-    // base class that performs the leak check
-    // only for stateful allocators
-    // it is a template to allow per class storage of the strings
-    // allocators that give different strings need different parameters
-    #if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-        template <class RawAllocator>
-        class leak_checker
-        {
-        protected:
-            leak_checker(const char *name) FOONATHAN_NOEXCEPT
-            : allocated_(0)
-            {
-                name_ = name;
-            }
-
-            leak_checker(leak_checker &&other) FOONATHAN_NOEXCEPT
-            : allocated_(other.allocated_)
-            {
-                other.allocated_ = 0u;
-            }
-
-            ~leak_checker() FOONATHAN_NOEXCEPT
-            {
-                if (allocated_ != 0u)
-                    get_leak_handler()({name_, this}, allocated_);
-            }
-
-            leak_checker& operator=(leak_checker &&other) FOONATHAN_NOEXCEPT
-            {
-                allocated_ = other.allocated_;
-                other.allocated_ = 0u;
-                return *this;
-            }
-
-            void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocated_ += size;
-            }
-
-            void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
-            {
-                allocated_ -= size;
-            }
-
-        private:
-            static const char* name_;
-            std::size_t allocated_;
-        };
-
-        template <class RawAllocator>
-        const char* detail::leak_checker<RawAllocator>::name_ = "";
-    #else
-        template <class RawAllocator>
-        class leak_checker
-        {
-        protected:
-            leak_checker(const char *) FOONATHAN_NOEXCEPT {}
-            leak_checker(leak_checker &&) FOONATHAN_NOEXCEPT {}
-            ~leak_checker() FOONATHAN_NOEXCEPT {}
-
-            leak_checker& operator=(leak_checker &&) FOONATHAN_NOEXCEPT {return *this;}
-
-            void on_allocate(std::size_t) FOONATHAN_NOEXCEPT {}
-            void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT {}
-        };
-    #endif
-
-    #if FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
-        inline void check_pointer(bool condition, const allocator_info &info, void *ptr)
-        {
-            if (!condition)
-                get_invalid_pointer_handler()(info, ptr);
-        }
-    #else
-        inline void check_pointer(bool, const allocator_info&, void *) FOONATHAN_NOEXCEPT {}
-    #endif
-    } // namespace detail
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_DEBUGGING_HPP_INCLUDED

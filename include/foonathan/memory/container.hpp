@@ -14,6 +14,9 @@
     #error "This header is only available for a hosted implementation."
 #endif
 
+#include <functional>
+#include <utility>
+
 #include <deque>
 #include <forward_list>
 #include <list>
@@ -26,6 +29,7 @@
 #include <vector>
 
 #include "std_allocator.hpp"
+#include "threading.hpp"
 
 namespace foonathan { namespace memory
 {

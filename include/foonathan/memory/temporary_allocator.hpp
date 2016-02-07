@@ -10,7 +10,6 @@
 
 #include FOONATHAN_THREAD_LOCAL_HEADER
 
-#include "allocator_traits.hpp"
 #include "config.hpp"
 #include "memory_stack.hpp"
 
@@ -93,6 +92,9 @@ namespace foonathan { namespace memory
     {
         return {size};
     }
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref temporary_allocator classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,

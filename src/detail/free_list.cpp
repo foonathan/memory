@@ -4,7 +4,6 @@
 
 #include "detail/free_list.hpp"
 
-#include <cstddef>
 #include <cstdint>
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
@@ -12,6 +11,8 @@
 #endif
 
 #include "detail/align.hpp"
+#include "detail/debug_helpers.hpp"
+#include "detail/error_helpers.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 
@@ -126,7 +127,7 @@ std::size_t free_memory_list::list_impl::insert(char *begin, char *end,
 void free_memory_list::list_impl::push(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT
 {
     // alignment is fence memory
-    auto node = debug_fill_free(ptr, node_size, alignment_for(node_size));
+    auto node = static_cast<char*>(debug_fill_free(ptr, node_size, alignment_for(node_size)));
 
     set_ptr(node, first_);
     first_ = node;
@@ -475,6 +476,8 @@ ordered_free_memory_list::list_impl::pos
     };
 #endif
 
+    auto info = allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::ordered_free_memory_list", this);
+
     // starting position is insert_, if set, otherwise first_
     // first_ might be null, too, but this is handled
     // insert_prev_ is the previous node in either case
@@ -493,9 +496,10 @@ ordered_free_memory_list::list_impl::pos
         {
             if (greater(cur, memory))
                 break;
-            detail::check_pointer(cur != memory,
-                                  {FOONATHAN_MEMORY_LOG_PREFIX "::detail::ordered_free_memory_list",
-                                   this}, memory);
+            detail::debug_check_pointer([&]
+                                        {
+                                            return cur != memory;
+                                        }, info, memory);
             next(cur, prev);
         }
 
@@ -509,9 +513,10 @@ ordered_free_memory_list::list_impl::pos
         {
             if (less(cur, memory))
                 break;
-            detail::check_pointer(cur != memory,
-                                  {FOONATHAN_MEMORY_LOG_PREFIX "::detail::ordered_free_memory_list",
-                                   this}, memory);
+            detail::debug_check_pointer([&]
+                                        {
+                                            return cur != memory;
+                                        }, info, memory);
             prev(cur, next);
         }
 

@@ -31,6 +31,7 @@ set(tests
         test_allocator.hpp
         test.cpp
         detail/align.cpp
+        detail/debug_helpers.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
         detail/memory_stack.cpp

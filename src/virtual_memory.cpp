@@ -4,46 +4,16 @@
 
 #include "virtual_memory.hpp"
 
-#include "debugging.hpp"
+#include "detail/debug_helpers.hpp"
+#include "error.hpp"
 #include "memory_arena.hpp"
 
 using namespace foonathan::memory;
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    #include <atomic>
-
-    namespace
-    {
-        std::size_t init_counter = 0u, alloc_counter = 0u;
-
-        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter += size;
-        }
-
-        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter -= size;
-        }
-    }
-
-    detail::virtual_memory_allocator_leak_checker_initializer_t::virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        ++init_counter;
-    }
-
-    detail::virtual_memory_allocator_leak_checker_initializer_t::~virtual_memory_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, alloc_counter);
-    }
-#else
-    namespace
-    {
-        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
-        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
-    }
-#endif
+void detail::virtual_memory_allocator_leak_handler::operator()(std::ptrdiff_t amount)
+{
+    detail::debug_handle_memory_leak({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, amount);
+}
 
 #if defined(_WIN32)
     #include <windows.h>
@@ -164,9 +134,9 @@ void *virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
     auto no_pages = calc_no_pages(size);
     auto pages = virtual_memory_reserve(no_pages);
     if (!pages || !virtual_memory_commit(pages, no_pages))
-        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", this},
+        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr},
                                       no_pages * virtual_memory_page_size));
-    on_alloc(size);
+    on_allocate(size);
 
     return detail::debug_fill_new(pages, size, virtual_memory_page_size);
 }
@@ -175,7 +145,7 @@ void virtual_memory_allocator::deallocate_node(void *node, std::size_t size, std
 {
     auto pages = detail::debug_fill_free(node, size, virtual_memory_page_size);
 
-    on_dealloc(size);
+    on_deallocate(size);
 
     auto no_pages = calc_no_pages(size);
     virtual_memory_decommit(pages, no_pages);
@@ -228,7 +198,10 @@ memory_block virtual_block_allocator::allocate_block()
 
 void virtual_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
 {
-    detail::check_pointer(static_cast<char*>(block.memory) == cur_ - block_size_, info(), block.memory);
+    detail::debug_check_pointer([&]
+                                {
+                                    return static_cast<char*>(block.memory) == cur_ - block_size_;
+                                }, info(), block.memory);
     cur_ -= block_size_;
     virtual_memory_decommit(cur_, block_size_);
 }

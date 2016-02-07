@@ -11,11 +11,14 @@
 #include <type_traits>
 
 #include "detail/align.hpp"
+#include "detail/error_helpers.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/utility.hpp"
-#include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {

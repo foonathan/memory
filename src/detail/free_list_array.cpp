@@ -4,7 +4,7 @@
 
 #include "detail/free_list_array.hpp"
 
-#include "error.hpp"
+#include "detail/error_helpers.hpp"
 #include "ilog2.hpp"
 
 using namespace foonathan::memory;

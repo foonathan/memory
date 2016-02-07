@@ -11,9 +11,10 @@
 #include <type_traits>
 
 #include "detail/align.hpp"
+#include "detail/error_helpers.hpp"
 #include "detail/memory_stack.hpp"
 #include "detail/free_list_array.hpp"
-#include "allocator_traits.hpp"
+#include "config.hpp"
 #include "debugging.hpp"
 #include "error.hpp"
 #include "memory_arena.hpp"
@@ -21,6 +22,14 @@
 
 namespace foonathan { namespace memory
 {
+    namespace detail
+    {
+        struct memory_pool_collection_leak_handler
+        {
+            void operator()(std::ptrdiff_t amount);
+        };
+    } // namespace detail
+
     /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each size.
     /// That means that for each possible size up to an upper bound there will be a seperate free list.
     /// Allocating a node will not waste any memory.
@@ -47,12 +56,11 @@ namespace foonathan { namespace memory
     template <class PoolType, class BucketDistribution,
             class BlockOrRawAllocator = default_allocator>
     class memory_pool_collection
-    : FOONATHAN_EBO(detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>)
+    : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_collection_leak_handler>)
     {
         using free_list_array = detail::free_list_array<typename PoolType::type,
                                                         typename BucketDistribution::type>;
-        using leak_checker =  detail::leak_checker<memory_pool_collection<node_pool,
-                                                identity_buckets, default_allocator>>;
+        using leak_checker =  detail::default_leak_checker<detail::memory_pool_collection_leak_handler>;
     public:
         using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
         using pool_type = PoolType;
@@ -67,8 +75,7 @@ namespace foonathan { namespace memory
         template <typename ... Args>
         memory_pool_collection(std::size_t max_node_size, std::size_t block_size,
                     Args&&... args)
-        : leak_checker(info().name),
-          arena_(block_size, detail::forward<Args>(args)...),
+        : arena_(block_size, detail::forward<Args>(args)...),
           stack_(allocate_block()),
           pools_(stack_, block_end(), max_node_size)
         {}
@@ -83,7 +90,7 @@ namespace foonathan { namespace memory
         /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
         /// even when passing it memory that was previously allocated by this object.
         memory_pool_collection(memory_pool_collection &&other) FOONATHAN_NOEXCEPT
-        : detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>(detail::move(other)),
+        : leak_checker(detail::move(other)),
           arena_(detail::move(other.arena_)),
           stack_(detail::move(other.stack_)),
           pools_(detail::move(other.pools_))
@@ -91,7 +98,7 @@ namespace foonathan { namespace memory
 
         memory_pool_collection& operator=(memory_pool_collection &&other) FOONATHAN_NOEXCEPT
         {
-            detail::leak_checker<memory_pool_collection<node_pool, identity_buckets, default_allocator>>::operator=(detail::move(other));
+            leak_checker::operator=(detail::move(other));
             arena_ = detail::move(other.arena_);
             stack_ = detail::move(other.stack_);
             pools_ = detail::move(other.pools_);
@@ -292,6 +299,9 @@ namespace foonathan { namespace memory
     template <class PoolType = node_pool, class ImplAllocator = default_allocator>
     FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                              memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref memory_pool_collection classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,

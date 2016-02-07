@@ -8,76 +8,59 @@
     #include <memory>
 #endif
 
-#include "detail/align.hpp"
-#include "debugging.hpp"
+#include <new>
+#include FOONATHAN_GET_NEW_HANDLER_HEADER
+
 #include "error.hpp"
 
 using namespace foonathan::memory;
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    #include <atomic>
-
-    namespace
-    {
-        std::size_t init_counter = 0u, alloc_counter = 0u;
-
-        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter += size;
-        }
-
-        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
-        {
-            alloc_counter -= size;
-        }
-    }
-
-    detail::new_allocator_leak_checker_initializer_t::new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        ++init_counter;
-    }
-
-    detail::new_allocator_leak_checker_initializer_t::~new_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
-    {
-        if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr}, alloc_counter);
-    }
-#else
-    namespace
-    {
-        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
-        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
-    }
-#endif
-
-void* new_allocator::allocate_node(std::size_t size, std::size_t)
+const allocator_info& detail::new_allocator_impl::info() FOONATHAN_NOEXCEPT
 {
-    auto actual_size = size + (detail::debug_fence_size ? 2 * detail::max_alignment : 0u);
-
-    auto mem = detail::try_allocate([](std::size_t size)
-                                    {
-                                        return ::operator new(size,
-                                                              std::nothrow);
-                                    }, actual_size,
-                                    {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", this});
-    on_alloc(size);
-    return detail::debug_fill_new(mem, size, detail::max_alignment);
+    static allocator_info info(FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr);
+    return info;
 }
 
-void new_allocator::deallocate_node(void* node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_NOEXCEPT
 {
-    auto memory = detail::debug_fill_free(node, size, detail::max_alignment);
-    ::operator delete(memory);
+    void *memory = nullptr;
+    while (true)
+    {
+        memory = ::operator new(size, std::nothrow);
+        if (memory)
+            break;
 
-    on_dealloc(size);
+        auto handler = foonathan_comp::get_new_handler();
+        if (handler)
+        {
+            FOONATHAN_TRY
+            {
+                handler();
+            }
+            FOONATHAN_CATCH_ALL
+            {
+                return nullptr;
+            }
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    return memory;
 }
 
-std::size_t new_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+void detail::new_allocator_impl::deallocate(void *ptr, std::size_t, size_t t) FOONATHAN_NOEXCEPT
+{
+    ::operator delete(ptr);
+}
+
+std::size_t detail::new_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     return std::allocator<char>().max_size();
 #else
-    return -1;
+    return std::size_t(-1);
 #endif
 }
 

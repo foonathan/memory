@@ -4,7 +4,7 @@
 
 #include "detail/align.hpp"
 
-#include "error.hpp"
+#include "detail/error_helpers.hpp"
 #include "ilog2.hpp"
 
 using namespace foonathan::memory;

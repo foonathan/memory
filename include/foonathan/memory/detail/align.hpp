@@ -5,10 +5,6 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 
-#include <cstddef>
-#include <cstdint>
-#include <type_traits>
-
 #include FOONATHAN_ALIGNAS_HEADER
 #include FOONATHAN_ALIGNOF_HEADER
 #include FOONATHAN_MAX_ALIGN_T_HEADER

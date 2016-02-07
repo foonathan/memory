@@ -5,6 +5,7 @@
 #include "detail/memory_stack.hpp"
 
 #include "detail/align.hpp"
+#include "detail/debug_helpers.hpp"
 #include "debugging.hpp"
 
 using namespace foonathan::memory;

@@ -4,23 +4,31 @@
 
 #include "debugging.hpp"
 
-#include <atomic>
-#include <cstdlib>
-
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdio>
 #endif
 
+#include <atomic>
+
+#include "error.hpp"
 
 using namespace foonathan::memory;
 
 namespace
 {
-    void default_leak_handler(const allocator_info &info, std::size_t amount) FOONATHAN_NOEXCEPT
+    void default_leak_handler(const allocator_info &info, std::ptrdiff_t amount) FOONATHAN_NOEXCEPT
     {
     #if FOONATHAN_HOSTED_IMPLEMENTATION
-        std::fprintf(stderr, "[%s] Allocator %s (at %p) leaked %zu bytes.\n",
-                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, amount);
+        if (amount > 0)
+            std::fprintf(stderr, "[%s] Allocator %s (at %p) leaked %zu bytes.\n",
+                     FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, std::size_t(amount));
+        else
+            std::fprintf(stderr, "[%s] Allocator %s (at %p) has deallocated %zu bytes more than ever allocated "
+                         "(it's amazing you're able to see this message!).\n",
+                         FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, std::size_t(-amount));
+    #else
+        (void)info;
+        (void)amount;
     #endif
     }
 
@@ -45,6 +53,8 @@ namespace
         std::fprintf(stderr, "[%s] Deallocation function of allocator %s (at %p) received invalid pointer %p\n",
                      FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, ptr);
     #endif
+        (void)info;
+        (void)ptr;
         std::abort();
     }
 
@@ -70,6 +80,9 @@ namespace
                     "[%s] Buffer overflow at address %p detected, corresponding memory block %p has only size %zu.",
                     FOONATHAN_MEMORY_LOG_PREFIX, ptr, memory, node_size);
     #endif
+        (void)memory;
+        (void)node_size;
+        (void)ptr;
         std::abort();
     }
 

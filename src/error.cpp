@@ -5,7 +5,6 @@
 #include "error.hpp"
 
 #include <atomic>
-#include <cstdlib>
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdio>
@@ -92,44 +91,4 @@ bad_allocation_size::bad_allocation_size(const allocator_info& info,
 const char* bad_allocation_size::what() const FOONATHAN_NOEXCEPT
 {
     return "allocation size/alignment exceeds supported maximum for allocator";
-}
-
-void* foonathan::memory::detail::try_allocate(void* (* alloc_func)(size_t), std::size_t size,
-                                              const allocator_info& info)
-{
-    while (true)
-    {
-        auto memory = alloc_func(size);
-        if (memory)
-            return memory;
-
-        auto handler = foonathan_comp::get_new_handler();
-        if (handler)
-        {
-            FOONATHAN_TRY
-            {
-                handler();
-            }
-            FOONATHAN_CATCH_ALL
-            {
-                FOONATHAN_THROW(out_of_memory(info, size));
-            }
-        }
-        else
-        {
-            FOONATHAN_THROW(out_of_memory(info, size));
-        }
-    }
-    FOONATHAN_MEMORY_UNREACHABLE("while (true) shouldn't exit");
-    return nullptr;
-}
-
-void foonathan::memory::detail::handle_failed_assert(const char *msg,
-                                                     const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT
-{
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-    std::fprintf(stderr, "[%s] Assertion failure in function %s (%s:%d): %s.",
-                 FOONATHAN_MEMORY_LOG_PREFIX, fnc, file, line, msg);
-#endif
-    std::abort();
 }
