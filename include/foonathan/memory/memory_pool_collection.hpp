@@ -115,10 +115,10 @@ namespace foonathan { namespace memory
         /// Then it removes a node from it.
         /// \returns A \concept{concept_node,node} of given size suitable aligned,
         /// i.e. suitable for any type where <tt>sizeof(T) < node_size</tt>.
-        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed.
-        /// \requires \c node_size must be a valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
+        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed or a \ref bad_node_size exception if the node size is too big.
         void* allocate_node(std::size_t node_size)
         {
+            detail::check_node_size(node_size, max_node_size(), info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
@@ -131,14 +131,13 @@ namespace foonathan { namespace memory
         /// Otherwise has the same behavior as \ref allocate_node().
         /// \returns An array of \c n nodes of size \c node_size suitable aligned.
         /// \throws Anything thrown by the used \concept{concept_blockallocator,BlockAllocator}'s allocation function if a growth is needed,
-        /// or \ref bad_allocation_size if <tt>n * node_size()</tt> is too big.
-        /// \requires The \c PoolType must support array allocations, otherwise the body of this function will not compile.
-        /// \c count must be valid \concept{concept_array,array count} and
-        /// \c node_size must be valid \concept{concept_node,node size} less than or equal to \ref max_node_size().
+        /// or a \ref bad_allocation_size exception.
+        /// \requires \c count must be valid \concept{concept_array,array count} and
+        /// \c node_size must be valid \concept{concept_node,node size}.
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
-            FOONATHAN_MEMORY_ASSERT_MSG(PoolType::value, "array allocations not supported");
-            detail::check_allocation_size(count * node_size, next_capacity(),
+            detail::check_node_size(node_size, max_node_size(), info());
+            detail::check_allocation_size(count * node_size, PoolType::value ? next_capacity() : 0u,
                                           info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
@@ -149,8 +148,7 @@ namespace foonathan { namespace memory
                 reserve_impl(pool, count * node_size);
                 mem = pool.allocate(count * node_size);
                 if (!mem)
-                    FOONATHAN_THROW(bad_allocation_size(info(),
-                                                        count * node_size, next_capacity()));
+                    FOONATHAN_THROW(bad_array_size(info(), count * node_size, next_capacity()));
             }
             return mem;
         }
@@ -182,6 +180,7 @@ namespace foonathan { namespace memory
         /// \c capacity_left must be less than \ref next_capacity().
         void reserve(std::size_t node_size, std::size_t capacity)
         {
+            FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             auto& pool = pools_.get(node_size);
             reserve_impl(pool, capacity);
         }
@@ -199,6 +198,7 @@ namespace foonathan { namespace memory
         /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
         std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
+            FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             return pools_.get(node_size).capacity();
         }
 
@@ -316,26 +316,26 @@ namespace foonathan { namespace memory
 
         /// \returns The result of \ref memory_pool_collection::allocate_node().
         /// \throws Anything thrown by the pool allocation function
-        /// or \ref bad_allocation_size if \c size / \c alignment exceeds \ref max_node_size() / the suitable alignment value,
+        /// or a \ref bad_allocation_size exception if \c size / \c alignment exceeds \ref max_node_size() / the suitable alignment value,
         /// i.e. the node is over-aligned.
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, max_node_size(state), state.info());
-            detail::check_allocation_size(alignment, detail::alignment_for(size), state.info());
+            detail::check_node_size(size, max_node_size(state), state.info());
+            detail::check_alignment(alignment, detail::alignment_for(size), state.info());
             auto mem = state.allocate_node(size);
             state.on_allocate(size);
             return mem;
         }
 
         /// \returns The result of \ref memory_pool_collection::allocate_array().
-        /// \throws Anything thrown by the pool allocation function.
+        /// \throws Anything thrown by the pool allocation function or a \ref bad_allocation_size exception.
         /// \requires The \ref memory_pool_collection has to support array allocations.
         static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, max_node_size(state), state.info());
-            detail::check_allocation_size(alignment, max_alignment(state), state.info());
+            // node and array already checked
+            detail::check_alignment(alignment, max_alignment(state), state.info());
             return allocate_array(Pool{}, state, count, size);
         }
 

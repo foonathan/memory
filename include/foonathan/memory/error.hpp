@@ -138,6 +138,7 @@ namespace foonathan { namespace memory
     /// \note Even if all parameters are less than the maximum, \ref out_of_memory or a similar exception can be thrown,
     /// because the maximum functions return an upper bound and not the actual supported maximum size,
     /// since it always depends on fence memory, alignment buffer and the like.
+    /// \note A user should only \c catch for \c bad_allocation_size, not the derived classes.
     /// \ingroup memory
     class bad_allocation_size : public std::bad_alloc
     {
@@ -241,6 +242,7 @@ namespace foonathan { namespace memory
     {
     public:
         /// \effects Just forwards to \ref bad_allocation_size.
+        /// \c passed is <tt>count * size</tt>, \c supported the size in bytes.
         bad_alignment(const allocator_info &info,
                       std::size_t passed, std::size_t supported)
         : bad_allocation_size(info, passed, supported) {}
@@ -256,6 +258,24 @@ namespace foonathan { namespace memory
         {
             if (passed > supported)
                 FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
+        }
+
+        inline void check_node_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_node_size(info, passed, supported));
+        }
+
+        inline void check_array_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_array_size(info, passed, supported));
+        }
+
+        inline void check_alignment(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_alignment(info, passed, supported));
         }
     } // namespace detail
 }} // namespace foonathan::memory

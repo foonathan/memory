@@ -110,12 +110,11 @@ namespace foonathan { namespace memory
         /// This can sometimes lead to a growth, even if technically there is enough continuous memory on the free list.
         /// \returns An array of \c n nodes of size \ref node_size() suitable aligned.
         /// \throws Anything thrown by the used \concept{concept_blockallocator,BlockAllocator}'s allocation function if a growth is needed,
-        /// or \ref bad_allocation_size if <tt>n * node_size()</tt> is too big.
-        /// \requires The \c PoolType must support array allocations, otherwise the body of this function will not compile.
-        /// \c n must be valid \concept{concept_array,array count}.
+        /// or \ref bad_array_size if <tt>n * node_size()</tt> is too big.
+        /// \requires \c n must be valid \concept{concept_array,array count}.
         void* allocate_array(std::size_t n)
         {
-            FOONATHAN_MEMORY_ASSERT_MSG(pool_type::value, "does not support array allocations");
+            detail::check_array_size(n * node_size(), pool_type::value ? next_capacity() : 0, info());
             return allocate_array(n, node_size());
         }
 
@@ -181,9 +180,6 @@ namespace foonathan { namespace memory
 
         void* allocate_array(std::size_t n, std::size_t node_size)
         {
-            detail::check_allocation_size(n * node_size, next_capacity(),
-                                          info());
-
             auto mem = free_list_.empty() ? nullptr
                                           : free_list_.allocate(n * node_size);
             if (!mem)
@@ -191,8 +187,8 @@ namespace foonathan { namespace memory
                 allocate_block();
                 mem = free_list_.allocate(n * node_size);
                 if (!mem)
-                    FOONATHAN_THROW(bad_allocation_size(info(),
-                                                        n * node_size, capacity_left()));
+                    // generic: bad size
+                    FOONATHAN_THROW(bad_array_size(info(), n * node_size, capacity_left()));
             }
             return mem;
         }
@@ -233,12 +229,12 @@ namespace foonathan { namespace memory
 
         /// \returns The result of \ref memory_pool::allocate_node().
         /// \throws Anything thrown by the pool allocation function
-        /// or \ref bad_allocation_size if \c size / \c alignment exceeds \ref max_node_size() / \ref max_alignment().
+        /// or a \ref bad_allocation_size exception.
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, max_node_size(state), state.info());
-            detail::check_allocation_size(alignment, max_alignment(state), state.info());
+            detail::check_node_size(size, max_node_size(state), state.info());
+            detail::check_alignment(alignment, max_alignment(state), state.info());
             auto mem = state.allocate_node();
             state.on_allocate(size);
             return mem;
@@ -253,9 +249,9 @@ namespace foonathan { namespace memory
         static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, max_node_size(state), state.info());
-            detail::check_allocation_size(alignment, max_alignment(state), state.info());
-            // array size already checked
+            detail::check_node_size(size, max_node_size(state), state.info());
+            detail::check_alignment(alignment, max_alignment(state), state.info());
+            detail::check_array_size(count, max_array_size(state), state.info());
             return allocate_array(PoolType{}, state, count, size);
         }
 
