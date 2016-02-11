@@ -14,7 +14,7 @@ void* static_allocator::allocate_node(std::size_t size, std::size_t alignment)
 {
     auto mem = stack_.allocate(end_, size, alignment);
     if (!mem)
-        FOONATHAN_THROW(out_of_memory(info(), size));
+        FOONATHAN_THROW(out_of_fixed_memory(info(), size));
     return mem;
 }
 
@@ -30,7 +30,7 @@ allocator_info static_allocator::info() const FOONATHAN_NOEXCEPT
 memory_block static_block_allocator::allocate_block()
 {
     if (cur_ + block_size_ > end_)
-        FOONATHAN_THROW(out_of_memory(info(), block_size_));
+        FOONATHAN_THROW(out_of_fixed_memory(info(), block_size_));
     auto mem = cur_;
     cur_ += block_size_;
     return {mem, block_size_};

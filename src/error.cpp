@@ -47,7 +47,12 @@ out_of_memory::out_of_memory(const allocator_info& info, std::size_t amount)
 
 const char* out_of_memory::what() const FOONATHAN_NOEXCEPT
 {
-    return "out of memory";
+    return "low-level allocator is out of memory";
+}
+
+const char* out_of_fixed_memory::what() const FOONATHAN_NOEXCEPT
+{
+    return "fixed size allocator is out of memory";
 }
 
 namespace
@@ -69,8 +74,7 @@ namespace
             bad_alloc_size_h(default_bad_alloc_size_handler);
 }
 
-bad_allocation_size::handler bad_allocation_size::set_handler(
-        bad_allocation_size::handler h)
+bad_allocation_size::handler bad_allocation_size::set_handler(bad_allocation_size::handler h)
 {
     return bad_alloc_size_h.exchange(h ? h : default_bad_alloc_size_handler);
 }
@@ -88,7 +92,22 @@ bad_allocation_size::bad_allocation_size(const allocator_info& info,
     bad_alloc_size_h.load()(info_, passed_, supported_);
 }
 
-const char* bad_allocation_size::what() const FOONATHAN_NOEXCEPT
+const char *bad_allocation_size::what() const FOONATHAN_NOEXCEPT
 {
-    return "allocation size/alignment exceeds supported maximum for allocator";
+    return "allocation node size exceeds supported maximum of allocator";
+}
+
+const char *bad_node_size::what() const FOONATHAN_NOEXCEPT
+{
+    return "allocation node size exceeds supported maximum of allocator";
+}
+
+const char *bad_array_size::what() const FOONATHAN_NOEXCEPT
+{
+    return "allocation array size exceeds supported maximum of allocator";
+}
+
+const char *bad_alignment::what() const FOONATHAN_NOEXCEPT
+{
+    return "allocation alignment exceeds supported maximum of allocator";
 }

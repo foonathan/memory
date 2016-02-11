@@ -11,11 +11,12 @@
 #include <type_traits>
 
 #include "detail/debug_helpers.hpp"
-#include "detail/error_helpers.hpp"
+#include "detail/assert.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
 #include "default_allocator.hpp"
+#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -444,11 +445,6 @@ namespace foonathan { namespace memory
     extern template class memory_arena<growing_block_allocator<>, false>;
 #endif
 
-    namespace detail
-    {
-        allocator_info fixed_block_allocator_info(void *obj);
-    } // namespace detail
-
     /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
     /// It can be used to prevent higher-level allocators from expanding.
     /// The one block allocation is performed through the \c allocate_array() function of the given \concept{concept_rawallocator,RawAllocator}.
@@ -481,7 +477,7 @@ namespace foonathan { namespace memory
                 block_size_ = 0u;
                 return {mem, block_size_};
             }
-            detail::handle_out_of_memory(detail::fixed_block_allocator_info(this), block_size_);
+            FOONATHAN_THROW(out_of_fixed_memory(info(), block_size_));
         }
 
         /// \effects Deallocates the previously allocated memory block.
@@ -491,7 +487,7 @@ namespace foonathan { namespace memory
             detail::debug_check_pointer([&]
                                         {
                                             return block_size_ == 0u;
-                                        }, detail::fixed_block_allocator_info(this), block.memory);
+                                        }, info(), block.memory);
             traits::deallocate_array(get_allocator(), block.memory,
                                      block.size, 1, detail::max_alignment);
             block_size_ = block.size;
@@ -510,6 +506,11 @@ namespace foonathan { namespace memory
         }
 
     private:
+        allocator_info info() FOONATHAN_NOEXCEPT
+        {
+            return {FOONATHAN_MEMORY_LOG_PREFIX "::fixed_block_allocator", this};
+        }
+
         std::size_t block_size_;
     };
 

@@ -2,26 +2,15 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_MEMORY_DETAIL_ERROR_HELPERS_HPP_INCLUDED
-#define FOONATHAN_MEMORY_DETAIL_ERROR_HELPERS_HPP_INCLUDED
+#ifndef FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
+#define FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
 
 #include "../config.hpp"
 
 namespace foonathan { namespace memory
 {
-    struct allocator_info;
-
     namespace detail
     {
-        // checks if passed <= supported and throws bad_allocation_size if needed
-        // useful because it does not require including error.hpp
-        void check_allocation_size(std::size_t passed, std::size_t supported,
-                                   const allocator_info &info);
-
-        // handles an out of memory condition by throwing the exception
-        // useful because it does not require including error.hpp
-        void handle_out_of_memory(const allocator_info &info, std::size_t amount);
-
         // handles a failed assertion
         void handle_failed_assert(const char *msg, const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT;
 
@@ -47,4 +36,4 @@ namespace foonathan { namespace memory
     } // namespace detail
 }} // namespace foonathan::memory
 
-#endif // FOONATHAN_MEMORY_DETAIL_ERROR_HELPERS_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED

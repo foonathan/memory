@@ -15,10 +15,9 @@
 
 using namespace foonathan::memory;
 
-const allocator_info& detail::new_allocator_impl::info() FOONATHAN_NOEXCEPT
+allocator_info detail::new_allocator_impl::info() FOONATHAN_NOEXCEPT
 {
-    static allocator_info info(FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr);
-    return info;
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr};
 }
 
 void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_NOEXCEPT
