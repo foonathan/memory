@@ -49,7 +49,7 @@ void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_N
     return memory;
 }
 
-void detail::new_allocator_impl::deallocate(void *ptr, std::size_t, size_t t) FOONATHAN_NOEXCEPT
+void detail::new_allocator_impl::deallocate(void *ptr, std::size_t, size_t) FOONATHAN_NOEXCEPT
 {
     ::operator delete(ptr);
 }
@@ -64,5 +64,6 @@ std::size_t detail::new_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class detail::lowlevel_allocator<detail::new_allocator_impl>;
     template class foonathan::memory::allocator_traits<new_allocator>;
 #endif

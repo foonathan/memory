@@ -17,6 +17,7 @@
     }
 
     #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+        template class detail::lowlevel_allocator<detail::malloc_allocator_impl>;
         template class foonathan::memory::allocator_traits<malloc_allocator>;
     #endif
 

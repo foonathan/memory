@@ -68,6 +68,7 @@ namespace foonathan { namespace memory
     using heap_allocator = FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::heap_allocator_impl>);
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class detail::lowlevel_allocator<detail::heap_allocator_impl>;
     extern template class allocator_traits<heap_allocator>;
 #endif
 }} // namespace foonathan::memory

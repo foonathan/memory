@@ -80,5 +80,6 @@ std::size_t detail::heap_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class detail::lowlevel_allocator<detail::heap_allocator_impl>;
     template class foonathan::memory::allocator_traits<heap_allocator>;
 #endif

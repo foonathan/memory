@@ -38,9 +38,9 @@ namespace foonathan { namespace memory
         public:
             using is_stateful = std::false_type;
 
-            lowlevel_allocator() FOONATHAN_NOEXCEPT = default;
+            lowlevel_allocator() FOONATHAN_NOEXCEPT {}
             lowlevel_allocator(lowlevel_allocator &&) FOONATHAN_NOEXCEPT {}
-            ~lowlevel_allocator() FOONATHAN_NOEXCEPT = default;
+            ~lowlevel_allocator() FOONATHAN_NOEXCEPT {}
 
             lowlevel_allocator& operator=(lowlevel_allocator &&) FOONATHAN_NOEXCEPT
             {
