@@ -5,8 +5,9 @@
 # builds tools
 
 add_executable(foonathan_memory_node_size_debugger node_size_debugger.hpp node_size_debugger.cpp)
-comp_target_features(foonathan_memory_node_size_debugger PUBLIC CPP11)
+comp_target_features(foonathan_memory_node_size_debugger PRIVATE CPP11)
 target_compile_definitions(foonathan_memory_node_size_debugger PUBLIC
                            VERSION="${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}")
-set_target_properties(foonathan_memory_node_size_debugger PROPERTIES
-                        OUTPUT_NAME nodesize_dbg)
+set_target_properties(foonathan_memory_node_size_debugger PROPERTIES OUTPUT_NAME nodesize_dbg)
+
+install(TARGETS foonathan_memory_node_size_debugger DESTINATION bin EXPORT foonathan_memory)
