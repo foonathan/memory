@@ -78,7 +78,7 @@ See `example/` for more.
 
 ## Installation
 
-This library is designed to work as [CMake] subdirectory.
+This library can be used as [CMake] subdirectory.
 It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer versions should work too.
 
 1. Fetch it, e.g. using [git submodules] `git submodule add https://github.com/foonathan/memory ext/memory` and `git submodule update --init --recursive`.
@@ -93,6 +93,20 @@ It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer version
 not on the newest version, run `git submodule update 
 --recursive --remote` to force the compatiblity submodule of memory to 
 update to the latest version.*
+
+You can also install the library:
+
+1. Run `cmake -DCMAKE_BUILD_TYPE="buildtype" -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF .` inside the library sources.
+
+2. Run `cmake --build . -- install` to install the library under `${CMAKE_INSTALL_PREFIX}`.
+
+3. Repeat 1 and 2 for each build type/configuration you want to have (like `Debug`, `RelWithDebInfo` and `Release` or custom names).
+
+The use an installed library:
+
+4. Call `find_package(foonathan_memory major.minor REQUIRED)` to find the library.
+
+5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` and activate C++11 to link to the library.
 
 See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
 
