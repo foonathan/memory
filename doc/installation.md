@@ -70,6 +70,12 @@ This *should* work without your help, otherwise it will tell you what to do.
 A `0.x` version requires an exact match in the call to `find_package()`, otherwise a library with same major version and a higher minor version is also compatible.
 If you want only exact version matches add the `EXACT` flag to `find_package()`.
 
+If a right library version/configuration cannot be found, this is an error due to the `REQUIRED`.
+If this is not what you want, leave it out and do conditionals based on the CMake variable `foonathan_memory_FOUND`.
+In the source code, all targets linking to the library have the macro `FOONATHAN_MEMORY` defined automatically,
+as `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR`.
+Use conditional compilation with them.
+
 After that you can link to the library by calling `target_link_libraries(your_target PUBLIC foonathan_memory)`.
 This only requires that `your_target` has C++11 or higher activated.
 
@@ -82,6 +88,8 @@ Then simply include the headers, everything is under the subdirectory `foonathan
 
 To use the library with other build-systems, add `${CMAKE_INSTALL_PREFIX}/include/foonathan_memory-${major}.${minor}` and `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}` to your include directories path.
 Activate C++11 and link to the library file in `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}`.
+
+You should also gobally define the `FOONATHAN_MEMORY` macro as `1` and the `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR` macros as the corresponding values.
 
 [CMake]: www.cmake.org
 [git submodule]: http://git-scm.com/docs/git-submodule

@@ -86,6 +86,10 @@ target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN
                                                    $<INSTALL_INTERFACE:${include_dest}> # for client in install mode
                                                    $<INSTALL_INTERFACE:${lib_dest}> # for generated files in install mdoe
                                             PRIVATE ${header_path}) # for source files
+target_compile_definitions(foonathan_memory PUBLIC
+                            FOONATHAN_MEMORY=1
+                            FOONATHAN_MEMORY_VERSION_MAJOR=${FOONATHAN_MEMORY_VERSION_MAJOR}
+                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR})
 
 # installation
 install(TARGETS foonathan_memory EXPORT foonathan_memory  DESTINATION ${lib_dest})

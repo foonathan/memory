@@ -31,6 +31,9 @@
 // log prefix
 #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
 
+// version
+#define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
+
 // use this macro to mark implementation-defined types
 // gives it more semantics and useful with doxygen
 // add PREDEFINED: FOONATHAN_IMPL_DEFINED():=implementation_defined
