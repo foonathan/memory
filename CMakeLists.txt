@@ -95,5 +95,6 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
     add_subdirectory(tool)
 endif()
 
-# export
-install(EXPORT foonathan_memory DESTINATION lib)
+# exporting
+install(FILES cmake/foonathan_memory-config.cmake DESTINATION lib/foonathan_memory)
+install(EXPORT foonathan_memory DESTINATION lib/foonathan_memory)
