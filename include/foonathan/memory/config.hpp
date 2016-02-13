@@ -23,10 +23,10 @@
 #endif
 
 // general compatibility headers
-#include FOONATHAN_CONSTEXPR_HEADER
-#include FOONATHAN_NOEXCEPT_HEADER
-#include FOONATHAN_EXCEPTION_SUPPORT_HEADER
-#include FOONATHAN_HOSTED_IMPLEMENTATION_HEADER
+#include <foonathan/constexpr.hpp>
+#include <foonathan/noexcept.hpp>
+#include <foonathan/exception_support.hpp>
+#include <foonathan/hosted_implementation.hpp>
 
 // namespace prefix
 #if !FOONATHAN_MEMORY_NAMESPACE_PREFIX

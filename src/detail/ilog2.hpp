@@ -7,7 +7,7 @@
 
 #include "config.hpp"
 
-#include FOONATHAN_CLZ_HEADER
+#include <foonathan/clz.hpp>
 
 namespace foonathan { namespace memory
 {

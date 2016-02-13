@@ -5,9 +5,9 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 
-#include FOONATHAN_ALIGNAS_HEADER
-#include FOONATHAN_ALIGNOF_HEADER
-#include FOONATHAN_MAX_ALIGN_T_HEADER
+#include <foonathan/alignas.hpp>
+#include <foonathan/alignof.hpp>
+#include <foonathan/max_align_t.hpp>
 
 #include "../config.hpp"
 
