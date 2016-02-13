@@ -13,7 +13,7 @@
 #include "allocator_traits.hpp"
 #include "config.hpp"
 
-#include FOONATHAN_MUTEX_HEADER
+#include <foonathan/mutex.hpp>
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     #include <mutex>

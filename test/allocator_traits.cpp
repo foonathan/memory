@@ -7,8 +7,8 @@
 #include <catch.hpp>
 
 #include <type_traits>
-#include <memory/allocator_traits.hpp>
-#include <memory/heap_allocator.hpp>
+
+#include "heap_allocator.hpp"
 
 using namespace foonathan::memory;
 

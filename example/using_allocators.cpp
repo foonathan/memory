@@ -9,14 +9,12 @@
 #include <iostream>
 #include <iterator>
 
-#include <memory/container.hpp> // vector, list, list_node_size
-#include <memory/memory_pool.hpp> // memory_pool
-#include <memory/smart_ptr.hpp> // allocate_unique
-#include <memory/temporary_allocator.hpp> // temporary_allocator
+#include <foonathan/memory/container.hpp> // vector, list, list_node_size
+#include <foonathan/memory/memory_pool.hpp> // memory_pool
+#include <foonathan/memory/smart_ptr.hpp> // allocate_unique
+#include <foonathan/memory/temporary_allocator.hpp> // temporary_allocator
 
 // namespace alias for easier access
-// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
-// it is already provided in each header file, so unnecessary in real application code
 namespace memory = foonathan::memory;
 
 template <typename BiIter>

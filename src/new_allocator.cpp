@@ -9,7 +9,7 @@
 #endif
 
 #include <new>
-#include FOONATHAN_GET_NEW_HANDLER_HEADER
+#include <foonathan/get_new_handler.hpp>
 
 #include "error.hpp"
 

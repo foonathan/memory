@@ -23,20 +23,16 @@
 #endif
 
 // general compatibility headers
-#include FOONATHAN_CONSTEXPR_HEADER
-#include FOONATHAN_NOEXCEPT_HEADER
-#include FOONATHAN_EXCEPTION_SUPPORT_HEADER
-#include FOONATHAN_HOSTED_IMPLEMENTATION_HEADER
+#include <foonathan/constexpr.hpp>
+#include <foonathan/noexcept.hpp>
+#include <foonathan/exception_support.hpp>
+#include <foonathan/hosted_implementation.hpp>
 
-// namespace prefix
-#if !FOONATHAN_MEMORY_NAMESPACE_PREFIX
-    namespace foonathan { namespace memory {}}
-    namespace memory = foonathan::memory;
+// log prefix
+#define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
 
-    #define FOONATHAN_MEMORY_LOG_PREFIX "memory"
-#else
-    #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
-#endif
+// version
+#define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
 // use this macro to mark implementation-defined types
 // gives it more semantics and useful with doxygen

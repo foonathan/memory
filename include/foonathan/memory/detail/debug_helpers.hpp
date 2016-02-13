@@ -8,7 +8,7 @@
 #include <atomic>
 #include <type_traits>
 
-#include FOONATHAN_THREAD_LOCAL_HEADER
+#include <foonathan/thread_local.hpp>
 
 #include "../config.hpp"
 
