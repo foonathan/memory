@@ -15,14 +15,17 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
     set(debug_asserts ON)
     set(debug_checks ON)
     set(debug_fence 8)
+    set(lib_dest lib/foonathan_memory/debug)
 elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
     set(debug_asserts OFF)
     set(debug_checks ON)
     set(debug_fence 0)
+    set(lib_dest lib/foonathan_memory/relwithdebinfo)
 else()
     set(debug_asserts OFF)
     set(debug_checks OFF)
     set(debug_fence 0)
+    set(lib_dest lib/foonathan_memory/release)
 endif()
 
 option(FOONATHAN_MEMORY_DEBUG_ASSERT
@@ -97,4 +100,4 @@ endif()
 
 # exporting
 install(FILES cmake/foonathan_memory-config.cmake DESTINATION lib/foonathan_memory)
-install(EXPORT foonathan_memory DESTINATION lib/foonathan_memory)
+install(EXPORT foonathan_memory DESTINATION ${lib_dest})

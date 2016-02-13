@@ -80,12 +80,15 @@ else()
 endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
-_foonathan_use_comp(foonathan_memory) # setup compatiblity code
-target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_INCLUDE_DIR}> # subdirectory: headers
-                                                   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # subdirectory
-                                                   $<INSTALL_INTERFACE:include> # installation
-                                            PRIVATE ${header_path})
+_foonathan_use_comp(foonathan_memory)
+target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_INCLUDE_DIR}> # for client in subdirectory
+                                                   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
+                                                   $<INSTALL_INTERFACE:include> # for client in install mode
+                                                   $<INSTALL_INTERFACE:${lib_dest}> # for generated files in install mdoe
+                                            PRIVATE ${header_path}) # for source files
 
-install(TARGETS foonathan_memory EXPORT foonathan_memory DESTINATION lib)
-install(FILES ${header} ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION include/foonathan/memory) # client headers
-install(FILES ${detail_header} DESTINATION include/foonathan/memory/detail) # detail headers
+# installation
+install(TARGETS foonathan_memory EXPORT foonathan_memory DESTINATION ${lib_dest})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${lib_dest})
+install(FILES ${header} DESTINATION include/foonathan/memory)
+install(FILES ${detail_header} DESTINATION include/foonathan/memory/detail)
