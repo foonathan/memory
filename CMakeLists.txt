@@ -7,6 +7,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(FOONATHAN_MEMORY)
 
+set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_MINOR 4 CACHE STRING "minor version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION 0.4 CACHE STRING "version of memory" FORCE)
+
 # compatibility options
 include(cmake/compatibility.cmake)
 
@@ -15,17 +19,17 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
     set(debug_asserts ON)
     set(debug_checks ON)
     set(debug_fence 8)
-    set(lib_dest lib/foonathan_memory/debug)
+    set(lib_dest lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}/debug)
 elseif(${CMAKE_BUILD_TYPE} MATCHES "RelWithDebInfo")
     set(debug_asserts OFF)
     set(debug_checks ON)
     set(debug_fence 0)
-    set(lib_dest lib/foonathan_memory/relwithdebinfo)
+    set(lib_dest lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}/relwithdebinfo)
 else()
     set(debug_asserts OFF)
     set(debug_checks OFF)
     set(debug_fence 0)
-    set(lib_dest lib/foonathan_memory/release)
+    set(lib_dest lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}/release)
 endif()
 
 option(FOONATHAN_MEMORY_DEBUG_ASSERT
@@ -71,9 +75,6 @@ option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${
 option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${build_examples_tests})
 option(FOONATHAN_MEMORY_BUILD_TOOLS "whether or not to build the tools" ${build_tools})
 
-set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
-set(FOONATHAN_MEMORY_VERSION_MINOR 4 CACHE STRING "minor version of memory" FORCE)
-
 # subdirectories
 add_subdirectory(src)
 if(FOONATHAN_MEMORY_BUILD_EXAMPLES)
@@ -87,5 +88,10 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
 endif()
 
 # exporting
-install(FILES cmake/foonathan_memory-config.cmake DESTINATION lib/foonathan_memory)
+configure_file(cmake/foonathan_memory-config-version.cmake.in
+               ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake
+               @ONLY)
+
+install(FILES cmake/foonathan_memory-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake
+        DESTINATION lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION})
 install(EXPORT foonathan_memory DESTINATION ${lib_dest})

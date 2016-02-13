@@ -83,12 +83,12 @@ add_library(foonathan_memory ${detail_header} ${header} ${src})
 _foonathan_use_comp(foonathan_memory)
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
                                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
-                                                   $<INSTALL_INTERFACE:include> # for client in install mode
+                                                   $<INSTALL_INTERFACE:include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}> # for client in install mode
                                                    $<INSTALL_INTERFACE:${lib_dest}> # for generated files in install mdoe
                                             PRIVATE ${header_path}) # for source files
 
 # installation
 install(TARGETS foonathan_memory EXPORT foonathan_memory DESTINATION ${lib_dest})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${lib_dest})
-install(FILES ${header} DESTINATION include/foonathan/memory)
-install(FILES ${detail_header} DESTINATION include/foonathan/memory/detail)
+install(FILES ${header} DESTINATION include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}/foonathan/memory)
+install(FILES ${detail_header} DESTINATION include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}/foonathan/memory/detail)
