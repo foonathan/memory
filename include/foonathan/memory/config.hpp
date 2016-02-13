@@ -28,15 +28,8 @@
 #include <foonathan/exception_support.hpp>
 #include <foonathan/hosted_implementation.hpp>
 
-// namespace prefix
-#if !FOONATHAN_MEMORY_NAMESPACE_PREFIX
-    namespace foonathan { namespace memory {}}
-    namespace memory = foonathan::memory;
-
-    #define FOONATHAN_MEMORY_LOG_PREFIX "memory"
-#else
-    #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
-#endif
+// log prefix
+#define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
 
 // use this macro to mark implementation-defined types
 // gives it more semantics and useful with doxygen

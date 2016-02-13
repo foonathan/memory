@@ -8,13 +8,11 @@
 #include <iostream>
 #include <memory>
 
-#include <memory/allocator_storage.hpp> // allocator_reference, any_allocator_reference
-#include <memory/heap_allocator.hpp> // heap_allocator
-#include <memory/memory_stack.hpp> // memory_stack
+#include <foonathan/memory/allocator_storage.hpp> // allocator_reference, any_allocator_reference
+#include <foonathan/memory/heap_allocator.hpp> // heap_allocator
+#include <foonathan/memory/memory_stack.hpp> // memory_stack
 
 // namespace alias for easier access
-// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
-// it is already provided in each header file, so unznecessary in real application code
 namespace memory = foonathan::memory;
 
 template <class RawAllocator>

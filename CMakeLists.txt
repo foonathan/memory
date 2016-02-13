@@ -71,18 +71,6 @@ option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${
 option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${build_examples_tests})
 option(FOONATHAN_MEMORY_BUILD_TOOLS "whether or not to build the tools" ${build_tools})
 
-option(FOONATHAN_MEMORY_INCLUDE_PREFIX "whether or not you have to use <foonathan/memory/xxx.hpp>" OFF)
-option(FOONATHAN_MEMORY_NAMESPACE_PREFIX "whether or not everything is in namespace foonathan::memory" OFF)
-
-# variables to use library in other projects
-if(FOONATHAN_MEMORY_INCLUDE_PREFIX)
-    set(FOONATHAN_MEMORY_INCLUDE_DIR ${FOONATHAN_MEMORY_SOURCE_DIR}/include/ CACHE PATH
-         "include directory for library")
-else()
-    set(FOONATHAN_MEMORY_INCLUDE_DIR ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan CACHE PATH
-          "include directory for library")
-endif()
-
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
 set(FOONATHAN_MEMORY_VERSION_MINOR 4 CACHE STRING "minor version of memory" FORCE)
 
