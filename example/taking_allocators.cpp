@@ -14,8 +14,8 @@
 #include <foonathan/memory/allocator_storage.hpp> // allocator_reference
 #include <foonathan/memory/default_allocator.hpp> // default_allocator
 
-// namespace alias for easier access
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 namespace using_std_allocator
 {

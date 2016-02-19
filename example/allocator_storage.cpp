@@ -12,8 +12,8 @@
 #include <foonathan/memory/heap_allocator.hpp> // heap_allocator
 #include <foonathan/memory/memory_stack.hpp> // memory_stack
 
-// namespace alias for easier access
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 template <class RawAllocator>
 void do_sth(memory::allocator_reference<RawAllocator> ref);

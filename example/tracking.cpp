@@ -11,8 +11,8 @@
 #include <foonathan/memory/memory_pool.hpp> // memory_pool
 #include <foonathan/memory/tracking.hpp> // make_tracked_allocator
 
-// namespace alias for easier access
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 int main()
 {

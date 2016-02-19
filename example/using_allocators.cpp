@@ -14,8 +14,8 @@
 #include <foonathan/memory/smart_ptr.hpp> // allocate_unique
 #include <foonathan/memory/temporary_allocator.hpp> // temporary_allocator
 
-// namespace alias for easier access
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 template <typename BiIter>
 void merge_sort(BiIter begin, BiIter end);

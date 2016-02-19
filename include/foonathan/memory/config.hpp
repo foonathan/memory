@@ -5,14 +5,6 @@
 /// \file
 /// Configuration macros.
 
-/// \defgroup memory memory
-
-/// \namespace foonathan
-/// Foonathan namespace.
-
-/// \namespace foonathan::memory
-/// Memory namespace.
-
 #ifndef FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 #define FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 
