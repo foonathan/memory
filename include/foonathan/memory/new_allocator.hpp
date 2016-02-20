@@ -38,7 +38,7 @@ namespace foonathan { namespace memory
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using (nothrow) <tt>operator new</tt>.
     /// If the operator returns \c nullptr, it behaves like \c new and loops calling \c std::new_handler,
     /// but instead of throwing a \c std::bad_alloc exception, it throws \ref out_of_memory.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     using new_allocator = FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::new_allocator_impl>);
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE

@@ -17,7 +17,7 @@ namespace foonathan { namespace memory
     /// The magic values that are used for debug filling.
     /// If \ref FOONATHAN_MEMORY_DEBUG_FILL is \c true, memory will be filled to help detect use-after-free or missing initialization errors.
     /// These are the constants for the different types.
-    /// \ingroup memory
+    /// \ingroup memory core
     enum class debug_magic : unsigned char
     {
         /// Marks internal memory used by the allocator - "allocated block".
@@ -46,19 +46,19 @@ namespace foonathan { namespace memory
     /// It must not throw any exceptions since it is called in the cleanup process.
     /// \defaultbe On a hosted implementation it logs the leak to \c stderr and returns, continuing execution.
     /// On a freestanding implementation it does nothing.
-    /// \ingroup memory
+    /// \ingroup memory core
     using leak_handler = void(*)(const allocator_info &info, std::ptrdiff_t amount);
 
     /// Exchanges the \ref leak_handler.
     /// \effects Sets \c h as the new \ref leak_handler in an atomic operation.
     /// A \c nullptr sets the default \ref leak_handler.
     /// \returns The previous \ref leak_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     leak_handler set_leak_handler(leak_handler h);
 
     /// Returns the \ref leak_handler.
     /// \returns The current \ref leak_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     leak_handler get_leak_handler();
 
     /// The type of the handler called when an invalid pointer is passed to a deallocation function.
@@ -68,19 +68,19 @@ namespace foonathan { namespace memory
     /// It must not throw any exceptions since it might be called in the cleanup process.
     /// \defaultbe On a hosted implementation it logs the information to \c stderr and calls \c std::abort().
     /// On a freestanding implementation it only calls \c std::abort().
-    /// \ingroup memory
+    /// \ingroup memory core
     using invalid_pointer_handler = void(*)(const allocator_info &info, const void *ptr);
 
     /// Exchanges the \ref invalid_pointer_handler.
     /// \effects Sets \c h as the new \ref invalid_pointer_handler in an atomic operation.
     /// A \c nullptr sets the default \ref invalid_pointer_handler.
     /// \returns The previous \ref invalid_pointer_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     invalid_pointer_handler set_invalid_pointer_handler(invalid_pointer_handler h);
 
     /// Returns the \ref invalid_pointer_handler.
     /// \returns The current \ref invalid_pointer_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     invalid_pointer_handler get_invalid_pointer_handler();
 
     /// The type of the handler called when a buffer under/overflow is detected.
@@ -91,19 +91,19 @@ namespace foonathan { namespace memory
     /// It must not throw any exceptions since it me be called in the cleanup process.
     /// \defaultbe On a hosted implementation it logs the information to \c stderr and calls \c std::abort().
     /// On a freestanding implementation it only calls \c std::abort().
-    /// \ingroup memory
+    /// \ingroup memory core
     using buffer_overflow_handler = void(*)(const void *memory, std::size_t size, const void *write_ptr);
 
     /// Exchanges the \ref buffer_overflow_handler.
     /// \effects Sets \c h as the new \ref buffer_overflow_handler in an atomic operation.
     /// A \c nullptr sets the default \ref buffer_overflow_handler.
     /// \returns The previous \ref buffer_overflow_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     buffer_overflow_handler set_buffer_overflow_handler(buffer_overflow_handler h);
 
     /// Returns the \ref buffer_overflow_handler.
     /// \returns The current \ref buffer_overflow_handler. This is never \c nullptr.
-    /// \ingroup memory
+    /// \ingroup memory core
     buffer_overflow_handler get_buffer_overflow_handler();
 }} // namespace foonathan::memory
 

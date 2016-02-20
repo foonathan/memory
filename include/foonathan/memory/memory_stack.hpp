@@ -50,7 +50,7 @@ namespace foonathan { namespace memory
     /// and saves a marker to the current top.
     /// Allocation simply moves this marker by the appropriate number of bytes and returns the pointer at the old marker position,
     /// deallocation is not directly supported, only setting the marker to a previously queried position.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class BlockOrRawAllocator = default_allocator>
     class memory_stack
     : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_stack_leak_handler>)
@@ -207,7 +207,7 @@ namespace foonathan { namespace memory
     /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class ImplRawAllocator>
     class allocator_traits<memory_stack<ImplRawAllocator>>
     {

@@ -54,14 +54,14 @@ namespace foonathan { namespace memory
     /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
     /// it cannot be used since it would not be called.<br>
     /// Specialize it for custom \c Allocator types to override this check.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <class Allocator>
     struct allocator_is_raw_allocator
     : FOONATHAN_EBO(detail::check_standard_allocator<Allocator>::valid)
     {};
 
     /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <typename T>
     struct allocator_is_raw_allocator<std::allocator<T>>
     : std::true_type
@@ -260,7 +260,7 @@ namespace foonathan { namespace memory
     /// The default specialization of the allocator_traits for a \concept{concept_rawallocator,RawAllocator}.
     /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
     /// Any specialization must provide the same interface.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <class Allocator>
     class allocator_traits
     {
@@ -361,7 +361,7 @@ namespace foonathan { namespace memory
 
     /// Traits that check whether a type models concept \concept{concept_rawallocator,RawAllocator}.<br>
     /// It must either provide the necessary functions for the default traits specialization or has specialized it.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <typename T>
     struct is_raw_allocator
     : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(std::declval<T&>()))>

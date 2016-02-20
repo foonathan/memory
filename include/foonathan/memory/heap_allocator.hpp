@@ -27,6 +27,7 @@ namespace foonathan { namespace memory
     /// It shall return a \c nullptr if no memory is available.
     /// It must be thread safe.
     /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::malloc is used as fallback.
+    /// \ingroup memory allocator
     void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
 
     /// Deallocates heap memory.
@@ -37,6 +38,7 @@ namespace foonathan { namespace memory
     /// The pointer will not be zero.
     /// It must be thread safe.
     /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::free is used as fallback.
+    /// \ingroup memory allocator
     void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
 
     namespace detail
@@ -64,7 +66,7 @@ namespace foonathan { namespace memory
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.
     /// It uses the two functions \ref heap_alloc and \ref heap_dealloc for the allocation,
     /// which default to \c std::malloc and \c std::free.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     using heap_allocator = FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::heap_allocator_impl>);
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE

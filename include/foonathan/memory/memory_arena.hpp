@@ -22,7 +22,7 @@ namespace foonathan { namespace memory
 {
     /// A memory block.
     /// It is defined by its starting address and size.
-    /// \ingroup memory
+    /// \ingroup memory core
     struct memory_block
     {
         void *memory; ///< The address of the memory block (might be \c nullptr).
@@ -54,7 +54,7 @@ namespace foonathan { namespace memory
     } // namespace detail
 
     /// Traits that check whether a type models concept \concept{concept_blockallocator,BlockAllocator}.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <typename T>
     struct is_block_allocator
     : decltype(detail::is_block_allocator_impl<T>(0)) {};
@@ -71,7 +71,7 @@ namespace foonathan { namespace memory
     /// This can be useful, e.g. if there will never be blocks available for deallocation.
     /// The (tiny) overhead for the cache can then be disabled.
     /// An example is \ref memory_pool.
-    /// \ingroup memory
+    /// \ingroup memory core
     FOONATHAN_CONSTEXPR bool cached_arena = true;
     FOONATHAN_CONSTEXPR bool uncached_arena = false;
     /// @}
@@ -226,7 +226,7 @@ namespace foonathan { namespace memory
     /// This can be disabled with the second template parameter,
     /// passing it \ref uncached_arena (or \c false) disables it,
     /// \ref cached_arena (or \c true) enables it explicitly.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <class BlockAllocator, bool Cached /* = true */>
     class memory_arena
     : FOONATHAN_EBO(BlockAllocator), FOONATHAN_EBO(detail::memory_arena_cache<Cached>)
@@ -375,7 +375,7 @@ namespace foonathan { namespace memory
     /// The size of the next memory block will grow by a given factor after each allocation,
     /// allowing an amortized constant allocation time in the higher level allocator.
     /// The factor can be given as rational in the template parameter, default is \c 2.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <class RawAllocator = default_allocator,
               unsigned Num = 2, unsigned Den = 1>
     class growing_block_allocator
@@ -448,7 +448,7 @@ namespace foonathan { namespace memory
     /// A \concept{concept_blockallocator,BlockAllocator} that allows only one block allocation.
     /// It can be used to prevent higher-level allocators from expanding.
     /// The one block allocation is performed through the \c allocate_array() function of the given \concept{concept_rawallocator,RawAllocator}.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <class RawAllocator = default_allocator>
     class fixed_block_allocator
     : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
@@ -541,16 +541,17 @@ namespace foonathan { namespace memory
     /// Takes either a \concept{concept_blockallocator,BlockAllocator} or a \concept{concept_rawallocator,RawAllocator}.
     /// In the first case simply aliases the type unchanged, in the second to \ref growing_block_allocator with the \concept{concept_rawallocator,RawAllocator}.
     /// Using this allows passing normal \concept{concept_rawallocator,RawAllocators} as \concept{concept_blockallocator,BlockAllocators}.
-    /// \ingroup memory
+    /// \ingroup memory core
     template <class BlockOrRawAllocator>
     using make_block_allocator_t
-        = typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
+        = FOONATHAN_IMPL_DEFINED(typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
                                     BlockOrRawAllocator,
-                                    growing_block_allocator<BlockOrRawAllocator>>::type;
+                                    growing_block_allocator<BlockOrRawAllocator>>::type);
 
     /// Helper function make a \concept{concept_blockallocator,BlockAllocator}.
     /// \returns A \concept{concept_blockallocator,BlockAllocator} of the given type created with the given arguments.
     /// \requires Same requirements as the constructor.
+    /// \ingroup memory core
     template <class BlockOrRawAllocator, typename ... Args>
     make_block_allocator_t<BlockOrRawAllocator> make_block_allocator(std::size_t block_size, Args&&... args)
     {

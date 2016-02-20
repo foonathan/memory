@@ -10,6 +10,14 @@
 
 /// \defgroup memory memory
 
+/// \defgroup core Core components
+
+/// \defgroup allocator Allocator implementations
+
+/// \defgroup adapter Adapters and Wrappers
+
+/// \defgroup storage Allocator storage
+
 /// \namespace foonathan
 /// Foonathan namespace.
 

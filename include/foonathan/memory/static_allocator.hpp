@@ -26,7 +26,7 @@ namespace foonathan { namespace memory
     /// Its constructor will take a reference to it and use it for its allocation.
     /// The storage type is simply a \c char array aligned for maximum alignment.
     /// \note It is not allowed to access the memory of the storage.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <std::size_t Size>
     struct static_allocator_storage
     {
@@ -47,7 +47,7 @@ namespace foonathan { namespace memory
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
     /// Deallocations are not supported, memory cannot be marked as freed.<br>
     /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocator objects.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     class static_allocator
     {
     public:
@@ -102,7 +102,7 @@ namespace foonathan { namespace memory
     /// It works on a \ref static_allocator_storage and uses it for all allocations,
     /// deallocations are only allowed in reversed order which is guaranteed by \ref memory_arena.
     /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocator objects.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     class static_block_allocator
     {
     public:
