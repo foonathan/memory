@@ -48,13 +48,22 @@ namespace foonathan { namespace memory
     using default_mutex = no_mutex;
 #endif
 
+    /// Specifies whether or not a \concept{concept_rawallocator,RawAllocator} is thread safe as-is.
+    /// This allows to use \ref no_mutex as an optimization.
+    /// Note that stateless allocators are implictly thread-safe.
+    /// Specialize it only for your own stateful allocators.
+    template <class RawAllocator>
+    struct is_thread_safe_allocator
+    : std::integral_constant<bool, !allocator_traits<RawAllocator>::is_stateful::value>
+    {};
+
     namespace detail
     {
         // selects a mutex for an Allocator
         // stateless allocators don't need locking
         template <class RawAllocator, class Mutex>
-        using mutex_for = typename std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
-                                                    Mutex, no_mutex>::type;
+        using mutex_for = typename std::conditional<is_thread_safe_allocator<RawAllocator>::value,
+                                                    no_mutex, Mutex>::type;
 
         // storage for mutexes to use EBO
         // it provides const lock/unlock function, inherit from it
