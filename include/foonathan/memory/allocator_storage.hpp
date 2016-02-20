@@ -380,10 +380,12 @@ namespace foonathan { namespace memory
     /// \ingroup memory
     template <class RawAllocator>
     class reference_storage
+#ifndef DOXYGEN
     : FOONATHAN_EBO(detail::reference_storage_impl<
         typename allocator_traits<RawAllocator>::allocator_type,
         decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
                                         is_shared_allocator<RawAllocator>{}))>)
+#endif
     {
         using storage = detail::reference_storage_impl<
                 typename allocator_traits<RawAllocator>::allocator_type,

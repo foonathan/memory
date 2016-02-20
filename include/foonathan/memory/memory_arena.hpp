@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED
 
 /// \file
-/// Class \ref memory_arena and related functionality regarding \concept{concept_blockallocator,BlockAllocators}.
+/// Class \ref foonathan::memory::memory_arena and related functionality regarding \concept{concept_blockallocator,BlockAllocators}.
 
 #include <type_traits>
 
@@ -338,7 +338,7 @@ namespace foonathan { namespace memory
         }
 
         /// \returns The size of the arena, i.e. how many blocks are in use.
-        /// It is always smaller or equal to the \ref capacity_left().
+        /// It is always smaller or equal to the \ref capacity().
         std::size_t size() const FOONATHAN_NOEXCEPT
         {
             return used_.size();
@@ -467,7 +467,7 @@ namespace foonathan { namespace memory
 
         /// \effects Allocates a new memory block or throws an exception if there was already one allocation.
         /// \returns The new \ref memory_block.
-        /// \throws Anything thrown by the \c allocate_array() function of the \concept{concept_rawallocator,RawAllocator} or \ref out_of_memory() if this is not the first call.
+        /// \throws Anything thrown by the \c allocate_array() function of the \concept{concept_rawallocator,RawAllocator} or \ref out_of_memory if this is not the first call.
         memory_block allocate_block()
         {
             if (block_size_)

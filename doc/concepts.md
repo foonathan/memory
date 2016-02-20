@@ -201,6 +201,7 @@ public:
 private:
     std::size_t block_size_;    
 };
+```
 
 ## <a name="concept_storagepolicy"></a>StoragePolicy
 

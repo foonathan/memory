@@ -46,7 +46,7 @@ namespace foonathan { namespace memory
     } // namespace detail
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that provides stack-like (LIFO) allocations.
-    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator<default_allocator> to allocate huge blocks
+    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator to allocate huge blocks
     /// and saves a marker to the current top.
     /// Allocation simply moves this marker by the appropriate number of bytes and returns the pointer at the old marker position,
     /// deallocation is not directly supported, only setting the marker to a previously queried position.

@@ -46,7 +46,7 @@ namespace foonathan { namespace memory
     /// A stateful \concept{concept_rawallocator,RawAllocator} that uses a fixed sized storage for the allocations.
     /// It works on a \ref static_allocator_storage and uses its memory for all allocations.
     /// Deallocations are not supported, memory cannot be marked as freed.<br>
-    /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocators.
+    /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocator objects.
     /// \ingroup memory
     class static_allocator
     {
@@ -101,7 +101,7 @@ namespace foonathan { namespace memory
     /// A \concept{concept_blockallocator,BlockAllocator} that allocates the blocks from a fixed size storage.
     /// It works on a \ref static_allocator_storage and uses it for all allocations,
     /// deallocations are only allowed in reversed order which is guaranteed by \ref memory_arena.
-    /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocators.
+    /// \note It is not allowed to share an \ref static_allocator_storage between multiple \ref static_allocator objects.
     /// \ingroup memory
     class static_block_allocator
     {

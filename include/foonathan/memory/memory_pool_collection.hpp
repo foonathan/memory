@@ -213,7 +213,7 @@ namespace foonathan { namespace memory
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {

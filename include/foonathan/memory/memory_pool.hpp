@@ -29,7 +29,7 @@ namespace foonathan { namespace memory
     } // namespace detail
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that manages \concept{concept_node,nodes} of fixed size.
-    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator<default_allocator>,
+    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator,
     /// subdivides them in small nodes of given size and puts them onto a free list.
     /// Allocation and deallocation simply remove or add nodes from this list and are thus fast.
     /// The way the list is maintained can be controlled via the \c PoolType

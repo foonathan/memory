@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_RESOURCE_ADAPTER_HPP_INCLUDED
 
 /// \file
-/// Class \ref memory_resource_adapter and \ref memory_resource_allocator to allow usage of PMRs.
+/// Class \ref foonathan::memory::memory_resource_adapter and \ref foonathan::memory::memory_resource_allocator to allow usage of PMRs.
 
 #include "detail/assert.hpp"
 #include "detail/utility.hpp"
@@ -23,7 +23,7 @@ namespace foonathan { namespace memory
     /// By default, it uses the version of foonathan/compatibility.<br>
     /// See the polymorphic memory resource proposal for the member documentation.
     /// \ingroup memory
-    using memory_resource = FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE;
+    FOONATHAN_ALIAS_TEMPLATE(memory_resource, FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE);
 
     /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a \ref memory_resource.
     /// \ingroup memory
