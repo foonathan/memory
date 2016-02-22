@@ -12,6 +12,7 @@
 #include <foonathan/memory/container.hpp> // vector, list, list_node_size
 #include <foonathan/memory/memory_pool.hpp> // memory_pool
 #include <foonathan/memory/smart_ptr.hpp> // allocate_unique
+#include <foonathan/memory/static_allocator.hpp> // static_allocator_storage, static_block_allocator
 #include <foonathan/memory/temporary_allocator.hpp> // temporary_allocator
 
 // alias namespace foonathan::memory as memory for easier access
@@ -27,20 +28,53 @@ int main()
     // list_node_size<int>::value is the size of each node of a std::list
     memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
 
-    // alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
+    // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
     // std_allocator stores a reference to a RawAllocator and provides the Allocator interface
-    memory::list<int, std::allocator<char>> list(std::allocator<char>{});
+    memory::list<int, memory::memory_pool<>> list(pool);
     list.push_back(3);
     list.push_back(2);
     list.push_back(1);
 
+    for (auto e : list)
+        std::cout << e << ' ';
+    std::cout << '\n';
+
     merge_sort(list.begin(), list.end());
+
+    for (auto e : list)
+        std::cout << e << ' ';
+    std::cout << '\n';
 
     // allocate a std::unique_ptr using the pool
     // memory::allocate_shared is also available
     auto ptr = memory::allocate_unique<int>(pool, *list.begin());
     std::cout << *ptr << '\n';
+
+    // static storage of size 4KiB
+    memory::static_allocator_storage<4096u> storage;
+
+    // a memory pool again but this time with a BlockAllocator
+    // this controls the internal allocations of the pool itself
+    // we need to specify the first template parameter giving the type of the pool as well
+    // (node_pool is the default)
+    // we use a static_block_allocator that uses the static storage above
+    // all allocations will use a memory block on the stack
+    using static_pool_t = memory::memory_pool<memory::node_pool, memory::static_block_allocator>;
+    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4096u, storage);
+
+    // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
+    // see why I wrote these? :D
+    // now we have a hash set that lives on the stack!
+    memory::unordered_set<int, static_pool_t> set(static_pool);
+
+    set.insert(3);
+    set.insert(2);
+    set.insert(3); // running out of stack memory is properly handled, of course
+
+    for (auto e : set)
+        std::cout << e << ' ';
+    std::cout << '\n';
 }
 
 // naive implementation of merge_sort using temporary memory allocator
