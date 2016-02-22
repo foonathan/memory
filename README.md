@@ -7,49 +7,112 @@ Over the course of the years many solutions have been proposed. for example [EAS
 
 ## Features
 
-* new `RawAllocator` concept that is similar to an `Allocator` but easier to use and write
-* implementations of it like memory pools,  and other allocator classes
+New allocator concepts:
+
+* a `RawAllocator` that is similar to an `Allocator` but easier to use and write
+* a `BlockAllocator` that is an allocator for huge memory blocks
+
+Several implementations:
+
+* `heap_/malloc_/new_allocator`
+* virtual memory allocators
+* allocator using a static memory block located on the stack
+* memory stack
+* different memory pools
 * a portable, improved `alloca()` in the form of `temporary_allocator`
-* various adapter classes, e.g. for memory tracking or type-erased references
-* std_allocator class that converts a RawAllocator to an Allocator, so they can be used everywhere an Allocator is accepted
-* allocator_deleter clases to have deleters that use a RawAllocator
+
+Adapters, wrappers and storage classes:
+
+* incredible powerful `allocator_traits` allowing `Allocator`s as `RawAllocator`s
+* `std_allocator` to make a `RawAllocator` an `Allocator` again
+* adapters for the memory resource TS
+* `allocator_deleter` classes for smart pointers
+* (optionally type-erased) `allocator_reference` and other storage classes
+* memory tracking wrapper
+
+In addition:
+
 * container node size debuggers that obtain information about the node size of an STL container at compile-time to specify node sizes for pools
-* customizable error handling routines that can work with exceptions disabled
 * debugging options for leak checking, double-free checks or buffer overflows
-* most parts can work on a freestanding implementation
+* customizable error handling routines that can work with exceptions disabled
+* everything except the STL adapters works on a freestanding environment
 
 ## Basic example
 
 ```cpp
-#include <algorithm>
+include <algorithm>
 #include <iostream>
 #include <iterator>
 
-#include <memory/container.hpp>
-#include <memory/memory_pool.hpp>
-#include <memory/smart_ptr.hpp>
-#include <memory/temporary_allocator.hpp>
+#include <foonathan/memory/container.hpp> // vector, list, list_node_size
+#include <foonathan/memory/memory_pool.hpp> // memory_pool
+#include <foonathan/memory/smart_ptr.hpp> // allocate_unique
+#include <foonathan/memory/static_allocator.hpp> // static_allocator_storage, static_block_allocator
+#include <foonathan/memory/temporary_allocator.hpp> // temporary_allocator
+
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 template <typename BiIter>
 void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
+    // a memory pool RawAllocator
+    // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
+    // list_node_size<int>::value is the size of each node of a std::list
     memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
 
-    // alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
+    // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
+    // a std::list using a memory_pool
+    // std_allocator stores a reference to a RawAllocator and provides the Allocator interface
     memory::list<int, memory::memory_pool<>> list(pool);
     list.push_back(3);
     list.push_back(2);
     list.push_back(1);
 
+    for (auto e : list)
+        std::cout << e << ' ';
+    std::cout << '\n';
+
     merge_sort(list.begin(), list.end());
 
-    // a unique_ptr using the pool
+    for (auto e : list)
+        std::cout << e << ' ';
+    std::cout << '\n';
+
+    // allocate a std::unique_ptr using the pool
+    // memory::allocate_shared is also available
     auto ptr = memory::allocate_unique<int>(pool, *list.begin());
     std::cout << *ptr << '\n';
+
+    // static storage of size 4KiB
+    memory::static_allocator_storage<4096u> storage;
+
+    // a memory pool again but this time with a BlockAllocator
+    // this controls the internal allocations of the pool itself
+    // we need to specify the first template parameter giving the type of the pool as well
+    // (node_pool is the default)
+    // we use a static_block_allocator that uses the static storage above
+    // all allocations will use a memory block on the stack
+    using static_pool_t = memory::memory_pool<memory::node_pool, memory::static_block_allocator>;
+    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4096u, storage);
+
+    // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
+    // see why I wrote these? :D
+    // now we have a hash set that lives on the stack!
+    memory::unordered_set<int, static_pool_t> set(static_pool);
+
+    set.insert(3);
+    set.insert(2);
+    set.insert(3); // running out of stack memory is properly handled, of course
+
+    for (auto e : set)
+        std::cout << e << ' ';
+    std::cout << '\n';
 }
 
+// naive implementation of merge_sort using temporary memory allocator
 template <typename BiIter>
 void merge_sort(BiIter begin, BiIter end)
 {
@@ -62,9 +125,14 @@ void merge_sort(BiIter begin, BiIter end)
     auto mid = begin;
     std::advance(mid, distance / 2);
 
+    // an allocator for temporary memory
+    // is similar to alloca() but uses its own stack
+    // this stack is thread_local and created on the first call to this function
+    // as soon as the allocator object goes out of scope, everything allocated through it, will be freed
     auto alloc = memory::make_temporary_allocator();
 
     // alias for std::vector<value_type, memory::std_allocator<value_type, memory::temporary_allocator>>
+    // a std::vector using a temporary_allocator
     memory::vector<value_type, memory::temporary_allocator> first(begin, mid, alloc),
                                                             second(mid, end, alloc);
 
