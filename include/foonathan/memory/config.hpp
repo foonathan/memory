@@ -59,52 +59,52 @@
     // dummy definitions of config macros for doxygen
 
     /// The major version number.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_VERSION_MAJOR 1
 
     /// The minor version number.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_VERSION_MINOR 1
 
     /// The total version number of the form \c Mmm.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
     /// Whether or not the \ref foonathan::memory::default_mutex will be \c std::mutex or \ref foonathan::memory::no_mutex.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE 1
 
     /// Whether or not internal assertions in the library are enabled.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_ASSERT 1
 
     /// Whether or not allocated memory will be filled with special values.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_FILL 1
 
     /// The size of the fence memory, it has no effect if \ref FOONATHAN_MEMORY_DEBUG_FILL is \c false.
     /// \note For most allocators, the actual value doesn't matter and they use appropriate defaults to ensure alignment etc.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_FENCE 1
 
     /// Whether or not leak checking is enabled.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_LEAK_CHECK 1
 
     /// Whether or not the deallocation functions will check for pointers that were never allocated by an allocator.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_POINTER_CHECK 1
 
     /// Whether or not the deallocation functions will check for double free errors.
-    /// This option makes no sense if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is not \c true.
-    /// \ingroup memory
+    /// This option makes no sense if \ref FOONATHAN_MEMORY_DEBUG_POINTER_CHECK is \c false.
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK 1
 
     /// Whether or not everything is in namespace <tt>foonathan::memory</tt>.
     /// If \c false, a namespace alias <tt>namespace memory = foonathan::memory</tt> is automatically inserted into each header,
     /// allowing to qualify everything with <tt>foonathan::</tt>.
     /// \note This option breaks in combination with using <tt>using namespace foonathan;</tt>.
-    /// \ingroup memory
+    /// \ingroup memory core
     #define FOONATHAN_MEMORY_NAMESPACE_PREFIX 1
 #endif
 

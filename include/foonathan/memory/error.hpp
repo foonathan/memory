@@ -17,7 +17,7 @@ namespace foonathan { namespace memory
 {
     /// Contains information about an allocator.
     /// It can be used for logging in the various handler functions.
-    /// \ingroup memory
+    /// \ingroup memory core
     struct allocator_info
     {
         /// The name of the allocator.
@@ -60,7 +60,7 @@ namespace foonathan { namespace memory
     /// It is derived from \c std::bad_alloc.
     /// This can happen if a low level allocation function like \c std::malloc() runs out of memory.
     /// Throwing can be prohibited by the handler function.
-    /// \ingroup memory
+    /// \ingroup memory core
     class out_of_memory : public std::bad_alloc
     {
     public:
@@ -116,7 +116,7 @@ namespace foonathan { namespace memory
     /// thrown when a low-level allocator with a fixed size runs out of memory.
     /// For example, thrown by \ref fixed_block_allocator or \ref static_allocator.<br>
     /// It is derived from \ref out_of_memory but does not provide its own handler.
-    /// \ingroup memory
+    /// \ingroup memory core
     class out_of_fixed_memory : public out_of_memory
     {
     public:
@@ -139,7 +139,7 @@ namespace foonathan { namespace memory
     /// because the maximum functions return an upper bound and not the actual supported maximum size,
     /// since it always depends on fence memory, alignment buffer and the like.
     /// \note A user should only \c catch for \c bad_allocation_size, not the derived classes.
-    /// \ingroup memory
+    /// \ingroup memory core
     class bad_allocation_size : public std::bad_alloc
     {
     public:
@@ -203,7 +203,7 @@ namespace foonathan { namespace memory
     /// The exception class thrown when the node size exceeds the supported maximum,
     /// i.e. it is bigger than \c max_node_size().
     /// It is derived from \ref bad_allocation_size but does not override the handler.
-    /// \ingroup memory
+    /// \ingroup memory core
     class bad_node_size : public bad_allocation_size
     {
     public:
@@ -220,7 +220,7 @@ namespace foonathan { namespace memory
     /// The exception class thrown when the array size exceeds the supported maximum,
     /// i.e. it is bigger than \c max_array_size().
     /// It is derived from \ref bad_allocation_size but does not override the handler.
-    /// \ingroup memory
+    /// \ingroup memory core
     class bad_array_size : public bad_allocation_size
     {
     public:
@@ -237,7 +237,7 @@ namespace foonathan { namespace memory
     /// The exception class thrown when the alignment exceeds the supported maximum,
     /// i.e. it is bigger than \c max_alignment().
     /// It is derived from \ref bad_allocation_size but does not override the handler.
-    /// \ingroup memory
+    /// \ingroup memory core
     class bad_alignment : public bad_allocation_size
     {
     public:

@@ -23,7 +23,7 @@ namespace foonathan { namespace memory
 {
     /// A dummy \c Mutex class that does not lock anything.
     /// It is a valid \c Mutex and can be used to disable locking anywhere a \c Mutex is requested.
-    /// \ingroup memory
+    /// \ingroup memory core
     struct no_mutex
     {
         void lock() FOONATHAN_NOEXCEPT
@@ -44,7 +44,7 @@ namespace foonathan { namespace memory
     /// The default \c Mutex type used as default template paremeter in, e.g. \ref allocator_reference.
     /// If the CMake option \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true and there is threading support,
     /// it is \c std::mutex, else \ref no_mutex.
-    /// \ingroup memory
+    /// \ingroup memory core
     using default_mutex = no_mutex;
 #endif
 
@@ -52,6 +52,7 @@ namespace foonathan { namespace memory
     /// This allows to use \ref no_mutex as an optimization.
     /// Note that stateless allocators are implictly thread-safe.
     /// Specialize it only for your own stateful allocators.
+    /// \ingroup memory core
     template <class RawAllocator>
     struct is_thread_safe_allocator
     : std::integral_constant<bool, !allocator_traits<RawAllocator>::is_stateful::value>

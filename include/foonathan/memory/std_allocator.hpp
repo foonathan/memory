@@ -22,7 +22,7 @@ namespace foonathan { namespace memory
     /// It allows using a \c RawAllocator anywhere a \c Allocator is required.
     /// It stores the allocator as \ref allocator_reference to allow required copying of a \c Allocator,
     /// synchronization is done via a \c Mutex which defaults to \ref default_mutex.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator, class Mutex = default_mutex>
     class std_allocator
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
@@ -281,7 +281,7 @@ namespace foonathan { namespace memory
     /// An alias template for \ref std_allocator using a type-erased \concept{concept_rawallocator,RawAllocator}.
     /// This is the same as using a \ref std_allocator with the tag type \ref any_allocator.
     /// The implementation is optimized to call fewer virtual functions.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(any_std_allocator,
                              std_allocator<T, any_allocator, Mutex>);

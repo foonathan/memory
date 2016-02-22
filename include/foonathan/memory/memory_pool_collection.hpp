@@ -33,6 +33,7 @@ namespace foonathan { namespace memory
     /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each size.
     /// That means that for each possible size up to an upper bound there will be a seperate free list.
     /// Allocating a node will not waste any memory.
+    /// \ingroup memory allocator
     struct identity_buckets
     {
         using type = detail::identity_access_policy;
@@ -41,6 +42,7 @@ namespace foonathan { namespace memory
     /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each power of two.
     /// That means for each power of two up to an upper bound there will be a separate free list.
     /// Allocating a node will only waste half of the memory.
+    /// \ingroup memory allocator
     struct log2_buckets
     {
         using type = detail::log2_access_policy;
@@ -52,7 +54,7 @@ namespace foonathan { namespace memory
     /// Allocating a node of given size will use the appropriate free list.<br>
     /// This allocator is ideal for \concept{concept_node,node} allocations in any order but with a predefined set of sizes,
     /// not only one size like \ref memory_pool.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class PoolType, class BucketDistribution,
             class BlockOrRawAllocator = default_allocator>
     class memory_pool_collection
@@ -213,7 +215,7 @@ namespace foonathan { namespace memory
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
@@ -295,7 +297,7 @@ namespace foonathan { namespace memory
 
     /// An alias for \ref memory_pool_collection using the \ref identity_buckets policy
     /// and a \c PoolType defaulting to \ref node_pool.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class PoolType = node_pool, class ImplAllocator = default_allocator>
     FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                              memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
@@ -306,7 +308,7 @@ namespace foonathan { namespace memory
     /// Specialization of the \ref allocator_traits for \ref memory_pool_collection classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref memory_pool_collection::allocate_node() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class Pool, class BucketDist, class RawAllocator>
     class allocator_traits<memory_pool_collection<Pool, BucketDist, RawAllocator>>
     {

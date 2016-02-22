@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_MEMORY_RESOURCE_ADAPTER_HPP_INCLUDED
 
 /// \file
-/// Class \ref memory_resource_adapter and \ref memory_resource_allocator to allow usage of PMRs.
+/// Class \ref foonathan::memory::memory_resource_adapter and \ref foonathan::memory::memory_resource_allocator to allow usage of PMRs.
 
 #include "detail/assert.hpp"
 #include "detail/utility.hpp"
@@ -22,11 +22,11 @@ namespace foonathan { namespace memory
     /// the exact type can be customized via the CMake options \c FOONATHAN_MEMORY_MEMORY_RESOURCE and \c FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER.
     /// By default, it uses the version of foonathan/compatibility.<br>
     /// See the polymorphic memory resource proposal for the member documentation.
-    /// \ingroup memory
-    using memory_resource = FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE;
+    /// \ingroup memory adapter
+    FOONATHAN_ALIAS_TEMPLATE(memory_resource, FOONATHAN_MEMORY_IMPL_MEMORY_RESOURCE);
 
     /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a \ref memory_resource.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <class RawAllocator>
     class memory_resource_adapter
     : public memory_resource, FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
@@ -95,7 +95,7 @@ namespace foonathan { namespace memory
     };
 
     /// Wraps a \ref memory_resource and makes it a \concept{concept_rawallocator,RawAllocator}.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     class memory_resource_allocator
     {
     public:
@@ -144,7 +144,7 @@ namespace foonathan { namespace memory
 
     /// Specialization of \ref is_shared_allocator to mark \ref memory_resource_allocator as shared.
     /// This allows using it as \ref allocator_reference directly.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <>
     struct is_shared_allocator<memory_resource_allocator> : std::true_type {};
 }} // namespace foonathan::memory

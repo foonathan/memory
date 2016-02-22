@@ -34,7 +34,7 @@ namespace foonathan { namespace memory
     /// The \concept{concept_storagepolicy,StoragePolicy} defines the allocator type being stored and how it is stored.
     /// The \c Mutex controls synchronization of the access.
     /// \requires The \c StoragePolicy itself must not store an instance of this class.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class StoragePolicy, class Mutex>
     class allocator_storage
     : FOONATHAN_EBO(StoragePolicy,
@@ -191,12 +191,12 @@ namespace foonathan { namespace memory
 
     /// Tag type that enables type-erasure in \ref reference_storage.
     /// It can be used everywhere a \ref allocator_reference is used internally.
-    /// \ingroup memory
+    /// \ingroup memory storage
     struct any_allocator {};
 
     /// A \concept{concept_storagepolicy,StoragePolicy} that stores the allocator directly.
     /// It embeds the allocator inside it, i.e. moving the storage policy will move the allocator.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class RawAllocator>
     class direct_storage : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
     {
@@ -246,7 +246,7 @@ namespace foonathan { namespace memory
     /// An alias template for \ref allocator_storage using the \ref direct_storage policy without a mutex.
     /// It has the effect of giving any \concept{concept_rawallocator,RawAllocator} the interface with all member functions,
     /// avoiding the need to wrap it inside the \ref allocator_traits.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class RawAllocator>
     FOONATHAN_ALIAS_TEMPLATE(allocator_adapter,
                              allocator_storage<direct_storage<RawAllocator>,
@@ -367,7 +367,7 @@ namespace foonathan { namespace memory
     /// If a \c RawAllocator is shared, it will be directly embedded inside \ref reference_storage since it already provides \ref allocator_reference like semantics, so there is no need to add them manually,<br>
     /// Specialize it for your own types, if they provide sharing semantics and can be copied.
     /// \note This makes no guarantess about the lifetime of the shared object, the sharing allocators can either own or refer to a shared object.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class RawAllocator>
     struct is_shared_allocator : std::false_type {};
 
@@ -377,13 +377,15 @@ namespace foonathan { namespace memory
     /// For allocators that are already shared (determined through \ref is_shared_allocator) it will store the allocator type directly.
     /// \note It does not take ownership over the allocator in the stateful case, the user has to ensure that the allocator object stays valid.
     /// In the other cases the lifetime does not matter.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class RawAllocator>
     class reference_storage
+#ifndef DOXYGEN
     : FOONATHAN_EBO(detail::reference_storage_impl<
         typename allocator_traits<RawAllocator>::allocator_type,
         decltype(detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
                                         is_shared_allocator<RawAllocator>{}))>)
+#endif
     {
         using storage = detail::reference_storage_impl<
                 typename allocator_traits<RawAllocator>::allocator_type,
@@ -424,7 +426,7 @@ namespace foonathan { namespace memory
     /// Specialization of the class template \ref reference_storage that is type-erased.
     /// It is triggered by the tag type \ref any_allocator.
     /// The specialization can store a reference to any allocator type.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <>
     class reference_storage<any_allocator>
     {
@@ -632,7 +634,7 @@ namespace foonathan { namespace memory
     /// An alias template for \ref allocator_storage using the \ref reference_storage policy with a given \c Mutex.
     /// It will store a reference to the given allocator type. The tag type \ref any_allocator enables type-erasure.
     /// The \c Mutex defaults to the \ref default_mutex.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class RawAllocator, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
                              allocator_storage<reference_storage<RawAllocator>, Mutex>);
@@ -656,14 +658,14 @@ namespace foonathan { namespace memory
     }
 
     /// An alias for the \ref reference_storage specialization using type-erasure.
-    /// \ingroup memory
+    /// \ingroup memory storage
     using any_reference_storage = reference_storage<any_allocator>;
 
     /// A template alias for \ref allocator_storage using the \ref any_reference_storage with a given \c Mutex.
     /// It will store a reference to any \concept{concept_rawallocator,RawAllocator}.
     /// The \c Mutex defaults to \ref default_mutex.
     /// This is the same as passing the tag type \ref any_allocator to the alias \ref allocator_reference.
-    /// \ingroup memory
+    /// \ingroup memory storage
     template <class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(any_allocator_reference,
                              allocator_storage<any_reference_storage, Mutex>);

@@ -19,7 +19,7 @@ namespace foonathan { namespace memory
 {
     /// A \concept{concept_rawallocator,RawAllocator} adapter that ensures a minimum alignment.
     /// It adjusts the alignment value so that it is always larger than the minimum and forwards to the specified allocator.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <class RawAllocator>
     class aligned_allocator
     : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)

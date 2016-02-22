@@ -29,7 +29,7 @@ namespace foonathan { namespace memory
     } // namespace detail
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that manages \concept{concept_node,nodes} of fixed size.
-    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator<default_allocator>,
+    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator,
     /// subdivides them in small nodes of given size and puts them onto a free list.
     /// Allocation and deallocation simply remove or add nodes from this list and are thus fast.
     /// The way the list is maintained can be controlled via the \c PoolType
@@ -38,7 +38,7 @@ namespace foonathan { namespace memory
     /// for example in a node based container like \c std::list.
     /// It is not so good for different allocation sizes and has some drawbacks for arrays
     /// as described in \ref memory_pool_type.hpp.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <typename PoolType = node_pool, class BlockOrRawAllocator = default_allocator>
     class memory_pool
     : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_leak_handler>)
@@ -219,7 +219,7 @@ namespace foonathan { namespace memory
     /// Specialization of the \ref allocator_traits for \ref memory_pool classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref memory_pool::allocate_node() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <typename PoolType, class ImplRawAllocator>
     class allocator_traits<memory_pool<PoolType, ImplRawAllocator>>
     {

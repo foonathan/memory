@@ -33,7 +33,7 @@ namespace foonathan { namespace memory
     /// This avoids the stack overflow error and is portable,
     /// with a similar speed.
     /// All allocations done in the scope of the allocator object are automatically freed when the object is destroyed.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     class temporary_allocator
     {
     public:
@@ -99,7 +99,7 @@ namespace foonathan { namespace memory
     /// Specialization of the \ref allocator_traits for \ref temporary_allocator classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref temporary_allocator::allocate() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <>
     class allocator_traits<temporary_allocator>
     {
