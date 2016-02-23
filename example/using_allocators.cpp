@@ -9,7 +9,7 @@
 #include <iostream>
 #include <iterator>
 
-#include <foonathan/memory/container.hpp> // vector, list, list_node_size
+#include <foonathan/memory/container.hpp> // vector, list, list_node_size,...
 #include <foonathan/memory/memory_pool.hpp> // memory_pool
 #include <foonathan/memory/smart_ptr.hpp> // allocate_unique
 #include <foonathan/memory/static_allocator.hpp> // static_allocator_storage, static_block_allocator
@@ -66,7 +66,7 @@ int main()
     // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
     // see why I wrote these? :D
     // now we have a hash set that lives on the stack!
-    memory::unordered_set<int, static_pool_t> set(static_pool);
+    memory::unordered_set<int, static_pool_t> set(13, std::hash<int>{}, std::equal_to<int>{}, static_pool); // GCC 4.7 is missing the allocator-only ctor, breaks travis :(
 
     set.insert(3);
     set.insert(2);

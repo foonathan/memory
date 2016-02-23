@@ -32,7 +32,7 @@ namespace foonathan { namespace memory
             static std::size_t max_node_size() FOONATHAN_NOEXCEPT;
         };
 
-        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(new_allocator_impl, new_alloator_leak_checker);
+        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(new_allocator_impl, new_alloator_leak_checker)
     } // namespace detail
 
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using (nothrow) <tt>operator new</tt>.

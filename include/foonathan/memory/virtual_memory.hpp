@@ -28,7 +28,7 @@ namespace foonathan { namespace memory
             void operator()(std::ptrdiff_t amount);
         };
 
-        FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(virtual_memory_allocator_leak_handler, virtual_memory_allocator_leak_checker);
+        FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(virtual_memory_allocator_leak_handler, virtual_memory_allocator_leak_checker)
     } // namespace detail
 
     /// The page size of the virtual memory.

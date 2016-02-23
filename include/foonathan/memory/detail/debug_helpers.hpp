@@ -194,7 +194,7 @@ namespace foonathan { namespace memory
         using global_leak_checker = global_leak_checker_impl<Handler>;
 
         #define FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(handler, var_name) \
-                    static foonathan::memory::detail::global_leak_checker<handler>::counter var_name
+                    static foonathan::memory::detail::global_leak_checker<handler>::counter var_name;
     #else
         template <class Handler>
         using global_leak_checker = no_leak_checker<int>; // only one instantiation
