@@ -77,14 +77,6 @@ Most of the time stateless allocators are also empty types, although this is not
 (*note:* it does not make much sense for them to be not-empty, since the values of the member variables is not required to be the same.)
 An additional requirement for stateless allocator is that they have a default constructor.
 
-Some allocator types manage huge memory block and return part of it in their allocation functions, i.e. memory arenas.
-The used memory block is managed by an allocator itself.
-Such an allocator is called an *implementation allocator*.
-It is simply a normal `RawAllocator` but embedded inside another one and primarily used in it.
-They are often low-level allocators that are specialized for huge allocations.
-The allocator using the implementation allocator often only needs a memory block of given size.
-It is recommended to use the array version there, i.e. to call `allocate_array(size, 1, alignment)`.
-
 Access to a `RawAllocator` is only done via the class [allocator_traits].
 It can be specialized for own `RawAllocator` types.
 The requirements for such a specialization are shown in the following table,
@@ -134,13 +126,17 @@ Expression|RawAllocator|Fallback
 `traits::max_array_size(calloc)` | `calloc.max_array_size()` | `traits::max_node_size(calloc)`
 `traits::max_alignment(calloc)` | `calloc.max_alignment()` | `alignof(std::max_align_t)`
 
-To allow usage of types modelling the `Allocator` concept, there is an additional behavior when selecting the fallback.
+To allow rebinding required for traditional `Allocator`s, there is an additional behavior when selecting the fallback.
 If the parameter of the `allocator_traits` contains a typedef `value_type`, `traits::allocator_type` will rebind the type to `char`.
 This is done in the same way `std::allocator_traits` does it, i.e. first try to access the `rebind` member struct,
 then a type `alloc<T, Args...>` will be rebound to `alloc<char, Args...>`.
 If the parameter does not provide a member function `allocate_node`, it will try and call the allocation function required by the `Allocator` concept,
 i.e. `static_cast<void*>(alloc.allocate(size)`, likewise for `deallocate_node` which will call forward to the deallocation function `alloc.deallocate(static_cast<char*>(node), size)`.
+
 This enables the usage of any type modelling the `Allocator` concept where a `RawAllocator` is expected.
+It is only enabled, however, if the `Allocator` does not provide custom `construct()`/`destroy()` function since they would never be called.
+The checking can be overriden by specializing the traits class [allocator_is_raw_allocator](\ref foonathan::memory::allocator_is_raw_allocator).
+Note that it does *not* use the `std::allocator_traits` but calls the functions directly enabling only the `Allocator` classes that do not have specialized the traits template.
 
 For exposition, this is the minimum required interface for a `RawAllocator` without an appropriate specialization:
 
@@ -160,6 +156,53 @@ struct min_raw_allocator
 i.e. allocate memory through the traits and deallocate through the member function or vice-versa.
 It is completely allowed that those functions do completely different things.
 
+## <a name="concept_blockallocator"></a>BlockAllocator
+
+Some allocator types manage huge memory blocks and returns part of them in their allocation functions.
+Such huge memory blocks are managed by a memory arena, implemented in the class [memory_arena].
+
+The size and the allocation of the memory blocks is controlled by a `BlockAllocator`.
+It is responsible to allocate and deallocate those blocks. It must be nothrow moveable and a valid base class, i.e. not `final`. In addition, it must provide the following:
+
+Expression|Semantics
+----------|---------
+`BlockAllocator(block_size, args)`|Creates a `BlockAllocator` by giving it a non-zero initial block size and optionally multiple further arguments.
+`alloc.allocate_block()`|Returns a new [memory_block] object that is the next memory block.
+`alloc.deallocate_block(block)`|Deallocates a `memory_block`. Deallocation will be done in reverse order.
+`calloc.next_block_size()`|Returns the size of the `memory_block` in the next allocation.
+
+The alignments of the allocated memory blocks must be the maximum alignment.
+
+This is a sample `BlockAllocator` that uses `new` for the allocation:
+
+```cpp
+class block_allocator
+{
+public:
+    block_allocator(std::size_t block_size)
+    : block_size_(block_size) {}
+    
+    memory_block allocate_block()
+    {
+        auto mem = ::operator new(block_size_);
+        return {mem, block_size_};
+    }
+    
+    void deallocate_block(memory_block b)
+    {
+        ::operator delete(b.memory);
+    }
+    
+    std::size_t next_block_size() const
+    {
+        return block_size_;    
+    }
+    
+private:
+    std::size_t block_size_;    
+};
+```
+
 ## <a name="concept_storagepolicy"></a>StoragePolicy
 
 A `StoragePolicy` stores a [RawAllocator](#concept_rawallocator) and is used with the class template [allocator_storage].
@@ -173,7 +216,7 @@ Expression|Semantics
 ----------|---------
 `StoragePolicy::allocator_type` | The type of the allocator being stored as determinted through the [allocator_traits]. For a type-erased storage, it can be the type-erased base class.
 `StoragePolicy(args)` | Creates the `StoragePolicy`. `args` can be anything. It is used to create the allocator.
-`policy.get_allocator()` | Returns a reference to the `allocator_type`. Must not throw. Returns a `const` reference, if `policy` is `const`. Can return a default constructed allocator as a temporary if stateless allocator types are stored.
+`policy.get_allocator()` | Returns a reference to the `allocator_type`. Must not throw. May return a `const` reference, if `policy` is `const`.
 
 For exposition, this is a sample `StoragePolicy`.
 Note that it is not required to be a template, although it does not make much sense otherwise.
@@ -219,16 +262,14 @@ Expression|Semantics
 `tracker.on_array_allocation(array, count, size, alignment)` | Same as the [node](#concept_node) version, but for [arrays](#concept_array).
 `tracker.on_array_deallocation(array, count, size, alignment)` | Same the [node](#concept_node) version, but for [arrays](#concept_array).
 
-A *deep tracker* also tracks an implementation allocator of another allocator
+A *deep tracker* also tracks a [BlockAllocator](#concept_block_allocator) of another allocator
 and thus allows monitoring the often more expensive big allocations done by it.
 Such a `Tracker` must provide the following additional functions:
 
 Expression|Semantics
 ----------|---------
-`tracker.on_allocator_growth(memory, size)` | Gets called after the implementation allocator has allocated the passed memory block of given size.
-`tracker.on_allocator_shrinkage(memory, size)` | Gets called before a given memory block of the implementation allocator will be deallocated.
-
-The above functions do not distinguish between [nodes](#concept_node) or [arrays](#concept_array).
+`tracker.on_allocator_growth(memory, size)` | Gets called after the block allocator has allocated the passed memory block of given size.
+`tracker.on_allocator_shrinkage(memory, size)` | Gets called before a given memory block of the block allocator will be deallocated.
 
 For exposition, this is a sample `Tracker`:
 
@@ -261,4 +302,6 @@ struct tracker
 
 [allocator_storage]: \ref foonathan::memory::allocator_storage
 [allocator_traits]: \ref foonathan::memory::allocator_traits
+[memory_arena]: \ref foonathan::memory::memory_arena
+[memory_block]: \ref foonathan::memory::memory_block
 [tracked_allocator]: \ref foonathan::memory::tracked_allocator

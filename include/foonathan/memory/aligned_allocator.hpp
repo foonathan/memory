@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,16 +8,18 @@
 /// \file
 /// Class \ref foonathan::memory::aligned_allocator and related functions.
 
+#include <type_traits>
+
+#include "detail/assert.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
-#include "error.hpp"
 
 namespace foonathan { namespace memory
 {
     /// A \concept{concept_rawallocator,RawAllocator} adapter that ensures a minimum alignment.
     /// It adjusts the alignment value so that it is always larger than the minimum and forwards to the specified allocator.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <class RawAllocator>
     class aligned_allocator
     : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)

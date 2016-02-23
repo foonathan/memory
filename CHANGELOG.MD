@@ -1,3 +1,16 @@
+0.5
+---
+* improved CMake build system, now supports cmake installation and `find_package()`
+* improved low-level allocators and added `malloc_allocator`
+* add virtual memory interface and allocators
+* add allocators using a fixed-sized storage block
+* introduced `BlockAllocator` concept and various implementations
+* new class template `memory_arena` that is used inside the higher level allocators, allows more control over the internal allocations
+* add wrappers/adapters for the polymorphic memory resource TS
+* improved tracking classes
+* other improvements like concept checks and more exception classes
+* internal changes
+
 0.4
 ---
 * polished up the interface, many breaking changes in the form of renaming and new header files

@@ -1,55 +1,42 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
 #include "heap_allocator.hpp"
 
-#include <new>
-
-#include "debugging.hpp"
 #include "error.hpp"
 
 using namespace foonathan::memory;
 
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    #include <atomic>
+#ifdef _WIN32
+    #include <malloc.h>
+    #include <windows.h>
 
     namespace
     {
-        std::size_t init_counter = 0u, alloc_counter = 0u;
-
-        void on_alloc(std::size_t size) FOONATHAN_NOEXCEPT
+        HANDLE get_process_heap() FOONATHAN_NOEXCEPT
         {
-            alloc_counter += size;
+            static auto heap = GetProcessHeap();
+            return heap;
         }
 
-        void on_dealloc(std::size_t size) FOONATHAN_NOEXCEPT
+        std::size_t max_size() FOONATHAN_NOEXCEPT
         {
-            alloc_counter -= size;
+            return _HEAP_MAXREQ;
         }
     }
 
-    detail::heap_allocator_leak_checker_initializer_t::
-        heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    void* foonathan::memory::heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT
     {
-        ++init_counter;
+        return HeapAlloc(get_process_heap(), 0, size);
     }
 
-    detail::heap_allocator_leak_checker_initializer_t::
-        ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT
+    void foonathan::memory::heap_dealloc(void *ptr, std::size_t) FOONATHAN_NOEXCEPT
     {
-        if (--init_counter == 0u && alloc_counter != 0u)
-            get_leak_handler()({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr}, alloc_counter);
+        HeapFree(get_process_heap(), 0, ptr);
     }
-#else
-    namespace
-    {
-        void on_alloc(std::size_t) FOONATHAN_NOEXCEPT {}
-        void on_dealloc(std::size_t) FOONATHAN_NOEXCEPT {}
-    }
-#endif
 
-#if FOONATHAN_HOSTED_IMPLEMENTATION
+#elif FOONATHAN_HOSTED_IMPLEMENTATION
     #include <cstdlib>
     #include <memory>
 
@@ -71,7 +58,7 @@ using namespace foonathan::memory;
         }
     }
 #else
-    // no implemenetation for heap_alloc/heap_dealloc
+    // no implementation for heap_alloc/heap_dealloc
 
     namespace
     {
@@ -82,25 +69,17 @@ using namespace foonathan::memory;
     }
 #endif
 
-void* heap_allocator::allocate_node(std::size_t size, std::size_t)
+allocator_info detail::heap_allocator_impl::info() FOONATHAN_NOEXCEPT
 {
-    auto memory = memory::heap_alloc(size + 2 * detail::debug_fence_size);
-    if (!memory)
-        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", this},
-                                      size + 2 * detail::debug_fence_size));
-    on_alloc(size);
-    return detail::debug_fill_new(memory, size);
+    return {FOONATHAN_MEMORY_LOG_PREFIX "::heap_allocator", nullptr};
 }
 
-void heap_allocator::deallocate_node(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
-{
-    auto memory = detail::debug_fill_free(ptr, size);
-    memory::heap_dealloc(memory, size);
-
-    on_dealloc(size);
-}
-
-std::size_t heap_allocator::max_node_size() const FOONATHAN_NOEXCEPT
+std::size_t detail::heap_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 {
     return max_size();
 }
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    template class detail::lowlevel_allocator<detail::heap_allocator_impl>;
+    template class foonathan::memory::allocator_traits<heap_allocator>;
+#endif

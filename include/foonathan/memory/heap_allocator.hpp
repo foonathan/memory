@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,22 +8,16 @@
 /// \file
 /// Class \ref foonathan::memory::heap_allocator and related functions.
 
-#include <type_traits>
-
+#include "detail/lowlevel_allocator.hpp"
 #include "config.hpp"
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    #include "allocator_traits.hpp"
+#endif
 
 namespace foonathan { namespace memory
 {
-#if FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
-    namespace detail
-    {
-        static struct heap_allocator_leak_checker_initializer_t
-        {
-            heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
-            ~heap_allocator_leak_checker_initializer_t() FOONATHAN_NOEXCEPT;
-        } heap_allocator_leak_checker_initializer;
-    } // namespace detail
-#endif
+    struct allocator_info;
 
     /// Allocates heap memory.
     /// This function is used by the \ref heap_allocator to allocate the heap memory.
@@ -32,7 +26,8 @@ namespace foonathan { namespace memory
     /// The size parameter will not be zero.
     /// It shall return a \c nullptr if no memory is available.
     /// It must be thread safe.
-    /// \defaultbe On a hosted implementation this function simply calls \c std::malloc.
+    /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::malloc is used as fallback.
+    /// \ingroup memory allocator
     void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
 
     /// Deallocates heap memory.
@@ -42,41 +37,42 @@ namespace foonathan { namespace memory
     /// It shall free the memory.
     /// The pointer will not be zero.
     /// It must be thread safe.
-    /// \defaultbe On a freestanding implementation this function simply calls \c std::free.
+    /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::free is used as fallback.
+    /// \ingroup memory allocator
     void heap_dealloc(void *ptr, std::size_t size) FOONATHAN_NOEXCEPT;
+
+    namespace detail
+    {
+        struct heap_allocator_impl
+        {
+            static allocator_info info() FOONATHAN_NOEXCEPT;
+
+            static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+            {
+                return heap_alloc(size);
+            }
+
+            static void deallocate(void *ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+            {
+                heap_dealloc(ptr, size);
+            }
+
+            static std::size_t max_node_size() FOONATHAN_NOEXCEPT;
+        };
+
+        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(heap_allocator_impl, heap_alloator_leak_checker)
+    } // namespace detail
 
     /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.
     /// It uses the two functions \ref heap_alloc and \ref heap_dealloc for the allocation,
     /// which default to \c std::malloc and \c std::free.
-    /// \ingroup memory
-    class heap_allocator
-    {
-    public:
-        using is_stateful = std::false_type;
+    /// \ingroup memory allocator
+    using heap_allocator = FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::heap_allocator_impl>);
 
-        heap_allocator() FOONATHAN_NOEXCEPT = default;
-        heap_allocator(heap_allocator&&) FOONATHAN_NOEXCEPT {}
-        ~heap_allocator() FOONATHAN_NOEXCEPT = default;
-
-        heap_allocator& operator=(heap_allocator &&) FOONATHAN_NOEXCEPT
-        {
-            return *this;
-        }
-
-        /// \effects A \concept{concept_rawallocator,RawAllocator} allocation function.
-        /// It uses \ref heap_alloc.
-        /// \returns A pointer to a \concept{concept_node,node}, it will never be \c nullptr.
-        /// \throws An exception of type \ref out_of_memory or whatever is thrown by its handler if \ref heap_alloc returns a \c nullptr.
-        void* allocate_node(std::size_t size, std::size_t alignment);
-
-        /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
-        /// It uses \ref heap_dealloc.
-        void deallocate_node(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
-
-        /// \returns The maximum node size by forwaring to \c std::allocator<char>::max_size()
-        /// or the maximum value on a freestanding implementation.
-        std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
-    };
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class detail::lowlevel_allocator<detail::heap_allocator_impl>;
+    extern template class allocator_traits<heap_allocator>;
+#endif
 }} // namespace foonathan::memory
 
-#endif // PORTAL_MEMORY_HEAP_ALLOCATOR_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_HEAP_ALLOCATOR_HPP_INCLUDED

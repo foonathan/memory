@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan MÃ¼ller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,14 +8,12 @@
 #include <iostream>
 #include <memory>
 
-#include <memory/allocator_storage.hpp> // allocator_reference, any_allocator_reference
-#include <memory/heap_allocator.hpp> // heap_allocator
-#include <memory/memory_stack.hpp> // memory_stack
+#include <foonathan/memory/allocator_storage.hpp> // allocator_reference, any_allocator_reference
+#include <foonathan/memory/heap_allocator.hpp> // heap_allocator
+#include <foonathan/memory/memory_stack.hpp> // memory_stack
 
-// namespace alias for easier access
-// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
-// it is already provided in each header file, so unznecessary in real application code
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 template <class RawAllocator>
 void do_sth(memory::allocator_reference<RawAllocator> ref);

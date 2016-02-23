@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -9,13 +9,15 @@
 /// \c Deleter classes using a \concept{concept_rawallocator,RawAllocator}.
 
 #include "allocator_storage.hpp"
+#include "config.hpp"
+#include "threading.hpp"
 
 namespace foonathan { namespace memory
 {
     /// A deleter class that deallocates the memory through a specified \concept{concept_rawallocator,RawAllocator}.
     /// It deallocates memory for a specified type but does not call its destructors.
     /// Only a reference to the \c RawAllocator is stored, access to it is synchronized by a given \c Mutex which defaults to \ref default_mutex.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename Type, class RawAllocator, class Mutex = default_mutex>
     class allocator_deallocator
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
@@ -48,7 +50,7 @@ namespace foonathan { namespace memory
 
     /// Specialization of \ref allocator_deallocator for array types.
     /// Otherwise the same behavior.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename Type, class RawAllocator, class Mutex>
     class allocator_deallocator<Type[], RawAllocator, Mutex>
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
@@ -94,7 +96,7 @@ namespace foonathan { namespace memory
 
     /// Similar to \ref allocator_deallocator but calls the destructors of the objects.
     /// Otherwise behaves the same.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename Type, class RawAllocator, class Mutex = default_mutex>
     class allocator_deleter
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
@@ -129,7 +131,7 @@ namespace foonathan { namespace memory
 
     /// Specialization of \ref allocator_deleter for array types.
     /// Otherwise the same behavior.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename Type, class RawAllocator, class Mutex>
     class allocator_deleter<Type[], RawAllocator, Mutex>
     : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)

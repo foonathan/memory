@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -11,17 +11,18 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "detail/block_list.hpp"
+#include "detail/assert.hpp"
 #include "detail/memory_stack.hpp"
-#include "allocator_traits.hpp"
-#include "debugging.hpp"
-#include "default_allocator.hpp"
+#include "config.hpp"
 #include "error.hpp"
+#include "memory_arena.hpp"
 
 namespace foonathan { namespace memory
 {
+#if !defined(DOXYGEN)
     template <class Impl>
     class memory_stack;
+#endif
 
     namespace detail
     {
@@ -31,34 +32,38 @@ namespace foonathan { namespace memory
             char *top;
             const char *end;
 
-            stack_marker(std::size_t i, const detail::fixed_memory_stack &s) FOONATHAN_NOEXCEPT
-            : index(i), top(s.top()), end(s.end()) {}
+            stack_marker(std::size_t i, const detail::fixed_memory_stack &s, const char *end) FOONATHAN_NOEXCEPT
+            : index(i), top(s.top()), end(end) {}
 
             template <class Impl>
             friend class memory::memory_stack;
         };
+
+        struct memory_stack_leak_handler
+        {
+            void operator()(std::ptrdiff_t amount);
+        };
     } // namespace detail
 
     /// A stateful \concept{concept_rawallocator,RawAllocator} that provides stack-like (LIFO) allocations.
-    /// It allocates huge memory blocks serving as arena from a given \c RawAllocator defaulting to \ref default_allocator
+    /// It uses a \ref memory_arena with a given \c BlockOrRawAllocator defaulting to \ref growing_block_allocator to allocate huge blocks
     /// and saves a marker to the current top.
     /// Allocation simply moves this marker by the appropriate number of bytes and returns the pointer at the old marker position,
     /// deallocation is not directly supported, only setting the marker to a previously queried position.
-    /// \ingroup memory
-    template <class RawAllocator = default_allocator>
+    /// \ingroup memory allocator
+    template <class BlockOrRawAllocator = default_allocator>
     class memory_stack
-    : FOONATHAN_EBO(detail::leak_checker<memory_stack<default_allocator>>)
+    : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_stack_leak_handler>)
     {
-        using leak_checker = detail::leak_checker<memory_stack<default_allocator>>;
     public:
-        using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
+        using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
 
-        /// \effects Creates it with a given initial block size and implementation allocator.
+        /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
         /// It will allocate the first block and sets the top to its beginning.
+        template <typename ... Args>
         explicit memory_stack(std::size_t block_size,
-                        allocator_type allocator = allocator_type())
-        : leak_checker(info().name),
-          list_(block_size, detail::move(allocator))
+                        Args&&... args)
+        : arena_(block_size, detail::forward<Args>(args)...)
         {
             allocate_block();
         }
@@ -66,20 +71,20 @@ namespace foonathan { namespace memory
         /// \effects Allocates a memory block of given size and alignment.
         /// It simply moves the top marker.
         /// If there is not enough space on the current memory block,
-        /// a new one will be allocated by the implementation allocator or taken from a cache
+        /// a new one will be allocated by the \concept{concept_blockallocator,BlockAllocator} or taken from a cache
         /// and used for the allocation.
         /// \returns A \concept{concept_node,node} with given size and alignment.
-        /// \throws Anything thrown by the implementation allocator on growth
+        /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} on growth
         /// or \ref bad_allocation_size if \c size is too big.
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
             detail::check_allocation_size(size, next_capacity(), info());
-            auto mem = stack_.allocate(size, alignment);
+            auto mem = stack_.allocate(block_end(), size, alignment);
             if (!mem)
             {
                 allocate_block();
-                mem = stack_.allocate(size, alignment);
+                mem = stack_.allocate(block_end(), size, alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
             }
             return mem;
@@ -93,10 +98,10 @@ namespace foonathan { namespace memory
         /// \returns A marker to the current top of the stack.
         marker top() const FOONATHAN_NOEXCEPT
         {
-            return {list_.size() - 1, stack_};
+            return {arena_.size() - 1, stack_, block_end()};
         }
 
-       /// \effects Unwinds the stack to a certain marker position.
+        /// \effects Unwinds the stack to a certain marker position.
         /// This sets the top pointer of the stack to the position described by the marker
         /// and has the effect of deallocating all memory allocated since the marker was obtained.
         /// If any memory blocks are unused after the operation,
@@ -106,56 +111,67 @@ namespace foonathan { namespace memory
         /// i.e. it must have been pointed below the top at all time.
         void unwind(marker m) FOONATHAN_NOEXCEPT
         {
-            detail::check_pointer(m.index <= list_.size() - 1, info(), m.top);
+            detail::debug_check_pointer([&]
+                                        {
+                                            return m.index <= arena_.size() - 1;
+                                        }, info(), m.top);
 
-            if (std::size_t to_deallocate = (list_.size() - 1) - m.index) // different index
+            if (std::size_t to_deallocate = (arena_.size() - 1) - m.index) // different index
             {
-                list_.deallocate(stack_.top()); // top block only used up to the top of the stack
+                arena_.deallocate_block();
                 for (std::size_t i = 1; i != to_deallocate; ++i)
-                    list_.deallocate(); // other blocks fully used
+                    arena_.deallocate_block();
 
-                detail::check_pointer(m.end == list_.top().end(), info(), m.top);
+                detail::debug_check_pointer([&]
+                                            {
+                                                auto cur = arena_.current_block();
+                                                return m.end == static_cast<char*>(cur.memory) + cur.size;
+                                            }, info(), m.top);
 
                 // mark memory from new top to end of the block as freed
-                detail::debug_fill(m.top, std::size_t(m.end - m.top), debug_magic::freed_memory);
-                stack_ = {m.top, m.end};
+                detail::debug_fill_free(m.top, std::size_t(m.end - m.top), 0);
+                stack_ = detail::fixed_memory_stack(m.top);
             }
             else // same index
             {
-                detail::check_pointer(stack_.top() >= m.top, info(), m.top);
+                detail::debug_check_pointer([&]
+                                            {
+                                                return stack_.top() >= m.top;
+                                            }, info(), m.top);
                 stack_.unwind(m.top);
             }
         }
 
-        /// \effects \ref unwind() does not actually do any deallocation of blocks on the implementation allocator,
+        /// \effects \ref unwind() does not actually do any deallocation of blocks on the \concept{concept_blockallocator,BlockAllocator},
         /// unused memory is stored in a cache for later reuse.
         /// This function clears that cache.
         void shrink_to_fit() FOONATHAN_NOEXCEPT
         {
-            list_.shrink_to_fit();
+            arena_.shrink_to_fit();
         }
 
         /// \returns The amount of memory remaining in the current block.
         /// This is the number of bytes that are available for allocation
-        /// before the cache or implementation allocator needs to be used.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        /// before the cache or \concept{concept_blockallocator,BlockAllocator} needs to be used.
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
-            return std::size_t(stack_.end() - stack_.top());
+            return std::size_t(block_end() - stack_.top());
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
+        /// This function just forwards to the \ref memory_arena.
+        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
         /// but it is an upper bound to it.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
-            return list_.next_block_size();
+            return arena_.next_block_size();
         }
 
-        /// \returns A reference to the implementation allocator used for managing the arena.
+        /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
         /// \requires It is undefined behavior to move this allocator out into another object.
         allocator_type& get_allocator() FOONATHAN_NOEXCEPT
         {
-            return list_.get_allocator();
+            return arena_.get_allocator();
         }
 
     private:
@@ -166,20 +182,32 @@ namespace foonathan { namespace memory
 
         void allocate_block()
         {
-            auto block = list_.allocate();
-            stack_ = detail::fixed_memory_stack(block.memory, block.size);
+            stack_ = detail::fixed_memory_stack(arena_.allocate_block().memory);
         }
 
-        detail::block_list<allocator_type> list_;
+        const char* block_end() const FOONATHAN_NOEXCEPT
+        {
+            auto block = arena_.current_block();
+            return static_cast<const char*>(block.memory) + block.size;
+        }
+
+        memory_arena<allocator_type> arena_;
         detail::fixed_memory_stack stack_;
 
-        friend allocator_traits<memory_stack<allocator_type>>;
+        friend allocator_traits<memory_stack<BlockOrRawAllocator>>;
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class memory_stack<>;
+#endif
+
+    template <class Allocator>
+    class allocator_traits;
 
     /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <class ImplRawAllocator>
     class allocator_traits<memory_stack<ImplRawAllocator>>
     {
@@ -238,6 +266,10 @@ namespace foonathan { namespace memory
             return std::size_t(-1);
         }
     };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+    extern template class allocator_traits<memory_stack<>>;
+#endif
 }} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED

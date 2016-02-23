@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,7 +8,8 @@
 /// \file
 /// Class \ref foonathan::memory::temporary_allocator and related functions.
 
-#include "allocator_traits.hpp"
+#include <foonathan/thread_local.hpp>
+
 #include "config.hpp"
 #include "memory_stack.hpp"
 
@@ -32,7 +33,7 @@ namespace foonathan { namespace memory
     /// This avoids the stack overflow error and is portable,
     /// with a similar speed.
     /// All allocations done in the scope of the allocator object are automatically freed when the object is destroyed.
-    /// \ingroup memory
+    /// \ingroup memory allocator
     class temporary_allocator
     {
     public:
@@ -92,10 +93,13 @@ namespace foonathan { namespace memory
         return {size};
     }
 
+    template <class Allocator>
+    class allocator_traits;
+
     /// Specialization of the \ref allocator_traits for \ref temporary_allocator classes.
     /// \note It is not allowed to mix calls through the specialization and through the member functions,
     /// i.e. \ref temporary_allocator::allocate() and this \c allocate_node().
-    /// \ingroup memory
+    /// \ingroup memory allocator
     template <>
     class allocator_traits<temporary_allocator>
     {
@@ -106,7 +110,7 @@ namespace foonathan { namespace memory
         /// \returns The result of \ref temporary_allocator::allocate().
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, max_node_size(state),
+            detail::check_node_size(size, max_node_size(state),
                 {FOONATHAN_MEMORY_LOG_PREFIX "::temporary_allocator", &state});
             return state.allocate(size, alignment);
         }

@@ -1,17 +1,14 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
 #ifndef FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 #define FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
 
-#include <type_traits>
-
 #include "align.hpp"
+#include "assert.hpp"
 #include "memory_stack.hpp"
-
 #include "../config.hpp"
-#include "../error.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -31,12 +28,13 @@ namespace foonathan { namespace memory
             // all lists are initially empty
             // actual number is calculated via policy
             // memory is taken from fixed_memory_stack, it must be sufficient
-            free_list_array(fixed_memory_stack &stack,
+            free_list_array(fixed_memory_stack &stack, const char *end,
                             std::size_t max_node_size) FOONATHAN_NOEXCEPT
             : no_elements_(AccessPolicy::index_from_size(max_node_size)
                            - min_size_index + 1)
             {
-                array_ = static_cast<FreeList*>(stack.allocate(no_elements_ * sizeof(FreeList),
+                array_ = static_cast<FreeList*>(stack.allocate(end,
+                                                               no_elements_ * sizeof(FreeList),
                                                                FOONATHAN_ALIGNOF(FreeList)));
                 FOONATHAN_MEMORY_ASSERT(array_);
                 for (std::size_t i = 0u; i != no_elements_; ++i)
@@ -64,6 +62,7 @@ namespace foonathan { namespace memory
 
                 other.array_ = nullptr;
                 other.no_elements_ = 0u;
+                return *this;
             }
 
             // access free list for given size

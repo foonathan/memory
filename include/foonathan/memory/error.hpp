@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -17,7 +17,7 @@ namespace foonathan { namespace memory
 {
     /// Contains information about an allocator.
     /// It can be used for logging in the various handler functions.
-    /// \ingroup memory
+    /// \ingroup memory core
     struct allocator_info
     {
         /// The name of the allocator.
@@ -60,7 +60,7 @@ namespace foonathan { namespace memory
     /// It is derived from \c std::bad_alloc.
     /// This can happen if a low level allocation function like \c std::malloc() runs out of memory.
     /// Throwing can be prohibited by the handler function.
-    /// \ingroup memory
+    /// \ingroup memory core
     class out_of_memory : public std::bad_alloc
     {
     public:
@@ -112,15 +112,34 @@ namespace foonathan { namespace memory
         std::size_t amount_;
     };
 
-    /// The exception class thrown if a size or alignemnt parameter in an allocation function exceeds the supported maximum.
+    /// A special case of \ref out_of_memory errors
+    /// thrown when a low-level allocator with a fixed size runs out of memory.
+    /// For example, thrown by \ref fixed_block_allocator or \ref static_allocator.<br>
+    /// It is derived from \ref out_of_memory but does not provide its own handler.
+    /// \ingroup memory core
+    class out_of_fixed_memory : public out_of_memory
+    {
+    public:
+        /// \effects Just forwards to \ref out_of_memory.
+        out_of_fixed_memory(const allocator_info &info, std::size_t amount)
+        : out_of_memory(info, amount) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
+    /// The exception class thrown when an allocation size is bigger than the supported maximum.
+    /// This size is either the node, array or alignment parameter in a call to an allocation function.
+    /// If those exceed the supported maximum returned by \c max_node_size(), \c max_array_size() or \c max_alignment(),
+    /// one of its derived classes will be thrown or this class if in a situation where the type is unknown.
     /// It is derived from \c std::bad_alloc.
-    /// This is either a node size, an array size or an alignment value.
     /// Throwing can be prohibited by the handler function.
-    /// \note This exception can be thrown even if all parameters are less than the maximum
-    /// returned by \c max_node_size(), \c max_array_size() or \c max_alignment().
-    /// Those functions return an upper bound and not the actual supported maximum size,
+    /// \note Even if all parameters are less than the maximum, \ref out_of_memory or a similar exception can be thrown,
+    /// because the maximum functions return an upper bound and not the actual supported maximum size,
     /// since it always depends on fence memory, alignment buffer and the like.
-    /// \ingroup memory
+    /// \note A user should only \c catch for \c bad_allocation_size, not the derived classes.
+    /// \ingroup memory core
     class bad_allocation_size : public std::bad_alloc
     {
     public:
@@ -181,45 +200,83 @@ namespace foonathan { namespace memory
         std::size_t passed_, supported_;
     };
 
+    /// The exception class thrown when the node size exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_node_size().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory core
+    class bad_node_size : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        bad_node_size(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
+    /// The exception class thrown when the array size exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_array_size().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory core
+    class bad_array_size : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        bad_array_size(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
+    /// The exception class thrown when the alignment exceeds the supported maximum,
+    /// i.e. it is bigger than \c max_alignment().
+    /// It is derived from \ref bad_allocation_size but does not override the handler.
+    /// \ingroup memory core
+    class bad_alignment : public bad_allocation_size
+    {
+    public:
+        /// \effects Just forwards to \ref bad_allocation_size.
+        /// \c passed is <tt>count * size</tt>, \c supported the size in bytes.
+        bad_alignment(const allocator_info &info,
+                      std::size_t passed, std::size_t supported)
+        : bad_allocation_size(info, passed, supported) {}
+
+        /// \returns A static NTBS that describes the error.
+        /// It does not contain any specific information since there is no memory for formatting.
+        const char* what() const FOONATHAN_NOEXCEPT override;
+    };
+
     namespace detail
     {
-        // tries to allocate memory by calling the function in a loop
-        // if the function returns a non-null pointer, it is returned
-        // otherwise the std::new_handler is called, if it exits and the loop continued
-        // if it doesn't exist, the out_of_memory_handler is called and std::bad_alloc thrown afterwards
-        void* try_allocate(void* (*alloc_func)(std::size_t size), std::size_t size,
-                            const allocator_info& info);
-
-        // checks for a valid size
-        inline void check_allocation_size(std::size_t passed, std::size_t supported,
-                                   const allocator_info &info)
+        inline void check_allocation_size(std::size_t passed, std::size_t supported, const allocator_info &info)
         {
             if (passed > supported)
                 FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
         }
 
-        // handles a failed assertion
-        void handle_failed_assert(const char *msg, const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT;
+        inline void check_node_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_node_size(info, passed, supported));
+        }
 
-    // note: debug assertion macros don't use fully qualified name
-    // because they should only be used in this library, where the whole namespace is available
-    // can be override via command line definitions
-    #if FOONATHAN_MEMORY_DEBUG_ASSERT && !defined(FOONATHAN_MEMORY_ASSERT)
-        #define FOONATHAN_MEMORY_ASSERT(Expr) \
-            static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed", \
-                                                                      __FILE__, __LINE__, __func__), true))
+        inline void check_array_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_array_size(info, passed, supported));
+        }
 
-        #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg) \
-            static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed: " Msg, \
-                                                                      __FILE__, __LINE__, __func__), true))
-
-        #define FOONATHAN_MEMORY_UNREACHABLE(Msg) \
-            detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__,  __LINE__, __func__)
-    #elif !defined(FOONATHAN_MEMORY_ASSERT)
-        #define FOONATHAN_MEMORY_ASSERT(Expr) static_cast<void>(Expr)
-        #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg) static_cast<void>(Expr)
-        #define FOONATHAN_MEMORY_UNREACHABLE(Msg) /* nothing */
-    #endif
+        inline void check_alignment(std::size_t passed, std::size_t supported, const allocator_info &info)
+        {
+            if (passed > supported)
+                FOONATHAN_THROW(bad_alignment(info, passed, supported));
+        }
     } // namespace detail
 }} // namespace foonathan::memory
 

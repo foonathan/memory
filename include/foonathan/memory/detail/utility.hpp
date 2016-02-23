@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -19,52 +19,14 @@ namespace foonathan { namespace memory
 {
     namespace detail
     {
-        // move - taken from http://stackoverflow.com/a/7518365
-        template <typename T>
-        typename std::remove_reference<T>::type&& move(T&& arg) FOONATHAN_NOEXCEPT
-        {
-            return static_cast<typename std::remove_reference<T>::type&&>(arg);
-        }
-
-        // forward - taken from http://stackoverflow.com/a/27501759
-        template <class T>
-        T&& forward(typename std::remove_reference<T>::type& t) FOONATHAN_NOEXCEPT
-        {
-            return static_cast<T&&>(t);
-        }
-
-        template <class T>
-        T&& forward(typename std::remove_reference<T>::type&& t) FOONATHAN_NOEXCEPT
-        {
-            static_assert(!std::is_lvalue_reference<T>::value,
-                          "Can not forward an rvalue as an lvalue.");
-            return static_cast<T&&>(t);
-        }
-
-        namespace swap_impl
-        {
-            // equivalent of std::swap but requires nothrow
-            template <typename T>
-            void swap(T &a, T &b) FOONATHAN_NOEXCEPT
-            {
-                T tmp = detail::move(a);
-                a = detail::move(b);
-                b = detail::move(tmp);
-            }
-        } // namespace swap_impl
+        using foonathan_comp::move;
+        using foonathan_comp::forward;
 
         // ADL aware swap
         template <typename T>
         void adl_swap(T &a, T &b) FOONATHAN_NOEXCEPT
         {
-            // sometimes std::swap is found via ADL
-            // use it instead of swap_impl::swap to prevent ambiguity
-            // when both functions exist, i.e. on hosted
-        #if FOONATHAN_HOSTED_IMPLEMENTATION
-            using std::swap;
-        #else
-            using swap_impl::swap;
-        #endif
+            using foonathan_comp::swap;
             swap(a, b);
         }
 
@@ -100,6 +62,13 @@ namespace foonathan { namespace memory
                               #Expr " does not have the return type " #T); \
                 return Expr; \
             }
+
+        // whether or not a type is an instantiation of a template
+        template <template <typename...> class Template, typename T>
+        struct is_instantiation_of : std::false_type {};
+
+        template <template <typename...> class Template, typename ... Args>
+        struct is_instantiation_of<Template, Template<Args...>> : std::true_type {};
     } // namespace detail
 }} // namespace foonathan::memory
 

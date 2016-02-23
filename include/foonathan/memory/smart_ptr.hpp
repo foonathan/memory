@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -15,7 +15,9 @@
 #endif
 
 #include <memory>
+#include <type_traits>
 
+#include "detail/utility.hpp"
 #include "deleter.hpp"
 #include "std_allocator.hpp"
 
@@ -84,7 +86,7 @@ namespace foonathan { namespace memory
 
     /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
     /// It is an alias template using \ref allocator_deleter as \c Deleter class.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator>
     FOONATHAN_ALIAS_TEMPLATE(unique_ptr, std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
 
@@ -94,7 +96,7 @@ namespace foonathan { namespace memory
     /// \returns A \c std::unique_ptr owning that memory.
     /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
     /// the caller has to ensure that the object lives as long as the smart pointer.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator, typename ... Args>
     auto allocate_unique(RawAllocator &&alloc, Args &&... args)
     -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
@@ -111,7 +113,7 @@ namespace foonathan { namespace memory
     /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that memory.
     /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
     /// the caller has to ensure that the object lives as long as the smart pointer.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator, typename ... Args>
     auto allocate_unique(any_allocator, RawAllocator &&alloc, Args &&... args)
     -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
@@ -126,7 +128,7 @@ namespace foonathan { namespace memory
     /// \returns A \c std::unique_ptr owning that array.
     /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
     /// the caller has to ensure that the object lives as long as the smart pointer.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator>
     auto allocate_unique(RawAllocator &&alloc, std::size_t size)
     -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
@@ -142,7 +144,7 @@ namespace foonathan { namespace memory
     /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that array.
     /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
     /// the caller has to ensure that the object lives as long as the smart pointer.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator>
     auto allocate_unique(any_allocator, RawAllocator &&alloc, std::size_t size)
     -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
@@ -158,7 +160,7 @@ namespace foonathan { namespace memory
     /// \returns A \c std::shared_ptr created using \c std::allocate_shared.
     /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the shared pointer,
     /// the caller has to ensure that the object lives as long as the smart pointer.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator, typename ... Args>
     std::shared_ptr<T> allocate_shared(RawAllocator &&alloc, Args &&... args)
     {

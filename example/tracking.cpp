@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan MÃ¼ller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -7,14 +7,12 @@
 
 #include <iostream>
 
-#include <memory/container.hpp> // set, set_node_size
-#include <memory/memory_pool.hpp> // memory_pool
-#include <memory/tracking.hpp> // make_tracked_allocator
+#include <foonathan/memory/container.hpp> // set, set_node_size
+#include <foonathan/memory/memory_pool.hpp> // memory_pool
+#include <foonathan/memory/tracking.hpp> // make_tracked_allocator
 
-// namespace alias for easier access
-// if the CMake option FOONATHAN_MEMORY_NAMESPACE_PREFIX is OFF (the default),
-// it is already provided in each header file, so unnecessary in real application code
-namespace memory = foonathan::memory;
+// alias namespace foonathan::memory as memory for easier access
+#include <foonathan/memory/namespace_alias.hpp>
 
 int main()
 {

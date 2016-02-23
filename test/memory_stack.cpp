@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -16,22 +16,21 @@ TEST_CASE("memory_stack", "[stack]")
     test_allocator alloc;
     memory_stack<allocator_reference<test_allocator>> stack(100, alloc);
     REQUIRE(alloc.no_allocated() == 1u);
-    REQUIRE(stack.capacity() == 100 - detail::block_list_impl::impl_offset());
-    auto capacity = stack.capacity();
+    REQUIRE(stack.capacity_left() <= 100);
+    auto capacity = stack.capacity_left();
 
     SECTION("empty unwind")
     {
         auto m = stack.top();
         stack.unwind(m);
-        REQUIRE(capacity ==
-                100 - detail::block_list_impl::impl_offset());
+        REQUIRE(capacity <= 100);
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }
     SECTION("normal allocation/unwind")
     {
         stack.allocate(10, 1);
-        REQUIRE(stack.capacity() == capacity - 10 - 2 * detail::debug_fence_size);
+        REQUIRE(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
 
         auto m = stack.top();
 
@@ -39,7 +38,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(detail::align_offset(memory, 16) == 0u);
 
         stack.unwind(m);
-        REQUIRE(stack.capacity() ==
+        REQUIRE(stack.capacity_left() ==
                 capacity - 10 - 2 * detail::debug_fence_size);
 
         REQUIRE(stack.allocate(10, 16) == memory);

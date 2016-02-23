@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -8,101 +8,157 @@
 /// \file
 /// Class \ref foonathan::memory::tracked_allocator and related classes and functions.
 
-#include <cstddef>
-
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
+#include "memory_arena.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// A \concept{concept_rawallocator,RawAllocator} adapter that tracks an implementation allocator.
-    /// It wraps a \c RawAllocator that will be used as implementation allocator inside an arena.
-    /// Any allocation and deallocation will forward to the growth and shrinking functions of the \concept{concept_tracker,deep tracker}.
-    /// The class can then be passed as implementation allocator to an arena.
-    /// \note It is recommended to use this class only with \ref tracked_allocator::make_deeply_tracked_allocator.
-    /// \ingroup memory
-    template <class Tracker, class ImplRawAllocator>
-    class tracked_impl_allocator
-    : FOONATHAN_EBO(allocator_traits<ImplRawAllocator>::allocator_type)
+    namespace detail
     {
-        using traits = allocator_traits<ImplRawAllocator>;
+        template <class Tracker, class BlockAllocator>
+        class deeply_tracked_block_allocator;
+
+        template <class Tracker, class BlockAllocator>
+        void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator> &alloc, Tracker *t) FOONATHAN_NOEXCEPT
+        {
+            alloc.tracker_ = t;
+        }
+
+        template <class Allocator, class Tracker>
+        void set_tracker(Allocator &, Tracker *) {}
+
+        // used with deeply_tracked_allocator
+        template <class Tracker, class BlockAllocator>
+        class deeply_tracked_block_allocator
+        : FOONATHAN_EBO(BlockAllocator)
+        {
+        public:
+            template <typename ... Args>
+            deeply_tracked_block_allocator(std::size_t block_size, Args&&... args)
+            : BlockAllocator(block_size, detail::forward<Args>(args)...),
+              tracker_(nullptr) {}
+
+            memory_block allocate_block()
+            {
+                auto block = BlockAllocator::allocate_block();
+                if (tracker_) // on first call tracker_ is nullptr
+                    tracker_->on_allocator_growth(block.memory, block.size);
+                return block;
+            }
+
+            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+            {
+                if (tracker_) // on last call tracker_ is nullptr again
+                    tracker_->on_allocator_shrinking(block.memory, block.size);
+                BlockAllocator::deallocate_block(block);
+            }
+
+            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            {
+                return BlockAllocator::next_block_size();
+            }
+
+        private:
+            Tracker *tracker_;
+
+            friend void set_tracker<>(deeply_tracked_block_allocator &, Tracker*) FOONATHAN_NOEXCEPT;
+        };
+    } // namespace detail
+
+    /// A \concept{concept_blockallocator,BlockAllocator} adapter that tracks another allocator using a \concept{concept_tracker,tracker}.
+    /// It wraps another \concept{concept_blockallocator,BlockAllocator} and calls the tracker function before forwarding to it.
+    /// The class can then be used anywhere a \concept{concept_blockallocator,BlockAllocator} is required and the memory usage will be tracked.<br>
+    /// It will only call the <tt>on_allocator_growth()</tt> and <tt>on_allocator_shrinking()</tt> tracking functions,
+    /// since a \concept{concept_blockallocator,BlockAllocator} is normally used inside higher allocators only.
+    /// \ingroup memory adapter
+    template <class Tracker, class BlockOrRawAllocator>
+    class tracked_block_allocator
+    : FOONATHAN_EBO(Tracker, make_block_allocator_t<BlockOrRawAllocator>)
+    {
     public:
-        using allocator_type = typename traits::allocator_type ;
+        using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
         using tracker = Tracker;
 
-        using is_stateful = std::true_type;
-
-        /// \effects Takes a \concept{concept_tracker,deep tracker} and the \concept{concept_rawallocator,RawAllocator}
-        /// and wraps it.
-        /// It will only store a pointer to the \c Trakcer to allow it being shared with the higher-level arena
-        /// it is embedded in.
-        tracked_impl_allocator(tracker &t, allocator_type allocator = {})
-        : t_(&t),
-          allocator_type(detail::move(allocator)) {}
-
         /// @{
-        /// \effects Forwards to the allocation function of the implementation allocator
-        /// and calls the <tt>Tracker::on_allocator_growth()</tt> function.
-        /// \returns The result of the implementation allocator function.
-        void* allocate_node(std::size_t size, std::size_t alignment)
+        /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
+        /// It will embed both objects.
+        explicit tracked_block_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)) {}
+
+        tracked_block_allocator(tracker t, allocator_type &&alloc) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)), allocator_type(detail::move(alloc)) {}
+        /// @}
+
+        /// \effects Creates it in the form required by the concept.
+        /// The allocator will be constructed using \c block_size and \c args.
+        template <typename ... Args>
+        tracked_block_allocator(std::size_t block_size, tracker t, Args&&... args)
+        : tracker(detail::move(t)), allocator_type(block_size, detail::forward<Args>(args)...) {}
+
+        /// \effects Calls <tt>Tracker::on_allocator_growth()</tt> after forwarding to the allocator.
+        /// \returns The block as the returned by the allocator.
+        memory_block allocate_block()
         {
-            auto mem = traits::allocate_node(*this, size, alignment);
-            t_->on_allocator_growth(mem, size);
-            return mem;
+            auto block = allocator_type::allocate_block();
+            this->on_allocator_growth(block.memory, block.size);
+            return block;
         }
 
-        void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
+        /// \effects Calls <tt>Tracker::on_allocator_shrinking()</tt> and forwards to the allocator.
+        void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
         {
-            auto mem = traits::allocate_array(*this, count, size, alignment);
-            t_->on_allocator_growth(mem, size * count);
-            return mem;
+            this->on_allocator_shrinking(block.memory, block.size);
+            allocator_type::deallocate_block(block);
+        }
+
+        /// \returns The next block size as returned by the allocator.
+        std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+        {
+            return allocator_type::next_block_size();
+        }
+
+        /// @{
+        /// \returns A (const) reference to the used allocator.
+        allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+        {
+            return *this;
+        }
+
+        const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+        {
+            return *this;
         }
         /// @}
 
         /// @{
-        /// \effects Forwards to the deallocation function of the implementation allocator
-        /// after caling the <tt>Tracker::on_allocator_shrinking()</tt> function.
-        void deallocate_node(void *ptr,
-                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        /// \returns A (const) reference to the tracker.
+        tracker& get_tracker() FOONATHAN_NOEXCEPT
         {
-            t_->on_allocator_shrinking(ptr, size);
-            traits::deallocate_node(*this, ptr, size, alignment);
+            return *this;
         }
 
-        void deallocate_array(void *ptr, std::size_t count,
-                              std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        const tracker& get_tracker() const FOONATHAN_NOEXCEPT
         {
-            t_->on_allocator_shrinking(ptr, size * count);
-            traits::deallocate_array(*this, ptr, count, size, alignment);
+            return *this;
         }
         /// @}
-
-        /// @{
-        /// \returns The result of the corresponding function the implementation allocator.
-        std::size_t max_node_size() const
-        {
-            return traits::max_node_size(*this);
-        }
-
-        std::size_t max_array_size() const
-        {
-            return traits::max_array_size(*this);
-        }
-
-        std::size_t max_alignment() const
-        {
-            return traits::max_alignment(*this);
-        }
-        /// @}
-
-    private:
-        Tracker *t_;
     };
 
+    /// Similar to \ref tracked_block_allocator, but shares the tracker with the higher level allocator.
+    /// This allows tracking both (de-)allocations and growth with one tracker.
+    /// \note Due to implementation reasons, it cannot track growth and shrinking in the constructor/destructor of the higher level allocator.
+    /// \ingroup memory adapter
+    template <class Tracker, class BlockOrRawAllocator>
+    using deeply_tracked_block_allocator
+    = FOONATHAN_IMPL_DEFINED(detail::deeply_tracked_block_allocator<Tracker, make_block_allocator_t<BlockOrRawAllocator>>);
+
     /// A \concept{concept_rawallocator,RawAllocator} adapter that tracks another allocator using a \concept{concept_tracker,tracker}.
-    /// It wraps another \c RawAllocator and calls the tracker function before forwarding to it.
-    /// The class can then be used anywhere a \c RawAllocator is required and the memory usage will be tracked.
-    /// \ingroup memory
+    /// It wraps another \concept{concept_rawallocator,RawAllocator} and calls the tracker function before forwarding to it.
+    /// The class can then be used anywhere a \concept{concept_rawallocator,RawAllocator} is required and the memory usage will be tracked.<br>
+    /// If the \concept{concept_rawallocator,RawAllocator} uses \ref deeply_tracked_block_allocator as \concept{concept_blockallocator,BlockAllocator},
+    /// it will also track growth and shrinking of the allocator.
+    /// \ingroup memory adapter
     template <class Tracker, class RawAllocator>
     class tracked_allocator
     : FOONATHAN_EBO(Tracker, allocator_traits<RawAllocator>::allocator_type)
@@ -118,27 +174,43 @@ namespace foonathan { namespace memory
         /// @{
         /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
         /// It will embed both objects.
-        explicit tracked_allocator(tracker t = {})
-        : tracker(detail::move(t)) {}
+        /// \note This will never call the <tt>Tracker::on_allocator_growth()</tt> function.
+        explicit tracked_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+        : tracked_allocator(detail::move(t), allocator_type{}) {}
 
-        tracked_allocator(tracker t, allocator_type&& allocator)
-        : tracker(detail::move(t)), allocator_type(detail::move(allocator)) {}
+        tracked_allocator(tracker t, allocator_type&& allocator) FOONATHAN_NOEXCEPT
+        : tracker(detail::move(t)), allocator_type(detail::move(allocator))
+        {
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
+        }
         /// @}
+
+        /// \effects Destroys both tracker and allocator.
+        /// \note This will never call the <tt>Tracker::on_allocator_shrinking()</tt> function.
+        ~tracked_allocator() FOONATHAN_NOEXCEPT
+        {
+            detail::set_tracker(get_allocator().get_allocator(), static_cast<tracker*>(nullptr));
+        }
 
         /// @{
         /// \effects Moving moves both the tracker and the allocator.
         tracked_allocator(tracked_allocator &&other) FOONATHAN_NOEXCEPT
-        : tracker(detail::move(other)), allocator_type(detail::move(other)) {}
+        : tracker(detail::move(other)), allocator_type(detail::move(other))
+        {
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
+        }
 
         tracked_allocator& operator=(tracked_allocator &&other) FOONATHAN_NOEXCEPT
         {
             tracker::operator=(detail::move(other));
             allocator_type::operator=(detail::move(other));
+            detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
             return *this;
         }
         /// @}
 
         /// \effects Calls <tt>Tracker::on_node_allocation()</tt> and forwards to the allocator.
+        /// If a growth occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_growth()</tt>.
         /// \returns The result of <tt>allocate_node()</tt>
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
@@ -148,6 +220,7 @@ namespace foonathan { namespace memory
         }
 
         /// \effects Calls <tt>Tracker::on_array_allocation()</tt> and forwards to the allocator.
+        /// If a growth occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_growth()</tt>.
         /// \returns The result of <tt>allocate_array()</tt>
         void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
         {
@@ -157,6 +230,7 @@ namespace foonathan { namespace memory
         }
 
         /// \effects Calls <tt>Tracker::on_node_deallocation()</tt> and forwards to the allocator's <tt>deallocate_node()</tt>.
+        /// If shrinking occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_shrinking()</tt>.
         void deallocate_node(void *ptr,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
@@ -165,6 +239,7 @@ namespace foonathan { namespace memory
         }
 
         /// \effects Calls <tt>Tracker::on_array_deallocation()</tt> and forwards to the allocator's <tt>deallocate_array()</tt>.
+        /// If shrinking occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_shrinking()</tt>.
         void deallocate_array(void *ptr, std::size_t count,
                               std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
         {
@@ -215,17 +290,6 @@ namespace foonathan { namespace memory
             return *this;
         }
         /// @}
-
-#ifdef DOXYGEN
-    private:
-#endif
-        template <class ImplRawAllocator, typename ... Args>
-        tracked_allocator(tracker t, ImplRawAllocator impl,
-                        Args&&... args)
-        : tracker(detail::move(t)),
-          allocator_type(detail::forward<Args>(args)...,
-                tracked_impl_allocator<tracker, ImplRawAllocator>(*this, detail::move(impl)))
-        {}
     };
 
     /// \effects Takes a \concept{concept_rawallocator,RawAllocator} and wraps it with a \concept{concept_tracker,tracker}.
@@ -238,17 +302,54 @@ namespace foonathan { namespace memory
         return tracked_allocator<Tracker, typename std::decay<RawAllocator>::type>{detail::move(t), detail::move(alloc)};
     }
 
-    /// \effects Takes a \concept{concept_tracker,deep tracker}, a \concept{concept_rawallocator,RawAllocator} and constructor arguments
-    /// and creates a new \ref tracked_allocator that will track a new allocator object created with the constructor arguments
-    /// and an implementation allocator that is the passed allocator wrapped in \ref tracked_impl_allocator with the same tracker.
-    /// It assumes that the implementation allocator is the last constructor argument.
-    /// \returns A \ref tracked_allocator that deeply tracks the given allocator type.
-    /// \relates tracked_allocator
-    template <template <class> class RawAllocator, class Tracker, class ImplRawAllocator, class ... Args>
-    auto make_deeply_tracked_allocator(Tracker t, ImplRawAllocator impl, Args&&... args)
-    -> tracked_allocator<Tracker, RawAllocator<tracked_impl_allocator<Tracker, ImplRawAllocator>>>
+    namespace detail
     {
-        return {detail::move(t), detail::move(impl), detail::forward<Args&&>(args)...};
+        template <typename T, bool Block>
+        struct is_block_or_raw_allocator_impl
+        : std::true_type {};
+
+        template <typename T>
+        struct is_block_or_raw_allocator_impl<T, false>
+        : memory::is_raw_allocator<T> {};
+
+        template <typename T>
+        struct is_block_or_raw_allocator
+        : is_block_or_raw_allocator_impl<T, memory::is_block_allocator<T>::value> {};
+
+        template <class RawAllocator, class BlockAllocator>
+        struct rebind_block_allocator;
+
+        template <template <typename...> class RawAllocator, typename ... Args, class OtherBlockAllocator>
+        struct rebind_block_allocator<RawAllocator<Args...>, OtherBlockAllocator>
+        {
+            using type = RawAllocator<typename std::conditional<is_block_or_raw_allocator<Args>::value,
+                                                                OtherBlockAllocator, Args>::type...>;
+        };
+
+        template <class Tracker, class RawAllocator>
+        using deeply_tracked_block_allocator_for
+            = memory::deeply_tracked_block_allocator<Tracker, typename RawAllocator::allocator_type>;
+
+        template <class Tracker, class RawAllocator>
+        using rebound_allocator
+            = typename rebind_block_allocator<RawAllocator, deeply_tracked_block_allocator_for<Tracker, RawAllocator>>::type;
+    } // namespace detail
+
+    /// A \ref tracked_allocator that has rebound any \concept{concept_blockallocator,BlockAllocator} to the corresponding \ref deeply_tracked_block_allocator.
+    /// This makes it a deeply tracked allocator.<br>
+    /// It replaces each template argument of the given \concept{concept_rawallocator,RawAllocator} for which \ref is_block_allocator or \ref is_raw_allocator is \c true with a \ref deeply_tracked_block_allocator.
+    /// \ingroup memory adapter
+    template <class Tracker, class RawAllocator>
+    FOONATHAN_ALIAS_TEMPLATE(deeply_tracked_allocator, tracked_allocator<Tracker, detail::rebound_allocator<Tracker, RawAllocator>>);
+
+    /// \effects Takes a \concept{concept_rawallocator,RawAllocator} and deeply wraps it with a \concept{concept_tracker,tracker}.
+    /// \returns A \ref deeply_tracked_allocator with the corresponding parameters forwarded to the constructor.
+    /// \relates deeply_tracked_allocator
+    template <class RawAllocator, class Tracker, typename ... Args>
+    auto make_deeply_tracked_allocator(Tracker t, Args&&... args)
+    -> deeply_tracked_allocator<Tracker, RawAllocator>
+    {
+        return deeply_tracked_allocator<Tracker, RawAllocator>(detail::move(t), {detail::forward<Args>(args)...});
     }
 }} // namespace foonathan::memory
 

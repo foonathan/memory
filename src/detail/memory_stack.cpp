@@ -1,34 +1,35 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
 #include "detail/memory_stack.hpp"
 
 #include "detail/align.hpp"
+#include "detail/debug_helpers.hpp"
 #include "debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
 
 fixed_memory_stack::fixed_memory_stack(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT
-: cur_(other.cur_), end_(other.end_)
+: cur_(other.cur_)
 {
     other.cur_ = nullptr;
-    other.end_ = nullptr;
 }
 
 fixed_memory_stack& fixed_memory_stack::operator=(fixed_memory_stack &&other) FOONATHAN_NOEXCEPT
 {
     cur_ = other.cur_;
-    end_ = other.end_;
     other.cur_ = nullptr;
-    other.end_ = nullptr;
     return *this;
 }
 
-void* fixed_memory_stack::allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+void* fixed_memory_stack::allocate(const char *end, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
 {
-    auto remaining = std::size_t(end_ - cur_);
+    if (cur_ == nullptr)
+        return nullptr;
+
+    auto remaining = std::size_t(end - cur_);
     auto offset = align_offset(cur_ + debug_fence_size, alignment);
 
     if (debug_fence_size + offset + size + debug_fence_size > remaining)

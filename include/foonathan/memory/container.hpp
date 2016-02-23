@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -14,6 +14,9 @@
     #error "This header is only available for a hosted implementation."
 #endif
 
+#include <functional>
+#include <utility>
+
 #include <deque>
 #include <forward_list>
 #include <list>
@@ -26,10 +29,11 @@
 #include <vector>
 
 #include "std_allocator.hpp"
+#include "threading.hpp"
 
 namespace foonathan { namespace memory
 {
-    /// \addtogroup memory
+    /// \ingroup memory adapter
     /// @{
 
     /// Alias template for an STL container that uses a certain \concept{concept_rawallocator,RawAllocator}.
@@ -104,7 +108,7 @@ namespace foonathan { namespace memory
     /// @{
     /// Convenience function to create a container adapter using a certain \concept{concept_rawallocator,RawAllocator}.
     /// \returns An empty adapter with an implementation container using a reference to a given allocator.
-    /// \ingroup memory
+    /// \ingroup memory adapter
     template <typename T, class RawAllocator,
             class Container = deque<T, RawAllocator>>
     std::stack<T, Container> make_stack(RawAllocator &allocator)
@@ -137,7 +141,7 @@ namespace foonathan { namespace memory
     #include "container_node_sizes.hpp"
     #undef FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
 #else
-    /// \addtogroup memory
+    /// \ingroup memory adapter
     /// @{
 
     /// Contains the node size of a node based STL container with a specific type.
