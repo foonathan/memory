@@ -188,10 +188,10 @@ virtual_block_allocator::~virtual_block_allocator() FOONATHAN_NOEXCEPT
 memory_block virtual_block_allocator::allocate_block()
 {
     if (std::size_t(end_ - cur_) < block_size_)
-        FOONATHAN_THROW(out_of_memory(info(), block_size_));
+        FOONATHAN_THROW(out_of_fixed_memory(info(), block_size_));
     auto mem = virtual_memory_commit(cur_, block_size_ / virtual_memory_page_size);
     if (!mem)
-        FOONATHAN_THROW(out_of_memory(info(), block_size_));
+        FOONATHAN_THROW(out_of_fixed_memory(info(), block_size_));
     cur_ += block_size_;
     return {mem, block_size_};
 }
