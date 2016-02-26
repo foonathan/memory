@@ -23,6 +23,7 @@ namespace foonathan { namespace memory
         FOONATHAN_CONSTEXPR std::size_t debug_fence_size
                 = FOONATHAN_MEMORY_DEBUG_FILL ? FOONATHAN_MEMORY_DEBUG_FENCE : 0u;
 
+    #if FOONATHAN_MEMORY_DEBUG_FILL
         // fills size bytes of memory with debug_magic
         void debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT;
 
@@ -41,6 +42,26 @@ namespace foonathan { namespace memory
 
         // fills internal memory
         void debug_fill_internal(void *memory, std::size_t size, bool free) FOONATHAN_NOEXCEPT;
+    #else
+        inline void debug_fill(void *, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
+
+        inline void* debug_is_filled(void *, std::size_t, debug_magic) FOONATHAN_NOEXCEPT
+        {
+            return nullptr;
+        }
+
+        inline void* debug_fill_new(void *memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            return memory;
+        }
+
+        inline void* debug_fill_free(void *memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            return static_cast<char*>(memory);
+        }
+
+        inline void debug_fill_internal(void *, std::size_t, bool) FOONATHAN_NOEXCEPT {}
+    #endif
 
         void debug_handle_invalid_ptr(const allocator_info &info, void *ptr);
 
