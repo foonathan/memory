@@ -51,18 +51,26 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // returns a memory block big enough for n bytes (!, not nodes)
-            // might fail even if capacity is sufficient
-            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
+            // must not be called
+            void* allocate(std::size_t) FOONATHAN_NOEXCEPT
+            {
+                return nullptr;
+            }
 
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
 
-            // deallocates multiple blocks with n bytes total
-            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
+            // must not be called
+            void deallocate(void *, std::size_t) FOONATHAN_NOEXCEPT {}
 
             //=== getter ===//
-            std::size_t node_size() const FOONATHAN_NOEXCEPT;
+            std::size_t node_size() const FOONATHAN_NOEXCEPT
+            {
+                return node_size_;
+            }
+
+            // alignment of all nodes
+            std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
             // number of nodes remaining
             std::size_t capacity() const FOONATHAN_NOEXCEPT
@@ -70,108 +78,15 @@ namespace foonathan { namespace memory
                 return capacity_;
             }
 
-            bool empty() const FOONATHAN_NOEXCEPT;
-
-            // alignment of all nodes
-            std::size_t alignment() const FOONATHAN_NOEXCEPT;
+            bool empty() const FOONATHAN_NOEXCEPT
+            {
+                return first_ == nullptr;
+            }
 
         private:
-            // cache for new nodes that were never used
-            // it works like a stack and is continous, so supports arrays
-            class cache
-            {
-            public:
-                cache() FOONATHAN_NOEXCEPT
-                : cur_(nullptr), end_(nullptr) {}
+            std::size_t fence_size() const FOONATHAN_NOEXCEPT;
 
-                cache(void *memory, std::size_t size) FOONATHAN_NOEXCEPT
-                : cur_(static_cast<char*>(memory)), end_(cur_ + size) {}
-
-                cache(cache &&other) FOONATHAN_NOEXCEPT
-                : cur_(other.cur_), end_(other.end_)
-                {
-                    other.cur_ = other.end_ = nullptr;
-                }
-
-                ~cache() FOONATHAN_NOEXCEPT = default;
-
-                cache& operator=(cache &&other) FOONATHAN_NOEXCEPT
-                {
-                    cur_ = other.cur_;
-                    end_ = other.end_;
-                    other.cur_ = other.end_ = nullptr;
-                    return *this;
-                }
-
-                // allocates memory of given size and alignment
-                // takes care of debug filling
-                // returns nullptr if no memory available
-                void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
-
-                // tries to deallocate memory
-                // only works if deallocation in reversed order
-                // returns true if succesfully deallocated
-                bool try_deallocate(void *ptr, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT;
-
-                char* top() FOONATHAN_NOEXCEPT
-                {
-                    return cur_;
-                }
-
-                char* end() FOONATHAN_NOEXCEPT
-                {
-                    return end_;
-                }
-
-                // number of nodes that can be allocated from the cache
-                std::size_t no_nodes(std::size_t node_size) const FOONATHAN_NOEXCEPT;
-
-            private:
-                char *cur_, *end_;
-            };
-
-            // intrusive list for unused memory nodes
-            // gives only a stack like interface
-            class list_impl
-            {
-            public:
-                list_impl() FOONATHAN_NOEXCEPT
-                : first_(nullptr) {}
-
-                list_impl(list_impl &&other) FOONATHAN_NOEXCEPT
-                : first_(other.first_)
-                {
-                    other.first_ = nullptr;
-                }
-
-                ~list_impl() FOONATHAN_NOEXCEPT = default;
-
-                list_impl& operator=(list_impl &&other) FOONATHAN_NOEXCEPT
-                {
-                    first_ = other.first_;
-                    other.first_ = nullptr;
-                    return *this;
-                }
-
-                // inserts all memory from an intervall into the list
-                // it will be inserted into the front
-                std::size_t insert(char *begin, char *end, std::size_t node_size) FOONATHAN_NOEXCEPT;
-
-                // pushes a single node into the list
-                // it takes care of debug filling
-                void push(void *ptr, std::size_t node_size) FOONATHAN_NOEXCEPT;
-
-                // pops the first node from the list
-                // it takes care of debug fillilng
-                // returns nullptr if empty
-                void* pop(std::size_t node_size) FOONATHAN_NOEXCEPT;
-
-            private:
-                char *first_;
-            };
-
-            cache cache_;
-            list_impl list_;
+            char *first_;
             std::size_t node_size_, capacity_;
         };
 
