@@ -86,7 +86,7 @@ void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
     --capacity_;
 
     auto mem = first_;
-    first_ = list_get_next(mem);
+    first_ = list_get_next(first_);
     return debug_fill_new(mem, node_size_, fence_size());
 }
 
