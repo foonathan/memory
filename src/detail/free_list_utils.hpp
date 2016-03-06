@@ -21,7 +21,7 @@ namespace foonathan { namespace memory
         {
             FOONATHAN_MEMORY_ASSERT(address);
             FOONATHAN_MEMORY_ASSERT(is_aligned(address, FOONATHAN_ALIGNOF(std::uintptr_t)));
-            return *static_cast<std::uintptr_t*>(address);
+            return *static_cast<std::uintptr_t *>(address);
         }
 
         // sets stored integer value
@@ -29,7 +29,7 @@ namespace foonathan { namespace memory
         {
             FOONATHAN_MEMORY_ASSERT(address);
             FOONATHAN_MEMORY_ASSERT(is_aligned(address, FOONATHAN_ALIGNOF(std::uintptr_t)));
-            *static_cast<std::uintptr_t*>(address) = i;
+            *static_cast<std::uintptr_t *>(address) = i;
         }
 
         // pointer to integer
@@ -39,14 +39,14 @@ namespace foonathan { namespace memory
         }
 
         // integer to pointer
-        inline char* from_int(std::uintptr_t i) FOONATHAN_NOEXCEPT
+        inline char *from_int(std::uintptr_t i) FOONATHAN_NOEXCEPT
         {
-            return reinterpret_cast<char*>(i);
+            return reinterpret_cast<char *>(i);
         }
 
         //=== intrusive linked list ===//
         // reads a stored pointer value
-        inline char* list_get_next(void *address) FOONATHAN_NOEXCEPT
+        inline char *list_get_next(void *address) FOONATHAN_NOEXCEPT
         {
             return from_int(get_int(address));
         }
@@ -58,56 +58,40 @@ namespace foonathan { namespace memory
         }
 
         //=== intrusive xor linked list ===//
-        // returns the next pointer given the previous pointer
-        inline char* xor_list_get_next(void *address, char *prev) FOONATHAN_NOEXCEPT
+        // returns the other pointer given one pointer
+        inline char *xor_list_get_other(void *address, char *prev_or_next) FOONATHAN_NOEXCEPT
         {
-            return from_int(get_int(address) ^ to_int(prev));
+            return from_int(get_int(address) ^ to_int(prev_or_next));
         }
 
-        // returns the prev pointer given the next pointer
-        inline char* xor_list_get_prev(void *address, char *next) FOONATHAN_NOEXCEPT
-        {
-            return from_int(get_int(address) ^ to_int(next));
-        }
-
-        // sets the next and previous pointer
+        // sets the next and previous pointer (order actually does not matter)
         inline void xor_list_set(void *address, char *prev, char *next) FOONATHAN_NOEXCEPT
         {
             set_int(address, to_int(prev) ^ to_int(next));
         }
 
-        // changes next pointer given the old next pointer
-        inline void xor_list_change_next(void *address, char *old_next, char *new_next) FOONATHAN_NOEXCEPT
+        // changes other pointer given one pointer
+        inline void xor_list_change(void *address, char *old_ptr, char *new_ptr) FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_ASSERT(address);
-            // use old_next to get previous pointer
-            auto prev = xor_list_get_prev(address, old_next);
-            // don't change previous pointer
-            xor_list_set(address, prev, new_next);
+            auto other = xor_list_get_other(address, old_ptr);
+            xor_list_set(address, other, new_ptr);
         }
 
-        // same for prev
-        inline void xor_list_change_prev(void *address, char *old_prev, char *new_prev) FOONATHAN_NOEXCEPT
-        {
-            FOONATHAN_MEMORY_ASSERT(address);
-            auto next = xor_list_get_next(address, old_prev);
-            xor_list_set(address, new_prev, next);
-        }
-
-        // advances a pointer pair forward
+        // advances a pointer pair forward/backward
         inline void xor_list_iter_next(char *&cur, char *&prev) FOONATHAN_NOEXCEPT
         {
-            auto next = xor_list_get_next(cur, prev);
+            auto next = xor_list_get_other(cur, prev);
             prev = cur;
             cur = next;
         }
 
-        // advances a pointer pair backward
-        inline void xor_list_iter_prev(char *&cur, char *&next) FOONATHAN_NOEXCEPT
+        // links new node between prev and next
+        inline void xor_list_insert(char *new_node, char *prev, char *next) FOONATHAN_NOEXCEPT
         {
-            auto prev = xor_list_get_prev(cur, next);
-            next = cur;
-            cur = prev;
+            xor_list_set(new_node, prev, next);
+            xor_list_change(prev, next, new_node); // change prev's next to new_node
+            xor_list_change(next, prev, new_node); // change next's prev to new_node
         }
     } // namespace detail
 }} // namespace foonathan::memory
