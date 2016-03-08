@@ -169,11 +169,15 @@ namespace foonathan { namespace memory
         private:
             std::size_t fence_size() const FOONATHAN_NOEXCEPT;
 
+            // returns previous pointer
+            char* insert_impl(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
+
             char* begin_node() FOONATHAN_NOEXCEPT;
             char* end_node() FOONATHAN_NOEXCEPT;
 
             std::uintptr_t begin_proxy_, end_proxy_;
             std::size_t node_size_, capacity_;
+            char *last_dealloc_, *last_dealloc_prev_;
         };
 
         #if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECk
