@@ -4,10 +4,6 @@
 
 #include "detail/free_list.hpp"
 
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-    #include <functional>
-#endif
-
 #include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
 #include "detail/assert.hpp"
@@ -126,25 +122,6 @@ namespace
         }
         xor_list_set(cur, last_cur, next); // last memory node gets next as next
         xor_list_change(next, prev, cur); // change prev pointer of next
-    }
-
-    // if std::less/std::greater not available compare integer representation and hope it works
-    bool less(char *a, char *b) FOONATHAN_NOEXCEPT
-    {
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-        return std::less<char*>()(a, b);
-#else
-        return to_int(a) < to_int(b);
-#endif
-    }
-
-    bool greater(char *a, char *b) FOONATHAN_NOEXCEPT
-    {
-#if FOONATHAN_HOSTED_IMPLEMENTATION
-        return std::greater<char*>()(a, b);
-#else
-        return to_int(a) < to_int(b);
-#endif
     }
 
     struct pos

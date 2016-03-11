@@ -11,6 +11,10 @@
 #include "detail/align.hpp"
 #include "detail/assert.hpp"
 
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <functional>
+#endif
+
 namespace foonathan { namespace memory
 {
     namespace detail
@@ -92,6 +96,26 @@ namespace foonathan { namespace memory
             xor_list_set(new_node, prev, next);
             xor_list_change(prev, next, new_node); // change prev's next to new_node
             xor_list_change(next, prev, new_node); // change next's prev to new_node
+        }
+
+        //=== sorted list utils ===//
+        // if std::less/std::greater not available compare integer representation and hope it works
+        bool less(char *a, char *b) FOONATHAN_NOEXCEPT
+        {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+            return std::less<char*>()(a, b);
+#else
+            return to_int(a) < to_int(b);
+#endif
+        }
+
+        bool greater(char *a, char *b) FOONATHAN_NOEXCEPT
+        {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+            return std::greater<char*>()(a, b);
+#else
+            return to_int(a) < to_int(b);
+#endif
         }
     } // namespace detail
 }} // namespace foonathan::memory
