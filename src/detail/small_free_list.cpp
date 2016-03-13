@@ -146,7 +146,8 @@ FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_alignment;
 
 small_free_memory_list::small_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-: node_size_(node_size), capacity_(0u) {}
+: node_size_(node_size), capacity_(0u),
+  alloc_chunk_(&base_), dealloc_chunk_(&base_) {}
 
 small_free_memory_list::small_free_memory_list(std::size_t node_size,
                                                void *mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -156,7 +157,9 @@ small_free_memory_list::small_free_memory_list(std::size_t node_size,
 }
 
 small_free_memory_list::small_free_memory_list(small_free_memory_list &&other) FOONATHAN_NOEXCEPT
-: node_size_(other.node_size_), capacity_(other.capacity_)
+: node_size_(other.node_size_), capacity_(other.capacity_),
+  // reset markers for simplicity
+  alloc_chunk_(&base_), dealloc_chunk_(&base_)
 {
     if (!other.empty())
     {
@@ -209,6 +212,10 @@ void foonathan::memory::detail::swap(small_free_memory_list &a, small_free_memor
 
     detail::adl_swap(a.node_size_, b.node_size_);
     detail::adl_swap(a.capacity_, b.capacity_);
+
+    // reset markers for simplicity
+    a.alloc_chunk_ = a.dealloc_chunk_ = &a.base_;
+    b.alloc_chunk_ = b.dealloc_chunk_ = &b.base_;
 }
 
 void small_free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -256,6 +263,7 @@ void small_free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXC
 void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
     auto chunk = find_chunk_impl(1);
+    alloc_chunk_ = chunk;
     FOONATHAN_MEMORY_ASSERT(chunk && chunk->capacity >= 1);
 
     --capacity_;
@@ -273,6 +281,7 @@ void small_free_memory_list::deallocate(void *mem) FOONATHAN_NOEXCEPT
     auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
 
     auto chunk = find_chunk_impl(node);
+    dealloc_chunk_ = chunk;
     // memory was never allocated from list
     detail::debug_check_pointer([&]{return chunk != nullptr;}, info, mem);
 
@@ -302,8 +311,13 @@ std::size_t small_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
 {
-    auto cur_forward = base_.next;
-    auto cur_backward = base_.prev;
+    if (auto c = make_chunk(alloc_chunk_, &base_, n))
+        return c;
+    else if (auto c = make_chunk(dealloc_chunk_, &base_, n))
+        return c;
+
+    auto cur_forward = alloc_chunk_->next;
+    auto cur_backward = alloc_chunk_->prev;
 
     do
     {
@@ -322,8 +336,16 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
 chunk* small_free_memory_list::find_chunk_impl(unsigned char *node) FOONATHAN_NOEXCEPT
 {
     auto actual_size = node_size_ + 2 * fence_size();
-    auto cur_forward = base_.next;
-    auto cur_backward = base_.prev;
+
+    auto c = make_chunk(dealloc_chunk_, &base_);
+    if (c && c->from(node, actual_size))
+        return c;
+    c = make_chunk(alloc_chunk_, &base_);
+    if (c && c->from(node, actual_size))
+        return c;
+
+    auto cur_forward = dealloc_chunk_->next;
+    auto cur_backward = dealloc_chunk_->prev;
 
     do
     {

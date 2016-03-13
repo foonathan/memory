@@ -114,6 +114,7 @@ namespace foonathan { namespace memory
 
             chunk_base base_;
             std::size_t node_size_, capacity_;
+            chunk_base *alloc_chunk_, *dealloc_chunk_;
         };
 
         // for some reason, this is required in order to define it
