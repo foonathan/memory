@@ -123,22 +123,46 @@ namespace
     chunk* from_chunk(chunk_base *c, chunk_base *proxy_address,
                       unsigned char *node, std::size_t node_size) FOONATHAN_NOEXCEPT
     {
-        FOONATHAN_MEMORY_ASSERT(c != proxy_address);
-        auto res = static_cast<chunk*>(c);
-        return res->from(node, node_size) ? res : nullptr;
+        auto res = make_chunk(c, proxy_address);
+        return res && res->from(node, node_size) ? res : nullptr;
     }
 
     // inserts already interconnected chunks into the list
+    // list will be kept ordered
     void insert_chunks(chunk_base *list, chunk_base *begin, chunk_base *end) FOONATHAN_NOEXCEPT
     {
         FOONATHAN_MEMORY_ASSERT(begin && end);
 
-        begin->prev = list;
-        end->next = list->next;
-        list->next = begin;
-
-        if (list->prev == list)
+        if (list->next == list) // empty
+        {
+            begin->prev = list;
+            end->next = list->next;
+            list->next = begin;
             list->prev = end;
+        }
+        else if (less(list->prev, begin)) // insert at end
+        {
+            list->prev->next = begin;
+            begin->prev = list->prev;
+            end->next = list;
+            list->prev = end;
+        }
+        else
+        {
+            auto prev = list;
+            auto cur = list->next;
+            while (less(cur, begin))
+            {
+                prev = cur;
+                cur = cur->next;
+            }
+            FOONATHAN_MEMORY_ASSERT(greater(cur, end));
+            FOONATHAN_MEMORY_ASSERT(prev == list || less(prev, begin));
+            prev->next = begin;
+            begin->prev = prev;
+            end->next = cur;
+            cur->prev = end;
+        }
     }
 }
 
@@ -333,30 +357,41 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
     return nullptr;
 }
 
+chunk* small_free_memory_list::find_chunk_impl(unsigned char *node, chunk_base *first, chunk_base *last) FOONATHAN_NOEXCEPT
+{
+    auto actual_size = node_size_ + 2 * fence_size();
+
+    do
+    {
+        if (auto c = from_chunk(first, &base_, node, actual_size))
+            return c;
+        else if (auto c = from_chunk(last, &base_, node, actual_size))
+            return c;
+
+        first = first->next;
+        last = last->prev;
+    } while (!greater(first, last));
+    return nullptr;
+}
+
 chunk* small_free_memory_list::find_chunk_impl(unsigned char *node) FOONATHAN_NOEXCEPT
 {
     auto actual_size = node_size_ + 2 * fence_size();
 
-    auto c = make_chunk(dealloc_chunk_, &base_);
-    if (c && c->from(node, actual_size))
+    if (auto c = from_chunk(dealloc_chunk_, &base_, node, actual_size))
         return c;
-    c = make_chunk(alloc_chunk_, &base_);
-    if (c && c->from(node, actual_size))
+    else if (auto c = from_chunk(alloc_chunk_, &base_, node, actual_size))
         return c;
-
-    auto cur_forward = dealloc_chunk_->next;
-    auto cur_backward = dealloc_chunk_->prev;
-
-    do
+    else if (less(dealloc_chunk_, node))
     {
-        if (auto c = from_chunk(cur_forward, &base_, node, actual_size))
-            return c;
-        else if (auto c = from_chunk(cur_backward, &base_, node, actual_size))
-            return c;
-
-        cur_forward = cur_forward->next;
-        cur_backward = cur_backward->next;
-    } while (cur_forward != cur_backward);
-
+        // node is in (dealloc_chunk_, base_.prev]
+        return find_chunk_impl(node, dealloc_chunk_->next, base_.prev);
+    }
+    else if (greater(dealloc_chunk_, node))
+    {
+        // node is in [base.next, dealloc_chunk_)
+        return find_chunk_impl(node, base_.next, dealloc_chunk_->prev);
+    }
+    FOONATHAN_MEMORY_UNREACHABLE("must be in one half");
     return nullptr;
 }

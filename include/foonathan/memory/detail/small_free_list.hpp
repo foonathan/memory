@@ -110,6 +110,7 @@ namespace foonathan { namespace memory
             std::size_t fence_size() const FOONATHAN_NOEXCEPT;
 
             chunk* find_chunk_impl(std::size_t n = 1) FOONATHAN_NOEXCEPT;
+            chunk* find_chunk_impl(unsigned char *node, chunk_base *first, chunk_base *last) FOONATHAN_NOEXCEPT;
             chunk* find_chunk_impl(unsigned char *node) FOONATHAN_NOEXCEPT;
 
             chunk_base base_;

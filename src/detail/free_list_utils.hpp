@@ -100,19 +100,19 @@ namespace foonathan { namespace memory
 
         //=== sorted list utils ===//
         // if std::less/std::greater not available compare integer representation and hope it works
-        inline bool less(char *a, char *b) FOONATHAN_NOEXCEPT
+        inline bool less(void *a, void *b) FOONATHAN_NOEXCEPT
         {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
-            return std::less<char*>()(a, b);
+            return std::less<void*>()(a, b);
 #else
             return to_int(a) < to_int(b);
 #endif
         }
 
-        inline bool greater(char *a, char *b) FOONATHAN_NOEXCEPT
+        inline bool greater(void *a, void *b) FOONATHAN_NOEXCEPT
         {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
-            return std::greater<char*>()(a, b);
+            return std::greater<void*>()(a, b);
 #else
             return to_int(a) < to_int(b);
 #endif
