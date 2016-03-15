@@ -52,17 +52,15 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // must not be called
-            void* allocate(std::size_t) FOONATHAN_NOEXCEPT
-            {
-                return nullptr;
-            }
+            // returns a memory block big enough for n bytes
+            // might fail even if capacity is sufficient
+            void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
             // deallocates a single block
             void deallocate(void *ptr) FOONATHAN_NOEXCEPT;
 
-            // must not be called
-            void deallocate(void *, std::size_t) FOONATHAN_NOEXCEPT {}
+            // deallocates multiple blocks with n bytes total
+            void deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
             //=== getter ===//
             std::size_t node_size() const FOONATHAN_NOEXCEPT
@@ -86,6 +84,7 @@ namespace foonathan { namespace memory
 
         private:
             std::size_t fence_size() const FOONATHAN_NOEXCEPT;
+            void insert_impl(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
             char *first_;
             std::size_t node_size_, capacity_;

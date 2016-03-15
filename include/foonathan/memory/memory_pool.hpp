@@ -187,7 +187,6 @@ namespace foonathan { namespace memory
                 allocate_block();
                 mem = free_list_.allocate(n * node_size);
                 if (!mem)
-                    // generic: bad size
                     FOONATHAN_THROW(bad_array_size(info(), n * node_size, capacity_left()));
             }
             return mem;

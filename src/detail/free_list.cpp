@@ -15,6 +15,112 @@
 using namespace foonathan::memory;
 using namespace detail;
 
+namespace
+{
+    // i.e. array
+    struct interval
+    {
+        char *prev; // last before
+        char *first; // first in
+        char *last; // last in
+        char *next; // first after
+
+        // number of nodes in the interval
+        std::size_t size(std::size_t node_size) const FOONATHAN_NOEXCEPT
+        {
+            // last is inclusive, so add actual_size to it
+            // note: cannot use next, might not be directly after
+            auto end = last + node_size;
+            FOONATHAN_MEMORY_ASSERT((end - first) % node_size == 0u);
+            return (end - first) / node_size;
+        }
+    };
+
+    // searches for n consecutive bytes
+    // begin and end are the proxy nodes
+    // assumes list is not empty
+    // similar to list_search_array()
+    interval list_search_array(char *first,
+                               std::size_t bytes_needed, std::size_t node_size) FOONATHAN_NOEXCEPT
+    {
+        interval i;
+        i.prev = nullptr;
+        i.first = first;
+        // i.last/next are used as iterator for the end of the interval
+        i.last = first;
+        i.next = list_get_next(first);
+
+        auto bytes_so_far = node_size;
+        while (i.next)
+        {
+            if (i.last + node_size != i.next) // not continous
+            {
+                // restart at next
+                i.prev = i.last;
+                i.first = i.next;
+                i.last = i.next;
+                i.next = list_get_next(i.last);
+
+                bytes_so_far = node_size;
+            }
+            else
+            {
+                // extend interval
+                auto new_next = list_get_next(i.next);
+                i.last = i.next;
+                i.next = new_next;
+
+                bytes_so_far += node_size;
+                if (bytes_so_far >= bytes_needed)
+                    return i;
+            }
+        }
+        // not enough continuous space
+        return {nullptr, nullptr, nullptr, nullptr};
+    }
+
+    // similar to list_search_array()
+    // begin/end are proxy nodes
+    interval xor_list_search_array(char *begin, char *end,
+                                   std::size_t bytes_needed, std::size_t node_size) FOONATHAN_NOEXCEPT
+    {
+        interval i;
+        i.prev = begin;
+        i.first = xor_list_get_other(begin, nullptr);
+        // i.last/next are used as iterator for the end of the interval
+        i.last = i.first;
+        i.next = xor_list_get_other(i.last, i.prev);
+
+        auto bytes_so_far = node_size;
+        while (i.next != end)
+        {
+            if (i.last + node_size != i.next) // not continous
+            {
+                // restart at i.next
+                i.prev = i.last;
+                i.first = i.next;
+                i.last = i.next;
+                i.next = xor_list_get_other(i.first, i.prev);
+
+                bytes_so_far = node_size;
+            }
+            else
+            {
+                // extend interval
+                auto new_next = xor_list_get_other(i.next, i.last);
+                i.last = i.next;
+                i.next = new_next;
+
+                bytes_so_far += node_size;
+                if (bytes_so_far >= bytes_needed)
+                    return i;
+            }
+        }
+        // not enough continuous space
+        return {nullptr, nullptr, nullptr, nullptr};
+    }
+}
+
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
 
@@ -57,7 +163,75 @@ void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
 {
     FOONATHAN_MEMORY_ASSERT(mem);
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, alignment()));
+    detail::debug_fill_internal(mem, size, false);
 
+    insert_impl(mem, size);
+}
+
+void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
+{
+    FOONATHAN_MEMORY_ASSERT(!empty());
+    --capacity_;
+
+    auto mem = first_;
+    first_ = list_get_next(first_);
+    return debug_fill_new(mem, node_size_, fence_size());
+}
+
+void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
+{
+    FOONATHAN_MEMORY_ASSERT(!empty());
+    if (n <= node_size_)
+        return allocate();
+
+    auto actual_size = node_size_ + 2 * fence_size();
+
+    auto i = list_search_array(first_, n + 2 * fence_size(), actual_size);
+    if (i.first == nullptr)
+        return nullptr;
+
+    if (i.prev)
+        list_set_next(i.prev, i.next); // change next from previous to first after
+    else
+        first_ = i.next;
+    capacity_ -= i.size(actual_size);
+
+    return debug_fill_new(i.first, n, fence_size());
+}
+
+void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
+{
+    ++capacity_;
+
+    auto node = static_cast<char*>(debug_fill_free(ptr, node_size_, fence_size()));
+    list_set_next(node, first_);
+    first_ = node;
+}
+
+void free_memory_list::deallocate(void *ptr, std::size_t n) FOONATHAN_NOEXCEPT
+{
+    if (n <= node_size_)
+        deallocate(ptr);
+    else
+    {
+        auto mem = debug_fill_free(ptr, n, fence_size());
+        insert_impl(mem, n + 2 * fence_size());
+    }
+}
+
+std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return alignment_for(node_size_);
+}
+
+std::size_t free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
+{
+    // alignment is fence size
+    return debug_fence_size ? alignment() : 0u;
+}
+
+void free_memory_list::insert_impl(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
+{
     auto actual_size = node_size_ + 2 * fence_size();
     auto no_nodes = size / actual_size;
     FOONATHAN_MEMORY_ASSERT(no_nodes > 0);
@@ -74,41 +248,11 @@ void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
     capacity_ += no_nodes;
 }
 
-void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
-{
-    FOONATHAN_MEMORY_ASSERT(!empty());
-    --capacity_;
-
-    auto mem = first_;
-    first_ = list_get_next(first_);
-    return debug_fill_new(mem, node_size_, fence_size());
-}
-
-void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
-{
-    ++capacity_;
-
-    auto node = static_cast<char*>(debug_fill_free(ptr, node_size_, fence_size()));
-    list_set_next(node, first_);
-    first_ = node;
-}
-
-std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
-{
-    return alignment_for(node_size_);
-}
-
-std::size_t free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
-{
-    // alignment is fence size
-    return debug_fence_size ? alignment() : 0u;
-}
-
 namespace
 {
     // converts a block into a linked list
-    void link_block(void *memory, std::size_t node_size, std::size_t no_nodes,
-                    char *prev, char *next) FOONATHAN_NOEXCEPT
+    void xor_link_block(void *memory, std::size_t node_size, std::size_t no_nodes,
+                        char *prev, char *next) FOONATHAN_NOEXCEPT
     {
         auto cur = static_cast<char*>(memory);
         xor_list_change(prev, next, cur); // change next pointer of prev
@@ -198,56 +342,6 @@ namespace
 
         FOONATHAN_MEMORY_UNREACHABLE("memory must be in some half or outside");
         return {nullptr, nullptr};
-    }
-
-    struct interval
-    {
-        char *prev; // last before
-        char *first; // first in
-        char *last; // last in
-        char *next; // first after
-    };
-
-    // searches for n consecutive bytes
-    // begin and end are the proxy nodes
-    // assumes list is not empty
-    interval search_array(char *begin, char *end,
-                          std::size_t bytes_needed, std::size_t node_size) FOONATHAN_NOEXCEPT
-    {
-        interval i;
-        i.prev = begin;
-        i.first = xor_list_get_other(begin, nullptr);
-        // i.last/next are used as iterator for the end of the interval
-        i.last = i.first;
-        i.next = xor_list_get_other(i.last, i.prev);
-
-        auto bytes_so_far = node_size;
-        while (i.next != end)
-        {
-            if (i.last + node_size != i.next) // not continous
-            {
-                // restart at i.next
-                i.prev = i.last;
-                i.first = i.next;
-                i.last = i.next;
-                i.next = xor_list_get_other(i.first, i.prev);
-
-                bytes_so_far = node_size;
-            }
-            else
-            {
-                // extend interval
-                auto new_next = xor_list_get_other(i.next, i.last);
-                i.last = i.next;
-                i.next = new_next;
-
-                bytes_so_far += node_size;
-                if (bytes_so_far >= bytes_needed)
-                    return i;
-            }
-        }
-        // not enough continuous space
-        return {nullptr, nullptr, nullptr, nullptr};
     }
 }
 
@@ -377,15 +471,13 @@ void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
 
     auto actual_size = node_size_ + 2 * fence_size();
 
-    auto i = search_array(begin_node(), end_node(), n + 2 * fence_size(), actual_size);
+    auto i = xor_list_search_array(begin_node(), end_node(), n + 2 * fence_size(), actual_size);
     if (i.first == nullptr)
         return nullptr;
 
     xor_list_change(i.prev, i.first, i.next); // change next pointer from i.prev to i.next
     xor_list_change(i.next, i.last, i.prev); // change prev pointer from i.next to i.prev
-
-    // i.last is inclusive, so add actual_size to it
-    capacity_ -= (i.last + actual_size - i.first) / actual_size;
+    capacity_ -= i.size(actual_size);
 
     if (less(i.prev, last_dealloc_) && less(last_dealloc_, i.next))
     {
@@ -447,7 +539,7 @@ char* ordered_free_memory_list::insert_impl(void *mem, std::size_t size) FOONATH
                       begin_node(), end_node(),
                       last_dealloc_, last_dealloc_prev_);
 
-    link_block(mem, actual_size, no_nodes, p.prev, p.next);
+    xor_link_block(mem, actual_size, no_nodes, p.prev, p.next);
     capacity_ += no_nodes;
 
     if (p.prev == last_dealloc_prev_)
