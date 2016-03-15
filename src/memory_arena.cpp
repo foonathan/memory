@@ -7,23 +7,9 @@
 #include <new>
 
 #include "detail/align.hpp"
-#include "error.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
-
-struct memory_block_stack::node
-{
-    node *prev;
-    std::size_t usable_size;
-
-    node(node *prev, std::size_t size) FOONATHAN_NOEXCEPT
-    : prev(prev), usable_size(size) {}
-
-    static const std::size_t div_alignment;
-    static const std::size_t mod_offset;
-    static const std::size_t offset;
-};
 
 const std::size_t memory_block_stack::node::div_alignment = sizeof(memory_block_stack::node) / max_alignment;
 const std::size_t memory_block_stack::node::mod_offset = sizeof(memory_block_stack::node) % max_alignment != 0u;
@@ -54,13 +40,6 @@ void memory_block_stack::steal_top(memory_block_stack &other) FOONATHAN_NOEXCEPT
     head_ = to_steal;
 }
 
-memory_block_stack::inserted_mb memory_block_stack::top() const FOONATHAN_NOEXCEPT
-{
-    FOONATHAN_MEMORY_ASSERT(head_);
-    auto mem = static_cast<void*>(head_);
-    return {static_cast<char*>(mem) + node::offset, head_->usable_size};
-}
-
 std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
 {
     std::size_t res = 0u;
@@ -68,7 +47,6 @@ std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
         ++res;
     return res;
 }
-
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
     template class foonathan::memory::memory_arena<static_block_allocator, true>;
