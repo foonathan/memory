@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
 
+#include <cstdlib>
+
 #include "../config.hpp"
 
 namespace foonathan { namespace memory
@@ -31,7 +33,7 @@ namespace foonathan { namespace memory
         #elif !defined(FOONATHAN_MEMORY_ASSERT)
             #define FOONATHAN_MEMORY_ASSERT(Expr)
             #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
-            #define FOONATHAN_MEMORY_UNREACHABLE(Msg) /* nothing */
+            #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
         #endif
     } // namespace detail
 }} // namespace foonathan::memory
