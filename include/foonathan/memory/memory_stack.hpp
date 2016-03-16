@@ -80,8 +80,8 @@ namespace foonathan { namespace memory
         {
             detail::check_allocation_size<bad_allocation_size>(size, next_capacity(), info());
 
-            auto fence = detail::debug_fence_size ? detail::max_alignment : 0u;
-            auto offset = detail::align_offset(stack_.top(), alignment);
+            auto fence = detail::debug_fence_size;
+            auto offset = detail::align_offset(stack_.top() + fence, alignment);
 
             if (fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
             {
@@ -99,7 +99,9 @@ namespace foonathan { namespace memory
             }
 
             FOONATHAN_MEMORY_ASSERT(detail::is_aligned(stack_.top(), alignment));
-            return stack_.bump_return(size);
+            auto mem = stack_.bump_return(size);
+            stack_.bump(fence, debug_magic::fence_memory);
+            return mem;
         }
 
         /// The marker type that is used for unwinding.

@@ -12,6 +12,7 @@
 #include "detail/assert.hpp"
 
 #if FOONATHAN_HOSTED_IMPLEMENTATION
+    #include <cstring>
     #include <functional>
 #endif
 
@@ -24,16 +25,28 @@ namespace foonathan { namespace memory
         inline std::uintptr_t get_int(void *address) FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_ASSERT(address);
-            FOONATHAN_MEMORY_ASSERT(is_aligned(address, FOONATHAN_ALIGNOF(std::uintptr_t)));
-            return *static_cast<std::uintptr_t *>(address);
+            std::uintptr_t res;
+        #if FOONATHAN_HOSTED_IMPLEMENTATION
+            std::memcpy(&res, address, sizeof(std::uintptr_t));
+        #else
+            auto mem = static_cast<char*>(static_cast<void*>(&res));
+            for (auto i = 0u; i != sizeof(std::uintptr_t); ++i)
+                mem[i] = static_cast<char*>(address)[i];
+        #endif
+            return res;
         }
 
         // sets stored integer value
         inline void set_int(void *address, std::uintptr_t i) FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_ASSERT(address);
-            FOONATHAN_MEMORY_ASSERT(is_aligned(address, FOONATHAN_ALIGNOF(std::uintptr_t)));
-            *static_cast<std::uintptr_t *>(address) = i;
+        #if FOONATHAN_HOSTED_IMPLEMENTATION
+            std::memcpy(address, &i, sizeof(std::uintptr_t));
+        #else
+            auto mem = static_cast<char*>(static_cast<void*>(&i));
+            for (auto i = 0u; i != sizeof(std::uintptr_t); ++i)
+                static_cast<char*>(address)[i] = mem[i];
+        #endif
         }
 
         // pointer to integer

@@ -226,8 +226,8 @@ std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 
 std::size_t free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 {
-    // alignment is fence size
-    return debug_fence_size ? alignment() : 0u;
+    // node size is fence size
+    return debug_fence_size ? node_size_ : 0u;
 }
 
 void free_memory_list::insert_impl(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -524,8 +524,8 @@ std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 
 std::size_t ordered_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 {
-    // alignment is fence size
-    return debug_fence_size ? alignment() : 0u;
+    // node size is fence size
+    return debug_fence_size ? node_size_ : 0u;
 }
 
 char* ordered_free_memory_list::insert_impl(void *mem, std::size_t size) FOONATHAN_NOEXCEPT

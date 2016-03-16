@@ -53,7 +53,7 @@ struct foonathan::memory::detail::chunk
     {
         auto begin = list_memory();
         auto end = list_memory() + no_nodes * node_size;
-        return begin <= node & node < end;
+        return (begin <= node) & (node < end);
     }
 
     // checks whether a node is already in this chunk
@@ -322,8 +322,8 @@ std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 
 std::size_t small_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 {
-    // fence size is alignment
-    return debug_fence_size ? alignment() : 0u;
+    // node size is fence size
+    return debug_fence_size ? node_size_ : 0u;
 }
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
