@@ -114,7 +114,9 @@ namespace foonathan { namespace memory
         /// \requires \c n must be valid \concept{concept_array,array count}.
         void* allocate_array(std::size_t n)
         {
-            detail::check_array_size(n * node_size(), pool_type::value ? next_capacity() : 0, info());
+            detail::check_allocation_size<bad_array_size>(n * node_size(),
+                                                          [&]{return pool_type::value ? next_capacity() : 0;},
+                                                          info());
             return allocate_array(n, node_size());
         }
 
@@ -232,8 +234,8 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
-            detail::check_node_size(size, max_node_size(state), state.info());
-            detail::check_alignment(alignment, max_alignment(state), state.info());
+            detail::check_allocation_size<bad_node_size>(size, max_node_size(state), state.info());
+            detail::check_allocation_size<bad_alignment>(alignment, [&]{return max_alignment(state);}, state.info());
             auto mem = state.allocate_node();
             state.on_allocate(size);
             return mem;
@@ -248,9 +250,9 @@ namespace foonathan { namespace memory
         static void* allocate_array(allocator_type &state, std::size_t count,
                              std::size_t size, std::size_t alignment)
         {
-            detail::check_node_size(size, max_node_size(state), state.info());
-            detail::check_alignment(alignment, max_alignment(state), state.info());
-            detail::check_array_size(count, max_array_size(state), state.info());
+            detail::check_allocation_size<bad_node_size>(size, max_node_size(state), state.info());
+            detail::check_allocation_size<bad_alignment>(alignment, [&]{return max_alignment(state);}, state.info());
+            detail::check_allocation_size<bad_array_size>(count * size, max_array_size(state), state.info());
             return allocate_array(PoolType{}, state, count, size);
         }
 

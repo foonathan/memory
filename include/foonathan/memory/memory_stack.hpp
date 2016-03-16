@@ -78,7 +78,7 @@ namespace foonathan { namespace memory
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, next_capacity(), info());
+            detail::check_allocation_size<bad_allocation_size>(size, next_capacity(), info());
 
             auto fence = detail::debug_fence_size ? detail::max_alignment : 0u;
             auto offset = detail::align_offset(stack_.top(), alignment);

@@ -68,6 +68,8 @@ else()
 endif()
 
 # other options
+option(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
+        "whether or not the size of the allocation will be checked" ON)
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
