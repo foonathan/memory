@@ -18,6 +18,15 @@ namespace foonathan { namespace memory
         {
             chunk_base *prev = this;
             chunk_base *next = this;
+
+            unsigned char first_free = 0; // first free node for the linked list
+            unsigned char capacity = 0; // total number of free nodes available
+            unsigned char no_nodes = 0; // total number of nodes in memory
+
+            chunk_base() FOONATHAN_NOEXCEPT = default;
+
+            chunk_base(unsigned char no) FOONATHAN_NOEXCEPT
+            : capacity(no), no_nodes(no) {}
         };
 
         struct chunk;

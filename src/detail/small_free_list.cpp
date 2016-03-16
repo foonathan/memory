@@ -23,14 +23,9 @@ struct foonathan::memory::detail::chunk
     static const std::size_t memory_offset;
     static const std::size_t max_nodes;
 
-    unsigned char first_free; // first free node for the linked list
-    unsigned char capacity; // total number of free nodes available
-    unsigned char no_nodes; // total number of nodes in memory
-
     // gives it the size of the memory block it is created in and the size of a node
     chunk(std::size_t total_memory, std::size_t node_size) FOONATHAN_NOEXCEPT
-    : first_free(0),
-      capacity(static_cast<unsigned char>((total_memory - memory_offset) / node_size)), no_nodes(capacity)
+    : chunk_base(static_cast<unsigned char>((total_memory - memory_offset) / node_size))
     {
         FOONATHAN_MEMORY_ASSERT((total_memory - memory_offset) / node_size <= max_nodes);
         FOONATHAN_MEMORY_ASSERT(capacity > 0);
@@ -58,7 +53,7 @@ struct foonathan::memory::detail::chunk
     {
         auto begin = list_memory();
         auto end = list_memory() + no_nodes * node_size;
-        return begin <= node && node < end;
+        return begin <= node & node < end;
     }
 
     // checks whether a node is already in this chunk
@@ -107,24 +102,22 @@ const std::size_t chunk::max_nodes
 namespace
 {
     // converts a chunk_base to a chunk (if it is one)
-    chunk* make_chunk(chunk_base *c, chunk_base *proxy_address) FOONATHAN_NOEXCEPT
+    chunk *make_chunk(chunk_base *c) FOONATHAN_NOEXCEPT
     {
-        return c == proxy_address ? nullptr : static_cast<chunk*>(c);
+        return static_cast<chunk*>(c);
     }
 
     // same as above but also requires a certain size
-    chunk* make_chunk(chunk_base *c, chunk_base *proxy_address, unsigned char size_needed) FOONATHAN_NOEXCEPT
+    chunk *make_chunk(chunk_base *c, unsigned char size_needed) FOONATHAN_NOEXCEPT
     {
-        auto res = make_chunk(c, proxy_address);
-        return res && res->capacity >= size_needed ? res : nullptr;
+        return c->capacity >= size_needed ? make_chunk(c) : nullptr;
     }
 
     // checks if memory was from a chunk, assumes chunk isn't proxy
-    chunk* from_chunk(chunk_base *c, chunk_base *proxy_address,
-                      unsigned char *node, std::size_t node_size) FOONATHAN_NOEXCEPT
+    chunk *from_chunk(chunk_base *c, unsigned char *node, std::size_t node_size) FOONATHAN_NOEXCEPT
     {
-        auto res = make_chunk(c, proxy_address);
-        return res && res->from(node, node_size) ? res : nullptr;
+        auto res = make_chunk(c);
+        return res->from(node, node_size) ? res : nullptr;
     }
 
     // inserts already interconnected chunks into the list
@@ -335,9 +328,9 @@ std::size_t small_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
 {
-    if (auto c = make_chunk(alloc_chunk_, &base_, n))
+    if (auto c = make_chunk(alloc_chunk_, n))
         return c;
-    else if (auto c = make_chunk(dealloc_chunk_, &base_, n))
+    else if (auto c = make_chunk(dealloc_chunk_, n))
         return c;
 
     auto cur_forward = alloc_chunk_->next;
@@ -345,15 +338,15 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
 
     do
     {
-        if (auto c = make_chunk(cur_forward, &base_, n))
+        if (auto c = make_chunk(cur_forward, n))
             return c;
-        else if (auto c = make_chunk(cur_backward, &base_, n))
+        else if (auto c = make_chunk(cur_backward, n))
             return c;
 
         cur_forward = cur_forward->next;
         cur_backward = cur_backward->next;
     } while (cur_forward != cur_backward);
-
+    FOONATHAN_MEMORY_UNREACHABLE("there is memory available somewhere...");
     return nullptr;
 }
 
@@ -363,9 +356,9 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char *node, chunk_base *
 
     do
     {
-        if (auto c = from_chunk(first, &base_, node, actual_size))
+        if (auto c = from_chunk(first, node, actual_size))
             return c;
-        else if (auto c = from_chunk(last, &base_, node, actual_size))
+        else if (auto c = from_chunk(last, node, actual_size))
             return c;
 
         first = first->next;
@@ -378,9 +371,9 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char *node) FOONATHAN_NO
 {
     auto actual_size = node_size_ + 2 * fence_size();
 
-    if (auto c = from_chunk(dealloc_chunk_, &base_, node, actual_size))
+    if (auto c = from_chunk(dealloc_chunk_, node, actual_size))
         return c;
-    else if (auto c = from_chunk(alloc_chunk_, &base_, node, actual_size))
+    else if (auto c = from_chunk(alloc_chunk_, node, actual_size))
         return c;
     else if (less(dealloc_chunk_, node))
     {
