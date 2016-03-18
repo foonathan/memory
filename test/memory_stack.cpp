@@ -35,7 +35,7 @@ TEST_CASE("memory_stack", "[stack]")
         auto m = stack.top();
 
         auto memory = stack.allocate(10, 16);
-        REQUIRE(detail::align_offset(memory, 16) == 0u);
+        REQUIRE(detail::is_aligned(memory, 16));
 
         stack.unwind(m);
         REQUIRE(stack.capacity_left() ==
@@ -45,7 +45,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }
-    SECTION("multiple blok allocation/unwind")
+    SECTION("multiple block allocation/unwind")
     {
         // note: tests are mostly hoping not to get a segfault
 

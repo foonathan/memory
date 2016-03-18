@@ -75,25 +75,6 @@ using namespace detail;
     {
         debug_fill(memory, size, free ? debug_magic::internal_freed_memory : debug_magic::internal_memory);
     }
-#else
-    void detail::debug_fill(void *, std::size_t, debug_magic) FOONATHAN_NOEXCEPT {}
-
-    void* detail::debug_is_filled(void *, std::size_t, debug_magic) FOONATHAN_NOEXCEPT
-    {
-        return nullptr;
-    }
-
-    void* detail::debug_fill_new(void *memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
-    {
-        return memory;
-    }
-
-    void* detail::debug_fill_free(void *memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
-    {
-        return static_cast<char*>(memory);
-    }
-
-    void detail::debug_fill_internal(void *, std::size_t, bool) FOONATHAN_NOEXCEPT {}
 #endif
 
 void detail::debug_handle_invalid_ptr(const allocator_info &info, void *ptr)

@@ -121,7 +121,12 @@ namespace foonathan { namespace memory
             void steal_top(memory_block_stack &other) FOONATHAN_NOEXCEPT;
 
             // returns the last pushed() inserted memory block
-            inserted_mb top() const FOONATHAN_NOEXCEPT;
+            inserted_mb top() const FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(head_);
+                auto mem = static_cast<void*>(head_);
+                return {static_cast<char*>(mem) + node::offset, head_->usable_size};
+            }
 
             bool empty() const FOONATHAN_NOEXCEPT
             {
@@ -132,7 +137,19 @@ namespace foonathan { namespace memory
             std::size_t size() const FOONATHAN_NOEXCEPT;
 
         private:
-            struct node;
+            struct node
+            {
+                node *prev;
+                std::size_t usable_size;
+
+                node(node *prev, std::size_t size) FOONATHAN_NOEXCEPT
+                : prev(prev), usable_size(size) {}
+
+                static const std::size_t div_alignment;
+                static const std::size_t mod_offset;
+                static const std::size_t offset;
+            };
+
             node *head_;
         };
 

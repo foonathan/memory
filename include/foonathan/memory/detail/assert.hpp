@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
 
+#include <cstdlib>
+
 #include "../config.hpp"
 
 namespace foonathan { namespace memory
@@ -29,9 +31,9 @@ namespace foonathan { namespace memory
                 #define FOONATHAN_MEMORY_UNREACHABLE(Msg) \
                     detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__,  __LINE__, __func__)
         #elif !defined(FOONATHAN_MEMORY_ASSERT)
-            #define FOONATHAN_MEMORY_ASSERT(Expr) static_cast<void>(Expr)
-            #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg) static_cast<void>(Expr)
-            #define FOONATHAN_MEMORY_UNREACHABLE(Msg) /* nothing */
+            #define FOONATHAN_MEMORY_ASSERT(Expr)
+            #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
+            #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
         #endif
     } // namespace detail
 }} // namespace foonathan::memory

@@ -50,8 +50,8 @@ set(src
         detail/assert.cpp
         detail/free_list.cpp
         detail/free_list_array.cpp
+        detail/free_list_utils.hpp
         detail/ilog2.hpp
-        detail/memory_stack.cpp
         detail/small_free_list.cpp
         debugging.cpp
         error.cpp

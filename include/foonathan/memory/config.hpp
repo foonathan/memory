@@ -70,6 +70,11 @@
     /// \ingroup memory core
     #define FOONATHAN_MEMORY_VERSION (FOONATHAN_MEMORY_VERSION_MAJOR * 100 + FOONATHAN_MEMORY_VERSION_MINOR)
 
+    /// Whether or not the allocation size will be checked,
+    /// i.e. the \ref bad_allocation_size thrown.
+    /// \ingroup memory core
+    #define FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE 1
+
     /// Whether or not the \ref foonathan::memory::default_mutex will be \c std::mutex or \ref foonathan::memory::no_mutex.
     /// \ingroup memory core
     #define FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE 1
