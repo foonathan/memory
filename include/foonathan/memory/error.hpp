@@ -139,6 +139,7 @@ namespace foonathan { namespace memory
     /// because the maximum functions return an upper bound and not the actual supported maximum size,
     /// since it always depends on fence memory, alignment buffer and the like.
     /// \note A user should only \c catch for \c bad_allocation_size, not the derived classes.
+    /// \note Most checks will only be done if \ref FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE is \c true.
     /// \ingroup memory core
     class bad_allocation_size : public std::bad_alloc
     {
@@ -254,28 +255,24 @@ namespace foonathan { namespace memory
 
     namespace detail
     {
-        inline void check_allocation_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        template <class Ex, typename Func>
+        void check_allocation_size(std::size_t passed, Func f, const allocator_info &info)
         {
+        #if FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
+            auto supported = f();
             if (passed > supported)
-                FOONATHAN_THROW(bad_allocation_size(info, passed, supported));
+                FOONATHAN_THROW(Ex(info, passed, supported));
+        #else
+            (void)passed;
+            (void)f;
+            (void)info;
+        #endif
         }
 
-        inline void check_node_size(std::size_t passed, std::size_t supported, const allocator_info &info)
+        template <class Ex>
+        void check_allocation_size(std::size_t passed, std::size_t supported, const allocator_info &info)
         {
-            if (passed > supported)
-                FOONATHAN_THROW(bad_node_size(info, passed, supported));
-        }
-
-        inline void check_array_size(std::size_t passed, std::size_t supported, const allocator_info &info)
-        {
-            if (passed > supported)
-                FOONATHAN_THROW(bad_array_size(info, passed, supported));
-        }
-
-        inline void check_alignment(std::size_t passed, std::size_t supported, const allocator_info &info)
-        {
-            if (passed > supported)
-                FOONATHAN_THROW(bad_alignment(info, passed, supported));
+            check_allocation_size<Ex>(passed, [&]{return supported;}, info);
         }
     } // namespace detail
 }} // namespace foonathan::memory

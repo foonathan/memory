@@ -5,11 +5,14 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED
 
+#include <cstdint>
+
 #include <foonathan/alignas.hpp>
 #include <foonathan/alignof.hpp>
 #include <foonathan/max_align_t.hpp>
 
 #include "../config.hpp"
+#include "assert.hpp"
 
 namespace foonathan { namespace memory
 {
@@ -23,7 +26,13 @@ namespace foonathan { namespace memory
 
         // returns the offset needed to align ptr for given alignment
         // alignment must be valid
-        std::size_t align_offset(void *ptr, std::size_t alignment) FOONATHAN_NOEXCEPT;
+        inline std::size_t align_offset(void *ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
+        {
+            FOONATHAN_MEMORY_ASSERT(is_valid_alignment(alignment));
+            auto address = reinterpret_cast<std::uintptr_t>(ptr);
+            auto misaligned = address & (alignment - 1);
+            return misaligned != 0 ? (alignment - misaligned) : 0;
+        }
 
         // whether or not the pointer is aligned for given alignment
         // alignment must be valid

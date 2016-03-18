@@ -4,7 +4,7 @@
 
 # builds test
 
-add_executable(foonathan_memory_profiling profiling.cpp)
+add_executable(foonathan_memory_profiling benchmark.hpp profiling.cpp)
 target_link_libraries(foonathan_memory_profiling foonathan_memory)
 target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)

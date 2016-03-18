@@ -110,7 +110,7 @@ namespace foonathan { namespace memory
         /// \returns The result of \ref temporary_allocator::allocate().
         static void* allocate_node(allocator_type &state, std::size_t size, std::size_t alignment)
         {
-            detail::check_node_size(size, max_node_size(state),
+            detail::check_allocation_size<bad_node_size>(size, [&]{return max_node_size(state);},
                 {FOONATHAN_MEMORY_LOG_PREFIX "::temporary_allocator", &state});
             return state.allocate(size, alignment);
         }

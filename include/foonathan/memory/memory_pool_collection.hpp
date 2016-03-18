@@ -120,7 +120,7 @@ namespace foonathan { namespace memory
         /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed or a \ref bad_node_size exception if the node size is too big.
         void* allocate_node(std::size_t node_size)
         {
-            detail::check_node_size(node_size, max_node_size(), info());
+            detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
@@ -138,9 +138,10 @@ namespace foonathan { namespace memory
         /// \c node_size must be valid \concept{concept_node,node size}.
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
-            detail::check_node_size(node_size, max_node_size(), info());
-            detail::check_allocation_size(count * node_size, PoolType::value ? next_capacity() : 0u,
-                                          info());
+            detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
+            detail::check_allocation_size<bad_array_size>(count * node_size,
+                                                          [&]{return PoolType::value ? next_capacity() : 0u;},
+                                                          info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
@@ -323,8 +324,8 @@ namespace foonathan { namespace memory
         static void* allocate_node(allocator_type &state,
                                 std::size_t size, std::size_t alignment)
         {
-            detail::check_node_size(size, max_node_size(state), state.info());
-            detail::check_alignment(alignment, detail::alignment_for(size), state.info());
+            // node already checked
+            detail::check_allocation_size<bad_alignment>(alignment, [&]{return detail::alignment_for(size);}, state.info());
             auto mem = state.allocate_node(size);
             state.on_allocate(size);
             return mem;
@@ -337,7 +338,7 @@ namespace foonathan { namespace memory
                              std::size_t size, std::size_t alignment)
         {
             // node and array already checked
-            detail::check_alignment(alignment, max_alignment(state), state.info());
+            detail::check_allocation_size<bad_alignment>(alignment, [&]{return detail::alignment_for(size);}, state.info());
             return allocate_array(Pool{}, state, count, size);
         }
 

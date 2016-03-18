@@ -4,19 +4,10 @@
 
 #include "detail/align.hpp"
 
-#include "detail/assert.hpp"
 #include "ilog2.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
-
-std::size_t foonathan::memory::detail::align_offset(void *ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
-{
-    FOONATHAN_MEMORY_ASSERT(is_valid_alignment(alignment));
-    auto address = reinterpret_cast<std::uintptr_t>(ptr);
-    auto misaligned = address & (alignment - 1);
-    return misaligned != 0 ? (alignment - misaligned) : 0;
-}
 
 bool foonathan::memory::detail::is_aligned(void *ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
 {

@@ -63,10 +63,9 @@ namespace foonathan { namespace memory
         template <typename ... Args>
         explicit memory_stack(std::size_t block_size,
                         Args&&... args)
-        : arena_(block_size, detail::forward<Args>(args)...)
-        {
-            allocate_block();
-        }
+        : arena_(block_size, detail::forward<Args>(args)...),
+          stack_(arena_.allocate_block().memory)
+        {}
 
         /// \effects Allocates a memory block of given size and alignment.
         /// It simply moves the top marker.
@@ -79,14 +78,29 @@ namespace foonathan { namespace memory
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size(size, next_capacity(), info());
-            auto mem = stack_.allocate(block_end(), size, alignment);
-            if (!mem)
+            detail::check_allocation_size<bad_allocation_size>(size, next_capacity(), info());
+
+            auto fence = detail::debug_fence_size;
+            auto offset = detail::align_offset(stack_.top() + fence, alignment);
+
+            if (fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
             {
-                allocate_block();
-                mem = stack_.allocate(block_end(), size, alignment);
-                FOONATHAN_MEMORY_ASSERT(mem);
+                stack_.bump(fence, debug_magic::fence_memory);
+                stack_.bump(offset, debug_magic::alignment_memory);
             }
+            else
+            {
+                auto block = arena_.allocate_block();
+                FOONATHAN_MEMORY_ASSERT_MSG(fence + size + fence <= block.size, "new block size not big enough");
+
+                stack_ = detail::fixed_memory_stack(block.memory);
+                // no need to align, block should be aligned for maximum
+                stack_.bump(fence, debug_magic::fence_memory);
+            }
+
+            FOONATHAN_MEMORY_ASSERT(detail::is_aligned(stack_.top(), alignment));
+            auto mem = stack_.bump_return(size);
+            stack_.bump(fence, debug_magic::fence_memory);
             return mem;
         }
 
@@ -178,11 +192,6 @@ namespace foonathan { namespace memory
         allocator_info info() const FOONATHAN_NOEXCEPT
         {
             return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_stack", this};
-        }
-
-        void allocate_block()
-        {
-            stack_ = detail::fixed_memory_stack(arena_.allocate_block().memory);
         }
 
         const char* block_end() const FOONATHAN_NOEXCEPT

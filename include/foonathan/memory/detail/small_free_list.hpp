@@ -8,46 +8,28 @@
 #include <cstddef>
 
 #include "../config.hpp"
+#include "utility.hpp"
 
 namespace foonathan { namespace memory
 {
     namespace detail
     {
-        // a chunk in the free list
-        struct chunk;
-
-        // a list of chunks
-        class chunk_list
+        struct chunk_base
         {
-        public:
-            chunk_list() FOONATHAN_NOEXCEPT = default;
-            chunk_list(chunk_list &&other) FOONATHAN_NOEXCEPT;
-            ~chunk_list() FOONATHAN_NOEXCEPT = default;
+            chunk_base *prev = this;
+            chunk_base *next = this;
 
-            chunk_list& operator=(chunk_list &&other) FOONATHAN_NOEXCEPT;
+            unsigned char first_free = 0; // first free node for the linked list
+            unsigned char capacity = 0; // total number of free nodes available
+            unsigned char no_nodes = 0; // total number of nodes in memory
 
-            friend void swap(chunk_list &a, chunk_list &b) FOONATHAN_NOEXCEPT;
+            chunk_base() FOONATHAN_NOEXCEPT = default;
 
-            // inserts a new chunk into the list
-            void insert(chunk *c) FOONATHAN_NOEXCEPT;
-
-            // inserts the next chunk from another list
-            chunk* insert(chunk_list &other) FOONATHAN_NOEXCEPT;
-
-            // returns the next chunk
-            chunk* top() const FOONATHAN_NOEXCEPT
-            {
-                return first_;
-            }
-
-            bool empty() const FOONATHAN_NOEXCEPT
-            {
-                return first_ == nullptr;
-            }
-
-        private:
-            chunk *first_ = nullptr;
+            chunk_base(unsigned char no) FOONATHAN_NOEXCEPT
+            : capacity(no), no_nodes(no) {}
         };
+
+        struct chunk;
 
         // the same as free_memory_list but optimized for small node sizes
         // it is slower and does not support arrays
@@ -73,7 +55,12 @@ namespace foonathan { namespace memory
 
             ~small_free_memory_list() FOONATHAN_NOEXCEPT = default;
 
-            small_free_memory_list& operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT;
+            small_free_memory_list& operator=(small_free_memory_list &&other) FOONATHAN_NOEXCEPT
+            {
+                small_free_memory_list tmp(detail::move(other));
+                swap(*this, tmp);
+                return *this;
+            }
 
             friend void swap(small_free_memory_list &a, small_free_memory_list &b) FOONATHAN_NOEXCEPT;
 
@@ -103,10 +90,19 @@ namespace foonathan { namespace memory
             // returns false, if there is none like that
             // never fails for n == 1 if not empty()
             // pre: capacity() >= n * node_size()
-            bool find_chunk(std::size_t n) FOONATHAN_NOEXCEPT;
+            bool find_chunk(std::size_t n) FOONATHAN_NOEXCEPT
+            {
+                return find_chunk_impl(n) != nullptr;
+            }
 
             //=== getter ===//
-            std::size_t node_size() const FOONATHAN_NOEXCEPT;
+            std::size_t node_size() const FOONATHAN_NOEXCEPT
+            {
+                return node_size_;
+            }
+
+            // the alignment of all nodes
+            std::size_t alignment() const FOONATHAN_NOEXCEPT;
 
             // number of nodes remaining
             std::size_t capacity() const FOONATHAN_NOEXCEPT
@@ -119,23 +115,20 @@ namespace foonathan { namespace memory
                 return capacity_ == 0u;
             }
 
-            // the alignment of all nodes
-            std::size_t alignment() const FOONATHAN_NOEXCEPT;
-
         private:
-            // finds the chunk from which memory is and returns it
-            // starts at dealloc_chunk_ and goes in both directions
-            // returns nullptr if no chunk
-            chunk* chunk_for(void *memory) FOONATHAN_NOEXCEPT;
+            std::size_t fence_size() const FOONATHAN_NOEXCEPT;
 
-            // node size with fence
-            std::size_t node_fence_size() const FOONATHAN_NOEXCEPT;
+            chunk* find_chunk_impl(std::size_t n = 1) FOONATHAN_NOEXCEPT;
+            chunk* find_chunk_impl(unsigned char *node, chunk_base *first, chunk_base *last) FOONATHAN_NOEXCEPT;
+            chunk* find_chunk_impl(unsigned char *node) FOONATHAN_NOEXCEPT;
 
-            chunk_list unused_chunks_, used_chunks_;
-            chunk *alloc_chunk_, *dealloc_chunk_;
-
+            chunk_base base_;
             std::size_t node_size_, capacity_;
+            chunk_base *alloc_chunk_, *dealloc_chunk_;
         };
+
+        // for some reason, this is required in order to define it
+        void swap(small_free_memory_list &a, small_free_memory_list &b) FOONATHAN_NOEXCEPT;
     } // namespace detail
 }} // namespace foonathan::memory
 
