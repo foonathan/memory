@@ -114,8 +114,11 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
     benchmark_array<Second, Tail...>(counts, node_sizes, array_sizes);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc >= 2)
+        sample_size = std::size_t(std::atoi(argv[1]));
+
     class comma_numpunct : public std::numpunct<char>
     {
     protected:
