@@ -479,7 +479,8 @@ void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     xor_list_change(i.next, i.last, i.prev); // change prev pointer from i.next to i.prev
     capacity_ -= i.size(actual_size);
 
-    if (less(i.prev, last_dealloc_) && less(last_dealloc_, i.next))
+    // if last_dealloc_ points into the array being removed
+    if (less_equal(i.first, last_dealloc_) && less_equal(last_dealloc_, i.last))
     {
         // move last_dealloc just outside range
         last_dealloc_ = i.next;
