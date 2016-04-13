@@ -26,7 +26,7 @@ std::size_t measure(F func, Args&&... args)
     return std::size_t(duration.count());
 }
 
-const std::size_t sample_size = 1024u;
+std::size_t sample_size = 1024u;
 
 template<typename F, typename Alloc, typename ... Args>
 std::size_t benchmark(F measure_func, Alloc make_alloc, Args&& ... args)

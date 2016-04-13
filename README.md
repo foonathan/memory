@@ -40,7 +40,7 @@ In addition:
 ## Basic example
 
 ```cpp
-include <algorithm>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 

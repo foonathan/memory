@@ -122,6 +122,11 @@ namespace foonathan { namespace memory
 #endif
         }
 
+        inline bool less_equal(void *a, void *b) FOONATHAN_NOEXCEPT
+        {
+            return a == b || less(a, b);
+        }
+
         inline bool greater(void *a, void *b) FOONATHAN_NOEXCEPT
         {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
@@ -129,6 +134,11 @@ namespace foonathan { namespace memory
 #else
             return to_int(a) < to_int(b);
 #endif
+        }
+
+        inline bool greater_equal(void *a, void *b) FOONATHAN_NOEXCEPT
+        {
+            return a == b || greater(a, b);
         }
     } // namespace detail
 }} // namespace foonathan::memory

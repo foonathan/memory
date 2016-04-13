@@ -344,8 +344,10 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
             return c;
 
         cur_forward = cur_forward->next;
-        cur_backward = cur_backward->next;
-    } while (cur_forward != cur_backward);
+        cur_backward = cur_backward->prev;
+        FOONATHAN_MEMORY_ASSERT(cur_forward != alloc_chunk_);
+        FOONATHAN_MEMORY_ASSERT(cur_backward != alloc_chunk_);
+    } while (true);
     FOONATHAN_MEMORY_UNREACHABLE("there is memory available somewhere...");
     return nullptr;
 }
