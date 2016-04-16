@@ -139,9 +139,7 @@ namespace foonathan { namespace memory
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
             detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
-            detail::check_allocation_size<bad_array_size>(count * node_size,
-                                                          [&]{return PoolType::value ? next_capacity() : 0u;},
-                                                          info());
+
             auto& pool = pools_.get(node_size);
             if (pool.empty())
                 reserve_impl(pool, def_capacity());
@@ -208,16 +206,15 @@ namespace foonathan { namespace memory
         /// \returns The amount of memory available in the arena not inside the free lists.
         /// This is the number of bytes that can be inserted into the free lists
         /// without requesting more memory from the \concept{concept_blockallocator,BlockAllocator}.
-        /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
+        /// \note Array allocations may lead to a growth even if the capacity is big enough.
         std::size_t capacity() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(block_end() - stack_.top());
         }
 
-        /// \returns The size of the next memory block after the free list gets empty and the arena grows.
-        /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
-        /// but it is an upper bound to it.
+        /// \returns The size of the next memory block after \ref capacity() arena grows.
+        /// This is the amount of memory that can be distributed in the pools.
+        /// \note If the `PoolType` is \ref small_node_pool, the exact usable memory is lower than that.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return arena_.next_block_size();

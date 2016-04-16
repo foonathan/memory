@@ -277,6 +277,17 @@ void small_free_memory_list::insert(void *mem, std::size_t size) FOONATHAN_NOEXC
     capacity_ += new_nodes;
 }
 
+std::size_t small_free_memory_list::usable_size(std::size_t size) const FOONATHAN_NOEXCEPT
+{
+    auto actual_size = node_size_ + 2 * fence_size();
+    auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
+    auto no_chunks = size / total_chunk_size;
+    auto remainder = size % total_chunk_size;
+
+    return no_chunks * chunk::max_nodes * actual_size
+           + (remainder > chunk::memory_offset ? remainder - chunk::memory_offset : 0u);
+}
+
 void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 {
     auto chunk = find_chunk_impl(1);

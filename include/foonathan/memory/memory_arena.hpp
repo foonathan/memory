@@ -111,6 +111,9 @@ namespace foonathan { namespace memory
             // the inserted block slightly smaller to allow for the fixup value
             using inserted_mb = memory_block;
 
+            // how much an inserted block is smaller
+            static const std::size_t implementation_offset;
+
             // pushes a memory block
             void push(allocated_mb block) FOONATHAN_NOEXCEPT;
 
@@ -169,6 +172,12 @@ namespace foonathan { namespace memory
             {
                 return cached_.size();
             }
+
+            std::size_t cached_block_size() const FOONATHAN_NOEXCEPT
+            {
+                return cached_.top().size;
+            }
+
             bool take_from_cache(detail::memory_block_stack &used) FOONATHAN_NOEXCEPT
             {
                 if (cached_.empty())
@@ -210,6 +219,11 @@ namespace foonathan { namespace memory
             }
 
             std::size_t cache_size() const FOONATHAN_NOEXCEPT
+            {
+                return 0u;
+            }
+
+            std::size_t cached_block_size() const FOONATHAN_NOEXCEPT
             {
                 return 0u;
             }
@@ -362,11 +376,13 @@ namespace foonathan { namespace memory
         }
 
         /// \returns The size of the next memory block,
-        /// i.e. of the next call to \ref allocate_block() if it does not use the cache.
-        /// This simply forwards to the \concept{concept_blockallocator,BlockAllocator}.
+        /// i.e. of the next call to \ref allocate_block().
+        /// If there are blocks in the cache, returns size of the next one.
+        /// Otherwise forwards to the \concept{concept_blockallocator,BlockAllocator} and subtracts an implementation offset.
         std::size_t next_block_size() const FOONATHAN_NOEXCEPT
         {
-            return allocator_type::next_block_size();
+            return this->cache_empty() ? allocator_type::next_block_size() - detail::memory_block_stack::implementation_offset
+                                       : this->cached_block_size();
         }
 
         /// \returns A reference of the \concept{concept_blockallocator,BlockAllocator} object.

@@ -48,6 +48,13 @@ namespace foonathan { namespace memory
             // pre: size != 0
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
+            // returns the usable size
+            // i.e. how many memory will be actually inserted and usable on a call to insert()
+            std::size_t usable_size(std::size_t size) const FOONATHAN_NOEXCEPT
+            {
+                return size;
+            }
+
             // returns a single block from the list
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
@@ -130,6 +137,13 @@ namespace foonathan { namespace memory
             // mem must be aligned for alignment()
             // pre: size != 0
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
+
+            // returns the usable size
+            // i.e. how many memory will be actually inserted and usable on a call to insert()
+            std::size_t usable_size(std::size_t size) const FOONATHAN_NOEXCEPT
+            {
+                return size;
+            }
 
             // returns a single block from the list
             // pre: !empty()

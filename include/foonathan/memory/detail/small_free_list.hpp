@@ -69,6 +69,10 @@ namespace foonathan { namespace memory
             // mem must be aligned for maximum alignment
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
+            // returns the usable size
+            // i.e. how many memory will be actually inserted and usable on a call to insert()
+            std::size_t usable_size(std::size_t size) const FOONATHAN_NOEXCEPT;
+
             // allocates a node big enough for the node size
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
