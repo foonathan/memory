@@ -78,27 +78,24 @@ namespace foonathan { namespace memory
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size<bad_allocation_size>(size, next_capacity(), info());
-
             auto fence = detail::debug_fence_size;
             auto offset = detail::align_offset(stack_.top() + fence, alignment);
 
-            if (stack_.top() && fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
+            if (!stack_.top() || fence + offset + size + fence > std::size_t(block_end() - stack_.top()))
             {
-                stack_.bump(fence, debug_magic::fence_memory);
-                stack_.bump(offset, debug_magic::alignment_memory);
-            }
-            else
-            {
+                // need to grow
                 auto block = arena_.allocate_block();
-                FOONATHAN_MEMORY_ASSERT_MSG(fence + size + fence <= block.size, "new block size not big enough");
-
                 stack_ = detail::fixed_memory_stack(block.memory);
-                // no need to align, block should be aligned for maximum
-                stack_.bump(fence, debug_magic::fence_memory);
+
+                // new alignment required for over-aligned types
+                offset = detail::align_offset(stack_.top() + fence, alignment);
+
+                auto needed = fence + offset + size + fence;
+                detail::check_allocation_size<bad_allocation_size>(needed, block.size, info());
             }
 
-            FOONATHAN_MEMORY_ASSERT(detail::is_aligned(stack_.top(), alignment));
+            stack_.bump(fence, debug_magic::fence_memory);
+            stack_.bump(offset, debug_magic::alignment_memory);
             auto mem = stack_.bump_return(size);
             stack_.bump(fence, debug_magic::fence_memory);
             return mem;
