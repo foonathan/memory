@@ -77,7 +77,7 @@ namespace foonathan { namespace memory
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // must not be called
+            // always returns nullptr, because array allocations are not supported
             void* allocate(std::size_t) FOONATHAN_NOEXCEPT
             {
                 return nullptr;
@@ -86,8 +86,11 @@ namespace foonathan { namespace memory
             // deallocates the node previously allocated via allocate()
             void deallocate(void *node) FOONATHAN_NOEXCEPT;
 
-            // must not be called
-            void deallocate(void *, std::size_t) FOONATHAN_NOEXCEPT {}
+            // forwards to insert()
+            void deallocate(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
+            {
+                insert(mem, size);
+            }
 
             // hint for allocate() to be prepared to allocate n nodes
             // it searches for a chunk that has n nodes free

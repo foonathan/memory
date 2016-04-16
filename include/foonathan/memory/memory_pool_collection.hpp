@@ -123,8 +123,14 @@ namespace foonathan { namespace memory
             detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
-                reserve_impl(pool, def_capacity());
-            return pool.allocate();
+            {
+                auto block = reserve_memory(pool, def_capacity());
+                pool.insert(block.memory, block.size);
+            }
+
+            auto mem = pool.allocate();
+            FOONATHAN_MEMORY_ASSERT(mem);
+            return mem;
         }
 
         /// \effects Allocates an \concept{concept_array,array} of nodes by searching for \c n continuous nodes on the appropriate free list and removing them.
@@ -141,16 +147,20 @@ namespace foonathan { namespace memory
             detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
 
             auto& pool = pools_.get(node_size);
-            if (pool.empty())
-                reserve_impl(pool, def_capacity());
-            auto mem = pool.allocate(count * node_size);
+
+            // try allocating if not empty
+            // for pools without array allocation support, allocate() will always return nullptr
+            auto mem = pool.empty() ? nullptr : pool.allocate(count * node_size);
             if (!mem)
             {
-                reserve_impl(pool, count * node_size);
-                mem = pool.allocate(count * node_size);
-                if (!mem)
-                    FOONATHAN_THROW(bad_array_size(info(), count * node_size, next_capacity()));
+                // use stack for allocation
+                detail::check_allocation_size<bad_array_size>(count * node_size,
+                                                              [&]{return next_capacity() - pool.alignment() + 1;},
+                                                              info());
+                mem = reserve_memory(pool, count * node_size).memory;
+                FOONATHAN_MEMORY_ASSERT(mem);
             }
+
             return mem;
         }
 
@@ -167,8 +177,9 @@ namespace foonathan { namespace memory
         /// i.e. either this allocator object or a new object created by moving this to it.
         void deallocate_array(void *ptr, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            FOONATHAN_MEMORY_ASSERT_MSG(PoolType::value, "array allocations not supported");
             auto& pool = pools_.get(node_size);
+            // deallocate array
+            // for pools without array allocation support, this will simply forward to insert()
             pool.deallocate(ptr, count * node_size);
         }
 
@@ -183,7 +194,7 @@ namespace foonathan { namespace memory
         {
             FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             auto& pool = pools_.get(node_size);
-            reserve_impl(pool, capacity);
+            reserve_memory(pool, capacity);
         }
 
         /// \returns The maximum node size for which is a free list.
@@ -249,7 +260,7 @@ namespace foonathan { namespace memory
             return static_cast<const char*>(block.memory) + block.size;
         }
 
-        void reserve_impl(typename pool_type::type &pool, std::size_t capacity)
+        memory_block reserve_memory(typename pool_type::type &pool, std::size_t capacity)
         {
             auto mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
             if (!mem)
@@ -272,8 +283,7 @@ namespace foonathan { namespace memory
                 mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
             }
-            // insert new
-            pool.insert(mem, capacity);
+            return {mem, capacity};
         }
 
         memory_arena<allocator_type, false> arena_;
