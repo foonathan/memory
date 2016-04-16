@@ -83,7 +83,7 @@ namespace foonathan { namespace memory
             auto fence = detail::debug_fence_size;
             auto offset = detail::align_offset(stack_.top() + fence, alignment);
 
-            if (fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
+            if (stack_.top() && fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
             {
                 stack_.bump(fence, debug_magic::fence_memory);
                 stack_.bump(offset, debug_magic::alignment_memory);

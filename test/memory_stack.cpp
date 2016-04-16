@@ -74,5 +74,19 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 1u);
     }
+    SECTION("move")
+    {
+        auto other = detail::move(stack);
+        auto m = other.top();
+        other.allocate(10,  1);
+        REQUIRE(alloc.no_allocated() == 1u);
+
+        stack.allocate(10, 1);
+        REQUIRE(alloc.no_allocated() == 2u);
+
+        stack = detail::move(other);
+        REQUIRE(alloc.no_allocated() == 1u);
+        stack.unwind(m);
+    }
 }
 
