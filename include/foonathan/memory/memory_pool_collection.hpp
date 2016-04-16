@@ -197,7 +197,7 @@ namespace foonathan { namespace memory
         /// as defined over the \c BucketDistribution.
         /// This is the number of nodes that can be allocated without the free list requesting more memory from the arena.
         /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
-        std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
+        std::size_t pool_capacity_left(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             return pools_.get(node_size).capacity();
@@ -207,12 +207,12 @@ namespace foonathan { namespace memory
         /// This is the number of bytes that can be inserted into the free lists
         /// without requesting more memory from the \concept{concept_blockallocator,BlockAllocator}.
         /// \note Array allocations may lead to a growth even if the capacity is big enough.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(block_end() - stack_.top());
         }
 
-        /// \returns The size of the next memory block after \ref capacity() arena grows.
+        /// \returns The size of the next memory block after \ref capacity_left() arena grows.
         /// This is the amount of memory that can be distributed in the pools.
         /// \note If the `PoolType` is \ref small_node_pool, the exact usable memory is lower than that.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT

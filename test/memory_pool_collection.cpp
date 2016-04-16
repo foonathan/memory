@@ -24,12 +24,12 @@ TEST_CASE("memory_pool_collection", "[pool]")
         const auto max_size = 16u;
         pools pool(max_size, 1000, alloc);
         REQUIRE(pool.max_node_size() == max_size);
-        REQUIRE(pool.capacity() <= 1000u);
+        REQUIRE(pool.capacity_left() <= 1000u);
         REQUIRE(pool.next_capacity() >= 1000u);
         REQUIRE(alloc.no_allocated() == 1u);
 
         for (auto i = 0u; i != max_size; ++i)
-            REQUIRE(pool.pool_capacity(i) == 0u);
+            REQUIRE(pool.pool_capacity_left(i) == 0u);
 
         SECTION("normal alloc/dealloc")
         {
@@ -40,7 +40,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
                 b.push_back(pool.allocate_node(5));
             }
             REQUIRE(alloc.no_allocated() == 1u);
-            REQUIRE(pool.capacity() <= 1000u);
+            REQUIRE(pool.capacity_left() <= 1000u);
 
             std::shuffle(a.begin(), a.end(), std::mt19937{});
             std::shuffle(b.begin(), b.end(), std::mt19937{});
