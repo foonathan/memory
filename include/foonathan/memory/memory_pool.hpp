@@ -153,12 +153,11 @@ namespace foonathan { namespace memory
         }
 
         /// \returns The size of the next memory block after the free list gets empty and the arena grows.
-        /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
-        /// but it is an upper bound to it.
+        /// \ref capacity_left() will increase by this amount.
+        /// \note Due to fence memory in debug mode this cannot be just divided by the \ref node_size() to get the number of nodes.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
-            return arena_.next_block_size();
+            return free_list_.usable_size(arena_.next_block_size());
         }
 
         /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.

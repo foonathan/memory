@@ -15,6 +15,8 @@ const std::size_t memory_block_stack::node::div_alignment = sizeof(memory_block_
 const std::size_t memory_block_stack::node::mod_offset = sizeof(memory_block_stack::node) % max_alignment != 0u;
 const std::size_t memory_block_stack::node::offset = (div_alignment + mod_offset) * max_alignment;
 
+const std::size_t memory_block_stack::implementation_offset = memory_block_stack::node::offset;
+
 void memory_block_stack::push(allocated_mb block) FOONATHAN_NOEXCEPT
 {
     FOONATHAN_MEMORY_ASSERT(is_aligned(block.memory, max_alignment));

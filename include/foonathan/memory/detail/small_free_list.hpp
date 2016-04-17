@@ -69,11 +69,15 @@ namespace foonathan { namespace memory
             // mem must be aligned for maximum alignment
             void insert(void *mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
+            // returns the usable size
+            // i.e. how many memory will be actually inserted and usable on a call to insert()
+            std::size_t usable_size(std::size_t size) const FOONATHAN_NOEXCEPT;
+
             // allocates a node big enough for the node size
             // pre: !empty()
             void* allocate() FOONATHAN_NOEXCEPT;
 
-            // must not be called
+            // always returns nullptr, because array allocations are not supported
             void* allocate(std::size_t) FOONATHAN_NOEXCEPT
             {
                 return nullptr;
@@ -82,8 +86,11 @@ namespace foonathan { namespace memory
             // deallocates the node previously allocated via allocate()
             void deallocate(void *node) FOONATHAN_NOEXCEPT;
 
-            // must not be called
-            void deallocate(void *, std::size_t) FOONATHAN_NOEXCEPT {}
+            // forwards to insert()
+            void deallocate(void *mem, std::size_t size) FOONATHAN_NOEXCEPT
+            {
+                insert(mem, size);
+            }
 
             // hint for allocate() to be prepared to allocate n nodes
             // it searches for a chunk that has n nodes free

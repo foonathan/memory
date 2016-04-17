@@ -123,8 +123,14 @@ namespace foonathan { namespace memory
             detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
             auto& pool = pools_.get(node_size);
             if (pool.empty())
-                reserve_impl(pool, def_capacity());
-            return pool.allocate();
+            {
+                auto block = reserve_memory(pool, def_capacity());
+                pool.insert(block.memory, block.size);
+            }
+
+            auto mem = pool.allocate();
+            FOONATHAN_MEMORY_ASSERT(mem);
+            return mem;
         }
 
         /// \effects Allocates an \concept{concept_array,array} of nodes by searching for \c n continuous nodes on the appropriate free list and removing them.
@@ -139,20 +145,22 @@ namespace foonathan { namespace memory
         void* allocate_array(std::size_t count, std::size_t node_size)
         {
             detail::check_allocation_size<bad_node_size>(node_size, [&]{return max_node_size();}, info());
-            detail::check_allocation_size<bad_array_size>(count * node_size,
-                                                          [&]{return PoolType::value ? next_capacity() : 0u;},
-                                                          info());
+
             auto& pool = pools_.get(node_size);
-            if (pool.empty())
-                reserve_impl(pool, def_capacity());
-            auto mem = pool.allocate(count * node_size);
+
+            // try allocating if not empty
+            // for pools without array allocation support, allocate() will always return nullptr
+            auto mem = pool.empty() ? nullptr : pool.allocate(count * node_size);
             if (!mem)
             {
-                reserve_impl(pool, count * node_size);
-                mem = pool.allocate(count * node_size);
-                if (!mem)
-                    FOONATHAN_THROW(bad_array_size(info(), count * node_size, next_capacity()));
+                // use stack for allocation
+                detail::check_allocation_size<bad_array_size>(count * node_size,
+                                                              [&]{return next_capacity() - pool.alignment() + 1;},
+                                                              info());
+                mem = reserve_memory(pool, count * node_size).memory;
+                FOONATHAN_MEMORY_ASSERT(mem);
             }
+
             return mem;
         }
 
@@ -169,8 +177,9 @@ namespace foonathan { namespace memory
         /// i.e. either this allocator object or a new object created by moving this to it.
         void deallocate_array(void *ptr, std::size_t count, std::size_t node_size) FOONATHAN_NOEXCEPT
         {
-            FOONATHAN_MEMORY_ASSERT_MSG(PoolType::value, "array allocations not supported");
             auto& pool = pools_.get(node_size);
+            // deallocate array
+            // for pools without array allocation support, this will simply forward to insert()
             pool.deallocate(ptr, count * node_size);
         }
 
@@ -185,7 +194,7 @@ namespace foonathan { namespace memory
         {
             FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             auto& pool = pools_.get(node_size);
-            reserve_impl(pool, capacity);
+            reserve_memory(pool, capacity);
         }
 
         /// \returns The maximum node size for which is a free list.
@@ -199,7 +208,7 @@ namespace foonathan { namespace memory
         /// as defined over the \c BucketDistribution.
         /// This is the number of nodes that can be allocated without the free list requesting more memory from the arena.
         /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
-        std::size_t pool_capacity(std::size_t node_size) const FOONATHAN_NOEXCEPT
+        std::size_t pool_capacity_left(std::size_t node_size) const FOONATHAN_NOEXCEPT
         {
             FOONATHAN_MEMORY_ASSERT_MSG(node_size <= max_node_size(), "node_size too big");
             return pools_.get(node_size).capacity();
@@ -208,16 +217,15 @@ namespace foonathan { namespace memory
         /// \returns The amount of memory available in the arena not inside the free lists.
         /// This is the number of bytes that can be inserted into the free lists
         /// without requesting more memory from the \concept{concept_blockallocator,BlockAllocator}.
-        /// \note Array allocations may lead to a growth even if the capacity_left is big enough.
-        std::size_t capacity() const FOONATHAN_NOEXCEPT
+        /// \note Array allocations may lead to a growth even if the capacity is big enough.
+        std::size_t capacity_left() const FOONATHAN_NOEXCEPT
         {
             return std::size_t(block_end() - stack_.top());
         }
 
-        /// \returns The size of the next memory block after the free list gets empty and the arena grows.
-        /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity() will return,
-        /// but it is an upper bound to it.
+        /// \returns The size of the next memory block after \ref capacity_left() arena grows.
+        /// This is the amount of memory that can be distributed in the pools.
+        /// \note If the `PoolType` is \ref small_node_pool, the exact usable memory is lower than that.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return arena_.next_block_size();
@@ -252,7 +260,7 @@ namespace foonathan { namespace memory
             return static_cast<const char*>(block.memory) + block.size;
         }
 
-        void reserve_impl(typename pool_type::type &pool, std::size_t capacity)
+        memory_block reserve_memory(typename pool_type::type &pool, std::size_t capacity)
         {
             auto mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
             if (!mem)
@@ -275,8 +283,7 @@ namespace foonathan { namespace memory
                 mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
                 FOONATHAN_MEMORY_ASSERT(mem);
             }
-            // insert new
-            pool.insert(mem, capacity);
+            return {mem, capacity};
         }
 
         memory_arena<allocator_type, false> arena_;

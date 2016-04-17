@@ -78,27 +78,24 @@ namespace foonathan { namespace memory
         /// \requires \c size and \c alignment must be valid.
         void* allocate(std::size_t size, std::size_t alignment)
         {
-            detail::check_allocation_size<bad_allocation_size>(size, next_capacity(), info());
-
             auto fence = detail::debug_fence_size;
             auto offset = detail::align_offset(stack_.top() + fence, alignment);
 
-            if (fence + offset + size + fence <= std::size_t(block_end() - stack_.top()))
+            if (!stack_.top() || fence + offset + size + fence > std::size_t(block_end() - stack_.top()))
             {
-                stack_.bump(fence, debug_magic::fence_memory);
-                stack_.bump(offset, debug_magic::alignment_memory);
-            }
-            else
-            {
+                // need to grow
                 auto block = arena_.allocate_block();
-                FOONATHAN_MEMORY_ASSERT_MSG(fence + size + fence <= block.size, "new block size not big enough");
-
                 stack_ = detail::fixed_memory_stack(block.memory);
-                // no need to align, block should be aligned for maximum
-                stack_.bump(fence, debug_magic::fence_memory);
+
+                // new alignment required for over-aligned types
+                offset = detail::align_offset(stack_.top() + fence, alignment);
+
+                auto needed = fence + offset + size + fence;
+                detail::check_allocation_size<bad_allocation_size>(needed, block.size, info());
             }
 
-            FOONATHAN_MEMORY_ASSERT(detail::is_aligned(stack_.top(), alignment));
+            stack_.bump(fence, debug_magic::fence_memory);
+            stack_.bump(offset, debug_magic::alignment_memory);
             auto mem = stack_.bump_return(size);
             stack_.bump(fence, debug_magic::fence_memory);
             return mem;
@@ -172,10 +169,10 @@ namespace foonathan { namespace memory
             return std::size_t(block_end() - stack_.top());
         }
 
-        /// \returns The size of the next memory block after the free list gets empty and the arena grows.
+        /// \returns The size of the next memory block after the current block is exhausted and the arena grows.
         /// This function just forwards to the \ref memory_arena.
-        /// \note Due to fence memory, alignment buffers and the like this may not be the exact result \ref capacity_left() will return,
-        /// but it is an upper bound to it.
+        /// \note All of it is available for the stack to use, but due to fences and alignment buffers,
+        /// this may not be the exact amount of memory usable for the user.
         std::size_t next_capacity() const FOONATHAN_NOEXCEPT
         {
             return arena_.next_block_size();
