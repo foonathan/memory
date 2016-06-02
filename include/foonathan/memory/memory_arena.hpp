@@ -507,8 +507,9 @@ namespace foonathan { namespace memory
             {
                 auto mem = traits::allocate_array(get_allocator(), block_size_,
                                                   1, detail::max_alignment);
+                memory_block block(mem, block_size_);
                 block_size_ = 0u;
-                return {mem, block_size_};
+                return block;
             }
             FOONATHAN_THROW(out_of_fixed_memory(info(), block_size_));
         }
