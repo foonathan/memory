@@ -147,7 +147,7 @@ See `example/` for more.
 ## Installation
 
 This library can be used as [CMake] subdirectory.
-It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer versions should work too.
+It is tested on GCC 4.8-5.0, Clang 3.5 and Visual Studio 2013. Newer versions should work too.
 
 1. Fetch it, e.g. using [git submodules] `git submodule add https://github.com/foonathan/memory ext/memory` and `git submodule update --init --recursive`.
 

@@ -6,7 +6,7 @@ This library can either be used [CMake]'s `add_subdirectory()` command or instal
 
 * git
 * CMake version 3.1 or higher
-* GCC 4.7 or higher, or clang 3.4 or higher or Visual Studio 12 or higher
+* GCC 4.8 or higher, or clang 3.5 or higher or Visual Studio 12 or higher
 
 ## As subdirectory of your project
 
