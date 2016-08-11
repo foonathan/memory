@@ -187,7 +187,8 @@ struct debug_map
     template <typename T>
     std::size_t debug()
     {
-        std::map<T, T, std::less<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::map<T, T, std::less<T>, node_size_debugger<type, type>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -205,7 +206,8 @@ struct debug_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::multimap<T, T, std::less<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::multimap<T, T, std::less<T>, node_size_debugger<type, type>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -223,7 +225,8 @@ struct debug_unordered_map
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_map<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::unordered_map<T, T, hash, std::equal_to<T>, node_size_debugger<type, type>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -241,7 +244,8 @@ struct debug_unordered_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multimap<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::unordered_multimap<T, T, hash, std::equal_to<T>, node_size_debugger<type, type>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
