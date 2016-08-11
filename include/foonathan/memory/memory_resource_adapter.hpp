@@ -70,7 +70,7 @@ namespace foonathan
                     return traits_type::allocate_node(*this, bytes, alignment);
                 auto div = bytes / max;
                 auto mod = bytes % max;
-                auto n   = div + bool(mod);
+                auto n   = div + (mod != 0);
                 return traits_type::allocate_array(*this, n, max, alignment);
             }
 
@@ -86,7 +86,7 @@ namespace foonathan
                 {
                     auto div = bytes / max;
                     auto mod = bytes % max;
-                    auto n   = div + bool(mod);
+                    auto n   = div + (mod != 0);
                     traits_type::deallocate_array(*this, p, n, max, alignment);
                 }
             }
