@@ -100,6 +100,7 @@ void instantiate_test_type_statefulness()
     {
         using is_stateful = std::true_type;
     };
+    (void)explicit_stateful_raw::is_stateful();
     test_type_statefulness<explicit_stateful_raw, explicit_stateful_raw, true>();
 
     struct explicit_stateless_raw
@@ -107,6 +108,7 @@ void instantiate_test_type_statefulness()
         using is_stateful = std::false_type;
         int i;
     };
+    (void)explicit_stateless_raw::is_stateful();
     test_type_statefulness<explicit_stateless_raw, explicit_stateless_raw, false>();
 
     test_type_statefulness<standard_alloc<char>, standard_alloc<char>, false>();
