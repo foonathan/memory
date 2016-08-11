@@ -87,6 +87,7 @@ void foonathan::memory::virtual_memory_release(void* pages, std::size_t no_pages
 {
     auto result = munmap(pages, no_pages * virtual_memory_page_size);
     FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot release pages");
+    (void)result;
 }
 
 void* foonathan::memory::virtual_memory_commit(void*       memory,
