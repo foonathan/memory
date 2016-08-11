@@ -207,8 +207,83 @@ namespace foonathan
             friend allocator_traits<memory_stack<BlockOrRawAllocator>>;
         };
 
+        /// Simple utility that automatically unwinds a `Stack` to a previously saved location.
+        /// A `Stack` is anything that provides a `marker`, a `top()` function returning a `marker`
+        /// and an `unwind()` function to unwind to a `marker`,
+        /// like a \ref foonathan::memory::memory_stack
+        /// \ingroup memory allocator
+        template <class Stack>
+        class memory_stack_raii_unwind
+        {
+        public:
+            using stack_type  = Stack;
+            using marker_type = typename stack_type::marker;
+
+            /// \effects Same as `memory_stack_raii_unwind(stack, stack.top())`.
+            explicit memory_stack_raii_unwind(stack_type& stack) FOONATHAN_NOEXCEPT
+                : memory_stack_raii_unwind(stack, stack.top())
+            {
+            }
+
+            /// \effects Creates the unwinder by giving it the stack and the marker.
+            /// \requires The stack must live longer than this object.
+            memory_stack_raii_unwind(stack_type& stack, marker_type marker) FOONATHAN_NOEXCEPT
+                : marker_(marker),
+                  stack_(&stack)
+            {
+            }
+
+            /// \effects Move constructs the unwinder by taking the saved position from `other`.
+            /// `other` does not save any location after that.
+            memory_stack_raii_unwind(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
+                : marker_(other.marker_),
+                  stack_(other.stack_)
+            {
+                other.stack_ = nullptr;
+            }
+
+            /// \effects Unwinds to the previously saved location,
+            /// if there is any, by calling `unwind()`.
+            ~memory_stack_raii_unwind() FOONATHAN_NOEXCEPT
+            {
+                if (stack_)
+                    stack_->unwind(marker_);
+            }
+
+            /// \effects Move assigns the unwinder by taking the saved position from `other`.
+            /// `other` does not save any location after that.
+            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind& other) FOONATHAN_NOEXCEPT
+            {
+                marker_ = other.marker_;
+                stack_  = other.stack_;
+
+                other.stack_ = nullptr;
+
+                return *this;
+            }
+
+            /// \returns The saved marker, if there is any.
+            marker_type get_marker() const FOONATHAN_NOEXCEPT
+            {
+                return marker_;
+            }
+
+            /// \returns The stack it will unwind.
+            /// \requires There must be a stack, i.e. it must not be in the moved-from state.
+            stack_type& get_stack() const FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT_MSG(stack_, "must not be called on a moved-from object");
+                return *stack_;
+            }
+
+        private:
+            marker_type marker_;
+            stack_type* stack_;
+        };
+
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
         extern template class memory_stack<>;
+        extern template class memory_stack_raii_unwind<memory_stack<>>;
 #endif
 
         template <class Allocator>
