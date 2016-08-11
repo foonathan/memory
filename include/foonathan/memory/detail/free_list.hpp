@@ -99,6 +99,8 @@ namespace foonathan
                 std::size_t node_size_, capacity_;
             };
 
+            void swap(free_memory_list& a, free_memory_list& b) FOONATHAN_NOEXCEPT;
+
             // same as above but keeps the nodes ordered
             // this allows array allocations, that is, consecutive nodes
             // debug: fills memory and uses a bigger node_size for fence memory
@@ -196,6 +198,8 @@ namespace foonathan
                 std::size_t    node_size_, capacity_;
                 char *         last_dealloc_, *last_dealloc_prev_;
             };
+
+            void swap(ordered_free_memory_list& a, ordered_free_memory_list& b) FOONATHAN_NOEXCEPT;
 
 #if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECk
             // use ordered version to allow pointer check
