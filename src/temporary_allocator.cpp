@@ -14,7 +14,9 @@ using namespace foonathan::memory;
 
 namespace
 {
-    void default_growth_tracker(std::size_t) FOONATHAN_NOEXCEPT {}
+    void default_growth_tracker(std::size_t) FOONATHAN_NOEXCEPT
+    {
+    }
     // purposely not initialized due to a weird Windows bug with clang and maybe others?
     // if missing thread support thread_local variables will only be zero initialized
     // initialization of growth tracker only done on access, since this is the only way to set it
@@ -25,9 +27,9 @@ namespace
     public:
         using is_stateful = std::false_type;
 
-        stack_impl_allocator() FOONATHAN_NOEXCEPT
-        : first_call_(true)
-        {}
+        stack_impl_allocator() FOONATHAN_NOEXCEPT : first_call_(true)
+        {
+        }
 
         void* allocate_node(std::size_t size, std::size_t alignment)
         {
@@ -41,7 +43,8 @@ namespace
             return default_allocator().allocate_node(size, alignment);
         }
 
-        void deallocate_node(void *memory, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+        void deallocate_node(void* memory, std::size_t size,
+                             std::size_t alignment) FOONATHAN_NOEXCEPT
         {
             default_allocator().deallocate_node(memory, size, alignment);
         }
@@ -71,7 +74,7 @@ namespace
     {
         if (!is_created)
         {
-            ::new(static_cast<void*>(&temporary_stack)) stack_type(size);
+            ::new (static_cast<void*>(&temporary_stack)) stack_type(size);
             is_created = true;
         }
         return get();
@@ -94,10 +97,11 @@ detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() FOONATHAN_NOEX
 
 FOONATHAN_THREAD_LOCAL std::size_t detail::temporary_allocator_dtor_t::nifty_counter_ = 0u;
 
-temporary_allocator::growth_tracker temporary_allocator::set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT
+temporary_allocator::growth_tracker temporary_allocator::set_growth_tracker(growth_tracker t)
+    FOONATHAN_NOEXCEPT
 {
     // check if not initialized, see comment at definition
-    auto old = stack_growth_tracker ? stack_growth_tracker : default_growth_tracker;
+    auto old             = stack_growth_tracker ? stack_growth_tracker : default_growth_tracker;
     stack_growth_tracker = t ? t : default_growth_tracker;
     return old;
 }
@@ -108,11 +112,13 @@ temporary_allocator::growth_tracker temporary_allocator::get_growth_tracker() FO
     return stack_growth_tracker ? stack_growth_tracker : default_growth_tracker;
 }
 
-temporary_allocator::temporary_allocator(temporary_allocator &&other) FOONATHAN_NOEXCEPT
-: marker_(other.marker_), prev_(top_), unwind_(true)
+temporary_allocator::temporary_allocator(temporary_allocator&& other) FOONATHAN_NOEXCEPT
+    : marker_(other.marker_),
+      prev_(top_),
+      unwind_(true)
 {
     other.unwind_ = false;
-    top_ = this;
+    top_          = this;
 }
 
 temporary_allocator::~temporary_allocator() FOONATHAN_NOEXCEPT
@@ -122,10 +128,10 @@ temporary_allocator::~temporary_allocator() FOONATHAN_NOEXCEPT
     top_ = prev_;
 }
 
-temporary_allocator& temporary_allocator::operator=(temporary_allocator &&other) FOONATHAN_NOEXCEPT
+temporary_allocator& temporary_allocator::operator=(temporary_allocator&& other) FOONATHAN_NOEXCEPT
 {
-    marker_ = other.marker_;
-    unwind_ = true;
+    marker_       = other.marker_;
+    unwind_       = true;
     other.unwind_ = false;
     return *this;
 }
@@ -137,14 +143,17 @@ void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
 }
 
 temporary_allocator::temporary_allocator(std::size_t size) FOONATHAN_NOEXCEPT
-: marker_(create(size).top()), prev_(nullptr), unwind_(true)
+    : marker_(create(size).top()),
+      prev_(nullptr),
+      unwind_(true)
 {
     top_ = this;
 }
 
 FOONATHAN_THREAD_LOCAL const temporary_allocator* temporary_allocator::top_ = nullptr;
 
-std::size_t allocator_traits<temporary_allocator>::max_node_size(const allocator_type &) FOONATHAN_NOEXCEPT
+std::size_t allocator_traits<temporary_allocator>::max_node_size(const allocator_type&)
+    FOONATHAN_NOEXCEPT
 {
     return get().next_capacity();
 }

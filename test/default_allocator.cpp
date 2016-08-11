@@ -14,7 +14,7 @@ using namespace foonathan::memory;
 
 // *very* simple test case to ensure proper alignment and might catch some segfaults
 template <class Allocator>
-void check_default_allocator(Allocator &alloc, std::size_t def_alignment = detail::max_alignment)
+void check_default_allocator(Allocator& alloc, std::size_t def_alignment = detail::max_alignment)
 {
     auto ptr = alloc.allocate_node(1, 1);
     REQUIRE(detail::is_aligned(ptr, def_alignment));
@@ -36,7 +36,7 @@ void check_default_allocator(Allocator &alloc, std::size_t def_alignment = detai
         ptrs.push_back(ptr);
     }
 
-     for (std::size_t i = 0u; i != 10u; ++i)
+    for (std::size_t i = 0u; i != 10u; ++i)
         alloc.deallocate_node(ptrs[i], i, 1);
 }
 
@@ -61,7 +61,7 @@ TEST_CASE("malloc_allocator", "[default_allocator]")
 TEST_CASE("static_allocator", "[default_allocator]")
 {
     static_allocator_storage<1024> storage;
-    static_allocator alloc(storage);
+    static_allocator               alloc(storage);
 
     // no need to test alignment issues here again, implemented by fixed_memory_stack
     check_default_allocator(alloc, 1);

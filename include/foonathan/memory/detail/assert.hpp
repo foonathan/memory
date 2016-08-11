@@ -9,33 +9,40 @@
 
 #include "../config.hpp"
 
-namespace foonathan { namespace memory
+namespace foonathan
 {
-    namespace detail
+    namespace memory
     {
-        // handles a failed assertion
-        void handle_failed_assert(const char *msg, const char *file, int line, const char *fnc) FOONATHAN_NOEXCEPT;
+        namespace detail
+        {
+            // handles a failed assertion
+            void handle_failed_assert(const char* msg, const char* file, int line,
+                                      const char* fnc) FOONATHAN_NOEXCEPT;
 
-        // note: debug assertion macros don't use fully qualified name
-        // because they should only be used in this library, where the whole namespace is available
-        // can be override via command line definitions
-        #if FOONATHAN_MEMORY_DEBUG_ASSERT && !defined(FOONATHAN_MEMORY_ASSERT)
-                #define FOONATHAN_MEMORY_ASSERT(Expr) \
-                    static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed", \
-                                                                              __FILE__, __LINE__, __func__), true))
+// note: debug assertion macros don't use fully qualified name
+// because they should only be used in this library, where the whole namespace is available
+// can be override via command line definitions
+#if FOONATHAN_MEMORY_DEBUG_ASSERT && !defined(FOONATHAN_MEMORY_ASSERT)
+#define FOONATHAN_MEMORY_ASSERT(Expr)                                                              \
+    static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed",    \
+                                                              __FILE__, __LINE__, __func__),       \
+                                 true))
 
-                #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg) \
-                    static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed: " Msg, \
-                                                                              __FILE__, __LINE__, __func__), true))
+#define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)                                                     \
+    static_cast<void>((Expr)                                                                       \
+                      || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed: " Msg,     \
+                                                       __FILE__, __LINE__, __func__),              \
+                          true))
 
-                #define FOONATHAN_MEMORY_UNREACHABLE(Msg) \
-                    detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__,  __LINE__, __func__)
-        #elif !defined(FOONATHAN_MEMORY_ASSERT)
-            #define FOONATHAN_MEMORY_ASSERT(Expr)
-            #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
-            #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
-        #endif
-    } // namespace detail
-}} // namespace foonathan::memory
+#define FOONATHAN_MEMORY_UNREACHABLE(Msg)                                                          \
+    detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__, __LINE__, __func__)
+#elif !defined(FOONATHAN_MEMORY_ASSERT)
+#define FOONATHAN_MEMORY_ASSERT(Expr)
+#define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
+#define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
+#endif
+        } // namespace detail
+    }
+} // namespace foonathan::memory
 
 #endif // FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED

@@ -20,28 +20,32 @@
 namespace using_std_allocator
 {
     template <typename T, class Allocator = std::allocator<T>>
-    class deep_copy_ptr
-    : Allocator
+    class deep_copy_ptr : Allocator
     {
         using traits = std::allocator_traits<Allocator>;
+
     public:
-        using value_type = typename traits::value_type;
+        using value_type     = typename traits::value_type;
         using allocator_type = Allocator;
 
-        explicit deep_copy_ptr(const allocator_type &alloc = allocator_type{})
-        : allocator_type(alloc), ptr_(nullptr) {}
+        explicit deep_copy_ptr(const allocator_type& alloc = allocator_type{})
+        : allocator_type(alloc), ptr_(nullptr)
+        {
+        }
 
-        deep_copy_ptr(value_type value, const allocator_type &alloc = allocator_type{})
-        : allocator_type(alloc), ptr_(create(*this, std::move(value))) {}
+        deep_copy_ptr(value_type value, const allocator_type& alloc = allocator_type{})
+        : allocator_type(alloc), ptr_(create(*this, std::move(value)))
+        {
+        }
 
-        deep_copy_ptr(const deep_copy_ptr &other)
+        deep_copy_ptr(const deep_copy_ptr& other)
         : allocator_type(traits::select_on_container_copy_construction(other)),
           ptr_(create(*this, *other))
-        {}
+        {
+        }
 
-        deep_copy_ptr(deep_copy_ptr &&other) noexcept
-        : allocator_type(std::move(other)),
-          ptr_(other.ptr_)
+        deep_copy_ptr(deep_copy_ptr&& other) noexcept : allocator_type(std::move(other)),
+                                                        ptr_(other.ptr_)
         {
             other.ptr_ = nullptr;
         }
@@ -51,16 +55,17 @@ namespace using_std_allocator
             destroy();
         }
 
-        deep_copy_ptr& operator=(const deep_copy_ptr &other)
+        deep_copy_ptr& operator=(const deep_copy_ptr& other)
         {
-            if (traits::propagate_on_container_copy_assignment::value && static_cast<Allocator&>(*this) != other)
+            if (traits::propagate_on_container_copy_assignment::value
+                && static_cast<Allocator&>(*this) != other)
             {
                 allocator_type alloc(other);
-                auto ptr = create(alloc, *other);
+                auto           ptr = create(alloc, *other);
                 destroy();
 
                 Allocator::operator=(std::move(alloc));
-                ptr_ = ptr;
+                ptr_               = ptr;
             }
             else
             {
@@ -71,17 +76,19 @@ namespace using_std_allocator
             return *this;
         }
 
-        deep_copy_ptr& operator=(deep_copy_ptr &&other) noexcept(traits::propagate_on_container_move_assignment::value)
+        deep_copy_ptr& operator=(deep_copy_ptr&& other) noexcept(
+            traits::propagate_on_container_move_assignment::value)
         {
-            if (traits::propagate_on_container_move_assignment::value && static_cast<allocator_type&>(*this) != other)
+            if (traits::propagate_on_container_move_assignment::value
+                && static_cast<allocator_type&>(*this) != other)
             {
                 allocator_type::operator=(std::move(other));
-                ptr_ = other.ptr_;
-                other.ptr_ = nullptr;
+                ptr_                    = other.ptr_;
+                other.ptr_              = nullptr;
             }
             else if (static_cast<allocator_type&>(*this) == other)
             {
-                ptr_ = other.ptr_;
+                ptr_       = other.ptr_;
                 other.ptr_ = nullptr;
             }
             else
@@ -93,7 +100,7 @@ namespace using_std_allocator
             return *this;
         }
 
-        friend void swap(deep_copy_ptr &a, deep_copy_ptr &b) noexcept
+        friend void swap(deep_copy_ptr& a, deep_copy_ptr& b) noexcept
         {
             using std::swap;
             if (traits::propagate_on_container_swap::value)
@@ -129,8 +136,8 @@ namespace using_std_allocator
         }
 
     private:
-        template <typename ... Args>
-        typename traits::pointer create(allocator_type &alloc, Args&&... args)
+        template <typename... Args>
+        typename traits::pointer create(allocator_type& alloc, Args&&... args)
         {
             auto ptr = traits::allocate(alloc, 1);
             try
@@ -160,31 +167,37 @@ namespace using_std_allocator
 
 namespace using_raw_allocator
 {
-    template <typename T, class RawAllocator = memory::default_allocator> // default allocator type, usually heap_allocator
+    template <typename T,
+              class RawAllocator =
+                  memory::default_allocator> // default allocator type, usually heap_allocator
     class deep_copy_ptr
-    : memory::allocator_reference<RawAllocator> // store the allocator by reference to allow sharing and copying
-                                                // for stateless allocators like default_allocator, it does not store an actual reference
-                                                // and can take a temporary, for stateful, the allocator must outlive the reference
+        : memory::
+              allocator_reference<RawAllocator> // store the allocator by reference to allow sharing and copying
+    // for stateless allocators like default_allocator, it does not store an actual reference
+    // and can take a temporary, for stateful, the allocator must outlive the reference
     {
         using allocator_ref = memory::allocator_reference<RawAllocator>;
+
     public:
-        using value_type = T;
+        using value_type     = T;
         using allocator_type = typename allocator_ref::allocator_type;
 
         explicit deep_copy_ptr(allocator_ref alloc = allocator_type{})
-        : allocator_ref(alloc), ptr_(nullptr) {}
+        : allocator_ref(alloc), ptr_(nullptr)
+        {
+        }
 
         deep_copy_ptr(value_type value, allocator_ref alloc = allocator_type{})
-        : allocator_ref(alloc), ptr_(create(std::move(value))) {}
+        : allocator_ref(alloc), ptr_(create(std::move(value)))
+        {
+        }
 
-        deep_copy_ptr(const deep_copy_ptr &other)
-        : allocator_ref(other),
-          ptr_(create(*other))
-        {}
+        deep_copy_ptr(const deep_copy_ptr& other) : allocator_ref(other), ptr_(create(*other))
+        {
+        }
 
-        deep_copy_ptr(deep_copy_ptr &&other) noexcept
-        : allocator_ref(std::move(other)),
-          ptr_(other.ptr_)
+        deep_copy_ptr(deep_copy_ptr&& other) noexcept : allocator_ref(std::move(other)),
+                                                        ptr_(other.ptr_)
         {
             other.ptr_ = nullptr;
         }
@@ -195,14 +208,14 @@ namespace using_raw_allocator
         }
 
         // assignment uses straightforward copy/move-and-swap idiom, instead of boilerplate required by Allocator
-        deep_copy_ptr& operator=(const deep_copy_ptr &other)
+        deep_copy_ptr& operator=(const deep_copy_ptr& other)
         {
             deep_copy_ptr tmp(other);
             swap(*this, tmp);
             return *this;
         }
 
-        deep_copy_ptr& operator=(deep_copy_ptr &&other) noexcept
+        deep_copy_ptr& operator=(deep_copy_ptr&& other) noexcept
         {
             deep_copy_ptr tmp(std::move(other));
             swap(*this, tmp);
@@ -210,7 +223,7 @@ namespace using_raw_allocator
         }
 
         // swap is straightforward too
-        friend void swap(deep_copy_ptr &a, deep_copy_ptr &b) noexcept
+        friend void swap(deep_copy_ptr& a, deep_copy_ptr& b) noexcept
         {
             using std::swap;
             swap(static_cast<allocator_ref&>(a), static_cast<allocator_ref&>(b));
@@ -243,17 +256,19 @@ namespace using_raw_allocator
         }
 
     private:
-        template <typename ... Args>
+        template <typename... Args>
         T* create(Args&&... args)
         {
-            auto storage = this->allocate_node(sizeof(T), alignof(T)); // first allocate storage for the node
+            auto storage =
+                this->allocate_node(sizeof(T), alignof(T)); // first allocate storage for the node
             try
             {
-                ::new(storage) T(std::forward<Args>(args)...); // then call constructor
+                ::new (storage) T(std::forward<Args>(args)...); // then call constructor
             }
             catch (...)
             {
-                this->deallocate_node(storage, sizeof(T), alignof(T)); // if failure, deallocate storage again
+                this->deallocate_node(storage, sizeof(T),
+                                      alignof(T)); // if failure, deallocate storage again
                 throw;
             }
             return static_cast<T*>(storage);
@@ -263,12 +278,12 @@ namespace using_raw_allocator
         {
             if (ptr_)
             {
-                ptr_->~T(); // call destructor
+                ptr_->~T();                                         // call destructor
                 this->deallocate_node(ptr_, sizeof(T), alignof(T)); // deallocate storage
             }
         }
 
-        T *ptr_;
+        T* ptr_;
     };
 }
 

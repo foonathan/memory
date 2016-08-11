@@ -20,47 +20,52 @@
 #include "detail/lowlevel_allocator.hpp"
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    #include "allocator_traits.hpp"
+#include "allocator_traits.hpp"
 #endif
 
-namespace foonathan { namespace memory
+namespace foonathan
 {
-    struct allocator_info;
-
-    namespace detail
+    namespace memory
     {
-        struct malloc_allocator_impl
+        struct allocator_info;
+
+        namespace detail
         {
-            static allocator_info info() FOONATHAN_NOEXCEPT;
-
-            static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+            struct malloc_allocator_impl
             {
-                return std::malloc(size);
-            }
+                static allocator_info info() FOONATHAN_NOEXCEPT;
 
-            static void deallocate(void *ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
-            {
-                std::free(ptr);
-            }
+                static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                {
+                    return std::malloc(size);
+                }
 
-            static std::size_t max_node_size() FOONATHAN_NOEXCEPT
-            {
-                return std::allocator<char>().max_size();
-            }
-        };
+                static void deallocate(void* ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+                {
+                    std::free(ptr);
+                }
 
-        FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(malloc_allocator_impl, malloc_alloator_leak_checker)
-    } // namespace detail
+                static std::size_t max_node_size() FOONATHAN_NOEXCEPT
+                {
+                    return std::allocator<char>().max_size();
+                }
+            };
 
-    /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using <tt>std::malloc()</tt>.
-    /// It throws \ref out_of_memory when the allocation fails.
-    /// \ingroup memory allocator
-    using malloc_allocator = FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::malloc_allocator_impl>);
+            FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(malloc_allocator_impl,
+                                                       malloc_alloator_leak_checker)
+        } // namespace detail
+
+        /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using <tt>std::malloc()</tt>.
+        /// It throws \ref out_of_memory when the allocation fails.
+        /// \ingroup memory allocator
+        using malloc_allocator =
+            FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::malloc_allocator_impl>);
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    extern template class detail::lowlevel_allocator<detail::malloc_allocator_impl>;
-    extern template class allocator_traits<malloc_allocator>;
+        extern template class detail::lowlevel_allocator<detail::malloc_allocator_impl>;
+        extern template class allocator_traits<malloc_allocator>;
 #endif
-}} // namespace foonathan::memory
+    }
+} // namespace foonathan::memory
 
 #endif //FOONATHAN_MEMORY_MALLOC_ALLOCATOR_HPP_INCLUDED

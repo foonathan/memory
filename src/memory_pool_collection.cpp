@@ -14,19 +14,24 @@ void detail::memory_pool_collection_leak_handler::operator()(std::ptrdiff_t amou
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class foonathan::memory::memory_pool_collection<node_pool, identity_buckets>;
-    template class foonathan::memory::memory_pool_collection<array_pool, identity_buckets>;
-    template class foonathan::memory::memory_pool_collection<small_node_pool, identity_buckets>;
+template class foonathan::memory::memory_pool_collection<node_pool, identity_buckets>;
+template class foonathan::memory::memory_pool_collection<array_pool, identity_buckets>;
+template class foonathan::memory::memory_pool_collection<small_node_pool, identity_buckets>;
 
-    template class foonathan::memory::memory_pool_collection<node_pool, log2_buckets>;
-    template class foonathan::memory::memory_pool_collection<array_pool, log2_buckets>;
-    template class foonathan::memory::memory_pool_collection<small_node_pool, log2_buckets>;
+template class foonathan::memory::memory_pool_collection<node_pool, log2_buckets>;
+template class foonathan::memory::memory_pool_collection<array_pool, log2_buckets>;
+template class foonathan::memory::memory_pool_collection<small_node_pool, log2_buckets>;
 
-    template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool, identity_buckets>>;
-    template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool, identity_buckets>>;
-    template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool, identity_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool,
+                                                                          identity_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool,
+                                                                          identity_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool,
+                                                                          identity_buckets>>;
 
-    template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
-    template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool, log2_buckets>>;
-    template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool, log2_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool,
+                                                                          log2_buckets>>;
+template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool,
+                                                                          log2_buckets>>;
 #endif

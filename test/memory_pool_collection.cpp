@@ -17,12 +17,12 @@ using namespace detail;
 
 TEST_CASE("memory_pool_collection", "[pool]")
 {
-    using pools = memory_pool_collection<node_pool, identity_buckets,
-                                        allocator_reference<test_allocator>>;
+    using pools =
+        memory_pool_collection<node_pool, identity_buckets, allocator_reference<test_allocator>>;
     test_allocator alloc;
     {
         const auto max_size = 16u;
-        pools pool(max_size, 1000, alloc);
+        pools      pool(max_size, 1000, alloc);
         REQUIRE(pool.max_node_size() == max_size);
         REQUIRE(pool.capacity_left() <= 1000u);
         REQUIRE(pool.next_capacity() >= 1000u);
@@ -33,7 +33,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
 
         SECTION("normal alloc/dealloc")
         {
-            std::vector<void*> a, b;
+            std::vector<void *> a, b;
             for (auto i = 0u; i != 5u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
@@ -52,7 +52,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
         }
         SECTION("multiple block alloc/dealloc")
         {
-            std::vector<void*> a, b;
+            std::vector<void *> a, b;
             for (auto i = 0u; i != 1000u; ++i)
             {
                 a.push_back(pool.allocate_node(1));

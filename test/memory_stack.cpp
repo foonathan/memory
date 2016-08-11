@@ -13,7 +13,7 @@ using namespace foonathan::memory;
 
 TEST_CASE("memory_stack", "[stack]")
 {
-    test_allocator alloc;
+    test_allocator                                    alloc;
     memory_stack<allocator_reference<test_allocator>> stack(100, alloc);
     REQUIRE(alloc.no_allocated() == 1u);
     REQUIRE(stack.capacity_left() <= 100);
@@ -38,8 +38,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(detail::is_aligned(memory, 16));
 
         stack.unwind(m);
-        REQUIRE(stack.capacity_left() ==
-                capacity - 10 - 2 * detail::debug_fence_size);
+        REQUIRE(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
 
         REQUIRE(stack.allocate(10, 16) == memory);
         REQUIRE(alloc.no_allocated() == 1u);
@@ -77,8 +76,8 @@ TEST_CASE("memory_stack", "[stack]")
     SECTION("move")
     {
         auto other = detail::move(stack);
-        auto m = other.top();
-        other.allocate(10,  1);
+        auto m     = other.top();
+        other.allocate(10, 1);
         REQUIRE(alloc.no_allocated() == 1u);
 
         stack.allocate(10, 1);
@@ -89,4 +88,3 @@ TEST_CASE("memory_stack", "[stack]")
         stack.unwind(m);
     }
 }
-

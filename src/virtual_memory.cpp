@@ -12,136 +12,147 @@ using namespace foonathan::memory;
 
 void detail::virtual_memory_allocator_leak_handler::operator()(std::ptrdiff_t amount)
 {
-    detail::debug_handle_memory_leak({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr}, amount);
+    detail::debug_handle_memory_leak({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator",
+                                      nullptr},
+                                     amount);
 }
 
 #if defined(_WIN32)
-    #include <windows.h>
+#include <windows.h>
 
-    namespace
+namespace
+{
+    std::size_t get_page_size() FOONATHAN_NOEXCEPT
     {
-        std::size_t get_page_size() FOONATHAN_NOEXCEPT
-        {
-            static_assert(sizeof(std::size_t) >= sizeof(DWORD), "possible loss of data");
+        static_assert(sizeof(std::size_t) >= sizeof(DWORD), "possible loss of data");
 
-            SYSTEM_INFO info;
-            GetSystemInfo(&info);
-            return std::size_t(info.dwPageSize);
-        }
+        SYSTEM_INFO info;
+        GetSystemInfo(&info);
+        return std::size_t(info.dwPageSize);
     }
+}
 
-    const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
+const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
 
-    void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto pages = VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
-        return pages;
-    }
+void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto pages =
+        VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
+    return pages;
+}
 
-    void foonathan::memory::virtual_memory_release(void *pages, std::size_t) FOONATHAN_NOEXCEPT
-    {
-        auto result = VirtualFree(pages, 0u, MEM_RELEASE);
-        FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot release pages");
-    }
+void foonathan::memory::virtual_memory_release(void* pages, std::size_t) FOONATHAN_NOEXCEPT
+{
+    auto result = VirtualFree(pages, 0u, MEM_RELEASE);
+    FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot release pages");
+}
 
-    void* foonathan::memory::virtual_memory_commit(void *memory, std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto region = VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
-        if (!region)
-            return nullptr;
-        FOONATHAN_MEMORY_ASSERT(region == memory);
-        return region;
-    }
+void* foonathan::memory::virtual_memory_commit(void*       memory,
+                                               std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto region =
+        VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
+    if (!region)
+        return nullptr;
+    FOONATHAN_MEMORY_ASSERT(region == memory);
+    return region;
+}
 
-    void foonathan::memory::virtual_memory_decommit(void *memory, std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto result = VirtualFree(memory, no_pages * virtual_memory_page_size, MEM_DECOMMIT);
-        FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot decommit memory");
-    }
+void foonathan::memory::virtual_memory_decommit(void*       memory,
+                                                std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto result = VirtualFree(memory, no_pages * virtual_memory_page_size, MEM_DECOMMIT);
+    FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot decommit memory");
+}
 #elif defined(__unix__) || defined(__APPLE__) // POSIX systems
-    #include <sys/mman.h>
-    #include <unistd.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
-    #if defined(PAGESIZE)
-        const std::size_t foonathan::memory::virtual_memory_page_size = PAGESIZE;
-    #elif defined(PAGE_SIZE)
-        const std::size_t foonathan::memory::virtual_memory_page_size = PAGE_SIZE;
-    #else
-        const std::size_t foonathan::memory::virtual_memory_page_size = sysconf(_SC_PAGESIZE);
-    #endif
-
-    void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto pages = mmap(nullptr, no_pages * virtual_memory_page_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        return pages == MAP_FAILED ? nullptr : pages;
-    }
-
-    void foonathan::memory::virtual_memory_release(void *pages, std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto result = munmap(pages, no_pages * virtual_memory_page_size);
-        FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot release pages");
-    }
-
-    void* foonathan::memory::virtual_memory_commit(void *memory, std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-        auto size = no_pages * virtual_memory_page_size;
-        auto result = mprotect(memory, size, PROT_WRITE | PROT_READ);
-        if (result != 0u)
-            return nullptr;
-
-        // advise that the memory will be needed
-        #if defined(MADV_WILLNEED)
-            madvise(memory, size, MADV_WILLNEED);
-        #elif defined(POSIX_MADV_WILLNEED)
-            posix_madvise(memory, size, POSIX_MADV_WILLNEED);
-        #endif
-
-        return memory;
-    }
-
-    void foonathan::memory::virtual_memory_decommit(void *memory, std::size_t no_pages) FOONATHAN_NOEXCEPT
-    {
-         auto size = no_pages * virtual_memory_page_size;
-        // advise that the memory won't be needed anymore
-        #if defined(MADV_FREE)
-            madvise(memory, size, MADV_FREE);
-        #elif defined(MADV_DONTNEED)
-            madvise(memory, size, MADV_DONTNEED);
-        #elif defined(POSIX_MADV_DONTNEED)
-            posix_madvise(memory, size, POSIX_MADV_DONTNEED);
-        #endif
-
-        auto result = mprotect(memory, size, PROT_NONE);
-        FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot decommit memory");
-    }
+#if defined(PAGESIZE)
+const std::size_t foonathan::memory::virtual_memory_page_size = PAGESIZE;
+#elif defined(PAGE_SIZE)
+const std::size_t foonathan::memory::virtual_memory_page_size = PAGE_SIZE;
 #else
-    #warning "virtual memory functions not available on your platform, define your own"
+const std::size_t foonathan::memory::virtual_memory_page_size = sysconf(_SC_PAGESIZE);
+#endif
+
+void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto pages = mmap(nullptr, no_pages * virtual_memory_page_size, PROT_NONE,
+                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    return pages == MAP_FAILED ? nullptr : pages;
+}
+
+void foonathan::memory::virtual_memory_release(void* pages, std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto result = munmap(pages, no_pages * virtual_memory_page_size);
+    FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot release pages");
+}
+
+void* foonathan::memory::virtual_memory_commit(void*       memory,
+                                               std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto size   = no_pages * virtual_memory_page_size;
+    auto result = mprotect(memory, size, PROT_WRITE | PROT_READ);
+    if (result != 0u)
+        return nullptr;
+
+// advise that the memory will be needed
+#if defined(MADV_WILLNEED)
+    madvise(memory, size, MADV_WILLNEED);
+#elif defined(POSIX_MADV_WILLNEED)
+    posix_madvise(memory, size, POSIX_MADV_WILLNEED);
+#endif
+
+    return memory;
+}
+
+void foonathan::memory::virtual_memory_decommit(void*       memory,
+                                                std::size_t no_pages) FOONATHAN_NOEXCEPT
+{
+    auto size = no_pages * virtual_memory_page_size;
+// advise that the memory won't be needed anymore
+#if defined(MADV_FREE)
+    madvise(memory, size, MADV_FREE);
+#elif defined(MADV_DONTNEED)
+    madvise(memory, size, MADV_DONTNEED);
+#elif defined(POSIX_MADV_DONTNEED)
+    posix_madvise(memory, size, POSIX_MADV_DONTNEED);
+#endif
+
+    auto result = mprotect(memory, size, PROT_NONE);
+    FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot decommit memory");
+}
+#else
+#warning "virtual memory functions not available on your platform, define your own"
 #endif
 
 namespace
 {
     std::size_t calc_no_pages(std::size_t size) FOONATHAN_NOEXCEPT
     {
-        auto div = size / virtual_memory_page_size;
+        auto div  = size / virtual_memory_page_size;
         auto rest = size % virtual_memory_page_size;
 
         return div + (rest != 0u) + (detail::debug_fence_size ? 2u : 1u);
     }
 }
 
-void *virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
+void* virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
 {
     auto no_pages = calc_no_pages(size);
-    auto pages = virtual_memory_reserve(no_pages);
+    auto pages    = virtual_memory_reserve(no_pages);
     if (!pages || !virtual_memory_commit(pages, no_pages))
-        FOONATHAN_THROW(out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr},
-                                      no_pages * virtual_memory_page_size));
+        FOONATHAN_THROW(
+            out_of_memory({FOONATHAN_MEMORY_LOG_PREFIX "::virtual_memory_allocator", nullptr},
+                          no_pages * virtual_memory_page_size));
     on_allocate(size);
 
     return detail::debug_fill_new(pages, size, virtual_memory_page_size);
 }
 
-void virtual_memory_allocator::deallocate_node(void *node, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+void virtual_memory_allocator::deallocate_node(void* node, std::size_t size,
+                                               std::size_t) FOONATHAN_NOEXCEPT
 {
     auto pages = detail::debug_fill_free(node, size, virtual_memory_page_size);
 
@@ -163,7 +174,7 @@ std::size_t virtual_memory_allocator::max_alignment() const FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class foonathan::memory::allocator_traits<virtual_memory_allocator>;
+template class foonathan::memory::allocator_traits<virtual_memory_allocator>;
 #endif
 
 virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::size_t no_blocks)
@@ -172,7 +183,7 @@ virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::si
     FOONATHAN_MEMORY_ASSERT(block_size % virtual_memory_page_size == 0u);
     FOONATHAN_MEMORY_ASSERT(no_blocks > 0);
     auto total_size = block_size_ * no_blocks;
-    auto no_pages = total_size / virtual_memory_page_size;
+    auto no_pages   = total_size / virtual_memory_page_size;
 
     cur_ = static_cast<char*>(virtual_memory_reserve(no_pages));
     if (!cur_)
@@ -198,10 +209,9 @@ memory_block virtual_block_allocator::allocate_block()
 
 void virtual_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
 {
-    detail::debug_check_pointer([&]
-                                {
-                                    return static_cast<char*>(block.memory) == cur_ - block_size_;
-                                }, info(), block.memory);
+    detail::
+        debug_check_pointer([&] { return static_cast<char*>(block.memory) == cur_ - block_size_; },
+                            info(), block.memory);
     cur_ -= block_size_;
     virtual_memory_decommit(cur_, block_size_);
 }

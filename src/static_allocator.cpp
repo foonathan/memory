@@ -24,7 +24,7 @@ allocator_info static_allocator::info() const FOONATHAN_NOEXCEPT
 }
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
-    template class foonathan::memory::allocator_traits<static_allocator>;
+template class foonathan::memory::allocator_traits<static_allocator>;
 #endif
 
 memory_block static_block_allocator::allocate_block()
@@ -38,10 +38,9 @@ memory_block static_block_allocator::allocate_block()
 
 void static_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
 {
-    detail::debug_check_pointer([&]
-                                {
-                                    return static_cast<char*>(block.memory) + block.size == cur_;
-                                }, info(), block.memory);
+    detail::
+        debug_check_pointer([&] { return static_cast<char*>(block.memory) + block.size == cur_; },
+                            info(), block.memory);
     cur_ -= block_size_;
 }
 

@@ -9,8 +9,8 @@
 #include <memory>
 
 #include <foonathan/memory/allocator_storage.hpp> // allocator_reference, any_allocator_reference
-#include <foonathan/memory/heap_allocator.hpp> // heap_allocator
-#include <foonathan/memory/memory_stack.hpp> // memory_stack
+#include <foonathan/memory/heap_allocator.hpp>    // heap_allocator
+#include <foonathan/memory/memory_stack.hpp>      // memory_stack
 
 // alias namespace foonathan::memory as memory for easier access
 #include <foonathan/memory/namespace_alias.hpp>
@@ -44,13 +44,15 @@ int main()
     // like std_allocator or the deep_copy_ptr from the other example
     // the empty template brackets are for the mutex that is used for synchronization (like in the normal reference),
     // the default is default_mutex and can be set via CMake options
-    memory::any_allocator_reference<> any1(ref_stateful); // initialize with another allocator reference, will "unwrap"
+    memory::any_allocator_reference<> any1(
+        ref_stateful); // initialize with another allocator reference, will "unwrap"
     do_sth(any1);
 
     memory::any_allocator_reference<> any2(stack); // initialize with a "normal" RawAllocator
     do_sth(any2);
 
-    memory::any_allocator_reference<> any3(std::allocator<char>{}); // normal Allocators are RawAllocators, too, so this works
+    memory::any_allocator_reference<> any3(
+        std::allocator<char>{}); // normal Allocators are RawAllocators, too, so this works
     do_sth(any3);
 }
 

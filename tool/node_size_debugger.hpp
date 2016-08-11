@@ -24,8 +24,7 @@
 // The allocator simply stores the size of the biggest type, it is rebound to,
 // as long as it is not the TestType, the actual value_type of the container.
 template <typename T, typename TestType>
-class node_size_debugger
-: public std::allocator<T>
+class node_size_debugger : public std::allocator<T>
 {
 public:
     template <typename Other>
@@ -34,16 +33,14 @@ public:
         using other = node_size_debugger<Other, TestType>;
     };
 
-    node_size_debugger()
-            : size_(0u)
+    node_size_debugger() : size_(0u)
     {
         if (!std::is_same<T, TestType>::value)
             size_ = std::max(size_, sizeof(T));
     }
 
     template <typename U>
-    node_size_debugger(node_size_debugger<U, TestType> other)
-            : size_(other.size_)
+    node_size_debugger(node_size_debugger<U, TestType> other) : size_(other.size_)
     {
         if (!std::is_same<T, TestType>::value)
             size_ = std::max(size_, sizeof(T));
@@ -65,7 +62,7 @@ struct hash
 {
     // note: not noexcept! this leads to a cached hash value
     template <typename T>
-    std::size_t operator()(const T &) const
+    std::size_t operator()(const T&) const
     {
         // quality doesn't matter
         return 0;
@@ -271,15 +268,15 @@ using node_size_map = std::map<std::size_t, std::size_t>;
 
 struct debug_result
 {
-    const char *container_name;
+    const char*   container_name;
     node_size_map node_sizes;
 };
 
-template <class Debugger, typename ... Types>
+template <class Debugger, typename... Types>
 node_size_map debug_impl(Debugger debugger, std::tuple<Types...>)
 {
     node_size_map result;
-    int dummy[] = {(result[alignof(Types)] = debug_single<Types>(debugger), 0)...};
+    int           dummy[] = {(result[alignof(Types)] = debug_single<Types>(debugger), 0)...};
     (void)dummy;
     return result;
 }

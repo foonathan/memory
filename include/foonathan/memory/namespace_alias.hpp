@@ -26,7 +26,9 @@
 
 namespace foonathan
 {
-    namespace memory {}
+    namespace memory
+    {
+    }
 } // namespace foonathan
 
 namespace memory = foonathan::memory;

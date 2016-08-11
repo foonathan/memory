@@ -23,21 +23,30 @@ template <typename T>
 struct std_allocator_construct
 {
     using value_type = T;
-    using pointer = T;
+    using pointer    = T;
 
-    void construct(pointer, T) {}
+    void construct(pointer, T)
+    {
+    }
 };
 
 static_assert(!allocator_is_raw_allocator<std_allocator_construct<int>>::value, "");
 static_assert(!is_raw_allocator<std_allocator_construct<int>>::value, "");
 
-struct raw_allocator_specialized {};
-
-namespace foonathan { namespace memory
+struct raw_allocator_specialized
 {
-    template <>
-    struct allocator_traits<raw_allocator_specialized> {};
-}} // namespace foonathan::memory
+};
+
+namespace foonathan
+{
+    namespace memory
+    {
+        template <>
+        struct allocator_traits<raw_allocator_specialized>
+        {
+        };
+    }
+} // namespace foonathan::memory
 
 static_assert(is_raw_allocator<raw_allocator_specialized>::value, "");
 
@@ -56,7 +65,7 @@ struct standard_alloc
     using value_type = T;
 };
 
-template <typename T, typename ... Dummy>
+template <typename T, typename... Dummy>
 struct standard_multi_arg
 {
     using value_type = T;
@@ -76,10 +85,15 @@ struct standard_with_rebind
 
 void instantiate_test_type_statefulness()
 {
-    struct empty_raw {};
+    struct empty_raw
+    {
+    };
     test_type_statefulness<empty_raw, empty_raw, false>();
 
-    struct non_empty_raw {int i;};
+    struct non_empty_raw
+    {
+        int i;
+    };
     test_type_statefulness<non_empty_raw, non_empty_raw, true>();
 
     struct explicit_stateful_raw
@@ -98,29 +112,34 @@ void instantiate_test_type_statefulness()
     test_type_statefulness<standard_alloc<char>, standard_alloc<char>, false>();
     test_type_statefulness<standard_alloc<int>, standard_alloc<char>, false>();
 
-    test_type_statefulness<standard_multi_arg<char, int, int>, standard_multi_arg<char, int, int>, false>();
-    test_type_statefulness<standard_multi_arg<int, int, int>, standard_multi_arg<char, int, int>, false>();
+    test_type_statefulness<standard_multi_arg<char, int, int>, standard_multi_arg<char, int, int>,
+                           false>();
+    test_type_statefulness<standard_multi_arg<int, int, int>, standard_multi_arg<char, int, int>,
+                           false>();
 
-    test_type_statefulness<standard_with_rebind<char, char>, standard_with_rebind<char, char>, false>();
-    test_type_statefulness<standard_with_rebind<int, char>, standard_with_rebind<char, int>, false>();
+    test_type_statefulness<standard_with_rebind<char, char>, standard_with_rebind<char, char>,
+                           false>();
+    test_type_statefulness<standard_with_rebind<int, char>, standard_with_rebind<char, int>,
+                           false>();
 }
 
 template <class Allocator>
-void test_node(Allocator &alloc)
+void test_node(Allocator& alloc)
 {
     auto ptr = allocator_traits<Allocator>::allocate_node(alloc, 1, 1);
     allocator_traits<Allocator>::deallocate_node(alloc, ptr, 1, 1);
 }
 
 template <class Allocator>
-void test_array(Allocator &alloc)
+void test_array(Allocator& alloc)
 {
     auto ptr = allocator_traits<Allocator>::allocate_array(alloc, 1, 1, 1);
     allocator_traits<Allocator>::deallocate_array(alloc, ptr, 1, 1, 1);
 }
 
 template <class Allocator>
-void test_max_getter(const Allocator &alloc, std::size_t alignment, std::size_t node, std::size_t array)
+void test_max_getter(const Allocator& alloc, std::size_t alignment, std::size_t node,
+                     std::size_t array)
 {
     auto i = allocator_traits<Allocator>::max_alignment(alloc);
     REQUIRE(i == alignment);
@@ -185,7 +204,8 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(std.dealloc);
 
         struct both_alloc : min_raw_allocator, standard_allocator
-        {};
+        {
+        };
 
         static_assert(is_raw_allocator<both_alloc>::value, "");
 
@@ -233,7 +253,9 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(array.alloc_array);
         REQUIRE(array.dealloc_array);
 
-        struct array_node : min_raw_allocator, array_raw {};
+        struct array_node : min_raw_allocator, array_raw
+        {
+        };
         static_assert(is_raw_allocator<array_node>::value, "");
 
         // array works over node
@@ -244,7 +266,9 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(!array2.alloc_node);
         REQUIRE(!array2.dealloc_node);
 
-        struct array_std : standard_allocator, array_raw {};
+        struct array_std : standard_allocator, array_raw
+        {
+        };
         // array works over standard
         array_std array3;
         test_array(array3);
@@ -253,7 +277,9 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(!array3.alloc);
         REQUIRE(!array3.dealloc);
 
-        struct array_node_std : standard_allocator, array_raw, min_raw_allocator {};
+        struct array_node_std : standard_allocator, array_raw, min_raw_allocator
+        {
+        };
         // array works over everything
         array_node_std array4;
         test_array(array4);
@@ -299,11 +325,15 @@ TEST_CASE("allocator_traits", "[core]")
         with_array array;
         test_max_getter(array, detail::max_alignment, std::size_t(-1), 2);
 
-        struct with_node_array : with_node, with_array {};
+        struct with_node_array : with_node, with_array
+        {
+        };
         with_node_array node_array;
         test_max_getter(node_array, detail::max_alignment, 1, 2);
 
-        struct with_everything : with_node_array, with_alignment {};
+        struct with_everything : with_node_array, with_alignment
+        {
+        };
         with_everything everything;
         test_max_getter(everything, detail::max_alignment * 2, 1, 2);
     }
