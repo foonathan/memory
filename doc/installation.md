@@ -34,12 +34,7 @@ If you want to configure the library, add `set(option value CACHE INTERNAL "" FO
 See [options] for a list of all configuration options and CMake variables.
 
 Now the targets is available and to use the library in your application, call to `target_link_libraries(target foonathan_memory)`.
-This will also setups the include search path of the compiler.
-
-The library requires C++11 support. If it is not already enabled for your target, you can use my [compatibility library].
-It provides an advanced `target_compile_features()` functionality with automated workaround code for missing features,
-but also a simple way to activate C++11. Just call `comp_target_features(target PUBLIC CPP11)`.
-This function is already available through the call to `add_subdirectory()` since `memory` is using it, too.
+This will also setups the include search path of the compiler, as well as other required flags.
 
 ### 3. Code Usage
 
@@ -77,17 +72,15 @@ as `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR`.
 Use conditional compilation with them.
 
 After that you can link to the library by calling `target_link_libraries(your_target PUBLIC foonathan_memory)`.
-This only requires that `your_target` has C++11 or higher activated.
-
-*Note: unlike in the `add_subdirectory()` version, my [compatibility library] is not exposed.
-You need to add it manually, if you want to use it to activate C++11.*
+This setups everything needed.
 
 Then simply include the headers, everything is under the subdirectory `foonathan/memory` so write `#include <foonathan/memory/heap_allocator.hpp>` to use the [heap_allocator].
 
 ## Using an installed library (other buildsystems)
 
 To use the library with other build-systems, add `${CMAKE_INSTALL_PREFIX}/include/foonathan_memory-${major}.${minor}` and `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}` to your include directories path.
-Activate C++11 and link to the library file in `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}`.
+Link to the library file in `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}` and enable the right C++ standard for your configuration.
+ This is at least C++11, but because of the automatic feature detection of my [compatibility library], it may be higher if your compiler supports more.
 
 You should also gobally define the `FOONATHAN_MEMORY` macro as `1` and the `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR` macros as the corresponding values.
 

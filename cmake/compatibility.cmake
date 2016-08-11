@@ -22,7 +22,7 @@ comp_target_features(_foonathan_memory_comp_runner INTERFACE
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/foonathan DESTINATION include/comp)
 
 function(_foonathan_use_comp target)
-    comp_target_features(${target} PRIVATE CPP11)
+    target_compile_options(${target} PUBLIC ${_foonathan_memory_comp_runner_COMP_COMPILE_OPTIONS})
     target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${_foonathan_memory_comp_include_path}>
                                                 $<INSTALL_INTERFACE:include/comp>)
 endfunction()

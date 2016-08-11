@@ -153,9 +153,7 @@ It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer version
 
 2. Call `add_subdirectory(ext/memory)` or whatever your local path is to make it available in CMake.
 
-3. Simply call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link this library and setups the include search path.
-
-4. You need to activate C++11 at your target, if not already done, you can use [foonathan/compatibility] already available through `add_subdirectory()` and call `comp_target_features(your_target PUBLIC CPP11)`.
+3. Simply call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link this library and setups the include search path and compilation options.
 
 *Note: If during CMake you see an error message that compatibility is 
 not on the newest version, run `git submodule update 
@@ -170,12 +168,12 @@ You can also install the library:
 
 3. Repeat 1 and 2 for each build type/configuration you want to have (like `Debug`, `RelWithDebInfo` and `Release` or custom names).
 
-The use an installed library:
+To use an installed library:
 
 4. Call `find_package(foonathan_memory major.minor REQUIRED)` to find the library.
 
-5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` and activate C++11 to link to the library.
-
+5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
+  
 See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
 
 ## Documentation
