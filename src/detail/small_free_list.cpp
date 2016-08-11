@@ -108,8 +108,9 @@ namespace
     }
 
     // same as above but also requires a certain size
-    chunk *make_chunk(chunk_base *c, unsigned char size_needed) FOONATHAN_NOEXCEPT
+    chunk *make_chunk(chunk_base *c, std::size_t size_needed) FOONATHAN_NOEXCEPT
     {
+        FOONATHAN_MEMORY_ASSERT(size_needed <= std::numeric_limits<unsigned char>::max());
         return c->capacity >= size_needed ? make_chunk(c) : nullptr;
     }
 
