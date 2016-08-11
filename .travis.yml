@@ -8,14 +8,14 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.8']
-        env: TOOLSET=g++-4.8 BUILD_TYPE='Debug'
+      env: TOOLSET=g++-4.8 BUILD_TYPE='Debug'
     - os: linux
       compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.8']
-        env: TOOLSET=g++-4.8 BUILD_TYPE='Release'
+      env: TOOLSET=g++-4.8 BUILD_TYPE='Release'
 
     - os: linux
       compiler: gcc
@@ -23,14 +23,14 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.9']
-        env: TOOLSET=g++-4.9 BUILD_TYPE='Debug'
+      env: TOOLSET=g++-4.9 BUILD_TYPE='Debug'
     - os: linux
       compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.9']
-        env: TOOLSET=g++-4.9 BUILD_TYPE='Release'
+      env: TOOLSET=g++-4.9 BUILD_TYPE='Release'
 
     - os: linux
       compiler: gcc
@@ -38,14 +38,14 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
-        env: TOOLSET=g++-5 BUILD_TYPE='Debug'
+      env: TOOLSET=g++-5 BUILD_TYPE='Debug'
     - os: linux
       compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
-        env: TOOLSET=g++-5 BUILD_TYPE='Release'
+      env: TOOLSET=g++-5 BUILD_TYPE='Release'
 
     - os: osx
       compiler: clang
