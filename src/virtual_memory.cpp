@@ -123,6 +123,7 @@ void foonathan::memory::virtual_memory_decommit(void*       memory,
 
     auto result = mprotect(memory, size, PROT_NONE);
     FOONATHAN_MEMORY_ASSERT_MSG(result == 0, "cannot decommit memory");
+    (void)result;
 }
 #else
 #warning "virtual memory functions not available on your platform, define your own"
