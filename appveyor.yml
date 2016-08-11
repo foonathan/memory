@@ -1,0 +1,39 @@
+version: '{build}'
+build_script:
+- cmd: >-
+    git submodule update --init --recursive
+
+
+    mkdir build-12
+
+    cd build-12\
+
+    cmake -G "Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_TOOLS=OFF -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
+
+    cmake --build .
+
+    cd ..\
+
+
+    mkdir build-14-debug
+
+    cd build-14-debug\
+
+    cmake -G "Visual Studio 14" -DCMAKE_BUILD_TYPE=Debug ..\
+
+    cmake --build .
+
+    test\Debug\foonathan_memory_test.exe
+
+    cd ..\
+
+
+    mkdir build-14-release
+
+    cd build-14-debug\
+
+    cmake -G "Visual Studio 14" -DCMAKE_BUILD_TYPE=Release ..\
+
+    cmake --build .
+
+    test\Debug\foonathan_memory_test.exe
