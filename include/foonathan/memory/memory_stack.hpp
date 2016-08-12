@@ -41,6 +41,52 @@ namespace foonathan
                 {
                 }
 
+                friend bool operator==(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    if (lhs.index != rhs.index)
+                        return false;
+                    FOONATHAN_MEMORY_ASSERT_MSG(lhs.end == rhs.end, "you must not compare two "
+                                                                    "stack markers from different "
+                                                                    "stacks");
+                    return lhs.top == rhs.top;
+                }
+
+                friend bool operator!=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(rhs == lhs);
+                }
+
+                friend bool operator<(const stack_marker& lhs,
+                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    if (lhs.index != rhs.index)
+                        return lhs.index < rhs.index;
+                    FOONATHAN_MEMORY_ASSERT_MSG(lhs.end == rhs.end, "you must not compare two "
+                                                                    "stack markers from different "
+                                                                    "stacks");
+                    return lhs.top < rhs.top;
+                }
+
+                friend bool operator>(const stack_marker& lhs,
+                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return rhs < lhs;
+                }
+
+                friend bool operator<=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(rhs < lhs);
+                }
+
+                friend bool operator>=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(lhs < rhs);
+                }
+
                 template <class Impl>
                 friend class memory::memory_stack;
             };
@@ -110,7 +156,10 @@ namespace foonathan
 
             /// The marker type that is used for unwinding.
             /// The exact type is implementation defined,
-            /// it is only required that it is copyable.
+            /// it is only required that it is efficiently copyable
+            /// and has all the comparision operators defined for two markers on the same stack.
+            /// Two markers are equal, if they are copies or created from two `top()` calls without a call to `unwind()` or `allocate()`.
+            /// A marker `a` is less than marker `b`, if after `a` was obtained, there was one or more call to `allocate()` and no call to `unwind()`.
             using marker = FOONATHAN_IMPL_DEFINED(detail::stack_marker);
 
             /// \returns A marker to the current top of the stack.
