@@ -8,8 +8,6 @@
 /// \file
 /// Class \ref foonathan::memory::temporary_allocator and related functions.
 
-#include <foonathan/thread_local.hpp>
-
 #include "config.hpp"
 #include "memory_stack.hpp"
 
@@ -17,6 +15,9 @@ namespace foonathan
 {
     namespace memory
     {
+        class temporary_allocator;
+        class temporary_stack;
+
         namespace detail
         {
             class temporary_block_allocator
@@ -45,14 +46,59 @@ namespace foonathan
             };
 
             using temporary_stack_impl = memory_stack<temporary_block_allocator>;
-        } // namespace detail
 
-        class temporary_allocator;
+            class temporary_stack_list;
+
+#if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 2
+            class temporary_stack_list_node
+            {
+            public:
+                // doesn't add into list
+                temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                {
+                }
+
+                temporary_stack_list_node(int) FOONATHAN_NOEXCEPT;
+
+                ~temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                {
+                }
+
+            private:
+                temporary_stack_list_node* next_;
+
+                friend temporary_stack_list;
+            };
+
+            static class temporary_allocator_dtor_t
+            {
+            public:
+                temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
+                ~temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
+            } temporary_allocator_dtor;
+#else
+            class temporary_stack_list_node
+            {
+            protected:
+                temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                {
+                }
+
+                temporary_stack_list_node(int) FOONATHAN_NOEXCEPT
+                {
+                }
+
+                ~temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                {
+                }
+            };
+#endif
+        } // namespace detail
 
         /// A wrapper around the \ref memory_stack that is used by the \ref temporary_allocator.
         /// There should be at least one per-thread.
         /// \ingroup memory allocator
-        class temporary_stack
+        class temporary_stack : FOONATHAN_EBO(detail::temporary_stack_list_node)
         {
         public:
             /// The type of the handler called when the internal \ref memory_stack grows.
@@ -79,6 +125,7 @@ namespace foonathan
 
             /// \effects Creates it with a given initial size of the stack.
             /// It can grow if needed, although that is expensive.
+            /// \requires `initial_size` must be greater than `0`.
             explicit temporary_stack(std::size_t initial_size) : stack_(initial_size), top_(nullptr)
             {
             }
@@ -90,6 +137,11 @@ namespace foonathan
             }
 
         private:
+            temporary_stack(int i, std::size_t initial_size)
+            : detail::temporary_stack_list_node(i), stack_(initial_size), top_(nullptr)
+            {
+            }
+
             using marker = detail::temporary_stack_impl::marker;
 
             marker top() const FOONATHAN_NOEXCEPT
@@ -107,7 +159,57 @@ namespace foonathan
 
             friend temporary_allocator;
             friend memory_stack_raii_unwind<temporary_stack>;
+            friend detail::temporary_stack_list;
         };
+
+        /// Manually takes care of the lifetime of the per-thread \ref temporary_stack.
+        /// The constructor will create it, if not already done, and the destructor will destroy it, if not already done.
+        /// \notes If there are multiple objects in a thread,
+        /// this will lead to unnecessary construction and destruction of the stack.
+        /// It is thus adviced to create one object on the top-level function of the thread, e.g. in `main()`.
+        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 2`, the destructor has no effect,
+        /// it will be destroyed automatically.
+        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, the use of this class has no effect,
+        /// because the per-thread stack is disabled.
+        class temporary_stack_initializer
+        {
+        public:
+            static FOONATHAN_CONSTEXPR std::size_t default_stack_size = 4096u;
+
+            static FOONATHAN_CONSTEXPR struct defer_create_t
+            {
+                FOONATHAN_CONSTEXPR_FNC defer_create_t() FOONATHAN_NOEXCEPT = default;
+            } defer_create{};
+
+            /// \effects Does not create the per-thread stack.
+            /// It will be created by the first call to \ref get_temporary_stack() in the current thread.
+            /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function has no effect.
+            temporary_stack_initializer(defer_create_t) FOONATHAN_NOEXCEPT
+            {
+            }
+
+            /// \effects Creates the per-thread stack with the given default size if it wasn't already created.
+            /// \requires `initial_size` must not be `0` if `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE != 0`.
+            /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function will issue a warning in debug mode.
+            /// This can be disabled by passing `0` as the initial size.
+            temporary_stack_initializer(std::size_t initial_size = default_stack_size);
+
+            /// \effects Destroys the per-thread stack if it isn't already destroyed.
+            ~temporary_stack_initializer() FOONATHAN_NOEXCEPT;
+
+            temporary_stack_initializer(temporary_stack_initializer&&) = delete;
+            temporary_stack_initializer& operator=(temporary_stack_initializer&&) = delete;
+        };
+
+        /// \effects Creates the per-thread \ref temporary_stack with the given initial size,
+        /// if it wasn't already created.
+        /// \returns The per-thread \ref temporary_stack.
+        /// \requires There must be a per-thread temporary stack (\ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE must not be equal to `0`).
+        /// \notes If \ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE is equal to `1`,
+        /// this function can create the temporary stack.
+        /// But if there is no \ref temporary_stack_initializer, it won't be destroyed.
+        temporary_stack& get_temporary_stack(
+            std::size_t initial_size = temporary_stack_initializer::default_stack_size);
 
         /// A stateful \concept{concept_rawallocator,RawAllocator} that handles temporary allocations.
         /// It works similar to \c alloca() but uses a seperate \ref memory_stack for the allocations,
@@ -119,6 +221,10 @@ namespace foonathan
         class temporary_allocator
         {
         public:
+            /// \effects Creates it by using the \ref get_temporary_stack() to get the temporary stack.
+            /// \requires There must be a per-thread temporary stack (\ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE must not be equal to `0`).
+            temporary_allocator();
+
             /// \effects Creates it by giving it the \ref temporary_stack it uses for allocation.
             explicit temporary_allocator(temporary_stack& stack);
 
