@@ -19,6 +19,9 @@ namespace foonathan
             void handle_failed_assert(const char* msg, const char* file, int line,
                                       const char* fnc) FOONATHAN_NOEXCEPT;
 
+            void handle_warning(const char* msg, const char* file, int line,
+                                const char* fnc) FOONATHAN_NOEXCEPT;
+
 // note: debug assertion macros don't use fully qualified name
 // because they should only be used in this library, where the whole namespace is available
 // can be override via command line definitions
@@ -36,10 +39,14 @@ namespace foonathan
 
 #define FOONATHAN_MEMORY_UNREACHABLE(Msg)                                                          \
     detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__, __LINE__, __func__)
+
+#define FOONATHAN_MEMORY_WARNING(Msg) detail::handle_warning(Msg, __FILE__, __LINE__, __func__)
+
 #elif !defined(FOONATHAN_MEMORY_ASSERT)
 #define FOONATHAN_MEMORY_ASSERT(Expr)
 #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
 #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
+#define FOONATHAN_MEMORY_WARNING(Msg)
 #endif
         } // namespace detail
     }
