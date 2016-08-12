@@ -234,7 +234,7 @@ namespace foonathan
             }
 
             /// \effects Move constructs the unwinder by taking the saved position from `other`.
-            /// `other` does not save any location after that.
+            /// `other.will_unwind()` will return `false` after it.
             memory_stack_raii_unwind(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
                 : marker_(other.marker_),
                   stack_(other.stack_)
@@ -251,7 +251,7 @@ namespace foonathan
             }
 
             /// \effects Move assigns the unwinder by taking the saved position from `other`.
-            /// `other` does not save any location after that.
+            /// `other.will_unwind()` will return `false` after it.
             memory_stack_raii_unwind& operator=(memory_stack_raii_unwind& other) FOONATHAN_NOEXCEPT
             {
                 marker_ = other.marker_;
@@ -262,17 +262,41 @@ namespace foonathan
                 return *this;
             }
 
+            /// \effects Removes the location without unwinding it.
+            /// `will_unwind()` will return `false`.
+            void release() FOONATHAN_NOEXCEPT
+            {
+                stack_ = nullptr;
+            }
+
+            /// \effects Unwinds to the saved location explictly.
+            /// \requires `will_unwind()` must return `true`.
+            void unwind() FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
+                stack_->unwind(marker_);
+            }
+
+            /// \returns Whether or not the unwinder will actually unwind.
+            /// \notes It will not unwind if it is in the moved-from state.
+            bool will_unwind() const FOONATHAN_NOEXCEPT
+            {
+                return stack_ != nullptr;
+            }
+
             /// \returns The saved marker, if there is any.
+            /// \requires `will_unwind()` must return `true`.
             marker_type get_marker() const FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
                 return marker_;
             }
 
             /// \returns The stack it will unwind.
-            /// \requires There must be a stack, i.e. it must not be in the moved-from state.
+            /// \requires `will_unwind()` must return `true`.
             stack_type& get_stack() const FOONATHAN_NOEXCEPT
             {
-                FOONATHAN_MEMORY_ASSERT_MSG(stack_, "must not be called on a moved-from object");
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
                 return *stack_;
             }
 
