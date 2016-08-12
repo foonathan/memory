@@ -303,6 +303,9 @@ namespace foonathan
             /// `other.will_unwind()` will return `false` after it.
             memory_stack_raii_unwind& operator=(memory_stack_raii_unwind& other) FOONATHAN_NOEXCEPT
             {
+                if (stack_)
+                    stack_->unwind(marker_);
+
                 marker_ = other.marker_;
                 stack_  = other.stack_;
 
