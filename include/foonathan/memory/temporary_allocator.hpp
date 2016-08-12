@@ -19,19 +19,98 @@ namespace foonathan
     {
         namespace detail
         {
-            static class temporary_allocator_dtor_t
+            class temporary_block_allocator
             {
             public:
-                temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
-                ~temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
+                explicit temporary_block_allocator(std::size_t block_size) FOONATHAN_NOEXCEPT;
+
+                memory_block allocate_block();
+
+                void deallocate_block(memory_block block);
+
+                std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+                {
+                    return block_size_;
+                }
+
+                using growth_tracker = void (*)(std::size_t size);
+
+                growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT;
+
+                growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT;
 
             private:
-                static FOONATHAN_THREAD_LOCAL std::size_t nifty_counter_;
-            } temporary_allocator_dtor;
+                growth_tracker tracker_;
+                std::size_t    block_size_;
+            };
+
+            using temporary_stack_impl = memory_stack<temporary_block_allocator>;
         } // namespace detail
 
+        class temporary_allocator;
+
+        /// A wrapper around the \ref memory_stack that is used by the \ref temporary_allocator.
+        /// There should be at least one per-thread.
+        /// \ingroup memory allocator
+        class temporary_stack
+        {
+        public:
+            /// The type of the handler called when the internal \ref memory_stack grows.
+            /// It gets the size of the new block that will be allocated.
+            /// \requiredbe The handler shall log the growth, throw an exception or aborts the program.
+            /// If this function does not return, the growth is prevented but the allocator unusable until memory is freed.
+            /// \defaultbe The default handler does nothing.
+            using growth_tracker = detail::temporary_block_allocator::growth_tracker;
+
+            /// \effects Sets \c h as the new \ref growth_tracker.
+            /// A \c nullptr sets the default \ref growth_tracker.
+            /// Each thread has its own, separate tracker.
+            /// \returns The previous \ref growth_tracker. This is never \c nullptr.
+            growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT
+            {
+                return stack_.get_allocator().set_growth_tracker(t);
+            }
+
+            /// \returns The current \ref growth_tracker. This is never \c nullptr.
+            growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT
+            {
+                return stack_.get_allocator().get_growth_tracker();
+            }
+
+            /// \effects Creates it with a given initial size of the stack.
+            /// It can grow if needed, although that is expensive.
+            explicit temporary_stack(std::size_t initial_size) : stack_(initial_size), top_(nullptr)
+            {
+            }
+
+            /// \returns `next_capacity()` of the internal `memory_stack`.
+            std::size_t next_capacity() const FOONATHAN_NOEXCEPT
+            {
+                return stack_.next_capacity();
+            }
+
+        private:
+            using marker = detail::temporary_stack_impl::marker;
+
+            marker top() const FOONATHAN_NOEXCEPT
+            {
+                return stack_.top();
+            }
+
+            void unwind(marker m) FOONATHAN_NOEXCEPT
+            {
+                stack_.unwind(m);
+            }
+
+            detail::temporary_stack_impl stack_;
+            temporary_allocator*         top_;
+
+            friend temporary_allocator;
+            friend memory_stack_raii_unwind<temporary_stack>;
+        };
+
         /// A stateful \concept{concept_rawallocator,RawAllocator} that handles temporary allocations.
-        /// It works similar to \c alloca() but uses a thread local \ref memory_stack for the allocations,
+        /// It works similar to \c alloca() but uses a seperate \ref memory_stack for the allocations,
         /// instead of the actual program stack.
         /// This avoids the stack overflow error and is portable,
         /// with a similar speed.
@@ -40,63 +119,35 @@ namespace foonathan
         class temporary_allocator
         {
         public:
-            /// The type of the handler called when the internal \ref memory_stack grows.
-            /// It gets the size of the new block that will be allocated.
-            /// \requiredbe The handler shall log the growth, throw an exception or aborts the program.
-            /// If this function does not return, the growth is prevented but the allocator unusable until memory is freed.
-            /// \defaultbe The default handler does nothing.
-            using growth_tracker = void (*)(std::size_t size);
+            /// \effects Creates it by giving it the \ref temporary_stack it uses for allocation.
+            explicit temporary_allocator(temporary_stack& stack);
 
-            /// \effects Sets \c h as the new \ref growth_tracker.
-            /// A \c nullptr sets the default \ref growth_tracker.
-            /// Each thread has its own, separate tracker.
-            /// \returns The previous \ref growth_tracker. This is never \c nullptr.
-            static growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT;
-
-            /// \returns The current \ref growth_tracker. This is never \c nullptr.
-            static growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT;
-
-            /// \effects Unwinds the \ref memory_stack to the point where it was upon creation.
             ~temporary_allocator() FOONATHAN_NOEXCEPT;
 
-            /// @{
-            /// \effects Makes the destination allocator object the active allocator.
-            /// Allocation must only be done from the active allocator object.
-            temporary_allocator(temporary_allocator&& other) FOONATHAN_NOEXCEPT;
-            temporary_allocator& operator=(temporary_allocator&& other) FOONATHAN_NOEXCEPT;
-            /// @}
+            temporary_allocator(temporary_allocator&&) = delete;
+            temporary_allocator& operator=(temporary_allocator&&) = delete;
 
             /// \effects Allocates memory from the internal \ref memory_stack by forwarding to it.
             /// \returns The result of \ref memory_stack::allocate().
-            /// \requires This function must be called on the active allocator object.
+            /// \requires `is_active()` must return `true`.
             void* allocate(std::size_t size, std::size_t alignment);
 
+            /// \returns Whether or not the allocator object is active.
+            /// \notes The active allocator object is the last object created for one stack.
+            /// Moving changes the active allocator.
+            bool is_active() const FOONATHAN_NOEXCEPT;
+
+            /// \returns The internal stack the temporary allocator is using.
+            /// \requires `is_active()` must return `true`.
+            temporary_stack& get_stack() const FOONATHAN_NOEXCEPT
+            {
+                return unwind_.get_stack();
+            }
+
         private:
-            temporary_allocator(std::size_t size) FOONATHAN_NOEXCEPT;
-
-            static FOONATHAN_THREAD_LOCAL const temporary_allocator* top_;
-            memory_stack<>::marker                                   marker_;
-            const temporary_allocator*                               prev_;
-            bool                                                     unwind_;
-
-            friend temporary_allocator make_temporary_allocator(std::size_t size)
-                FOONATHAN_NOEXCEPT;
+            memory_stack_raii_unwind<temporary_stack> unwind_;
+            temporary_allocator*                      prev_;
         };
-
-        /// \effects Creates a new \ref temporary_allocator object and makes it the active object.
-        /// If this is the first call of this function in a thread it will create the internal \ref memory_stack with the given size.
-        /// If there is never a call to this function in a thread, it will never be created.
-        /// If this is not the first call, the size parameter will be ignored.
-        /// The internal stack will be destroyed when the current thread ends.
-        /// Without growth there will be at most one heap allocation per thread.
-        /// \returns A new \ref temporary_allocator object that is the active object.
-        /// \requires The result must be stored on the program stack.
-        /// \relates temporary_allocator
-        inline temporary_allocator make_temporary_allocator(std::size_t size = 4096u)
-            FOONATHAN_NOEXCEPT
-        {
-            return {size};
-        }
 
         template <class Allocator>
         class allocator_traits;
@@ -147,7 +198,10 @@ namespace foonathan
 
             /// @{
             /// \returns The maximum size which is \ref memory_stack::next_capacity() of the internal stack.
-            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT;
+            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            {
+                return state.get_stack().next_capacity();
+            }
 
             static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
             {
