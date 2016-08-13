@@ -62,24 +62,6 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
                                                       detail::max_alignment);
 }
 
-#if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 1
-// the per-thread storage of the stack
-// necessary for all lifetime managment strategies
-namespace
-{
-    using storage_t =
-        std::aligned_storage<sizeof(temporary_stack), FOONATHAN_ALIGNOF(temporary_stack)>::type;
-    FOONATHAN_THREAD_LOCAL storage_t temporary_stack_storage;
-    FOONATHAN_THREAD_LOCAL bool      is_created = false;
-
-    temporary_stack& get() FOONATHAN_NOEXCEPT
-    {
-        FOONATHAN_MEMORY_ASSERT(is_created);
-        return *static_cast<temporary_stack*>(static_cast<void*>(&temporary_stack_storage));
-    }
-}
-#endif
-
 #if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 2
 // lifetime managment through the nifty counter and the list
 
@@ -90,17 +72,29 @@ static class detail::temporary_stack_list
 public:
     std::atomic<temporary_stack_list_node*> first;
 
-    void create(void* storage, std::size_t size)
+    temporary_stack* create(void* storage, std::size_t size)
     {
-        ::new (storage) temporary_stack(0, size);
+        return ::new (storage) temporary_stack(0, size);
+    }
+
+    void clear(temporary_stack& stack)
+    {
+        // stack should be empty now, so shrink_to_fit() clears all memory
+        stack.stack_.shrink_to_fit();
     }
 
     void destroy()
     {
-        for (auto ptr = first.exchange(nullptr); ptr; ptr = ptr->next_)
+        for (auto ptr = first.exchange(nullptr); ptr;)
         {
             auto stack = static_cast<temporary_stack*>(ptr);
+            auto next  = ptr->next_;
+
             stack->~temporary_stack();
+            default_allocator().deallocate_node(stack, sizeof(temporary_stack),
+                                                FOONATHAN_ALIGNOF(temporary_stack));
+
+            ptr = next;
         }
 
         FOONATHAN_MEMORY_ASSERT_MSG(!first,
@@ -118,6 +112,7 @@ detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEX
 namespace
 {
     FOONATHAN_THREAD_LOCAL std::size_t nifty_counter;
+    FOONATHAN_THREAD_LOCAL temporary_stack* stack = nullptr;
 }
 
 detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT
@@ -127,43 +122,59 @@ detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() FOONATHAN_NOEXC
 
 detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT
 {
-    if (--nifty_counter == 0u && is_created)
+    if (--nifty_counter == 0u && stack)
         temporary_stack_list_obj.destroy();
 }
 
 temporary_stack_initializer::temporary_stack_initializer(std::size_t initial_size)
 {
-    if (!is_created)
+    if (!stack)
     {
-        temporary_stack_list_obj.create(&temporary_stack_storage, initial_size);
-        is_created = true;
+        auto memory = default_allocator().allocate_node(sizeof(temporary_stack),
+                                                        FOONATHAN_ALIGNOF(temporary_stack));
+        stack = temporary_stack_list_obj.create(memory, initial_size);
     }
 }
 
 temporary_stack_initializer::~temporary_stack_initializer()
 {
     // don't destroy, nifty counter does that
+    // but can get rid of all the memory
+    if (stack)
+        temporary_stack_list_obj.clear(*stack);
 }
 
 temporary_stack& foonathan::memory::get_temporary_stack(std::size_t initial_size)
 {
-    if (!is_created)
+    if (!stack)
     {
-        temporary_stack_list_obj.create(&temporary_stack_storage, initial_size);
-        is_created = true;
+        auto memory = default_allocator().allocate_node(sizeof(temporary_stack),
+                                                        FOONATHAN_ALIGNOF(temporary_stack));
+        stack = temporary_stack_list_obj.create(memory, initial_size);
     }
-    return get();
+    return *stack;
 }
 
 #elif FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 1
 
 namespace
 {
+    using storage_t =
+        std::aligned_storage<sizeof(temporary_stack), FOONATHAN_ALIGNOF(temporary_stack)>::type;
+    FOONATHAN_THREAD_LOCAL storage_t temporary_stack_storage;
+    FOONATHAN_THREAD_LOCAL bool      is_created = false;
+
+    temporary_stack& get() FOONATHAN_NOEXCEPT
+    {
+        FOONATHAN_MEMORY_ASSERT(is_created);
+        return *static_cast<temporary_stack*>(static_cast<void*>(&temporary_stack_storage));
+    }
+
     void create(std::size_t initial_size)
     {
         if (!is_created)
         {
-            ::new(static_cast<void*>(&temporary_stack_storage)) temporary_stack(initial_size);
+            ::new (static_cast<void*>(&temporary_stack_storage)) temporary_stack(initial_size);
             is_created = true;
         }
     }
@@ -216,7 +227,8 @@ temporary_allocator::temporary_allocator() : temporary_allocator(get_temporary_s
 {
 }
 
-temporary_allocator::temporary_allocator(temporary_stack& stack) : unwind_(stack), prev_(stack.top_)
+temporary_allocator::temporary_allocator(temporary_stack& stack)
+: unwind_(stack), prev_(stack.top_), shrink_to_fit_(false)
 {
     FOONATHAN_MEMORY_ASSERT(!prev_ || prev_->is_active());
     stack.top_ = this;
@@ -225,13 +237,25 @@ temporary_allocator::temporary_allocator(temporary_stack& stack) : unwind_(stack
 temporary_allocator::~temporary_allocator()
 {
     if (is_active())
-        unwind_.get_stack().top_ = prev_;
+    {
+        auto& stack = unwind_.get_stack();
+        stack.top_  = prev_;
+        unwind_.unwind(); // manually call it now...
+        if (shrink_to_fit_)
+            // to call shrink_to_fit() afterwards
+            stack.stack_.shrink_to_fit();
+    }
 }
 
 void* temporary_allocator::allocate(std::size_t size, std::size_t alignment)
 {
     FOONATHAN_MEMORY_ASSERT_MSG(is_active(), "object isn't the active allocator");
     return unwind_.get_stack().stack_.allocate(size, alignment);
+}
+
+void temporary_allocator::shrink_to_fit() FOONATHAN_NOEXCEPT
+{
+    shrink_to_fit_ = true;
 }
 
 bool temporary_allocator::is_active() const FOONATHAN_NOEXCEPT

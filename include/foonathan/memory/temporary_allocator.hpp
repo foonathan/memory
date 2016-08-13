@@ -65,7 +65,7 @@ namespace foonathan
                 }
 
             private:
-                temporary_stack_list_node* next_;
+                temporary_stack_list_node* next_ = nullptr;
 
                 friend temporary_stack_list;
             };
@@ -167,8 +167,10 @@ namespace foonathan
         /// \notes If there are multiple objects in a thread,
         /// this will lead to unnecessary construction and destruction of the stack.
         /// It is thus adviced to create one object on the top-level function of the thread, e.g. in `main()`.
-        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 2`, the destructor has no effect,
-        /// it will be destroyed automatically.
+        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 2`, it is not necessary to use this class,
+        /// the nifty counter will clean everything upon program termination.
+        /// But it can still be used as an optimization if you have a thread that is terminated long before program exit.
+        /// The automatic clean up will only occur much later.
         /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, the use of this class has no effect,
         /// because the per-thread stack is disabled.
         class temporary_stack_initializer
@@ -243,6 +245,13 @@ namespace foonathan
             /// Moving changes the active allocator.
             bool is_active() const FOONATHAN_NOEXCEPT;
 
+            /// \effects Instructs it to release unnecessary memory after automatic unwinding occurs.
+            /// This will effectively forward to \ref memory_stack::shrink_to_fit() of the internal stack.
+            /// \notes Like the use of the \ref temporary_stack_initializer this can be used as an optimization,
+            /// to tell when the thread's \ref temporary_stack isn't needed anymore and can be destroyed.
+            /// \notes It doesn't call shrink to fit immediately, only in the destructor!
+            void shrink_to_fit() FOONATHAN_NOEXCEPT;
+
             /// \returns The internal stack the temporary allocator is using.
             /// \requires `is_active()` must return `true`.
             temporary_stack& get_stack() const FOONATHAN_NOEXCEPT
@@ -253,6 +262,7 @@ namespace foonathan
         private:
             memory_stack_raii_unwind<temporary_stack> unwind_;
             temporary_allocator*                      prev_;
+            bool                                      shrink_to_fit_;
         };
 
         template <class Allocator>

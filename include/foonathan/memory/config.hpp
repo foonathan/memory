@@ -116,12 +116,10 @@
 #define FOONATHAN_MEMORY_NAMESPACE_PREFIX 1
 
 /// The mode of the automatic \ref temporary_stack creation.
-/// Set to `2` to enable automatic lifetime managment of the per-thread stack through nifty counter.
-/// This mode requires full support for the `thread_local` keyword.
+/// Set to `2` to enable automatic lifetime management of the per-thread stack through nifty counter.
+/// Then all memory will be freed upon program termination automatically.
 /// Set to `1` to disable automatic lifetime managment of the per-thread stack,
 /// requires managing it through the \ref temporary_stack_initializer.
-/// This mode doesn't require full support for the `thread_local` keyword,
-/// GCCs `__thread` (which does not call destructors) is sufficient.
 /// Set to `0` to disable the per-thread stack completely.
 /// \ref get_temporary_stack() will abort the program upon call.
 /// \ingroup memory allocator

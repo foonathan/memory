@@ -25,6 +25,7 @@ There are the following variables available to configure it:
 * `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE`: The `temporary_allocator` uses a `temporary_stack` for its allocation.
 This option controls how and if a global, per-thread instance of it is managed.
 If `2` it is automatically managed and created on-demand, if `1` you need explicit lifetime control through the `temporary_stack_initializer` class and if `0` there is no stack created automatically.
+Mode `2` has a slight runtime overhead.
 
 * `FOONATHAN_MEMORY_DEBUG_*`: Specifies debugging options such as pointer check in `deallocate()` or filling newly allocated memory with values. They are set automatically for certain build types and cannot be overriden: All of them are enabled in `Debug` builds, the faster ones in `RelWithDebInfo` and none in `Release`. See [debugging](md_doc_debug_error.html#debugging) for a detailed description.
 

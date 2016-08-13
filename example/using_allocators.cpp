@@ -23,8 +23,6 @@ void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
-    memory::temporary_stack_initializer initializer;
-
     // a memory pool RawAllocator
     // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
     // list_node_size<int>::value is the size of each node of a std::list
