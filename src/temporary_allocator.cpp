@@ -64,6 +64,13 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
 
 #if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 2
 // lifetime managment through the nifty counter and the list
+// note: I could have used a simple `thread_local` variable for the temporary stack
+// but this could lead to issues with destruction order
+// and more importantly I have to support platforms that can't handle non-trivial thread local's
+// hence I need to dynamically allocate the stack's and store them in a container
+// on program exit the container is iterated and all stack's are properly destroyed
+// if a thread exit can be detected, the dynamic memory of the stack is already released,
+// but not the stack itself destroyed
 
 #include <atomic>
 
@@ -72,8 +79,10 @@ static class detail::temporary_stack_list
 public:
     std::atomic<temporary_stack_list_node*> first;
 
-    temporary_stack* create(void* storage, std::size_t size)
+    temporary_stack* create(std::size_t size)
     {
+        auto storage = default_allocator().allocate_node(sizeof(temporary_stack),
+                                                         FOONATHAN_ALIGNOF(temporary_stack));
         return ::new (storage) temporary_stack(0, size);
     }
 
@@ -102,17 +111,36 @@ public:
     }
 } temporary_stack_list_obj;
 
+namespace
+{
+    FOONATHAN_THREAD_LOCAL std::size_t nifty_counter;
+    FOONATHAN_THREAD_LOCAL temporary_stack* stack = nullptr;
+
+#if FOONATHAN_HAS_THREAD_LOCAL
+    thread_local struct thread_exit_detector_t
+    {
+        ~thread_exit_detector_t() FOONATHAN_NOEXCEPT
+        {
+            if (stack)
+                // clear automatically on thread exit, as the initializer's destructor does
+                // note: if another's thread_local variable destructor is called after this one
+                // and that destructor uses the temporary allocator
+                // the stack needs to grow again
+                // but who does temporary allocation in a destructor?!
+                temporary_stack_list_obj.clear(*stack);
+        }
+    } thread_exit_detector;
+#endif
+}
+
 detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEXCEPT
 {
     next_ = temporary_stack_list_obj.first.load();
     while (!temporary_stack_list_obj.first.compare_exchange_weak(next_, this))
         ;
-}
-
-namespace
-{
-    FOONATHAN_THREAD_LOCAL std::size_t nifty_counter;
-    FOONATHAN_THREAD_LOCAL temporary_stack* stack = nullptr;
+#if FOONATHAN_HAS_THREAD_LOCAL
+    (void)&thread_exit_detector; // ODR-use it, so it will be created
+#endif
 }
 
 detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT
@@ -129,11 +157,7 @@ detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() FOONATHAN_NOEX
 temporary_stack_initializer::temporary_stack_initializer(std::size_t initial_size)
 {
     if (!stack)
-    {
-        auto memory = default_allocator().allocate_node(sizeof(temporary_stack),
-                                                        FOONATHAN_ALIGNOF(temporary_stack));
-        stack = temporary_stack_list_obj.create(memory, initial_size);
-    }
+        stack = temporary_stack_list_obj.create(initial_size);
 }
 
 temporary_stack_initializer::~temporary_stack_initializer()
@@ -147,11 +171,7 @@ temporary_stack_initializer::~temporary_stack_initializer()
 temporary_stack& foonathan::memory::get_temporary_stack(std::size_t initial_size)
 {
     if (!stack)
-    {
-        auto memory = default_allocator().allocate_node(sizeof(temporary_stack),
-                                                        FOONATHAN_ALIGNOF(temporary_stack));
-        stack = temporary_stack_list_obj.create(memory, initial_size);
-    }
+        stack = temporary_stack_list_obj.create(initial_size);
     return *stack;
 }
 
