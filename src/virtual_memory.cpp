@@ -76,6 +76,10 @@ const std::size_t foonathan::memory::virtual_memory_page_size = PAGE_SIZE;
 const std::size_t foonathan::memory::virtual_memory_page_size = sysconf(_SC_PAGESIZE);
 #endif
 
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT
 {
     auto pages = mmap(nullptr, no_pages * virtual_memory_page_size, PROT_NONE,
