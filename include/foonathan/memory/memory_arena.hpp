@@ -31,7 +31,7 @@ namespace foonathan
             std::size_t size;   ///< The size of the memory block (might be \c 0).
 
             /// \effects Creates an invalid memory block with starting address \c nullptr and size \c 0.
-            memory_block() FOONATHAN_NOEXCEPT : memory_block(nullptr, size)
+            memory_block() FOONATHAN_NOEXCEPT : memory_block(nullptr, std::size_t(0))
             {
             }
 
