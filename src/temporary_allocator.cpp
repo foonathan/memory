@@ -183,7 +183,7 @@ temporary_stack_initializer::temporary_stack_initializer(std::size_t initial_siz
         stack = temporary_stack_list_obj.create(initial_size);
 }
 
-temporary_stack_initializer::~temporary_stack_initializer()
+temporary_stack_initializer::~temporary_stack_initializer() FOONATHAN_NOEXCEPT
 {
     // don't destroy, nifty counter does that
     // but can get rid of all the memory
@@ -277,7 +277,7 @@ temporary_allocator::temporary_allocator(temporary_stack& stack)
     stack.top_ = this;
 }
 
-temporary_allocator::~temporary_allocator()
+temporary_allocator::~temporary_allocator() FOONATHAN_NOEXCEPT
 {
     if (is_active())
     {
