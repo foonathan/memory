@@ -173,6 +173,7 @@ namespace foonathan
         /// The automatic clean up will only occur much later.
         /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, the use of this class has no effect,
         /// because the per-thread stack is disabled.
+        /// \relatesalso temporary_stack
         class temporary_stack_initializer
         {
         public:
@@ -210,6 +211,7 @@ namespace foonathan
         /// \notes If \ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE is equal to `1`,
         /// this function can create the temporary stack.
         /// But if there is no \ref temporary_stack_initializer, it won't be destroyed.
+        /// \relatesalso temporary_stack
         temporary_stack& get_temporary_stack(
             std::size_t initial_size = temporary_stack_initializer::default_stack_size);
 
