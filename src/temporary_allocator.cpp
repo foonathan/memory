@@ -72,24 +72,46 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
 // if a thread exit can be detected, the dynamic memory of the stack is already released,
 // but not the stack itself destroyed
 
-#include <atomic>
-
 static class detail::temporary_stack_list
 {
 public:
     std::atomic<temporary_stack_list_node*> first;
 
-    temporary_stack* create(std::size_t size)
+    temporary_stack* create_new(std::size_t size)
     {
         auto storage = default_allocator().allocate_node(sizeof(temporary_stack),
                                                          FOONATHAN_ALIGNOF(temporary_stack));
         return ::new (storage) temporary_stack(0, size);
     }
 
+    temporary_stack* find_unused()
+    {
+        for (auto ptr = first.load(); ptr; ptr = ptr->next_)
+        {
+            auto value = false;
+            if (ptr->in_use_.compare_exchange_strong(value, true))
+                return static_cast<temporary_stack*>(ptr);
+        }
+
+        return nullptr;
+    }
+
+    temporary_stack* create(std::size_t size)
+    {
+        if (auto ptr = find_unused())
+        {
+            FOONATHAN_MEMORY_ASSERT(ptr->in_use_);
+            ptr->stack_ = detail::temporary_stack_impl(size);
+            return ptr;
+        }
+        return create_new(size);
+    }
+
     void clear(temporary_stack& stack)
     {
         // stack should be empty now, so shrink_to_fit() clears all memory
         stack.stack_.shrink_to_fit();
+        stack.in_use_ = false; // mark as free
     }
 
     void destroy()
@@ -134,6 +156,7 @@ namespace
 }
 
 detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEXCEPT
+: in_use_(true)
 {
     next_ = temporary_stack_list_obj.first.load();
     while (!temporary_stack_list_obj.first.compare_exchange_weak(next_, this))

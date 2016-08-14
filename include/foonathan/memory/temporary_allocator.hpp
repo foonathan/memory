@@ -11,6 +11,10 @@
 #include "config.hpp"
 #include "memory_stack.hpp"
 
+#if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 2
+#include <atomic>
+#endif
+
 namespace foonathan
 {
     namespace memory
@@ -55,6 +59,7 @@ namespace foonathan
             public:
                 // doesn't add into list
                 temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                : in_use_(true)
                 {
                 }
 
@@ -66,6 +71,7 @@ namespace foonathan
 
             private:
                 temporary_stack_list_node* next_ = nullptr;
+                std::atomic<bool> in_use_;
 
                 friend temporary_stack_list;
             };
