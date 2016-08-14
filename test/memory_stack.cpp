@@ -59,6 +59,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_deallocated() == 0u);
 
         auto m2 = stack.top();
+        REQUIRE(m < m2);
         stack.allocate(10, 1);
         stack.unwind(m2);
         stack.allocate(20, 1);
@@ -86,5 +87,56 @@ TEST_CASE("memory_stack", "[stack]")
         stack = detail::move(other);
         REQUIRE(alloc.no_allocated() == 1u);
         stack.unwind(m);
+    }
+    SECTION("marker comparision")
+    {
+        auto m1 = stack.top();
+        auto m2 = stack.top();
+        REQUIRE(m1 == m2);
+
+        stack.allocate(1, 1);
+        auto m3 = stack.top();
+        REQUIRE(m1 < m3);
+
+        stack.unwind(m2);
+        REQUIRE(stack.top() == m2);
+    }
+    SECTION("unwinder")
+    {
+        auto m = stack.top();
+        {
+            memory_stack_raii_unwind<decltype(stack)> unwind(stack);
+            stack.allocate(10, 1);
+            REQUIRE(unwind.will_unwind());
+            REQUIRE(&unwind.get_stack() == &stack);
+            REQUIRE(unwind.get_marker() == m);
+        }
+        REQUIRE(stack.top() == m);
+
+        memory_stack_raii_unwind<decltype(stack)> unwind(stack);
+        stack.allocate(10, 1);
+        unwind.unwind();
+        REQUIRE(stack.top() == m);
+        REQUIRE(unwind.will_unwind());
+
+        {
+            memory_stack_raii_unwind<decltype(stack)> unwind(stack);
+            stack.allocate(10, 1);
+            unwind.release();
+            REQUIRE(!unwind.will_unwind());
+        }
+        REQUIRE(stack.top() > m);
+        m = stack.top();
+
+        unwind.release(); // need to release
+        unwind = memory_stack_raii_unwind<decltype(stack)>(stack);
+        REQUIRE(unwind.will_unwind());
+        REQUIRE(unwind.get_marker() == m);
+        REQUIRE(&unwind.get_stack() == &stack);
+        auto unwind2 = detail::move(unwind);
+        REQUIRE(unwind2.will_unwind());
+        REQUIRE(&unwind2.get_stack() == &stack);
+        REQUIRE(unwind2.get_marker() == m);
+        REQUIRE(!unwind.will_unwind());
     }
 }

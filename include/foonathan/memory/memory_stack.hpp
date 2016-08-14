@@ -178,6 +178,7 @@ namespace foonathan
             /// i.e. it must have been pointed below the top at all time.
             void unwind(marker m) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(m <= top());
                 detail::debug_check_pointer([&] { return m.index <= arena_.size() - 1; }, info(),
                                             m.top);
 
@@ -261,7 +262,7 @@ namespace foonathan
         /// and an `unwind()` function to unwind to a `marker`,
         /// like a \ref foonathan::memory::memory_stack
         /// \ingroup memory allocator
-        template <class Stack>
+        template <class Stack = memory_stack<>>
         class memory_stack_raii_unwind
         {
         public:
@@ -301,7 +302,7 @@ namespace foonathan
 
             /// \effects Move assigns the unwinder by taking the saved position from `other`.
             /// `other.will_unwind()` will return `false` after it.
-            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind& other) FOONATHAN_NOEXCEPT
+            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
             {
                 if (stack_)
                     stack_->unwind(marker_);
