@@ -114,6 +114,16 @@
 /// \note This option breaks in combination with using <tt>using namespace foonathan;</tt>.
 /// \ingroup memory core
 #define FOONATHAN_MEMORY_NAMESPACE_PREFIX 1
+
+/// The mode of the automatic \ref temporary_stack creation.
+/// Set to `2` to enable automatic lifetime management of the per-thread stack through nifty counter.
+/// Then all memory will be freed upon program termination automatically.
+/// Set to `1` to disable automatic lifetime managment of the per-thread stack,
+/// requires managing it through the \ref temporary_stack_initializer.
+/// Set to `0` to disable the per-thread stack completely.
+/// \ref get_temporary_stack() will abort the program upon call.
+/// \ingroup memory allocator
+#define FOONATHAN_MEMORY_TEMPORARY_STACK_MODE 2
 #endif
 
 #endif // FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED

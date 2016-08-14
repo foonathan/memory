@@ -485,7 +485,7 @@ namespace foonathan
             }
 
             /// \returns The growth factor.
-            float growth_factor() const FOONATHAN_NOEXCEPT
+            static float growth_factor() FOONATHAN_NOEXCEPT
             {
                 static FOONATHAN_CONSTEXPR auto factor = float(Num) / Den;
                 return factor;

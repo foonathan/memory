@@ -41,6 +41,52 @@ namespace foonathan
                 {
                 }
 
+                friend bool operator==(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    if (lhs.index != rhs.index)
+                        return false;
+                    FOONATHAN_MEMORY_ASSERT_MSG(lhs.end == rhs.end, "you must not compare two "
+                                                                    "stack markers from different "
+                                                                    "stacks");
+                    return lhs.top == rhs.top;
+                }
+
+                friend bool operator!=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(rhs == lhs);
+                }
+
+                friend bool operator<(const stack_marker& lhs,
+                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    if (lhs.index != rhs.index)
+                        return lhs.index < rhs.index;
+                    FOONATHAN_MEMORY_ASSERT_MSG(lhs.end == rhs.end, "you must not compare two "
+                                                                    "stack markers from different "
+                                                                    "stacks");
+                    return lhs.top < rhs.top;
+                }
+
+                friend bool operator>(const stack_marker& lhs,
+                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return rhs < lhs;
+                }
+
+                friend bool operator<=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(rhs < lhs);
+                }
+
+                friend bool operator>=(const stack_marker& lhs,
+                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                {
+                    return !(lhs < rhs);
+                }
+
                 template <class Impl>
                 friend class memory::memory_stack;
             };
@@ -110,7 +156,10 @@ namespace foonathan
 
             /// The marker type that is used for unwinding.
             /// The exact type is implementation defined,
-            /// it is only required that it is copyable.
+            /// it is only required that it is efficiently copyable
+            /// and has all the comparision operators defined for two markers on the same stack.
+            /// Two markers are equal, if they are copies or created from two `top()` calls without a call to `unwind()` or `allocate()`.
+            /// A marker `a` is less than marker `b`, if after `a` was obtained, there was one or more call to `allocate()` and no call to `unwind()`.
             using marker = FOONATHAN_IMPL_DEFINED(detail::stack_marker);
 
             /// \returns A marker to the current top of the stack.
@@ -129,6 +178,7 @@ namespace foonathan
             /// i.e. it must have been pointed below the top at all time.
             void unwind(marker m) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(m <= top());
                 detail::debug_check_pointer([&] { return m.index <= arena_.size() - 1; }, info(),
                                             m.top);
 
@@ -207,8 +257,110 @@ namespace foonathan
             friend allocator_traits<memory_stack<BlockOrRawAllocator>>;
         };
 
+        /// Simple utility that automatically unwinds a `Stack` to a previously saved location.
+        /// A `Stack` is anything that provides a `marker`, a `top()` function returning a `marker`
+        /// and an `unwind()` function to unwind to a `marker`,
+        /// like a \ref foonathan::memory::memory_stack
+        /// \ingroup memory allocator
+        template <class Stack = memory_stack<>>
+        class memory_stack_raii_unwind
+        {
+        public:
+            using stack_type  = Stack;
+            using marker_type = typename stack_type::marker;
+
+            /// \effects Same as `memory_stack_raii_unwind(stack, stack.top())`.
+            explicit memory_stack_raii_unwind(stack_type& stack) FOONATHAN_NOEXCEPT
+                : memory_stack_raii_unwind(stack, stack.top())
+            {
+            }
+
+            /// \effects Creates the unwinder by giving it the stack and the marker.
+            /// \requires The stack must live longer than this object.
+            memory_stack_raii_unwind(stack_type& stack, marker_type marker) FOONATHAN_NOEXCEPT
+                : marker_(marker),
+                  stack_(&stack)
+            {
+            }
+
+            /// \effects Move constructs the unwinder by taking the saved position from `other`.
+            /// `other.will_unwind()` will return `false` after it.
+            memory_stack_raii_unwind(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
+                : marker_(other.marker_),
+                  stack_(other.stack_)
+            {
+                other.stack_ = nullptr;
+            }
+
+            /// \effects Unwinds to the previously saved location,
+            /// if there is any, by calling `unwind()`.
+            ~memory_stack_raii_unwind() FOONATHAN_NOEXCEPT
+            {
+                if (stack_)
+                    stack_->unwind(marker_);
+            }
+
+            /// \effects Move assigns the unwinder by taking the saved position from `other`.
+            /// `other.will_unwind()` will return `false` after it.
+            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
+            {
+                if (stack_)
+                    stack_->unwind(marker_);
+
+                marker_ = other.marker_;
+                stack_  = other.stack_;
+
+                other.stack_ = nullptr;
+
+                return *this;
+            }
+
+            /// \effects Removes the location without unwinding it.
+            /// `will_unwind()` will return `false`.
+            void release() FOONATHAN_NOEXCEPT
+            {
+                stack_ = nullptr;
+            }
+
+            /// \effects Unwinds to the saved location explictly.
+            /// \requires `will_unwind()` must return `true`.
+            void unwind() FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
+                stack_->unwind(marker_);
+            }
+
+            /// \returns Whether or not the unwinder will actually unwind.
+            /// \notes It will not unwind if it is in the moved-from state.
+            bool will_unwind() const FOONATHAN_NOEXCEPT
+            {
+                return stack_ != nullptr;
+            }
+
+            /// \returns The saved marker, if there is any.
+            /// \requires `will_unwind()` must return `true`.
+            marker_type get_marker() const FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
+                return marker_;
+            }
+
+            /// \returns The stack it will unwind.
+            /// \requires `will_unwind()` must return `true`.
+            stack_type& get_stack() const FOONATHAN_NOEXCEPT
+            {
+                FOONATHAN_MEMORY_ASSERT(will_unwind());
+                return *stack_;
+            }
+
+        private:
+            marker_type marker_;
+            stack_type* stack_;
+        };
+
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
         extern template class memory_stack<>;
+        extern template class memory_stack_raii_unwind<memory_stack<>>;
 #endif
 
         template <class Allocator>

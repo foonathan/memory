@@ -94,9 +94,9 @@ void merge_sort(BiIter begin, BiIter end)
 
     // an allocator for temporary memory
     // is similar to alloca() but uses its own stack
-    // this stack is thread_local and created on the first call to this function
-    // as soon as the allocator object goes out of scope, everything allocated through it, will be freed
-    auto alloc = memory::make_temporary_allocator();
+    // this stack is thread_local and created the first time it's needed
+    // as soon as the allocator object goes out of scope everything allocated through it will be freed
+    memory::temporary_allocator alloc;
 
     // alias for std::vector<value_type, memory::std_allocator<value_type, memory::temporary_allocator>>
     // a std::vector using a temporary_allocator
