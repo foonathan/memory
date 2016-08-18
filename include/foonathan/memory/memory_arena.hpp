@@ -625,37 +625,37 @@ namespace foonathan
 /// \ingroup memory core
 /// @{
 #if FOONATHAN_HAS_LITERAL_OP
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_KiB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _KiB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_KB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _KB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1000);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_MiB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _MiB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1024 * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_MB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _MB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1000 * 1000);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_GiB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _GiB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1024 * 1024 * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_GB(unsigned long long value)
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _GB(unsigned long long value)
                 FOONATHAN_NOEXCEPT
             {
                 return std::size_t(value * 1000 * 1000 * 1000);
