@@ -129,7 +129,7 @@ public:
             ptr = next;
         }
 
-        FOONATHAN_MEMORY_ASSERT_MSG(!first,
+        FOONATHAN_MEMORY_ASSERT_MSG(!first.load(),
                                     "destroy() called while other threads are still running");
     }
 } temporary_stack_list_obj;
