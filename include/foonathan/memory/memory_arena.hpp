@@ -10,6 +10,8 @@
 
 #include <type_traits>
 
+#include <foonathan/literal_op.hpp>
+
 #include "detail/debug_helpers.hpp"
 #include "detail/assert.hpp"
 #include "detail/utility.hpp"
@@ -615,6 +617,51 @@ namespace foonathan
             return detail::make_block_allocator(is_block_allocator<BlockOrRawAllocator>{},
                                                 block_size, detail::forward<Args>(args)...);
         }
+
+        namespace literals
+        {
+/// Syntax sugar to express sizes with unit prefixes.
+/// \returns The number of bytes `value` is in the given unit.
+/// \ingroup memory core
+/// @{
+#if FOONATHAN_HAS_LITERAL_OP
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_KiB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1024);
+            }
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_KB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1000);
+            }
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_MiB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1024 * 1024);
+            }
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_MB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1000 * 1000);
+            }
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_GiB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1024 * 1024 * 1024);
+            }
+
+            FOONATHAN_CONSTEXPR_FNC std::size_t operator""_GB(unsigned long long value)
+                FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(value * 1000 * 1000 * 1000);
+            }
+#endif
+        } // namespace literals
     }
 } // namespace foonathan::memory
 

@@ -16,6 +16,8 @@
 
 int main()
 {
+    using namespace memory::literals;
+
     // tracker class that logs internal behavior of the allocator
     struct tracker
     {
@@ -49,7 +51,7 @@ int main()
     auto tracked_pool =
         memory::make_tracked_allocator(tracker{},
                                        memory::memory_pool<>(memory::set_node_size<int>::value,
-                                                             4096u));
+                                                             4_KiB));
 
     // use the allocator as usual
     // decltype(tracked_pool) can be used below, too

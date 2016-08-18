@@ -23,10 +23,12 @@ void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
+    using namespace memory::literals;
+
     // a memory pool RawAllocator
     // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
     // list_node_size<int>::value is the size of each node of a std::list
-    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
+    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4_KiB);
 
     // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
@@ -52,7 +54,7 @@ int main()
     std::cout << *ptr << '\n';
 
     // static storage of size 4KiB
-    memory::static_allocator_storage<4096u> storage;
+    memory::static_allocator_storage<4_KiB> storage;
 
     // a memory pool again but this time with a BlockAllocator
     // this controls the internal allocations of the pool itself
@@ -61,7 +63,7 @@ int main()
     // we use a static_block_allocator that uses the static storage above
     // all allocations will use a memory block on the stack
     using static_pool_t = memory::memory_pool<memory::node_pool, memory::static_block_allocator>;
-    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4096u, storage);
+    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4_KiB, storage);
 
     // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
     // see why I wrote these? :D

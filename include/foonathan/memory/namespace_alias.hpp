@@ -24,6 +24,9 @@
 /// \namespace foonathan::memory
 /// Memory namespace.
 
+/// \namespace foonathan::memory::literals
+/// Literals namespace.
+
 namespace foonathan
 {
     namespace memory

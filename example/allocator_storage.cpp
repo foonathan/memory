@@ -20,6 +20,8 @@ void do_sth(memory::allocator_reference<RawAllocator> ref);
 
 int main()
 {
+    using namespace memory::literals;
+
     // storing stateless allocator by reference
     // heap_allocator is stateless so it does not need to be actually referenced
     // the reference can take it as a temporary and construct it on the fly
@@ -29,7 +31,7 @@ int main()
     // create a memory_stack
     // allocates a memory block - initially 4KiB big - and allocates from it in a stack-like manner
     // deallocation is only done via unwinding to a previously queried marker
-    memory::memory_stack<> stack(4096);
+    memory::memory_stack<> stack(4_KiB);
 
     // storing stateful allocator by reference
     // memory_stack is stateful and thus the reference actually takes the address of the object
