@@ -50,8 +50,9 @@ memory_block detail::temporary_block_allocator::allocate_block()
     auto alloc  = temporary_impl_allocator();
     auto memory = temporary_impl_allocator_traits::allocate_array(alloc, block_size_, 1,
                                                                   detail::max_alignment);
-    auto block = memory_block(memory, block_size_);
-    block_size_ *= growing_block_allocator<temporary_impl_allocator>::growth_factor();
+    auto block  = memory_block(memory, block_size_);
+    block_size_ = std::size_t(block_size_
+                              * growing_block_allocator<temporary_impl_allocator>::growth_factor());
     return block;
 }
 
@@ -155,8 +156,7 @@ namespace
 #endif
 }
 
-detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEXCEPT
-: in_use_(true)
+detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEXCEPT : in_use_(true)
 {
     next_ = temporary_stack_list_obj.first.load();
     while (!temporary_stack_list_obj.first.compare_exchange_weak(next_, this))
@@ -265,6 +265,8 @@ temporary_stack& foonathan::memory::get_temporary_stack(std::size_t)
 }
 
 #endif
+
+const temporary_stack_initializer::defer_create_t temporary_stack_initializer::defer_create;
 
 temporary_allocator::temporary_allocator() : temporary_allocator(get_temporary_stack())
 {

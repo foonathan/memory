@@ -1,39 +1,18 @@
 version: '{build}'
 build_script:
-- cmd: >-
-    git submodule update --init --recursive
+  - cmd: git submodule update --init --recursive
 
+  - cmd: mkdir build-12 && cd build-12
+  - cmd: cmake -G"Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_TOOLS=OFF -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
+  - cmd: cmake --build . -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
-    mkdir build-12
+  - cmd: cd ..\ && mkdir build-14-debug && cd build-14-debug\
+  - cmd: cmake -G"Visual Studio 14" -DCMAKE_BUILD_TYPE=Debug ..\
+  - cmd: cmake --build . --config Debug -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cmd: test\Debug\foonathan_memory_test.exe
 
-    cd build-12\
+  - cmd: cd ..\ && mkdir build-14-release && cd build-14-release\
+  - cmd: cmake -G"Visual Studio 14" -DCMAKE_BUILD_TYPE=Release ..\
+  - cmd: cmake --build . --config Release -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cmd: test\Release\foonathan_memory_test.exe
 
-    cmake -G "Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_TOOLS=OFF -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
-
-    cmake --build .
-
-    cd ..\
-
-
-    mkdir build-14-debug
-
-    cd build-14-debug\
-
-    cmake -G "Visual Studio 14" -DCMAKE_BUILD_TYPE=Debug ..\
-
-    cmake --build .
-
-    test\Debug\foonathan_memory_test.exe
-
-    cd ..\
-
-
-    mkdir build-14-release
-
-    cd build-14-debug\
-
-    cmake -G "Visual Studio 14" -DCMAKE_BUILD_TYPE=Release ..\
-
-    cmake --build .
-
-    test\Debug\foonathan_memory_test.exe

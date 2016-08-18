@@ -58,8 +58,7 @@ namespace foonathan
             {
             public:
                 // doesn't add into list
-                temporary_stack_list_node() FOONATHAN_NOEXCEPT
-                : in_use_(true)
+                temporary_stack_list_node() FOONATHAN_NOEXCEPT : in_use_(true)
                 {
                 }
 
@@ -71,7 +70,7 @@ namespace foonathan
 
             private:
                 temporary_stack_list_node* next_ = nullptr;
-                std::atomic<bool> in_use_;
+                std::atomic<bool>          in_use_;
 
                 friend temporary_stack_list;
             };
@@ -185,10 +184,10 @@ namespace foonathan
         public:
             static FOONATHAN_CONSTEXPR std::size_t default_stack_size = 4096u;
 
-            static FOONATHAN_CONSTEXPR struct defer_create_t
+            static const struct defer_create_t
             {
                 FOONATHAN_CONSTEXPR_FNC defer_create_t() FOONATHAN_NOEXCEPT = default;
-            } defer_create{};
+            } defer_create;
 
             /// \effects Does not create the per-thread stack.
             /// It will be created by the first call to \ref get_temporary_stack() in the current thread.
