@@ -186,7 +186,7 @@ namespace foonathan
 
             static const struct defer_create_t
             {
-                FOONATHAN_CONSTEXPR_FNC defer_create_t() FOONATHAN_NOEXCEPT = default;
+                defer_create_t() FOONATHAN_NOEXCEPT {}
             } defer_create;
 
             /// \effects Does not create the per-thread stack.
