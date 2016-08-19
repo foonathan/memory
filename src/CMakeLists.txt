@@ -7,8 +7,9 @@
 set(header_path ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 set(detail_header
         ${header_path}/detail/align.hpp
-        ${header_path}/detail/debug_helpers.hpp
         ${header_path}/detail/assert.hpp
+        ${header_path}/detail/container_node_sizes.hpp
+        ${header_path}/detail/debug_helpers.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/lowlevel_allocator.hpp
@@ -42,7 +43,7 @@ set(header
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp
         ${header_path}/virtual_memory.hpp
-        ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp)
+        ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
 
 set(src
         detail/align.cpp
@@ -71,13 +72,13 @@ configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 # generate container_node_sizes.hpp
 if(FOONATHAN_MEMORY_BUILD_TOOLS AND (NOT CMAKE_CROSS_COMPILING))
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
-            COMMAND foonathan_memory_node_size_debugger --code --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+            COMMAND foonathan_memory_node_size_debugger --code --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             DEPENDS foonathan_memory_node_size_debugger
             VERBATIM)
 else()
-    message(WARNING "cannot generate container_node_sizes.hpp, node size information will be unavailable")
-    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes.hpp "")
+    message(WARNING "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
+    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "")
 endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})

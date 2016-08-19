@@ -179,6 +179,18 @@ namespace foonathan
                                                detail::forward<RawAllocator>(alloc)),
                                            detail::forward<Args>(args)...);
         }
+
+#if !defined(DOXYGEN)
+#include "detail/container_node_sizes.hpp"
+#else
+        /// Contains the node size needed for a `std::shared_ptr`.
+        /// These classes are auto-generated and only available if the tools are build and without cross-compiling.
+        /// \ingroup memory adapter
+        template <typename T>
+        struct shared_ptr_node_size : std::integral_constant<std::size_t, implementation_defined>
+        {
+        };
+#endif
     }
 } // namespace foonathan::memory
 

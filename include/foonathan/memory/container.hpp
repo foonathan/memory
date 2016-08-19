@@ -149,9 +149,7 @@ namespace foonathan
 /// @}
 
 #if !defined(DOXYGEN)
-#define FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
-#include "container_node_sizes.hpp"
-#undef FOONATHAN_MEMORY_IMPL_IN_CONTAINER_HPP
+#include "detail/container_node_sizes.hpp"
 #else
         /// \ingroup memory adapter
         /// @{
