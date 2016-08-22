@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <tuple>
 
+#if !defined(_MSC_VER)
 #include <foonathan/alignof.hpp>
 #include <foonathan/constexpr.hpp>
 
@@ -48,9 +49,6 @@ namespace detail
     struct M5; // Remove M1<>
     template <typename, std::size_t, std::size_t, std::size_t...>
     struct M6; // Sort by alignof
-
-    template <typename T>
-    using M0 = typename T::type;
 
     /*~
      * @note Both `M1,`M2 are used as a mutable compile-time "map"; `M1 inheritance
@@ -205,5 +203,8 @@ namespace detail
 // The cryptic template stuff above erases duplicate alignments
 using test_types = detail::unisorted_aligned_wrap<std::tuple, char, bool, short, int, long,
                                                   long long, float, double, long double>;
+#else
+using test_types = std::tuple<char, bool, short, int, long, long long, float, double, long double>;
+#endif
 
 #endif // FOONATHAN_MEMORY_TOOL_TEST_TYPES_HPP_INCLUDED
