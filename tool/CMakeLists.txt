@@ -4,7 +4,7 @@
 
 # builds tools
 
-add_executable(foonathan_memory_node_size_debugger node_size_debugger.hpp node_size_debugger.cpp)
+add_executable(foonathan_memory_node_size_debugger test_types.hpp node_size_debugger.hpp node_size_debugger.cpp)
 _foonathan_use_comp(foonathan_memory_node_size_debugger)
 target_compile_definitions(foonathan_memory_node_size_debugger PUBLIC
                            VERSION="${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}")
