@@ -3,7 +3,7 @@ build_script:
   - cmd: git submodule update --init --recursive
 
   - cmd: mkdir build-12 && cd build-12
-  - cmd: cmake -G"Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_TOOLS=OFF -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
+  - cmd: cmake -G"Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
   - cmd: cmake --build . -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
   - cmd: cd ..\ && mkdir build-14-debug && cd build-14-debug\
