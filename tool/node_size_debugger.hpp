@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <foonathan/alignof.hpp>
+
 template <typename TestType, class Debugger>
 struct node_size_storage
 {
@@ -177,7 +179,8 @@ struct debug_unordered_multiset
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multiset<T, hash, std::equal_to<T>, node_size_debugger<T, T, debug_unordered_multiset>>
+        std::unordered_multiset<T, hash, std::equal_to<T>,
+                                node_size_debugger<T, T, debug_unordered_multiset>>
             set;
         set.insert(T());
         set.insert(T());
@@ -235,7 +238,8 @@ struct debug_unordered_map
     std::size_t debug()
     {
         using type = std::pair<const T, T>;
-        std::unordered_map<T, T, hash, std::equal_to<T>, node_size_debugger<type, type, debug_unordered_map>>
+        std::unordered_map<T, T, hash, std::equal_to<T>,
+                           node_size_debugger<type, type, debug_unordered_map>>
             map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -255,7 +259,8 @@ struct debug_unordered_multimap
     std::size_t debug()
     {
         using type = std::pair<const T, T>;
-        std::unordered_multimap<T, T, hash, std::equal_to<T>, node_size_debugger<type, type, debug_unordered_multimap>>
+        std::unordered_multimap<T, T, hash, std::equal_to<T>,
+                                node_size_debugger<type, type, debug_unordered_multimap>>
             map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -286,10 +291,7 @@ std::size_t debug_single(Debugger debugger)
     return debugger.template debug<T>();
 }
 
-// All fundamental types that don't guarantee to have the same alignment (like int and unsigned int).
-// It thus covers all fundamental alignments and all possible node sizes.
-// Does not support extended alignments!
-using test_types = std::tuple<char, bool, short, int, long, long long, float, double, long double>;
+#include "test_types.hpp"
 
 // Maps the alignment of the test types to the base size of the node.
 // The base size of the node is the node size obtained via the allocator
@@ -307,7 +309,7 @@ template <class Debugger, typename... Types>
 node_size_map debug_impl(Debugger debugger, std::tuple<Types...>)
 {
     node_size_map result;
-    int           dummy[] = {(result[alignof(Types)] = debug_single<Types>(debugger), 0)...};
+    int dummy[] = {(result[FOONATHAN_ALIGNOF(Types)] = debug_single<Types>(debugger), 0)...};
     (void)dummy;
     return result;
 }

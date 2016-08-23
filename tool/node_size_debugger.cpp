@@ -122,10 +122,10 @@ struct code_serializer
     }
 };
 
-using debuggers = std::tuple<debug_forward_list, debug_list, debug_set, debug_multiset,
-                             debug_unordered_set, debug_unordered_multiset, debug_map,
-                             debug_multimap, debug_unordered_map, debug_unordered_multimap,
-                             debug_shared_ptr>;
+using debuggers =
+    std::tuple<debug_forward_list, debug_list, debug_set, debug_multiset, debug_unordered_set,
+               debug_unordered_multiset, debug_map, debug_multimap, debug_unordered_map,
+               debug_unordered_multimap, debug_shared_ptr>;
 
 template <class Debugger, class Serializer>
 void serialize_single(const Serializer& serializer)
@@ -135,10 +135,17 @@ void serialize_single(const Serializer& serializer)
     serializer.suffix();
 }
 
-template <class Serializer, typename... Debuggers>
+template <class Debugger, class Serializer>
+int serialize_impl(const Serializer& serializer)
+{
+    serializer(debug(Debugger()));
+    return 0;
+}
+
+template <class Serializer, class... Debuggers>
 void serialize_impl(const Serializer& serializer, std::tuple<Debuggers...>)
 {
-    int dummy[] = {(serializer(debug(Debuggers{})), 0)...};
+    int dummy[] = {serialize_impl<Debuggers>(serializer)...};
     (void)dummy;
 }
 
