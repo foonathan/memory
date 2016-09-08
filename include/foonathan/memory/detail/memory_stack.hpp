@@ -92,6 +92,18 @@ namespace foonathan
                     return memory;
                 }
 
+                // same as allocate() but does not check the size
+                // note: pass it the align OFFSET, not the alignment
+                void* allocate_unchecked(std::size_t size,
+                                         std::size_t align_offset) FOONATHAN_NOEXCEPT
+                {
+                    bump(debug_fence_size, debug_magic::fence_memory);
+                    bump(align_offset, debug_magic::alignment_memory);
+                    auto mem = bump_return(size);
+                    bump(debug_fence_size, debug_magic::fence_memory);
+                    return mem;
+                }
+
                 // unwindws the stack to a certain older position
                 // debug: marks memory from new top to old top as freed
                 // doesn't check for invalid pointer
