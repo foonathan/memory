@@ -21,7 +21,7 @@ namespace foonathan
         /// will make the next stack active for allocation,
         /// effectively releasing all of its memory.
         /// Any memory allocated will thus be usable for `N` iterations of the loop.
-        /// This type of allocator is a generalization of the double frame allocator model.
+        /// This type of allocator is a generalization of the double frame allocator.
         /// \ingroup memory allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
         class iteration_allocator
@@ -131,6 +131,12 @@ namespace foonathan
             memory_block               block_;
             std::size_t                cur_;
         };
+
+        /// An alias for \ref iteration_allocator for two iterations.
+        /// \ingroup memory allocator
+        template <class BlockOrRawAllocator = default_allocator>
+        FOONATHAN_ALIAS_TEMPLATE(double_frame_allocator,
+                                 iteration_allocator<2, BlockOrRawAllocator>);
     }
 } // namespace foonathan::memory
 
