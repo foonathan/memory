@@ -147,11 +147,7 @@ namespace foonathan
                     detail::check_allocation_size<bad_allocation_size>(needed, block.size, info());
                 }
 
-                stack_.bump(fence, debug_magic::fence_memory);
-                stack_.bump(offset, debug_magic::alignment_memory);
-                auto mem = stack_.bump_return(size);
-                stack_.bump(fence, debug_magic::fence_memory);
-                return mem;
+                return stack_.allocate_unchecked(size, offset);
             }
 
             /// The marker type that is used for unwinding.
