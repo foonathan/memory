@@ -580,6 +580,9 @@ namespace foonathan
 
         namespace detail
         {
+            template <class RawAlloc>
+            using default_block_wrapper = growing_block_allocator<RawAlloc>;
+
             template <class BlockAllocator, typename... Args>
             BlockAllocator make_block_allocator(std::true_type, std::size_t block_size,
                                                 Args&&... args)
@@ -587,25 +590,26 @@ namespace foonathan
                 return BlockAllocator(block_size, detail::forward<Args>(args)...);
             }
 
-            template <class RawAlloc>
+            template <template <class> class Wrapper, class RawAlloc>
             auto make_block_allocator(std::false_type, std::size_t block_size,
-                                      RawAlloc alloc = RawAlloc())
-                -> growing_block_allocator<RawAlloc>
+                                      RawAlloc alloc = RawAlloc()) -> Wrapper<RawAlloc>
             {
-                return growing_block_allocator<RawAlloc>(block_size, detail::move(alloc));
+                return Wrapper<RawAlloc>(block_size, detail::move(alloc));
             }
         } // namespace detail
 
         /// Takes either a \concept{concept_blockallocator,BlockAllocator} or a \concept{concept_rawallocator,RawAllocator}.
-        /// In the first case simply aliases the type unchanged, in the second to \ref growing_block_allocator with the \concept{concept_rawallocator,RawAllocator}.
+        /// In the first case simply aliases the type unchanged, in the second to \ref growing_block_allocator (or the template in `BlockAllocator`) with the \concept{concept_rawallocator,RawAllocator}.
         /// Using this allows passing normal \concept{concept_rawallocator,RawAllocators} as \concept{concept_blockallocator,BlockAllocators}.
         /// \ingroup memory core
-        template <class BlockOrRawAllocator>
-        using make_block_allocator_t = FOONATHAN_IMPL_DEFINED(
+        template <class BlockOrRawAllocator,
+                  template <typename> class BlockAllocator = detail::default_block_wrapper>
+        using make_block_allocator_t                       = FOONATHAN_IMPL_DEFINED(
             typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
                                       BlockOrRawAllocator,
-                                      growing_block_allocator<BlockOrRawAllocator>>::type);
+                                      BlockAllocator<BlockOrRawAllocator>>::type);
 
+        /// @{
         /// Helper function make a \concept{concept_blockallocator,BlockAllocator}.
         /// \returns A \concept{concept_blockallocator,BlockAllocator} of the given type created with the given arguments.
         /// \requires Same requirements as the constructor.
@@ -614,9 +618,21 @@ namespace foonathan
         make_block_allocator_t<BlockOrRawAllocator> make_block_allocator(std::size_t block_size,
                                                                          Args&&... args)
         {
-            return detail::make_block_allocator(is_block_allocator<BlockOrRawAllocator>{},
-                                                block_size, detail::forward<Args>(args)...);
+            return detail::make_block_allocator<detail::default_block_wrapper>(
+                is_block_allocator<BlockOrRawAllocator>{}, block_size,
+                detail::forward<Args>(args)...);
         }
+
+        template <template <class> class BlockAllocator, class BlockOrRawAllocator,
+                  typename... Args>
+        make_block_allocator_t<BlockOrRawAllocator, BlockAllocator> make_block_allocator(
+            std::size_t block_size, Args&&... args)
+        {
+            return detail::
+                make_block_allocator<BlockAllocator>(is_block_allocator<BlockOrRawAllocator>{},
+                                                     block_size, detail::forward<Args>(args)...);
+        }
+        /// @}
 
         namespace literals
         {

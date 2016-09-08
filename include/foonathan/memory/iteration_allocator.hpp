@@ -24,10 +24,12 @@ namespace foonathan
         /// This type of allocator is a generalization of the double frame allocator model.
         /// \ingroup memory allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
-        class iteration_allocator : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator>)
+        class iteration_allocator
+            : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>)
         {
         public:
-            using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
+            using allocator_type =
+                make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>;
 
             /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
             /// It will allocate the first (and only) block and evenly divide it on all the stacks it uses.
