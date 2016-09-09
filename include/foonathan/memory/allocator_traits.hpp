@@ -356,7 +356,8 @@ namespace foonathan
         {
             template <class RawAllocator>
             typename allocator_traits<RawAllocator>::foonathan_memory_default_traits
-                            alloc_uses_default_traits(RawAllocator&);
+                alloc_uses_default_traits(RawAllocator&);
+
             std::false_type alloc_uses_default_traits(...);
 
             template <typename T>
@@ -404,6 +405,188 @@ namespace foonathan
         struct is_raw_allocator
             : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(
                                               std::declval<T&>()))>
+        {
+        };
+
+        namespace traits_detail
+        {
+            //=== try_allocate_node() ===//
+            // try Allocator::try_allocate_node
+            // otherwise error
+            template <class Allocator>
+            auto try_allocate_node(full_concept, Allocator& alloc, std::size_t size,
+                                   std::size_t alignment) FOONATHAN_NOEXCEPT
+                -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_allocate_node(size, alignment), void*)
+
+                    template <class Allocator>
+                    error try_allocate_node(error, Allocator&, std::size_t, std::size_t)
+            {
+                static_assert(invalid_allocator_concept<Allocator>::error,
+                              "type does not provide: void* try_allocate_node(std::size_t, "
+                              "std::size_t)");
+                return {};
+            }
+
+            //=== try_deallocate_node() ===//
+            // try Allocator::try_deallocate_node
+            // otherwise error
+            template <class Allocator>
+            auto try_deallocate_node(full_concept, Allocator& alloc, void* ptr, std::size_t size,
+                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_deallocate_node(ptr, size, alignment), bool)
+
+                    template <class Allocator>
+                    error try_deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
+            {
+                static_assert(invalid_allocator_concept<Allocator>::error,
+                              "type does not provide: bool try_deallocate_node(void*, std::size_t, "
+                              "std::size_t)");
+                return error{};
+            }
+
+            //=== try_allocate_array() ===//
+            // first try Allocator::try_allocate_array
+            // then forward to try_allocate_node()
+            template <class Allocator>
+            auto try_allocate_array(full_concept, Allocator& alloc, std::size_t count,
+                                    std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_allocate_array(count, size, alignment),
+                                              void*)
+
+                    template <class Allocator>
+                    void* try_allocate_array(min_concept, Allocator& alloc, std::size_t count,
+                                             std::size_t size, std::size_t alignment)
+            {
+                return try_allocate_node(full_concept{}, alloc, count * size, alignment);
+            }
+
+            //=== try_deallocate_array() ===//
+            // first try Allocator::try_deallocate_array
+            // then forward to try_deallocate_node()
+            template <class Allocator>
+            auto try_deallocate_array(full_concept, Allocator& alloc, void* ptr, std::size_t count,
+                                      std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_deallocate_array(ptr, count, size,
+                                                                         alignment),
+                                              bool)
+
+                    template <class Allocator>
+                    bool try_deallocate_array(min_concept, Allocator& alloc, void* ptr,
+                                              std::size_t count, std::size_t size,
+                                              std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return try_deallocate_node(full_concept{}, alloc, ptr, count * size, alignment);
+            }
+        } // namespace traits_detail
+
+        /// The default specialization of the composable_allocator_traits for a \concept{concept_composableallocator,ComposableAllocator}.
+        /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
+        /// Any specialization must provide the same interface.
+        /// \ingroup memory core
+        template <class Allocator>
+        class composable_allocator_traits
+        {
+        public:
+            using allocator_type = typename allocator_traits<Allocator>::allocator_type;
+
+            static void* try_allocate_node(allocator_type& state, std::size_t size,
+                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                static_assert(is_raw_allocator<Allocator>::value,
+                              "ComposableAllocator must be RawAllocator");
+                return traits_detail::try_allocate_node(traits_detail::full_concept{}, state, size,
+                                                        alignment);
+            }
+
+            static void* try_allocate_array(allocator_type& state, std::size_t count,
+                                            std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                static_assert(is_raw_allocator<Allocator>::value,
+                              "ComposableAllocator must be RawAllocator");
+                return traits_detail::try_allocate_array(traits_detail::full_concept{}, state,
+                                                         count, size, alignment);
+            }
+
+            static bool try_deallocate_node(allocator_type& state, void* node, std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                static_assert(is_raw_allocator<Allocator>::value,
+                              "ComposableAllocator must be RawAllocator");
+                return traits_detail::try_deallocate_node(traits_detail::full_concept{}, state,
+                                                          node, size, alignment);
+            }
+
+            static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
+                                             std::size_t size,
+                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                static_assert(is_raw_allocator<Allocator>::value,
+                              "ComposableAllocator must be RawAllocator");
+                return traits_detail::try_deallocate_array(traits_detail::full_concept{}, state,
+                                                           array, count, size, alignment);
+            }
+
+#if !defined(DOXYGEN)
+            using foonathan_memory_default_traits = std::true_type;
+#endif
+        };
+
+        namespace detail
+        {
+            template <class RawAllocator>
+            typename composable_allocator_traits<RawAllocator>::foonathan_memory_default_traits
+                composable_alloc_uses_default_traits(RawAllocator&);
+
+            std::false_type composable_alloc_uses_default_traits(...);
+
+            template <typename T>
+            struct has_invalid_try_alloc_function
+                : std::is_same<decltype(
+                                   traits_detail::
+                                       try_allocate_node(traits_detail::full_concept{},
+                                                         std::declval<typename allocator_traits<T>::
+                                                                          allocator_type&>(),
+                                                         0, 0)),
+                               traits_detail::error>
+            {
+            };
+
+            template <typename T>
+            struct has_invalid_try_dealloc_function
+                : std::is_same<decltype(traits_detail::
+                                            try_deallocate_node(traits_detail::full_concept{},
+                                                                std::declval<
+                                                                    typename allocator_traits<T>::
+                                                                        allocator_type&>(),
+                                                                nullptr, 0, 0)),
+                               traits_detail::error>
+            {
+            };
+
+            template <typename T, class DefaultTraits>
+            struct is_composable_allocator : memory::is_raw_allocator<T>
+            {
+            };
+
+            template <typename T>
+            struct is_composable_allocator<T, std::integral_constant<bool, true>>
+                : std::integral_constant<bool,
+                                         memory::is_raw_allocator<T>::value
+                                             && !(has_invalid_try_alloc_function<T>::value
+                                                  || has_invalid_try_dealloc_function<T>::value)>
+            {
+            };
+        } // namespace detail
+
+        /// Traits that check whether a type models concept \concept{concept_rawallocator,ComposableAllocator}.<br>
+        /// It must be a \concept[concept_rawallocator,RawAllocator} and either provide the necessary functions for the default traits specialization or has specialized it.
+        /// \ingroup memory core
+        template <typename T>
+        struct is_composable_allocator
+            : detail::is_composable_allocator<T,
+                                              decltype(detail::composable_alloc_uses_default_traits(
+                                                  std::declval<T&>()))>
         {
         };
     }
