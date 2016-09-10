@@ -14,6 +14,13 @@ namespace foonathan
 {
     namespace memory
     {
+        namespace detail
+        {
+            template <class BlockOrRawAllocator>
+            using iteration_block_allocator =
+                make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>;
+        } // namespace detail
+
         /// A stateful \concept{concept_rawallocator,RawAllocator} that is designed for allocations in a loop.
         /// It uses `N` stacks for the allocation, one of them is always active.
         /// Allocation uses the currently active stack.
@@ -25,11 +32,10 @@ namespace foonathan
         /// \ingroup memory allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
         class iteration_allocator
-            : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>)
+            : FOONATHAN_EBO(detail::iteration_block_allocator<BlockOrRawAllocator>)
         {
         public:
-            using allocator_type =
-                make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>;
+            using allocator_type = detail::iteration_block_allocator<BlockOrRawAllocator>;
 
             /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
             /// It will allocate the first (and only) block and evenly divide it on all the stacks it uses.
