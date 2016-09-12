@@ -217,6 +217,7 @@ Expression|Semantics
 `StoragePolicy::allocator_type` | The type of the allocator being stored as determinted through the [allocator_traits]. For a type-erased storage, it can be the type-erased base class.
 `StoragePolicy(args)` | Creates the `StoragePolicy`. `args` can be anything. It is used to create the allocator.
 `policy.get_allocator()` | Returns a reference to the `allocator_type`. Must not throw. May return a `const` reference, if `policy` is `const`.
+`policy.is_composable()` | Returns whether or not the `allocator_type` is a [ComposableAllocator](#concept_composableallocator)
 
 For exposition, this is a sample `StoragePolicy`.
 Note that it is not required to be a template, although it does not make much sense otherwise.
@@ -239,6 +240,11 @@ public:
     const allocator_type& get_allocator() const noexcept
     {
         return alloc_;
+    }
+    
+    bool is_composable() const noexcept
+    {
+        return memory::is_composable_allocator<allocator_type>::value;
     }
 
 private:
