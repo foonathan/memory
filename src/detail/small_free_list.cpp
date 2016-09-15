@@ -309,46 +309,16 @@ void* small_free_memory_list::allocate() FOONATHAN_NOEXCEPT
 
 void small_free_memory_list::deallocate(void* mem) FOONATHAN_NOEXCEPT
 {
-    auto actual_size = node_size_ + 2 * fence_size();
-    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
-
-    auto chunk = find_chunk_impl(node);
-    dealloc_impl(chunk, mem, node, actual_size);
-}
-
-bool small_free_memory_list::try_deallocate(void* mem) FOONATHAN_NOEXCEPT
-{
-    auto actual_size = node_size_ + 2 * fence_size();
-    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
-
-    auto chunk = find_chunk_impl(node);
-    if (!chunk)
-        return false;
-
-    dealloc_impl(chunk, mem, node, actual_size);
-    return true;
-}
-
-std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
-{
-    return alignment_for(node_size_);
-}
-
-std::size_t small_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
-{
-    // node size is fence size
-    return debug_fence_size ? node_size_ : 0u;
-}
-
-void small_free_memory_list::dealloc_impl(chunk* chunk, void* mem, unsigned char* node,
-                                          std::size_t actual_size)
-{
-    dealloc_chunk_ = chunk;
-
     auto info =
         allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
+
+    auto actual_size = node_size_ + 2 * fence_size();
+    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
+
+    auto chunk     = find_chunk_impl(node);
+    dealloc_chunk_ = chunk;
     // memory was never allocated from list
-    debug_check_pointer([&] { return chunk != nullptr; }, info, mem);
+    detail::debug_check_pointer([&] { return chunk != nullptr; }, info, mem);
 
     auto offset = node - chunk->list_memory();
     // memory is not at the right position
@@ -361,6 +331,17 @@ void small_free_memory_list::dealloc_impl(chunk* chunk, void* mem, unsigned char
     chunk->deallocate(node, static_cast<unsigned char>(index));
 
     ++capacity_;
+}
+
+std::size_t small_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+{
+    return alignment_for(node_size_);
+}
+
+std::size_t small_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
+{
+    // node size is fence size
+    return debug_fence_size ? node_size_ : 0u;
 }
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT

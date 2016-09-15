@@ -160,7 +160,10 @@ namespace foonathan
             /// doesn't matter where it is coming from.
             bool try_deallocate_node(void* ptr) FOONATHAN_NOEXCEPT
             {
-                return free_list_.try_deallocate(ptr);
+                if (!arena_.owns(ptr))
+                    return false;
+                free_list_.deallocate(ptr);
+                return true;
             }
 
             /// \effects Deallocates an \concept{concept_array,array} by putting it back onto the free list.
@@ -245,9 +248,10 @@ namespace foonathan
             bool try_deallocate_array(void* ptr, std::size_t n,
                                       std::size_t node_size) FOONATHAN_NOEXCEPT
             {
-                if (!pool_type::value)
+                if (!pool_type::value || !arena_.owns(ptr))
                     return false;
-                return free_list_.try_deallocate(ptr, n * node_size);
+                free_list_.deallocate(ptr, n * node_size);
+                return true;
             }
 
             memory_arena<allocator_type, false> arena_;

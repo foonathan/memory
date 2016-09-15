@@ -44,6 +44,16 @@ void memory_block_stack::steal_top(memory_block_stack& other) FOONATHAN_NOEXCEPT
     head_          = to_steal;
 }
 
+bool memory_block_stack::owns(void* ptr) const FOONATHAN_NOEXCEPT
+{
+    for (auto cur = head_; cur; cur = cur->prev)
+    {
+        if (ptr > cur && ptr < cur + cur->usable_size)
+            return true;
+    }
+    return false;
+}
+
 std::size_t memory_block_stack::size() const FOONATHAN_NOEXCEPT
 {
     std::size_t res = 0u;

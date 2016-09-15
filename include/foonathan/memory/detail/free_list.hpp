@@ -66,20 +66,10 @@ namespace foonathan
                 void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
                 // deallocates a single block
-                bool deallocate(void* ptr) FOONATHAN_NOEXCEPT;
-
-                bool try_deallocate(void* ptr) FOONATHAN_NOEXCEPT
-                {
-                    return deallocate(ptr);
-                }
+                void deallocate(void* ptr) FOONATHAN_NOEXCEPT;
 
                 // deallocates multiple blocks with n bytes total
-                bool deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT;
-
-                bool try_deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
-                {
-                    return deallocate(ptr, n);
-                }
+                void deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
                 //=== getter ===//
                 std::size_t node_size() const FOONATHAN_NOEXCEPT
@@ -170,20 +160,10 @@ namespace foonathan
                 void* allocate(std::size_t n) FOONATHAN_NOEXCEPT;
 
                 // deallocates a single block
-                bool deallocate(void* ptr) FOONATHAN_NOEXCEPT;
-
-                bool try_deallocate(void* ptr) FOONATHAN_NOEXCEPT
-                {
-                    return deallocate(ptr);
-                }
+                void deallocate(void* ptr) FOONATHAN_NOEXCEPT;
 
                 // deallocates multiple blocks with n bytes total
-                bool deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT;
-
-                bool try_deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
-                {
-                    return deallocate(ptr, n);
-                }
+                void deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT;
 
                 //=== getter ===//
                 std::size_t node_size() const FOONATHAN_NOEXCEPT

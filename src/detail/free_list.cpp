@@ -201,18 +201,16 @@ void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     return debug_fill_new(i.first, n, fence_size());
 }
 
-bool free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
+void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 {
     ++capacity_;
 
     auto node = static_cast<char*>(debug_fill_free(ptr, node_size_, fence_size()));
     list_set_next(node, first_);
     first_ = node;
-
-    return true;
 }
 
-bool free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+void free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
 {
     if (n <= node_size_)
         deallocate(ptr);
@@ -221,8 +219,6 @@ bool free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
         auto mem = debug_fill_free(ptr, n, fence_size());
         insert_impl(mem, n + 2 * fence_size());
     }
-
-    return true;
 }
 
 std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
@@ -492,7 +488,7 @@ void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     return debug_fill_new(i.first, n, fence_size());
 }
 
-bool ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
+void ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 {
     auto node = static_cast<char*>(debug_fill_free(ptr, node_size_, fence_size()));
 
@@ -506,11 +502,9 @@ bool ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
 
     last_dealloc_      = node;
     last_dealloc_prev_ = p.prev;
-
-    return true;
 }
 
-bool ordered_free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+void ordered_free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
 {
     if (n <= node_size_)
         deallocate(ptr);
@@ -522,8 +516,6 @@ bool ordered_free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NO
         last_dealloc_      = static_cast<char*>(mem);
         last_dealloc_prev_ = prev;
     }
-
-    return true;
 }
 
 std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT

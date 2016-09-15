@@ -55,7 +55,7 @@ void check_list(FreeList& list, void* memory, std::size_t size)
     REQUIRE(is_aligned(node, list.alignment()));
     REQUIRE(list.capacity() == old_cap - 1);
 
-    REQUIRE(list.try_deallocate(node));
+    list.deallocate(node);
     REQUIRE(list.capacity() == old_cap);
 
     use_list_node(list);
