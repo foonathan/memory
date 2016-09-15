@@ -6,6 +6,7 @@
 #define FOONATHAN_MEMORY_DETAIL_SMALL_FREE_LIST_HPP_INCLUDED
 
 #include <cstddef>
+#include <foonathan/memory/error.hpp>
 
 #include "../config.hpp"
 #include "utility.hpp"
@@ -90,10 +91,18 @@ namespace foonathan
                 // deallocates the node previously allocated via allocate()
                 void deallocate(void* node) FOONATHAN_NOEXCEPT;
 
+                bool try_deallocate(void* node) FOONATHAN_NOEXCEPT;
+
                 // forwards to insert()
                 void deallocate(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
                 {
                     insert(mem, size);
+                }
+
+                bool try_deallocate(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
+                {
+                    deallocate(mem, size);
+                    return true;
                 }
 
                 // hint for allocate() to be prepared to allocate n nodes
@@ -129,13 +138,16 @@ namespace foonathan
             private:
                 std::size_t fence_size() const FOONATHAN_NOEXCEPT;
 
+                void dealloc_impl(chunk* chunk, void* mem, unsigned char* node, size_t actual_size);
+
                 chunk* find_chunk_impl(std::size_t n = 1) FOONATHAN_NOEXCEPT;
                 chunk* find_chunk_impl(unsigned char* node, chunk_base* first,
                                        chunk_base* last) FOONATHAN_NOEXCEPT;
-                chunk* find_chunk_impl(unsigned char* node) FOONATHAN_NOEXCEPT;
 
+                chunk* find_chunk_impl(unsigned char* node) FOONATHAN_NOEXCEPT;
                 chunk_base  base_;
                 std::size_t node_size_, capacity_;
+
                 chunk_base *alloc_chunk_, *dealloc_chunk_;
             };
 

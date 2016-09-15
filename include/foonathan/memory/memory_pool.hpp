@@ -110,6 +110,14 @@ namespace foonathan
                 return free_list_.allocate();
             }
 
+            /// \effects Allocates a single \concept{concept_node,node} similar to \ref allocate_node().
+            /// But if the free list is empty, a new block will *not* be allocated.
+            /// \returns A suitable aligned node of size \ref node_size() or `nullptr`.
+            void* try_allocate_node() FOONATHAN_NOEXCEPT
+            {
+                return free_list_.empty() ? nullptr : free_list_.allocate();
+            }
+
             /// \effects Allocates an \concept{concept_array,array} of nodes by searching for \c n continuous nodes on the list and removing them.
             /// Depending on the \c PoolType this can be a slow operation or not allowed at all.
             /// This can sometimes lead to a growth, even if technically there is enough continuous memory on the free list.
@@ -129,6 +137,15 @@ namespace foonathan
                 return allocate_array(n, node_size());
             }
 
+            /// \effects Allocates an \concept{concept_array,array| of nodes similar to \ref allocate_array().
+            /// But it will never allocate a new memory block.
+            /// \returns An array of \c n nodes of size \ref node_size() suitable aligned
+            /// or `nullptr`.
+            void* try_allocate_array(std::size_t n) FOONATHAN_NOEXCEPT
+            {
+                return try_allocate_array(n, node_size());
+            }
+
             /// \effects Deallocates a single \concept{concept_node,node} by putting it back onto the free list.
             /// \requires \c ptr must be a result from a previous call to \ref allocate_node() on the same free list,
             /// i.e. either this allocator object or a new object created by moving this to it.
@@ -137,13 +154,31 @@ namespace foonathan
                 free_list_.deallocate(ptr);
             }
 
+            /// \effects Deallocates a single \concept{concept_node,node} but it does not be a result of a previous call to \ref allocate_node().
+            /// \returns `true` if the node could be deallocated, `false` otherwise.
+            /// \notes Some free list implementations can deallocate any memory,
+            /// doesn't matter where it is coming from.
+            bool try_deallocate_node(void* ptr) FOONATHAN_NOEXCEPT
+            {
+                return free_list_.try_deallocate(ptr);
+            }
+
             /// \effects Deallocates an \concept{concept_array,array} by putting it back onto the free list.
             /// \requires \c ptr must be a result from a previous call to \ref allocate_array() with the same \c n on the same free list,
             /// i.e. either this allocator object or a new object created by moving this to it.
             void deallocate_array(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
             {
                 FOONATHAN_MEMORY_ASSERT_MSG(pool_type::value, "does not support array allocations");
-                deallocate_array(ptr, n, node_size());
+                free_list_.deallocate(ptr, n * node_size());
+            }
+
+            /// \effects Deallocates an \concept{concept_array,array} but it does not be a result of a previous call to \ref allocate_array().
+            /// \returns `true` if the node could be deallocated, `false` otherwise.
+            /// \notes Some free list implementations can deallocate any memory,
+            /// doesn't matter where it is coming from.
+            bool try_deallocate_array(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+            {
+                return try_deallocate_array(ptr, n, node_size());
             }
 
             /// \returns The size of each \concept{concept_node,node} in the pool,
@@ -201,16 +236,25 @@ namespace foonathan
                 return mem;
             }
 
-            void deallocate_array(void* ptr, std::size_t n,
-                                  std::size_t node_size) FOONATHAN_NOEXCEPT
+            void* try_allocate_array(std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
             {
-                free_list_.deallocate(ptr, n * node_size);
+                return !pool_type::value || free_list_.empty() ? nullptr :
+                                                                 free_list_.allocate(n * node_size);
+            }
+
+            bool try_deallocate_array(void* ptr, std::size_t n,
+                                      std::size_t node_size) FOONATHAN_NOEXCEPT
+            {
+                if (!pool_type::value)
+                    return false;
+                return free_list_.try_deallocate(ptr, n * node_size);
             }
 
             memory_arena<allocator_type, false> arena_;
             free_list free_list_;
 
             friend allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
+            friend composable_allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
         };
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
@@ -221,9 +265,6 @@ namespace foonathan
 
         template <class Type, class Alloc>
         FOONATHAN_CONSTEXPR std::size_t memory_pool<Type, Alloc>::min_node_size;
-
-        template <class Allocator>
-        class allocator_traits;
 
         /// Specialization of the \ref allocator_traits for \ref memory_pool classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
@@ -268,7 +309,9 @@ namespace foonathan
                                                              state.info());
                 detail::check_allocation_size<bad_array_size>(count * size, max_array_size(state),
                                                               state.info());
-                return allocate_array(PoolType{}, state, count, size);
+                auto mem = state.allocate_array(count, size);
+                state.on_allocate(count * size);
+                return mem;
             }
 
             /// \effects Just forwards to \ref memory_pool::deallocate_node().
@@ -283,7 +326,8 @@ namespace foonathan
             static void deallocate_array(allocator_type& state, void* array, std::size_t count,
                                          std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {
-                deallocate_array(PoolType{}, state, array, count, size);
+                state.free_list_.deallocate(array, count * size);
+                state.on_deallocate(count * size);
             }
 
             /// \returns The maximum size of each node which is \ref memory_pool::node_size().
@@ -304,33 +348,65 @@ namespace foonathan
             {
                 return state.free_list_.alignment();
             }
+        };
 
-        private:
-            static void* allocate_array(std::false_type, allocator_type&, std::size_t, std::size_t)
+        /// Specialization of the \ref composable_allocator_traits for \ref memory_pool classes.
+        /// \ingroup memory allocator
+        template <typename PoolType, class BlockOrRawAllocator>
+        class composable_allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>
+        {
+            using traits = allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
+
+        public:
+            using allocator_type = memory_pool<PoolType, BlockOrRawAllocator>;
+
+            /// \returns The result of \ref memory_pool::try_allocate_node()
+            /// or `nullptr` if the allocation size was too big.
+            static void* try_allocate_node(allocator_type& state, std::size_t size,
+                                           std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
-                return nullptr;
+                if (size > traits::max_node_size(state) || alignment > traits::max_alignment(state))
+                    return nullptr;
+                return state.try_allocate_node();
             }
 
-            static void* allocate_array(std::true_type, allocator_type& state, std::size_t count,
-                                        std::size_t size)
+            /// \effects Forwards to \ref memory_pool::try_allocate_array()
+            /// with the number of nodes adjusted to be the minimum,
+            /// if the \c size is less than the \ref memory_pool::node_size().
+            /// \returns A \concept{concept_array,array} with specified properties
+            /// or `nullptr` if it was unable to allocate.
+            static void* try_allocate_array(allocator_type& state, std::size_t count,
+                                            std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                auto mem = state.allocate_array(count, size);
-                state.on_allocate(count * size);
-                return mem;
+                if (size > traits::max_node_size(state)
+                    || count * size > traits::max_array_size(state)
+                    || alignment > traits::max_alignment(state))
+                    return nullptr;
+                return state.try_allocate_array(count, size);
             }
 
-            static void deallocate_array(std::false_type, allocator_type&, void*, std::size_t,
-                                         std::size_t)
+            /// \effects Just forwards to \ref memory_pool::try_deallocate_node().
+            /// \returns Whether the deallocation was successful.
+            static bool try_deallocate_node(allocator_type& state, void* node, std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                FOONATHAN_MEMORY_UNREACHABLE("array allocations not supported");
+                if (size > traits::max_node_size(state) || alignment > traits::max_alignment(state))
+                    return false;
+                return state.try_deallocate_node(node);
             }
 
-            static void deallocate_array(std::true_type, allocator_type& state, void* array,
-                                         std::size_t count, std::size_t size)
+            /// \effects Forwards to \ref memory_pool::deallocate_array() with the same size adjustment.
+            /// \returns Whether the deallocation was successful.
+            static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
+                                             std::size_t size,
+                                             std::size_t alignment) FOONATHAN_NOEXCEPT
             {
-                state.deallocate_array(array, count, size);
-                state.on_deallocate(count * size);
+                if (size > traits::max_node_size(state)
+                    || count * size > traits::max_array_size(state)
+                    || alignment > traits::max_alignment(state))
+                    return false;
+                return state.try_deallocate_array(array, count, size);
             }
         };
 
@@ -338,6 +414,10 @@ namespace foonathan
         extern template class allocator_traits<memory_pool<node_pool>>;
         extern template class allocator_traits<memory_pool<array_pool>>;
         extern template class allocator_traits<memory_pool<small_node_pool>>;
+
+        extern template class composable_allocator_traits<memory_pool<node_pool>>;
+        extern template class composable_allocator_traits<memory_pool<array_pool>>;
+        extern template class composable_allocator_traits<memory_pool<small_node_pool>>;
 #endif
     }
 } // namespace foonathan::memory

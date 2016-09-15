@@ -38,8 +38,12 @@ TEST_CASE("memory_pool", "[pool]")
 
             std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
 
+            auto i = 0u;
             for (auto ptr : ptrs)
-                pool.deallocate_node(ptr);
+                if (++i % 2)
+                    pool.deallocate_node(ptr);
+                else
+                    REQUIRE(pool.try_deallocate_node(ptr));
             REQUIRE(pool.capacity_left() == capacity);
         }
         SECTION("multiple block alloc/dealloc")
