@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
 
+#include "detail/debug_helpers.hpp"
 #include "detail/memory_stack.hpp"
 #include "default_allocator.hpp"
 #include "error.hpp"
@@ -14,6 +15,14 @@ namespace foonathan
 {
     namespace memory
     {
+        namespace detail
+        {
+            struct iteration_allocator_leak_handler
+            {
+                void operator()(std::ptrdiff_t amount);
+            };
+        } // namespace detail
+
         /// A stateful \concept{concept_rawallocator,RawAllocator} that is designed for allocations in a loop.
         /// It uses `N` stacks for the allocation, one of them is always active.
         /// Allocation uses the currently active stack.
@@ -25,8 +34,12 @@ namespace foonathan
         /// \ingroup memory allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
         class iteration_allocator
-            : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>)
+            : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>),
+              FOONATHAN_EBO(detail::default_leak_checker<detail::iteration_allocator_leak_handler>)
         {
+            using leak_checker =
+                detail::default_leak_checker<detail::iteration_allocator_leak_handler>;
+
         public:
             using allocator_type =
                 make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>;
@@ -62,6 +75,16 @@ namespace foonathan
                     || (fence + offset + size + fence > std::size_t(block_end(cur_) - stack.top())))
                     FOONATHAN_THROW(out_of_fixed_memory(info(), size));
                 return stack.allocate_unchecked(size, offset);
+            }
+
+            /// \effects Allocates a memory block of given size and alignment
+            /// similar to \ref allocate().
+            /// \returns A \concept{concept_node,node| with given size and alignment
+            /// or `nullptr` if the current stack does not have any memory left.
+            void* try_allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                auto& stack = stacks_[cur_];
+                return stack.allocate(block_end(cur_), size, alignment);
             }
 
             /// \effects Goes to the next internal stack.
@@ -130,6 +153,9 @@ namespace foonathan
             detail::fixed_memory_stack stacks_[N];
             memory_block               block_;
             std::size_t                cur_;
+
+            friend allocator_traits<iteration_allocator<N, BlockOrRawAllocator>>;
+            friend composable_allocator_traits<iteration_allocator<N, BlockOrRawAllocator>>;
         };
 
         /// An alias for \ref iteration_allocator for two iterations.
@@ -137,6 +163,120 @@ namespace foonathan
         template <class BlockOrRawAllocator = default_allocator>
         FOONATHAN_ALIAS_TEMPLATE(double_frame_allocator,
                                  iteration_allocator<2, BlockOrRawAllocator>);
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+        extern template class iteration_allocator<2>;
+#endif
+
+        /// Specialization of the \ref allocator_traits for \ref iteration_allocator.
+        /// \note It is not allowed to mix calls through the specialization and through the member functions,
+        /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
+        /// \ingroup memory allocator
+        template <std::size_t N, class BlockAllocator>
+        class allocator_traits<iteration_allocator<N, BlockAllocator>>
+        {
+        public:
+            using allocator_type = iteration_allocator<N, BlockAllocator>;
+            using is_stateful    = std::true_type;
+
+            /// \returns The result of \ref iteration_allocator::allocate().
+            static void* allocate_node(allocator_type& state, std::size_t size,
+                                       std::size_t alignment)
+            {
+                auto mem = state.allocate(size, alignment);
+                state.allocator_type::leak_checker::on_allocate(size);
+                return mem;
+            }
+
+            /// \returns The result of \ref memory_stack::allocate().
+            static void* allocate_array(allocator_type& state, std::size_t count, std::size_t size,
+                                        std::size_t alignment)
+            {
+                return allocate_node(state, count * size, alignment);
+            }
+
+            /// @{
+            /// \effects Does nothing besides bookmarking for leak checking, if that is enabled.
+            /// Actual deallocation can only be done via \ref memory_stack::unwind().
+            static void deallocate_node(allocator_type& state, void*, std::size_t size,
+                                        std::size_t) FOONATHAN_NOEXCEPT
+            {
+                state.allocator_type::leak_checker::on_deallocate(size);
+            }
+
+            static void deallocate_array(allocator_type& state, void* ptr, std::size_t count,
+                                         std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                deallocate_node(state, ptr, count * size, alignment);
+            }
+            /// @}
+
+            /// @{
+            /// \returns The maximum size which is \ref iteration_allocator::capacity_left().
+            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            {
+                return state.capacity_left();
+            }
+
+            static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            {
+                return state.capacity_left();
+            }
+            /// @}
+
+            /// \returns The maximum possible value since there is no alignment restriction
+            /// (except indirectly through \ref memory_stack::next_capacity()).
+            static std::size_t max_alignment(const allocator_type&) FOONATHAN_NOEXCEPT
+            {
+                return std::size_t(-1);
+            }
+        };
+
+        /// Specialization of the \ref composable_allocator_traits for \ref iteration_allocator classes.
+        /// \ingroup memory allocator
+        template <std::size_t N, class BlockAllocator>
+        class composable_allocator_traits<iteration_allocator<N, BlockAllocator>>
+        {
+        public:
+            using allocator_type = iteration_allocator<N, BlockAllocator>;
+
+            /// \returns The result of \ref memory_stack::try_allocate().
+            static void* try_allocate_node(allocator_type& state, std::size_t size,
+                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return state.try_allocate(size, alignment);
+            }
+
+            /// \returns The result of \ref memory_stack::try_allocate().
+            static void* try_allocate_array(allocator_type& state, std::size_t count,
+                                            std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return state.try_allocate(count * size, alignment);
+            }
+
+            /// @{
+            /// \effects Does nothing.
+            /// \returns Whether the memory will be deallocated by \ref memory_stack::unwind().
+            static bool try_deallocate_node(allocator_type& state, void* ptr, std::size_t,
+                                            std::size_t) FOONATHAN_NOEXCEPT
+            {
+                return state.block_.contains(ptr);
+            }
+
+            static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
+                                             std::size_t size,
+                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return try_deallocate_node(state, ptr, count * size, alignment);
+            }
+            /// @}
+        };
+
+#if FOONATHAN_MEMORY_EXTERN_TEMPLATE
+        extern template class allocator_traits<iteration_allocator<2>>;
+        extern template class composable_allocator_traits<iteration_allocator<2>>;
+#endif
     }
 } // namespace foonathan::memory
 

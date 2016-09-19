@@ -58,6 +58,7 @@ set(src
         debugging.cpp
         error.cpp
         heap_allocator.cpp
+        iteration_allocator.cpp
         malloc_allocator.cpp
         memory_arena.cpp
         memory_pool.cpp
