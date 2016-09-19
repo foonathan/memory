@@ -44,11 +44,13 @@ void memory_block_stack::steal_top(memory_block_stack& other) FOONATHAN_NOEXCEPT
     head_          = to_steal;
 }
 
-bool memory_block_stack::owns(void* ptr) const FOONATHAN_NOEXCEPT
+bool memory_block_stack::owns(const void* ptr) const FOONATHAN_NOEXCEPT
 {
+    auto address = static_cast<const char*>(ptr);
     for (auto cur = head_; cur; cur = cur->prev)
     {
-        if (ptr > cur && ptr < cur + cur->usable_size)
+        auto mem = static_cast<char*>(static_cast<void*>(cur));
+        if (address >= mem && address < mem + cur->usable_size)
             return true;
     }
     return false;
