@@ -17,4 +17,5 @@ void detail::memory_stack_leak_handler::operator()(std::ptrdiff_t amount)
 template class foonathan::memory::memory_stack<>;
 template class foonathan::memory::memory_stack_raii_unwind<memory_stack<>>;
 template class foonathan::memory::allocator_traits<memory_stack<>>;
+template class foonathan::memory::composable_allocator_traits<memory_stack<>>;
 #endif

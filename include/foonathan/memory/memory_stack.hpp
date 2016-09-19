@@ -150,6 +150,16 @@ namespace foonathan
                 return stack_.allocate_unchecked(size, offset);
             }
 
+            /// \effects Allocates a memory block of given size and alignment,
+            /// similar to \ref allocate().
+            /// But it does not attempt a growth if the arena is empty.
+            /// \returns A \concept{concept_node,node} with given size and alignment
+            /// or `nullptr` if there wasn't enough memory available.
+            void* try_allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return stack_.allocate(block_end(), size, alignment);
+            }
+
             /// The marker type that is used for unwinding.
             /// The exact type is implementation defined,
             /// it is only required that it is efficiently copyable
@@ -251,6 +261,7 @@ namespace foonathan
             detail::fixed_memory_stack   stack_;
 
             friend allocator_traits<memory_stack<BlockOrRawAllocator>>;
+            friend composable_allocator_traits<memory_stack<BlockOrRawAllocator>>;
         };
 
         /// Simple utility that automatically unwinds a `Stack` to a previously saved location.
@@ -359,18 +370,15 @@ namespace foonathan
         extern template class memory_stack_raii_unwind<memory_stack<>>;
 #endif
 
-        template <class Allocator>
-        class allocator_traits;
-
         /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
         /// \ingroup memory allocator
-        template <class ImplRawAllocator>
-        class allocator_traits<memory_stack<ImplRawAllocator>>
+        template <class BlockAllocator>
+        class allocator_traits<memory_stack<BlockAllocator>>
         {
         public:
-            using allocator_type = memory_stack<ImplRawAllocator>;
+            using allocator_type = memory_stack<BlockAllocator>;
             using is_stateful    = std::true_type;
 
             /// \returns The result of \ref memory_stack::allocate().
@@ -426,8 +434,50 @@ namespace foonathan
             }
         };
 
+        /// Specialization of the \ref composable_allocator_traits for \ref memory_stack classes.
+        /// \ingroup memory allocator
+        template <class BlockAllocator>
+        class composable_allocator_traits<memory_stack<BlockAllocator>>
+        {
+        public:
+            using allocator_type = memory_stack<BlockAllocator>;
+
+            /// \returns The result of \ref memory_stack::try_allocate().
+            static void* try_allocate_node(allocator_type& state, std::size_t size,
+                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return state.try_allocate(size, alignment);
+            }
+
+            /// \returns The result of \ref memory_stack::try_allocate().
+            static void* try_allocate_array(allocator_type& state, std::size_t count,
+                                            std::size_t size,
+                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return state.try_allocate(count * size, alignment);
+            }
+
+            /// @{
+            /// \effects Does nothing.
+            /// \returns Whether the memory will be deallocated by \ref memory_stack::unwind().
+            static bool try_deallocate_node(allocator_type& state, void* ptr, std::size_t,
+                                            std::size_t) FOONATHAN_NOEXCEPT
+            {
+                return state.arena_.owns(ptr);
+            }
+
+            static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
+                                             std::size_t size,
+                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return try_deallocate_node(state, ptr, count * size, alignment);
+            }
+            /// @}
+        };
+
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
         extern template class allocator_traits<memory_stack<>>;
+        extern template class composable_allocator_traits<memory_stack<>>;
 #endif
     }
 } // namespace foonathan::memory
