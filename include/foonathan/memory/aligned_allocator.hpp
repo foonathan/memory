@@ -25,7 +25,8 @@ namespace foonathan
         template <class RawAllocator>
         class aligned_allocator : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
-            using traits = allocator_traits<RawAllocator>;
+            using traits            = allocator_traits<RawAllocator>;
+            using composable_traits = composable_allocator_traits<RawAllocator>;
 
         public:
             using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
@@ -86,6 +87,44 @@ namespace foonathan
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
                 traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
+            }
+            /// @}
+
+            /// @{
+            /// \effects Forwards to the underlying allocator through the \ref composable_allocator_traits.
+            /// If the \c alignment is less than the \c min_alignment(), it is set to the minimum alignment.
+            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                if (min_alignment_ > alignment)
+                    alignment = min_alignment_;
+                return composable_traits::try_allocate_node(get_allocator(), size, alignment);
+            }
+
+            void* try_allocate_array(std::size_t count, std::size_t size,
+                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                if (min_alignment_ > alignment)
+                    alignment = min_alignment_;
+                return composable_traits::try_allocate_array(get_allocator(), count, size,
+                                                             alignment);
+            }
+
+            bool try_deallocate_node(void* ptr, std::size_t size,
+                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                if (min_alignment_ > alignment)
+                    alignment = min_alignment_;
+                return composable_traits::try_deallocate_node(get_allocator(), ptr, size,
+                                                              alignment);
+            }
+
+            bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
+                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                if (min_alignment_ > alignment)
+                    alignment = min_alignment_;
+                return composable_traits::try_deallocate_array(get_allocator(), ptr, count, size,
+                                                               alignment);
             }
             /// @}
 
