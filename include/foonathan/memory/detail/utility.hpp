@@ -43,6 +43,10 @@ namespace foonathan
 // defined PREDEFINED: FOONATHAN_REQUIRES_RET(x,r):=r
 #define FOONATHAN_REQUIRES_RET(Expr, ...) typename std::enable_if<(Expr), __VA_ARGS__>::type
 
+// fancier syntax for enable_if on non-templated member function
+#define FOONATHAN_ENABLE_IF(Expr)                                                                  \
+    template <typename Dummy = std::true_type, FOONATHAN_REQUIRES(Dummy::value && (Expr))>
+
 // fancier syntax for general expression SFINAE
 // used as (template) parameter
 // also useful for doxygen:

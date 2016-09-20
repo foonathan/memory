@@ -68,6 +68,7 @@ namespace foonathan
             void* try_allocate_node(std::false_type, Alloc&, std::size_t,
                                     std::size_t) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return nullptr;
             }
 
@@ -75,6 +76,7 @@ namespace foonathan
             void* try_allocate_array(std::false_type, Alloc&, std::size_t, std::size_t,
                                      std::size_t) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return nullptr;
             }
 
@@ -82,6 +84,7 @@ namespace foonathan
             bool try_deallocate_node(std::false_type, Alloc&, void*, std::size_t,
                                      std::size_t) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return false;
             }
 
@@ -89,6 +92,7 @@ namespace foonathan
             bool try_deallocate_array(std::false_type, Alloc&, void*, std::size_t, std::size_t,
                                       std::size_t) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return false;
             }
         } // namespace detail
@@ -107,7 +111,9 @@ namespace foonathan
                 !detail::is_nested_policy<StoragePolicy>::value,
                 "allocator_storage instantiated with another allocator_storage, double wrapping!");
 
-            using traits       = allocator_traits<typename StoragePolicy::allocator_type>;
+            using traits = allocator_traits<typename StoragePolicy::allocator_type>;
+            using composable_traits =
+                composable_allocator_traits<typename StoragePolicy::allocator_type>;
             using composable   = is_composable_allocator<typename StoragePolicy::allocator_type>;
             using actual_mutex = const detail::mutex_storage<detail::mutex_for<
                 typename StoragePolicy::allocator_type, Mutex>>;
@@ -231,40 +237,49 @@ namespace foonathan
             /// @}
 
             /// @{
-            /// \effects Calls the function on the stored composable allocator,
-            /// if the allocator is composable.
-            /// Otherwise it will always return in a failed operation.
+            /// \effects Calls the function on the stored composable allocator.
             /// The \c Mutex will be locked during the operation.
+            /// \requires The allocator must be composable,
+            /// i.e. \ref is_composable() must return `true`.
+            /// \notes This check is done at compile-time where possible,
+            /// and at runtime in the case of type-erased storage.
+            FOONATHAN_ENABLE_IF(composable::value)
             void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
-                return detail::try_allocate_node(composable{}, alloc, size, alignment);
+                return composable_traits::try_allocate_node(alloc, size, alignment);
             }
 
+            FOONATHAN_ENABLE_IF(composable::value)
             void* try_allocate_array(std::size_t count, std::size_t size,
                                      std::size_t alignment) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
-                return detail::try_allocate_array(composable{}, alloc, count, size, alignment);
+                return composable_traits::try_allocate_array(alloc, count, size, alignment);
             }
 
+            FOONATHAN_ENABLE_IF(composable::value)
             bool try_deallocate_node(void* ptr, std::size_t size,
                                      std::size_t alignment) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
-                return detail::try_deallocate_node(composable{}, alloc, ptr, size, alignment);
+                return composable_traits::try_deallocate_node(alloc, ptr, size, alignment);
             }
 
+            FOONATHAN_ENABLE_IF(composable::value)
             bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
                                       std::size_t alignment) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
-                return detail::try_deallocate_array(composable{}, alloc, ptr, count, size,
-                                                    alignment);
+                return composable_traits::try_deallocate_array(alloc, ptr, count, size, alignment);
             }
             /// @}
 
@@ -306,7 +321,9 @@ namespace foonathan
             /// @}.
 
             /// \returns Whether or not the stored allocator is composable,
-            /// that is the composing allocation functions do actually work sometimes.
+            /// that is you can use the compositioning functions.
+            /// \notes Due to type-erased allocators,
+            /// this function can not be `constexpr`.
             bool is_composable() const FOONATHAN_NOEXCEPT
             {
                 return StoragePolicy::is_composable();
@@ -615,6 +632,29 @@ namespace foonathan
                                       std::size_t alignment) FOONATHAN_NOEXCEPT
                 {
                     deallocate_impl(array, count, size, alignment);
+                }
+
+                void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                {
+                    return try_allocate_impl(1, size, alignment);
+                }
+
+                void* try_allocate_array(std::size_t count, std::size_t size,
+                                         std::size_t alignment) FOONATHAN_NOEXCEPT
+                {
+                    return try_allocate_impl(count, size, alignment);
+                }
+
+                bool try_deallocate_node(void* node, std::size_t size,
+                                         std::size_t alignment) FOONATHAN_NOEXCEPT
+                {
+                    return try_deallocate_impl(node, 1, size, alignment);
+                }
+
+                bool try_deallocate_array(void* array, std::size_t count, std::size_t size,
+                                          std::size_t alignment) FOONATHAN_NOEXCEPT
+                {
+                    return try_deallocate_impl(array, count, size, alignment);
                 }
 
                 // count 1 means node
