@@ -38,6 +38,7 @@ set(tests
         aligned_allocator.cpp
         allocator_traits.cpp
         default_allocator.cpp
+        fallback_allocator.cpp
         iteration_allocator.cpp
         memory_arena.cpp
         memory_pool.cpp
