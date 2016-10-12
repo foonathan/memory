@@ -360,7 +360,7 @@ namespace foonathan
         } // namespace detail
 
         /// Creates multiple nested \ref binary_segreagator.
-        /// If you pass one type, it must be a \concept{segregatable,Segregatable}.
+        /// If you pass one type, it must be a \concept{concept_segregatable,Segregatable}.
         /// Then the result is a \ref binary_segregator with that `Segregatable` and \ref null_allocator as fallback.
         /// If you pass two types, the first one must be a `Segregatable`,
         /// the second one a \concept{concept_rawallocator,RawAllocator}.

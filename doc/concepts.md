@@ -156,6 +156,40 @@ struct min_raw_allocator
 i.e. allocate memory through the traits and deallocate through the member function or vice-versa.
 It is completely allowed that those functions do completely different things.
 
+### Composable RawAllocator
+
+A RawAllocator can be *composable*.
+Access to the composable (de)allocation functions is only done through the [composable_allocator_traits].
+It can be specialized for your own allocator types.
+The requirements for such a specialization are shown in the following table,
+where `ctraits` is `composable_allocator_traits<RawAllocator`, `alloc` is an instance of type `traits::allocator_type`, `size` is a valid node size, `alignment` is a valid alignment, `count` is a valid array count,
+`node` is any non-null [node](#concept_node) and `array` is any non-null [array](#concept_array):
+
+Expression | Return Type | Description
+-----------|-------------|------------
+`ctraits::allocator_type` | `allocator_traits<RawAllocator>::allocator_type` | just forwards to the regular traits
+`ctraits::try_allocate_node(alloc, size, alignment)` | `void*` | Similar to the `allocate_node()` function but returns `nullptr` on failure instead of throwing an exception.
+`ctraits::try_allocate_array(alloc, count, size, alignment)` | `void*` | Similar to the `allocate_array()` function but returns `nullptr` on failure instead of throwing an exception.
+`ctraits::try_deallocate_node(alloc, node, size, alignment)` | `bool` | Similar to the `deallocate_node()` function but can be called with *any* [node](#concept_node). If that node was allocated by `alloc`, it will be deallocated and the function returns `true`. Otherwise the function has no effect and returns `false`.
+`ctraits::try_deallocate_array(alloc, array, count, size, alignment)` | `bool` | Similar to the `deallocate_array()` function but can be called with *any* [array](#concept_array). If that array was allocated by `alloc`, it will be deallocated and the function returns `true`. Otherwise the function has no effect and returns `false`.
+
+Unlike the normal allocation functions, the composable allocation functions are allowed to return `nullptr` on failure,
+they must never throw an exception.
+The deallocation function can be called with arbitrary nodes/arrays.
+The allocator must be able to detect whether they were originally allocated by the allocator and only deallocate them if that is the case.
+You are not allowed to mix the composable and normal allocation functions.
+
+Like [allocator_traits] the default [composable_allocator_traits] specialization forwards to member functions or uses a fallback:
+
+
+Expression|RawAllocator|Fallback
+----------|------------|--------
+`ctraits::allocator_type` | - | `allocator_traits<RawAllocator>::allocator_type`
+`ctraits::try_allocate_node(alloc, size, alignment)` | `alloc.try_allocate_node(size, alignment)` | none, required
+`ctraits::try_allocate_array(alloc, count, size, alignment)` | `alloc.try_allocate_array(count, size, alignment)` | `ctraits::try_allocate_node(alloc, count * size, alignment)`
+`ctraits::try_deallocate_node(alloc, node, size, alignment)` | `alloc.try_deallocate_node(node, size, alignment)` | non, required
+`ctraits::try_deallocate_array(alloc, array, count, size, alignment)` | `alloc.try_deallocate_array(array, count, size, alignment)` | `ctraits::try_deallocate_node(alloc, array, count * size, alignment)`
+
 ## <a name="concept_blockallocator"></a>BlockAllocator
 
 Some allocator types manage huge memory blocks and returns part of them in their allocation functions.
@@ -252,6 +286,58 @@ private:
 };
 ```
 
+## <a name="concept_segregatable"><a/>Segregatable
+
+A `Segregatable` stores a [RawAllocator](#concept_rawallocator) and controls for which allocations it will be used.
+It is used in [binary_segregator].
+
+It must be nothrow movable and provide the following:
+
+Expression|Type|Semantics
+----------|----|---------
+`Segregatable::allocator_type`|some [RawAllocator](#concept_rawallocator)|The type of the allocator it controls.
+`segregatable.get_allocator()`|`allocator_type&`|A reference to the allocator object it controls.
+`const_segregatable.get_allocator()`|`const allocator_type&`|A `const` reference to the allocator object it controls.
+`segregatable.use_allocate_node(size, alignment)`|`bool`|Whether or not the allocator object will be used for a node allocation with this specific properties. If it returns `true`, `allocate_node()` of the allocator object with the same parameters will be called, if it returns `false`, it will not be used.
+`segregatable.use_allocate_array(count, size, alignment)`|`bool`|Whether or not the allocator object will be used for an array allocation with this specific properties. If it returns `true`, `allocate_array()` of the allocator object with the same parameters will be called, if it returns `false`, it will not be used.
+
+For exposition, this is a simple `Segregatable` that will always use the given allocator:
+
+```cpp
+template <class RawAllocator>
+class segregatable
+{
+public:
+    using allocator_type = typename memory::allocator_traits<RawAllocator>::allocator_type;
+
+    segregatable(RawAllocator &&alloc) noexcept
+    : alloc_(std::move(alloc)) {}
+
+    allocator_type& get_allocator() noexcept
+    {
+        return alloc_;
+    }
+
+    const allocator_type& get_allocator() const noexcept
+    {
+        return alloc_;
+    }
+    
+    bool use_allocate_node(std::size_t, std::size_t) noexcept
+    {
+        return true;
+    }
+    
+    bool use_allocate_array(std::size_t, std::size_t) noexcept
+    {
+        return true;
+    }
+
+private:
+    allocator_type alloc_;
+};
+```
+
 ## <a name="concept_tracker"></a>Tracker
 
 A `Tracker` tracks allocation and/or deallocation of a `RawAllocator` and is used in the class template [tracked_allocator].
@@ -308,6 +394,8 @@ struct tracker
 
 [allocator_storage]: \ref foonathan::memory::allocator_storage
 [allocator_traits]: \ref foonathan::memory::allocator_traits
+[composable_allocator_traits]: \ref foonathan::memory::composable_allocator_traits
 [memory_arena]: \ref foonathan::memory::memory_arena
 [memory_block]: \ref foonathan::memory::memory_block
+[binary_segregator]: \ref foonathan::memory::binary_segregator
 [tracked_allocator]: \ref foonathan::memory::tracked_allocator
