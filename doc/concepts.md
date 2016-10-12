@@ -354,6 +354,8 @@ Expression|Semantics
 `tracker.on_array_allocation(array, count, size, alignment)` | Same as the [node](#concept_node) version, but for [arrays](#concept_array).
 `tracker.on_array_deallocation(array, count, size, alignment)` | Same the [node](#concept_node) version, but for [arrays](#concept_array).
 
+*Note*: Those tracking functions are also called after a succesful composable (de)allocation function.
+
 A *deep tracker* also tracks a [BlockAllocator](#concept_block_allocator) of another allocator
 and thus allows monitoring the often more expensive big allocations done by it.
 Such a `Tracker` must provide the following additional functions:

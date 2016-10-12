@@ -177,7 +177,8 @@ namespace foonathan
         class tracked_allocator
             : FOONATHAN_EBO(Tracker, allocator_traits<RawAllocator>::allocator_type)
         {
-            using traits = allocator_traits<RawAllocator>;
+            using traits            = allocator_traits<RawAllocator>;
+            using composable_traits = composable_allocator_traits<RawAllocator>;
 
         public:
             using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
@@ -239,6 +240,17 @@ namespace foonathan
                 return mem;
             }
 
+            /// \effects Calls the composable node allocation function.
+            /// If allocation was successful, also calls `Tracker::on_node_allocation()`.
+            /// \returns The result of `try_allocate_node()`.
+            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                auto mem = composable_traits::try_allocate_node(get_allocator(), size, alignment);
+                if (mem)
+                    this->on_node_allocation(mem, size, alignment);
+                return mem;
+            }
+
             /// \effects Calls <tt>Tracker::on_array_allocation()</tt> and forwards to the allocator.
             /// If a growth occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_growth()</tt>.
             /// \returns The result of <tt>allocate_array()</tt>
@@ -246,6 +258,19 @@ namespace foonathan
             {
                 auto mem = traits::allocate_array(get_allocator(), count, size, alignment);
                 this->on_array_allocation(mem, count, size, alignment);
+                return mem;
+            }
+
+            /// \effects Calls the composable array allocation function.
+            /// If allocation was succesful, also calls `Tracker::on_array_allocation()`.
+            /// \returns The result of `try_allocate_array()`.
+            void* try_allocate_array(std::size_t count, std::size_t size,
+                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                auto mem =
+                    composable_traits::try_allocate_array(get_allocator(), count, size, alignment);
+                if (mem)
+                    this->on_array_allocation(mem, count, size, alignment);
                 return mem;
             }
 
@@ -258,6 +283,19 @@ namespace foonathan
                 traits::deallocate_node(get_allocator(), ptr, size, alignment);
             }
 
+            /// \effects Calls the composable node deallocation function.
+            /// If it was succesful, also calls `Tracker::on_node_deallocation()`.
+            /// \returns The result of `try_deallocate_node()`.
+            bool try_deallocate_node(void* ptr, std::size_t size,
+                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                auto res =
+                    composable_traits::try_deallocate_node(get_allocator(), ptr, size, alignment);
+                if (res)
+                    this->on_node_deallocation(ptr, size, alignment);
+                return res;
+            }
+
             /// \effects Calls <tt>Tracker::on_array_deallocation()</tt> and forwards to the allocator's <tt>deallocate_array()</tt>.
             /// If shrinking occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_shrinking()</tt>.
             void deallocate_array(void* ptr, std::size_t count, std::size_t size,
@@ -265,6 +303,18 @@ namespace foonathan
             {
                 this->on_array_deallocation(ptr, count, size, alignment);
                 traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
+            }
+
+            /// \effects Calls the composable array deallocation function.
+            /// If it was succesful, also calls `Tracker::on_array_deallocation()`.
+            /// \returns The result of `try_deallocate_array()`.
+            bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
+                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                auto res = composable_traits::try_deallocate_array(ptr, count, size, alignment);
+                if (res)
+                    this->on_array_deallocation(ptr, count, size, alignment);
+                return res;
             }
 
             /// @{
