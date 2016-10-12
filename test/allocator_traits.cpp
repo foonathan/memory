@@ -340,3 +340,86 @@ TEST_CASE("allocator_traits", "[core]")
         test_max_getter(everything, detail::max_alignment * 2, 1, 2);
     }
 }
+
+template <class Allocator>
+void test_try_node(Allocator& alloc)
+{
+    auto ptr = composable_allocator_traits<Allocator>::try_allocate_node(alloc, 1, 1);
+    composable_allocator_traits<Allocator>::try_deallocate_node(alloc, ptr, 1, 1);
+}
+
+template <class Allocator>
+void test_try_array(Allocator& alloc)
+{
+    auto ptr = composable_allocator_traits<Allocator>::try_allocate_array(alloc, 1, 1, 1);
+    composable_allocator_traits<Allocator>::try_deallocate_array(alloc, ptr, 1, 1, 1);
+}
+
+TEST_CASE("composable_allocator_traits")
+{
+    struct min_composable_allocator
+    {
+        bool alloc_node = false, dealloc_node = false;
+
+        void* allocate_node(std::size_t, std::size_t)
+        {
+            return nullptr;
+        }
+
+        void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+        }
+
+        void* try_allocate_node(std::size_t, std::size_t)
+        {
+            alloc_node = true;
+            return nullptr;
+        }
+
+        bool try_deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        {
+            dealloc_node = true;
+            return true;
+        }
+    };
+    static_assert(is_composable_allocator<min_composable_allocator>::value, "");
+
+    SECTION("node")
+    {
+        min_composable_allocator alloc;
+        test_try_node(alloc);
+        REQUIRE(alloc.alloc_node);
+        REQUIRE(alloc.dealloc_node);
+    }
+    SECTION("array")
+    {
+        min_composable_allocator min;
+        test_try_array(min);
+        REQUIRE(min.alloc_node);
+        REQUIRE(min.dealloc_node);
+
+        struct array_composable : min_composable_allocator
+        {
+            bool alloc_array = false, dealloc_array = false;
+
+            void* try_allocate_array(std::size_t, std::size_t, std::size_t)
+            {
+                alloc_array = true;
+                return nullptr;
+            }
+
+            bool try_deallocate_array(void*, std::size_t, std::size_t,
+                                      std::size_t) FOONATHAN_NOEXCEPT
+            {
+                dealloc_array = true;
+                return true;
+            }
+        } array;
+
+        test_try_array(array);
+        REQUIRE(array.alloc_array);
+        REQUIRE(array.dealloc_array);
+        REQUIRE(!array.alloc_node);
+        REQUIRE(!array.dealloc_node);
+    }
+}

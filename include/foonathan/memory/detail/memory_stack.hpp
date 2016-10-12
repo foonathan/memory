@@ -73,23 +73,10 @@ namespace foonathan
 
                     auto remaining = std::size_t(end - cur_);
                     auto offset    = align_offset(cur_ + debug_fence_size, alignment);
-
                     if (debug_fence_size + offset + size + debug_fence_size > remaining)
                         return nullptr;
-                    debug_fill(cur_, offset, debug_magic::alignment_memory);
-                    cur_ += offset;
 
-                    debug_fill(cur_, debug_fence_size, debug_magic::fence_memory);
-                    cur_ += debug_fence_size;
-
-                    auto memory = cur_;
-                    debug_fill(cur_, size, debug_magic::new_memory);
-                    cur_ += size;
-
-                    debug_fill(cur_, debug_fence_size, debug_magic::fence_memory);
-                    cur_ += debug_fence_size;
-
-                    return memory;
+                    return allocate_unchecked(size, offset);
                 }
 
                 // same as allocate() but does not check the size

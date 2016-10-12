@@ -28,22 +28,24 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
 endif()
 
 set(tests
-        test_allocator.hpp
-        test.cpp
-        detail/align.cpp
-        detail/debug_helpers.cpp
-        detail/free_list.cpp
-        detail/free_list_array.cpp
-        detail/memory_stack.cpp
-        aligned_allocator.cpp
-        allocator_traits.cpp
-        default_allocator.cpp
-        iteration_allocator.cpp
-        memory_arena.cpp
-        memory_pool.cpp
-        memory_pool_collection.cpp
-        memory_resource_adapter.cpp
-        memory_stack.cpp)
+    test_allocator.hpp
+    test.cpp
+    detail/align.cpp
+    detail/debug_helpers.cpp
+    detail/free_list.cpp
+    detail/free_list_array.cpp
+    detail/memory_stack.cpp
+    aligned_allocator.cpp
+    allocator_traits.cpp
+    default_allocator.cpp
+    fallback_allocator.cpp
+    iteration_allocator.cpp
+    memory_arena.cpp
+    memory_pool.cpp
+    memory_pool_collection.cpp
+    memory_resource_adapter.cpp
+    memory_stack.cpp
+    segregator.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test foonathan_memory)

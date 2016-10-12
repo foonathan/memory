@@ -37,7 +37,8 @@ TEST_CASE("memory_pool_collection", "[pool]")
             for (auto i = 0u; i != 5u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
-                b.push_back(pool.allocate_node(5));
+                b.push_back(pool.try_allocate_node(5));
+                REQUIRE(b.back());
             }
             REQUIRE(alloc.no_allocated() == 1u);
             REQUIRE(pool.capacity_left() <= 1000u);
@@ -46,7 +47,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
             std::shuffle(b.begin(), b.end(), std::mt19937{});
 
             for (auto ptr : a)
-                pool.deallocate_node(ptr, 1);
+                REQUIRE(pool.try_deallocate_node(ptr, 1));
             for (auto ptr : b)
                 pool.deallocate_node(ptr, 5);
         }

@@ -47,6 +47,14 @@ namespace foonathan
                 : memory_block(begin, static_cast<char*>(end) - static_cast<char*>(begin))
             {
             }
+
+            /// \returns Whether or not a pointer is inside the memory.
+            bool contains(const void* address) const FOONATHAN_NOEXCEPT
+            {
+                auto mem  = static_cast<const char*>(memory);
+                auto addr = static_cast<const char*>(address);
+                return addr >= mem && addr < mem + size;
+            }
         };
 
         namespace detail
@@ -149,6 +157,8 @@ namespace foonathan
                 {
                     return head_ == nullptr;
                 }
+
+                bool owns(const void* ptr) const FOONATHAN_NOEXCEPT;
 
                 // O(n) size
                 std::size_t size() const FOONATHAN_NOEXCEPT;
@@ -367,6 +377,12 @@ namespace foonathan
                 auto block = used_.top();
                 detail::debug_fill_internal(block.memory, block.size, true);
                 this->do_deallocate_block(get_allocator(), used_);
+            }
+
+            /// \returns If `ptr` is in memory owned by the arena.
+            bool owns(const void* ptr) const FOONATHAN_NOEXCEPT
+            {
+                return used_.owns(ptr);
             }
 
             /// \effects Purges the cache of unused memory blocks by returning them.

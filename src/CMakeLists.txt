@@ -26,6 +26,7 @@ set(header
         ${header_path}/default_allocator.hpp
         ${header_path}/deleter.hpp
         ${header_path}/error.hpp
+        ${header_path}/fallback_allocator.hpp
         ${header_path}/malloc_allocator.hpp
         ${header_path}/heap_allocator.hpp
         ${header_path}/iteration_allocator.hpp
@@ -37,6 +38,7 @@ set(header
         ${header_path}/memory_stack.hpp
         ${header_path}/namespace_alias.hpp
         ${header_path}/new_allocator.hpp
+        ${header_path}/segregator.hpp
         ${header_path}/smart_ptr.hpp
         ${header_path}/static_allocator.hpp
         ${header_path}/std_allocator.hpp
@@ -58,6 +60,7 @@ set(src
         debugging.cpp
         error.cpp
         heap_allocator.cpp
+        iteration_allocator.cpp
         malloc_allocator.cpp
         memory_arena.cpp
         memory_pool.cpp
