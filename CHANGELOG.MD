@@ -9,16 +9,20 @@
 
 * add literal operators for memory sizes (`4_KiB`)
 * more flexible `make_block_allocator`
+* composable allocator concept
 
 ## Allocator
 
 * improved `temporary_allocator`: explicit seperation into `temporary_stack`, improved automatic creation
 * new `memory_stack_raii_unwind` for automatic unwinding
 * new `iteration_allocator`
+* make allocators composable
 
 ## Adapter
 
 * add `shared_ptr_node_size`
+* add `fallback_allocator`
+* add `segregator`
 
 ## Bugfixes
 
