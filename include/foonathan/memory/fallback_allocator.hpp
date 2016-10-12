@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_MEMORY_FALLBACK_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_FALLBACK_ALLOCATOR_HPP_INCLUDED
 
+#include "detail/ebo_storage.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
 #include "config.hpp"
@@ -20,8 +21,11 @@ namespace foonathan
         /// `Fallback` must be a \concept{concept_rawallocator,RawAllocator}.
         /// \ingroup memory adapter
         template <class Default, class Fallback>
-        class fallback_allocator : FOONATHAN_EBO(allocator_traits<Default>::allocator_type),
-                                   FOONATHAN_EBO(allocator_traits<Fallback>::allocator_type)
+        class fallback_allocator
+            : FOONATHAN_EBO(
+                  detail::ebo_storage<0, typename allocator_traits<Default>::allocator_type>),
+              FOONATHAN_EBO(
+                  detail::ebo_storage<1, typename allocator_traits<Fallback>::allocator_type>)
         {
             using default_traits             = allocator_traits<Default>;
             using default_composable_traits  = composable_allocator_traits<Default>;
@@ -41,8 +45,8 @@ namespace foonathan
             /// \effects Constructs the allocator by passing in the two allocators it has.
             explicit fallback_allocator(default_allocator_type&&  default_alloc,
                                         fallback_allocator_type&& fallback_alloc = {})
-            : default_allocator_type(detail::move(default_alloc)),
-              fallback_allocator_type(detail::move(fallback_alloc))
+            : detail::ebo_storage<0, default_allocator_type>(detail::move(default_alloc)),
+              detail::ebo_storage<1, fallback_allocator_type>(detail::move(fallback_alloc))
             {
             }
 
@@ -172,12 +176,12 @@ namespace foonathan
             /// \returns A (`const`) reference to the default allocator.
             default_allocator_type& get_default_allocator() FOONATHAN_NOEXCEPT
             {
-                return *this;
+                return detail::ebo_storage<0, default_allocator_type>::get();
             }
 
             const default_allocator_type& get_default_allocator() const FOONATHAN_NOEXCEPT
             {
-                return *this;
+                return detail::ebo_storage<0, default_allocator_type>::get();
             }
             /// @}
 
@@ -185,12 +189,12 @@ namespace foonathan
             /// \returns A (`const`) reference to the fallback allocator.
             fallback_allocator_type& get_fallback_allocator() FOONATHAN_NOEXCEPT
             {
-                return *this;
+                return detail::ebo_storage<1, fallback_allocator_type>::get();
             }
 
             const fallback_allocator_type& get_fallback_allocator() const FOONATHAN_NOEXCEPT
             {
-                return *this;
+                return detail::ebo_storage<1, fallback_allocator_type>::get();
             }
             /// @}
         };

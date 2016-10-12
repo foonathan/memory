@@ -38,6 +38,7 @@ set(header
         ${header_path}/memory_stack.hpp
         ${header_path}/namespace_alias.hpp
         ${header_path}/new_allocator.hpp
+        ${header_path}/segregator.hpp
         ${header_path}/smart_ptr.hpp
         ${header_path}/static_allocator.hpp
         ${header_path}/std_allocator.hpp
