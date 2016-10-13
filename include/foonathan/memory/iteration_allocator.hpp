@@ -178,6 +178,8 @@ namespace foonathan
         template <std::size_t N, class BlockAllocator>
         class allocator_traits<iteration_allocator<N, BlockAllocator>>
         {
+            using checker = typename allocator_type::leak_checker;
+
         public:
             using allocator_type = iteration_allocator<N, BlockAllocator>;
             using is_stateful    = std::true_type;
@@ -187,7 +189,7 @@ namespace foonathan
                                        std::size_t alignment)
             {
                 auto mem = state.allocate(size, alignment);
-                state.allocator_type::leak_checker::on_allocate(size);
+                state.checker::on_allocate(size);
                 return mem;
             }
 
@@ -204,7 +206,7 @@ namespace foonathan
             static void deallocate_node(allocator_type& state, void*, std::size_t size,
                                         std::size_t) FOONATHAN_NOEXCEPT
             {
-                state.allocator_type::leak_checker::on_deallocate(size);
+                state.leak_checker::on_deallocate(size);
             }
 
             static void deallocate_array(allocator_type& state, void* ptr, std::size_t count,

@@ -250,7 +250,7 @@ namespace foonathan
             using default_leak_checker = object_leak_checker<Handler>;
 #else
             template <class Handler>
-            using default_leak_checker = no_leak_checker<int>; // only one instantiation
+            using default_leak_checker = no_leak_checker<Handler>;
 #endif
         } // namespace detail
     }
