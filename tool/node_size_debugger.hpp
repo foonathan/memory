@@ -51,7 +51,7 @@ public:
     }
 
     template <typename U>
-    node_size_debugger(node_size_debugger<U, TestType, Debugger> other)
+    node_size_debugger(node_size_debugger<U, TestType, Debugger>)
     {
         if (!std::is_same<T, TestType>::value)
             node_size() = std::max(node_size(), sizeof(T));

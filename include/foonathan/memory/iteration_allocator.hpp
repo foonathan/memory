@@ -17,16 +17,14 @@ namespace foonathan
     {
         namespace detail
         {
-<<<<<<< HEAD
             template <class BlockOrRawAllocator>
             using iteration_block_allocator =
                 make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>;
-=======
+
             struct iteration_allocator_leak_handler
             {
                 void operator()(std::ptrdiff_t amount);
             };
->>>>>>> feature/ComposingAllocator
         } // namespace detail
 
         /// A stateful \concept{concept_rawallocator,RawAllocator} that is designed for allocations in a loop.
