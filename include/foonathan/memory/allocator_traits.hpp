@@ -277,9 +277,11 @@ namespace foonathan
         template <class Allocator>
         class allocator_traits
         {
+            using alloc_type =
+                decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}));
+
         public:
-            using allocator_type = typename std::decay<decltype(
-                traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}))>::type;
+            using allocator_type = typename std::decay<alloc_type>::type;
             using is_stateful =
                 decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
 
