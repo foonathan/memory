@@ -119,7 +119,7 @@ void instantiate_test_type_statefulness()
     test_type_statefulness<standard_multi_arg<int, int, int>, standard_multi_arg<char, int, int>,
                            false>();
 
-    test_type_statefulness<standard_with_rebind<char, char>, standard_with_rebind<char, char>,
+    test_type_statefulness<standard_with_rebind<char, char>, standard_with_rebind<char, int>,
                            false>();
     test_type_statefulness<standard_with_rebind<int, char>, standard_with_rebind<char, int>,
                            false>();

@@ -94,15 +94,17 @@ namespace foonathan
             };
 
             //=== allocator_type ===//
-            // if Allocator has a type ::value_type, assume std_allocator and rebind to char,
-            // by first trying ::rebind, then manual as in Alloc<T, Args> if this Alloc is Alloc<U, Args>.
-            // everything else returns the type as-is
-            // we need to simulate the behavior of std::allocator_traits::rebind_alloc
+            // if Allocator has a member template `rebind`, use that to rebind to `char`
+            // else if Allocator has a member `value_type`, rebind by changing argument
+            // else does nothing
             template <class Allocator>
             auto rebind_impl(int) -> typename Allocator::template rebind<char>::other&;
 
             template <class Allocator, typename T>
-            struct allocator_rebinder;
+            struct allocator_rebinder
+            {
+                using type = Allocator&;
+            };
 
             template <template <typename, typename...> class Alloc, typename U, typename... Args,
                       typename T>
@@ -111,17 +113,21 @@ namespace foonathan
                 using type = Alloc<T, Args...>&;
             };
 
-            template <class Allocator>
-            auto rebind_impl(...) -> typename allocator_rebinder<Allocator, char>::type;
+            template <class Allocator, typename = typename Allocator::value_type>
+            auto rebind_impl(char) -> typename allocator_rebinder<Allocator, char>::type;
 
             template <class Allocator>
-            auto allocator_type(
-                std_concept,
-                FOONATHAN_REQUIRES((!std::is_same<typename Allocator::value_type, char>::value)))
-                -> decltype(rebind_impl<Allocator>(0));
+            auto rebind_impl(...) -> Allocator&;
 
             template <class Allocator>
-            Allocator& allocator_type(error);
+            struct allocator_type_impl // required for MSVC
+            {
+                using type = decltype(rebind_impl<Allocator>(0));
+            };
+
+            template <class Allocator>
+            using allocator_type =
+                typename std::decay<typename allocator_type_impl<Allocator>::type>::type;
 
             //=== is_stateful ===//
             // first try to access Allocator::is_stateful,
@@ -277,11 +283,8 @@ namespace foonathan
         template <class Allocator>
         class allocator_traits
         {
-            using alloc_type =
-                decltype(traits_detail::allocator_type<Allocator>(traits_detail::full_concept{}));
-
         public:
-            using allocator_type = typename std::decay<alloc_type>::type;
+            using allocator_type = traits_detail::allocator_type<Allocator>;
             using is_stateful =
                 decltype(traits_detail::is_stateful<Allocator>(traits_detail::full_concept{}));
 
