@@ -46,14 +46,20 @@ namespace foonathan
                     return *this;
                 }
 
+                // bumps the top pointer without filling it
+                void bump(std::size_t offset) FOONATHAN_NOEXCEPT
+                {
+                    cur_ += offset;
+                }
+
                 // bumps the top pointer by offset and fills
                 void bump(std::size_t offset, debug_magic m) FOONATHAN_NOEXCEPT
                 {
                     detail::debug_fill(cur_, offset, m);
-                    cur_ += offset;
+                    bump(offset);
                 }
 
-                // same as bump() but returns old value
+                // same as bump(offset, m) but returns old value
                 void* bump_return(std::size_t offset,
                                   debug_magic m = debug_magic::new_memory) FOONATHAN_NOEXCEPT
                 {
