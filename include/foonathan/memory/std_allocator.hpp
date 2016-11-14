@@ -20,6 +20,54 @@ namespace foonathan
 {
     namespace memory
     {
+        namespace traits_detail
+        {
+            template <class RawAllocator>
+            auto propagate_on_container_swap(std_concept) ->
+                typename RawAllocator::propagate_on_container_swap;
+
+            template <class RawAllocator>
+            auto propagate_on_container_swap(min_concept) -> std::true_type;
+
+            template <class RawAllocator>
+            auto propagate_on_container_move_assignment(std_concept) ->
+                typename RawAllocator::propagate_on_container_move_assignment;
+
+            template <class RawAllocator>
+            auto propagate_on_container_move_assignment(min_concept) -> std::true_type;
+
+            template <class RawAllocator>
+            auto propagate_on_container_copy_assignment(std_concept) ->
+                typename RawAllocator::propagate_on_container_copy_assignment;
+
+            template <class RawAllocator>
+            auto propagate_on_container_copy_assignment(min_concept) -> std::true_type;
+        } // namespace traits_detail
+
+        /// Controls the propagation of a \ref std_allocator for a certain \concept{concept_rawallocator,RawAllocator}.
+        /// \ingroup memory adapter
+        template <class RawAllocator>
+        struct propagation_traits
+        {
+            using propagate_on_container_swap =
+                decltype(traits_detail::propagate_on_container_swap<RawAllocator>(
+                    traits_detail::full_concept{}));
+
+            using propagate_on_container_move_assignment =
+                decltype(traits_detail::propagate_on_container_move_assignment<RawAllocator>(
+                    traits_detail::full_concept{}));
+
+            using propagate_on_container_copy_assignment =
+                decltype(traits_detail::propagate_on_container_copy_assignment<RawAllocator>(
+                    traits_detail::full_concept{}));
+
+            template <class AllocReference>
+            static AllocReference select_on_container_copy_construction(const AllocReference& alloc)
+            {
+                return alloc;
+            }
+        };
+
         /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a "normal" \c Allocator.
         /// It allows using a \c RawAllocator anywhere a \c Allocator is required.
         /// It stores the allocator as \ref allocator_reference to allow required copying of a \c Allocator,
@@ -32,8 +80,7 @@ namespace foonathan
             // if it is any_allocator_reference an optimized implementation can be used
             using is_any = std::is_same<alloc_reference, any_allocator_reference<Mutex>>;
 
-            static const std::size_t size;
-            static const std::size_t alignment;
+            using prop_traits = propagation_traits<RawAllocator>;
 
         public:
             //=== typedefs ===//
@@ -45,9 +92,11 @@ namespace foonathan
             using size_type       = std::size_t;
             using difference_type = std::ptrdiff_t;
 
-            using propagate_on_container_swap            = std::true_type;
-            using propagate_on_container_move_assignment = std::true_type;
-            using propagate_on_container_copy_assignment = std::true_type;
+            using propagate_on_container_swap = typename prop_traits::propagate_on_container_swap;
+            using propagate_on_container_move_assignment =
+                typename prop_traits::propagate_on_container_move_assignment;
+            using propagate_on_container_copy_assignment =
+                typename prop_traits::propagate_on_container_copy_assignment;
 
             template <typename U>
             struct rebind
@@ -122,6 +171,13 @@ namespace foonathan
             {
             }
             /// @}
+
+            /// \returns A copy of the allocator.
+            /// This is required by the \c Allocator concept and forwards to the \ref propagation_traits.
+            std_allocator<T, RawAllocator, Mutex> select_on_container_copy_construction() const
+            {
+                return prop_traits::select_on_container_copy_construction(*this);
+            }
 
             //=== allocation/deallocation ===//
             /// \effects Allocates memory using the underlying \concept{concept_rawallocator,RawAllocator}.
@@ -205,29 +261,29 @@ namespace foonathan
             // any_allocator_reference: use virtual function which already does a dispatch on node/array
             void* allocate_impl(std::true_type, size_type n)
             {
-                return lock()->allocate_impl(n, size, alignment);
+                return lock()->allocate_impl(n, sizeof(T), FOONATHAN_ALIGNOF(T));
             }
 
             void deallocate_impl(std::true_type, void* ptr, size_type n)
             {
-                lock()->deallocate_impl(ptr, n, size, alignment);
+                lock()->deallocate_impl(ptr, n, sizeof(T), FOONATHAN_ALIGNOF(T));
             }
 
             // alloc_reference: decide between node/array
             void* allocate_impl(std::false_type, size_type n)
             {
                 if (n == 1)
-                    return this->allocate_node(size, alignment);
+                    return this->allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
                 else
-                    return this->allocate_array(n, size, alignment);
+                    return this->allocate_array(n, sizeof(T), FOONATHAN_ALIGNOF(T));
             }
 
             void deallocate_impl(std::false_type, void* ptr, size_type n)
             {
                 if (n == 1)
-                    this->deallocate_node(ptr, size, alignment);
+                    this->deallocate_node(ptr, sizeof(T), FOONATHAN_ALIGNOF(T));
                 else
-                    this->deallocate_array(ptr, n, size, alignment);
+                    this->deallocate_array(ptr, n, sizeof(T), FOONATHAN_ALIGNOF(T));
             }
 
             template <typename U> // stateful
@@ -248,11 +304,6 @@ namespace foonathan
             friend bool operator==(const std_allocator<T1, Impl, Mut>& lhs,
                                    const std_allocator<T2, Impl, Mut>& rhs) FOONATHAN_NOEXCEPT;
         };
-
-        template <typename T, class Alloc, class Mut>
-        const std::size_t std_allocator<T, Alloc, Mut>::size = sizeof(T);
-        template <typename T, class Alloc, class Mut>
-        const std::size_t std_allocator<T, Alloc, Mut>::alignment = FOONATHAN_ALIGNOF(T);
 
         /// \effects Compares two \ref std_allocator object, they are equal if either stateless or reference the same allocator.
         /// \returns The result of the comparision for equality.
