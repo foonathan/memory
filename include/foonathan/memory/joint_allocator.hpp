@@ -519,7 +519,26 @@ namespace foonathan
             }
 
             detail::joinable_stack* stack_;
+
+            friend bool operator==(const joint_allocator& lhs,
+                                   const joint_allocator& rhs) FOONATHAN_NOEXCEPT;
         };
+
+        /// @{
+        /// \returns Whether `lhs` and `rhs` use the same joint memory for the allocation.
+        /// \relates joint_allocator
+        inline bool operator==(const joint_allocator& lhs,
+                               const joint_allocator& rhs) FOONATHAN_NOEXCEPT
+        {
+            return lhs.stack_ == rhs.stack_;
+        }
+
+        inline bool operator!=(const joint_allocator& lhs,
+                               const joint_allocator& rhs) FOONATHAN_NOEXCEPT
+        {
+            return !(lhs == rhs);
+        }
+        /// @}
 
         /// Specialization of \ref is_shared_allocator to mark \ref joint_allocator as shared.
         /// This allows using it as \ref allocator_reference directly.
@@ -527,6 +546,40 @@ namespace foonathan
         template <>
         struct is_shared_allocator<joint_allocator> : std::true_type
         {
+        };
+
+#if !defined(DOXYGEN)
+        template <class RawAllocator>
+        struct propagation_traits;
+#endif
+
+        /// Specialization of the \ref propagation_traits for the \ref joint_allocator.
+        /// A joint allocator does not propagate on assignment
+        /// and it is not allowed to use the regular copy/move constructor of allocator aware containers,
+        /// instead it needs the copy/move constructor with allocator.
+        /// \notes This is required because the container constructor will end up copying/moving the allocator.
+        /// But this is not allowed as you need the allocator with the correct joined memory.
+        /// Copying can be customized (i.e. forbidden), but sadly not move, so keep that in mind.
+        /// \ingroup memory allocator
+        template <>
+        struct propagation_traits<joint_allocator>
+        {
+            using propagate_on_container_swap            = std::false_type;
+            using propagate_on_container_move_assignment = std::false_type;
+            using propagate_on_container_copy_assignment = std::false_type;
+
+            template <class AllocReference>
+            static AllocReference select_on_container_copy_construction(const AllocReference&)
+            {
+                static_assert(always_false<AllocReference>::value,
+                              "you must not use the regular copy constructor");
+            }
+
+        private:
+            template <typename T>
+            struct always_false : std::false_type
+            {
+            };
         };
 
         /// A zero overhead dynamic array using joint memory.
