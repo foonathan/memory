@@ -48,6 +48,11 @@ namespace foonathan
                     return true;
                 }
 
+                char* top() FOONATHAN_NOEXCEPT
+                {
+                    return stack.top();
+                }
+
                 void unwind(void* ptr) FOONATHAN_NOEXCEPT
                 {
                     stack.unwind(static_cast<char*>(ptr));
@@ -544,18 +549,19 @@ namespace foonathan
             /// or the joint memory block is exhausted.
             void* allocate_node(std::size_t size, std::size_t alignment)
             {
-                if (!stack_)
-                    FOONATHAN_THROW(out_of_fixed_memory(info(), size));
                 auto mem = stack_->allocate(size, alignment);
                 if (!mem)
                     FOONATHAN_THROW(out_of_fixed_memory(info(), size));
-                stack_ = nullptr;
                 return mem;
             }
 
-            /// \effects None, deallocation does nothing and is only done when the \ref joint_ptr destroys the memory.
-            void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            /// \effects Deallocates the node, if possible.
+            /// \notes It is only possible if it was the last allocation.
+            void deallocate_node(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {
+                auto end = static_cast<char*>(ptr) + size;
+                if (end == stack_->top())
+                    stack_->unwind(ptr);
             }
 
         private:
