@@ -142,6 +142,22 @@ namespace foonathan
             memory_resource* ptr_;
         };
 
+        /// @{
+        /// \returns Whether `lhs` and `rhs` share the same resource.
+        /// \relates memory_resource_allocator
+        inline bool operator==(const memory_resource_allocator& lhs,
+                               const memory_resource_allocator& rhs) FOONATHAN_NOEXCEPT
+        {
+            return lhs.resource() == rhs.resource();
+        }
+
+        inline bool operator!=(const memory_resource_allocator& lhs,
+                               const memory_resource_allocator& rhs) FOONATHAN_NOEXCEPT
+        {
+            return !(lhs == rhs);
+        }
+/// @}
+
 #if !defined(DOXYGEN)
         template <class RawAllocator>
         struct is_shared_allocator;

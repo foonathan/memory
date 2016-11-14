@@ -287,17 +287,31 @@ namespace foonathan
             }
 
             template <typename U> // stateful
-            bool equal_to(std::true_type, const std_allocator<U, RawAllocator, mutex>& other) const
-                FOONATHAN_NOEXCEPT
+            bool equal_to_impl(std::true_type, const std_allocator<U, RawAllocator, mutex>& other)
+                const FOONATHAN_NOEXCEPT
             {
                 return &get_allocator() == &other.get_allocator();
             }
 
             template <typename U> // non-stateful
-            bool equal_to(std::false_type,
-                          const std_allocator<U, RawAllocator, mutex>&) const FOONATHAN_NOEXCEPT
+            bool equal_to_impl(std::false_type, const std_allocator<U, RawAllocator, mutex>&) const
+                FOONATHAN_NOEXCEPT
             {
                 return true;
+            }
+
+            template <typename U> // shared
+            bool equal_to(std::true_type, const std_allocator<U, RawAllocator, mutex>& other) const
+                FOONATHAN_NOEXCEPT
+            {
+                return get_allocator() == other.get_allocator();
+            }
+
+            template <typename U> // not shared
+            bool equal_to(std::false_type, const std_allocator<U, RawAllocator, mutex>& other) const
+                FOONATHAN_NOEXCEPT
+            {
+                return equal_to_impl(typename allocator_traits<RawAllocator>::is_stateful{}, other);
             }
 
             template <typename T1, typename T2, class Impl, class Mut>
@@ -312,8 +326,7 @@ namespace foonathan
         bool operator==(const std_allocator<T, Impl, Mut>& lhs,
                         const std_allocator<U, Impl, Mut>& rhs) FOONATHAN_NOEXCEPT
         {
-            using allocator = typename std_allocator<T, Impl, Mut>::allocator_type;
-            return lhs.equal_to(typename allocator_traits<allocator>::is_stateful{}, rhs);
+            return lhs.equal_to(is_shared_allocator<Impl>{}, rhs);
         }
 
         /// \effects Compares two \ref std_allocator object, they are equal if either stateless or reference the same allocator.

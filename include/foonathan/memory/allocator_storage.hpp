@@ -115,8 +115,8 @@ namespace foonathan
             using composable_traits =
                 composable_allocator_traits<typename StoragePolicy::allocator_type>;
             using composable   = is_composable_allocator<typename StoragePolicy::allocator_type>;
-            using actual_mutex = const detail::mutex_storage<detail::mutex_for<
-                typename StoragePolicy::allocator_type, Mutex>>;
+            using actual_mutex = const detail::
+                mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
 
         public:
             using allocator_type = typename StoragePolicy::allocator_type;
@@ -529,6 +529,7 @@ namespace foonathan
         /// This sharing is stateful, however, stateless allocators are not considered shared in the meaning of this traits. <br>
         /// If a \c RawAllocator is shared, it will be directly embedded inside \ref reference_storage since it already provides \ref allocator_reference like semantics, so there is no need to add them manually,<br>
         /// Specialize it for your own types, if they provide sharing semantics and can be copied.
+        /// They also must provide an `operator==` to check whether two allocators refer to the same shared one.
         /// \note This makes no guarantess about the lifetime of the shared object, the sharing allocators can either own or refer to a shared object.
         /// \ingroup memory storage
         template <class RawAllocator>
