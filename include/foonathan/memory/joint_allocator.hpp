@@ -473,6 +473,26 @@ namespace foonathan
             }
         } // namespace detail
 
+        /// @{
+        /// \returns A new \ref joint_ptr that points to a copy of `joint`.
+        /// It will allocate as much memory as needed and forward to the copy constructor.
+        /// \ingroup memory allocator
+        template <typename T, class RawAllocator>
+        auto clone_joint(joint_type<T> joint, RawAllocator& alloc) -> joint_ptr<T, RawAllocator>
+        {
+            return joint_ptr<T, RawAllocator>(alloc, detail::get_storage(joint).capacity_used(),
+                                              joint.get());
+        }
+
+        template <typename T, class RawAllocator>
+        auto clone_joint(joint_type<T> joint, const RawAllocator& alloc)
+            -> joint_ptr<T, RawAllocator>
+        {
+            return joint_ptr<T, RawAllocator>(alloc, detail::get_storage(joint).capacity_used(),
+                                              joint.get());
+        }
+        /// @}
+
         /// A \concept{concept_rawallocator,RawAllocator} that uses the additional joint memory for its allocation.
         ///
         /// It is somewhat limited and allows only allocation once.
@@ -641,6 +661,30 @@ namespace foonathan
             {
             }
 
+            joint_array(const joint_array&) = delete;
+
+            /// \effects Copy constructs each element from `other` into the storage of the specified joint memory.
+            /// \throws \ref out_of_fixed_memory if the size is too big
+            /// and anything thrown by `T`s constructor.
+            /// If an allocation is thrown, the memory will be released directly.
+            template <typename JointType>
+            joint_array(const joint_array& other, joint_type<JointType> j)
+            : joint_array(detail::get_storage(j).stack(), other)
+            {
+            }
+
+            joint_array(joint_array&&) = delete;
+
+            /// \effects Move constructs each element from `other` into the storage of the specified joint memory.
+            /// \throws \ref out_of_fixed_memory if the size is too big
+            /// and anything thrown by `T`s constructor.
+            /// If an allocation is thrown, the memory will be released directly.
+            template <typename JointType>
+            joint_array(joint_array&& other, joint_type<JointType> j)
+            : joint_array(detail::get_storage(j).stack(), detail::move(other))
+            {
+            }
+
             /// \effects Destroys all objects,
             /// but does not release the storage.
             ~joint_array() FOONATHAN_NOEXCEPT
@@ -649,7 +693,7 @@ namespace foonathan
                     ptr_[i].~T();
             }
 
-            joint_array(joint_array&&) = delete;
+            joint_array& operator=(const joint_array&) = delete;
             joint_array& operator=(joint_array&&) = delete;
 
             //=== accessors ===//
@@ -806,6 +850,24 @@ namespace foonathan
                 builder b(stack, ptr_);
                 for (auto& elem : ilist)
                     b.create(elem);
+                size_ = b.release();
+            }
+
+            joint_array(detail::joinable_stack& stack, const joint_array& other)
+            : joint_array(allocate_only{}, stack, other.size())
+            {
+                builder b(stack, ptr_);
+                for (auto& elem : other)
+                    b.create(elem);
+                size_ = b.release();
+            }
+
+            joint_array(detail::joinable_stack& stack, joint_array&& other)
+            : joint_array(allocate_only{}, stack, other.size())
+            {
+                builder b(stack, ptr_);
+                for (auto& elem : other)
+                    b.create(detail::move(elem));
                 size_ = b.release();
             }
 
