@@ -6,6 +6,7 @@
 
 #include <catch.hpp>
 
+#include "container.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
@@ -174,4 +175,35 @@ TEST_CASE("joint_ptr", "[allocator]")
     }
 
     REQUIRE(alloc.no_allocated() == 0u);
+}
+
+TEST_CASE("joint_allocator", "[allocator]")
+{
+    struct joint_test : joint_type<joint_test>
+    {
+        vector<int, joint_allocator> vec;
+        int value;
+
+        joint_test(joint tag, int value, std::size_t size)
+        : joint_type(tag), vec(*this), value(value)
+        {
+            vec.reserve(size);
+            vec.push_back(42);
+            vec.push_back(-1);
+        }
+    };
+
+    test_allocator alloc;
+
+    auto ptr = allocate_joint<joint_test>(alloc, joint_size(10 * sizeof(int)), 5, 3);
+    verify(ptr, alloc, 5);
+    REQUIRE(ptr->vec[0] == 42);
+    REQUIRE(ptr->vec[1] == -1);
+
+    ptr->vec.push_back(5);
+    REQUIRE(ptr->vec.back() == 5);
+
+    REQUIRE(alloc.no_allocated() == 1u);
+    REQUIRE(alloc.last_allocated().size == sizeof(joint_test) + 10 * sizeof(int));
+    REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
 }
