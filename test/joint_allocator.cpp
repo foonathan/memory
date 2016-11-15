@@ -207,3 +207,79 @@ TEST_CASE("joint_allocator", "[allocator]")
     REQUIRE(alloc.last_allocated().size == sizeof(joint_test) + 10 * sizeof(int));
     REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
 }
+
+template <typename T>
+void verify(const joint_array<T>& array, std::size_t size)
+{
+    REQUIRE(array.data() == array.begin());
+    REQUIRE(array.size() == size);
+    REQUIRE(!array.empty());
+
+    auto iter = array.begin();
+    for (auto i = 0u; i != array.size(); ++i)
+    {
+        REQUIRE(&array[i] == array.data() + i);
+        REQUIRE(&array[i] == iter);
+        REQUIRE(iter - array.begin() == i);
+        ++iter;
+    }
+}
+
+TEST_CASE("joint_array", "[allocator]")
+{
+    struct joint_test : joint_type<joint_test>
+    {
+        int value;
+
+        joint_test(joint tag, int v) : joint_type(tag), value(v)
+        {
+        }
+    };
+
+    test_allocator alloc;
+    auto           ptr = allocate_joint<joint_test>(alloc, joint_size(20 * sizeof(int)), 5);
+    verify(ptr, alloc, 5);
+
+    SECTION("size constructor")
+    {
+        joint_array<int> arr(5, *ptr);
+        verify(arr, 5);
+        for (auto el : arr)
+            REQUIRE(el == 0);
+    }
+    SECTION("size value constructor")
+    {
+        joint_array<int> arr(5, 1, *ptr);
+        verify(arr, 5);
+        for (auto el : arr)
+            REQUIRE(el == 1);
+    }
+    SECTION("ilist constructor")
+    {
+        joint_array<int> arr({1, 2, 3}, *ptr);
+        verify(arr, 3);
+        REQUIRE(arr[0] == 1);
+        REQUIRE(arr[1] == 2);
+        REQUIRE(arr[2] == 3);
+    }
+    SECTION("iterator constructor")
+    {
+        int              input[] = {1, 2, 3};
+        joint_array<int> arr(std::begin(input), std::end(input), *ptr);
+        verify(arr, 3);
+        REQUIRE(arr[0] == 1);
+        REQUIRE(arr[1] == 2);
+        REQUIRE(arr[2] == 3);
+    }
+    SECTION("copy/move constructor")
+    {
+        joint_array<int> arr1({1, 2, 3}, *ptr);
+        verify(arr1, 3);
+
+        joint_array<int> arr2(arr1, *ptr);
+        verify(arr2, 3);
+        REQUIRE(arr2[0] == 1);
+        REQUIRE(arr2[1] == 2);
+        REQUIRE(arr2[2] == 3);
+    }
+}
