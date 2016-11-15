@@ -572,6 +572,15 @@ namespace foonathan
         {
         };
 
+        /// Specialization of \ref is_thread_safe_allocator to mark \ref joint_allocator as thread safe.
+        /// This is an optimization to get rid of the mutex in \ref allocator_reference,
+        /// as joint allocator must not be shared between threads.
+        /// \notes The allocator is *not* thread safe, it just must not be shared.
+        template <>
+        struct is_thread_safe_allocator<joint_allocator> : std::true_type
+        {
+        };
+
 #if !defined(DOXYGEN)
         template <class RawAllocator>
         struct propagation_traits;
