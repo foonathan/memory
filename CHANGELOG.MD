@@ -17,10 +17,12 @@
 * new `memory_stack_raii_unwind` for automatic unwinding
 * new `iteration_allocator`
 * make allocators composable
+* add facilities for joint memory allocations
 
 ## Adapter
 
 * add `shared_ptr_node_size`
+* add `string` container typedef
 * add `fallback_allocator`
 * add `segregator`
 
