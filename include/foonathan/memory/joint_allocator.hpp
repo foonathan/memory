@@ -311,7 +311,7 @@ namespace foonathan
                     this->deallocate_node(ptr_, sizeof(element_type)
                                                     + detail::get_stack(*ptr_).capacity(
                                                           detail::get_memory(*ptr_)),
-                                          detail::max_alignment);
+                                          FOONATHAN_ALIGNOF(element_type));
                     ptr_ = nullptr;
                 }
             }
@@ -361,7 +361,7 @@ namespace foonathan
             void create(std::size_t additional_size, Args&&... args)
             {
                 auto mem = this->allocate_node(sizeof(element_type) + additional_size,
-                                               detail::max_alignment);
+                                               FOONATHAN_ALIGNOF(element_type));
 
                 element_type* ptr = nullptr;
                 FOONATHAN_TRY
@@ -372,7 +372,7 @@ namespace foonathan
                 FOONATHAN_CATCH_ALL
                 {
                     this->deallocate_node(mem, sizeof(element_type) + additional_size,
-                                          detail::max_alignment);
+                                          FOONATHAN_ALIGNOF(element_type));
                     FOONATHAN_RETHROW;
                 }
                 ptr_ = ptr;
