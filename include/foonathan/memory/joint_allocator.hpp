@@ -111,6 +111,19 @@ namespace foonathan
             friend class joint_type;
         };
 
+        /// Tag type to make the joint size more explicit.
+        ///
+        /// It is used by \ref joint_ptr.
+        /// \ingroup memory allocator
+        struct joint_size
+        {
+            std::size_t size;
+
+            explicit joint_size(std::size_t size) FOONATHAN_NOEXCEPT : size(size)
+            {
+            }
+        };
+
         /// CRTP base class for all objects that want to use joint memory.
         ///
         /// This will disable default copy/move operations
@@ -233,17 +246,17 @@ namespace foonathan
             /// and creates the object by forwarding the arguments to its constructor.
             /// The \cocnept{concept_rawallocator,RawAllocator} will be used for the allocation.
             template <typename... Args>
-            joint_ptr(allocator_type& alloc, std::size_t additional_size, Args&&... args)
+            joint_ptr(allocator_type& alloc, joint_size additional_size, Args&&... args)
             : joint_ptr(alloc)
             {
-                create(additional_size, detail::forward<Args>(args)...);
+                create(additional_size.size, detail::forward<Args>(args)...);
             }
 
             template <typename... Args>
-            joint_ptr(const allocator_type& alloc, std::size_t additional_size, Args&&... args)
+            joint_ptr(const allocator_type& alloc, joint_size additional_size, Args&&... args)
             : joint_ptr(alloc)
             {
-                create(additional_size, detail::forward<Args>(args)...);
+                create(additional_size.size, detail::forward<Args>(args)...);
             }
             /// @}
 
@@ -443,7 +456,7 @@ namespace foonathan
         /// \relatesalso joint_ptr
         /// \ingroup memory allocator
         template <typename T, class RawAllocator, typename... Args>
-        auto allocate_joint(RawAllocator& alloc, std::size_t additional_size, Args&&... args)
+        auto allocate_joint(RawAllocator& alloc, joint_size additional_size, Args&&... args)
             -> joint_ptr<T, RawAllocator>
         {
             return joint_ptr<T, RawAllocator>(alloc, additional_size,
@@ -451,7 +464,7 @@ namespace foonathan
         }
 
         template <typename T, class RawAllocator, typename... Args>
-        auto allocate_joint(const RawAllocator& alloc, std::size_t additional_size, Args&&... args)
+        auto allocate_joint(const RawAllocator& alloc, joint_size additional_size, Args&&... args)
             -> joint_ptr<T, RawAllocator>
         {
             return joint_ptr<T, RawAllocator>(alloc, additional_size,
@@ -467,8 +480,9 @@ namespace foonathan
         auto clone_joint(const joint_type<T>& joint, RawAllocator& alloc)
             -> joint_ptr<T, RawAllocator>
         {
-            return joint_ptr<T, RawAllocator>(alloc, detail::get_stack(joint).capacity_used(
-                                                         detail::get_memory(joint)),
+            return joint_ptr<T, RawAllocator>(alloc,
+                                              joint_size(detail::get_stack(joint).capacity_used(
+                                                  detail::get_memory(joint))),
                                               static_cast<const T&>(joint));
         }
 
@@ -476,8 +490,9 @@ namespace foonathan
         auto clone_joint(const joint_type<T>& joint, const RawAllocator& alloc)
             -> joint_ptr<T, RawAllocator>
         {
-            return joint_ptr<T, RawAllocator>(alloc, detail::get_stack(joint).capacity_used(
-                                                         detail::get_memory(joint)),
+            return joint_ptr<T, RawAllocator>(alloc,
+                                              joint_size(detail::get_stack(joint).capacity_used(
+                                                  detail::get_memory(joint))),
                                               static_cast<const T&>(joint));
         }
         /// @}
