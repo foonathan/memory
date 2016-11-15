@@ -476,8 +476,8 @@ namespace foonathan
         /// \returns A new \ref joint_ptr that points to a copy of `joint`.
         /// It will allocate as much memory as needed and forward to the copy constructor.
         /// \ingroup memory allocator
-        template <typename T, class RawAllocator>
-        auto clone_joint(const joint_type<T>& joint, RawAllocator& alloc)
+        template <class RawAllocator, typename T>
+        auto clone_joint(RawAllocator& alloc, const joint_type<T>& joint)
             -> joint_ptr<T, RawAllocator>
         {
             return joint_ptr<T, RawAllocator>(alloc,
@@ -486,8 +486,8 @@ namespace foonathan
                                               static_cast<const T&>(joint));
         }
 
-        template <typename T, class RawAllocator>
-        auto clone_joint(const joint_type<T>& joint, const RawAllocator& alloc)
+        template <class RawAllocator, typename T>
+        auto clone_joint(const RawAllocator& alloc, const joint_type<T>& joint)
             -> joint_ptr<T, RawAllocator>
         {
             return joint_ptr<T, RawAllocator>(alloc,
