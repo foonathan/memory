@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -40,7 +40,7 @@ namespace foonathan
 
                 void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
                 {
-                    return stack_.allocate(end_, size, alignment);
+                    return stack_.allocate(end_, size, alignment, 0u);
                 }
 
                 bool bump(std::size_t offset) FOONATHAN_NOEXCEPT

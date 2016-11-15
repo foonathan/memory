@@ -71,29 +71,30 @@ namespace foonathan
 
                 // allocates memory by advancing the stack, returns nullptr if insufficient
                 // debug: mark memory as new_memory, put fence in front and back
-                void* allocate(const char* end, std::size_t size,
-                               std::size_t alignment) FOONATHAN_NOEXCEPT
+                void* allocate(const char* end, std::size_t size, std::size_t alignment,
+                               std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT
                 {
                     if (cur_ == nullptr)
                         return nullptr;
 
                     auto remaining = std::size_t(end - cur_);
-                    auto offset    = align_offset(cur_ + debug_fence_size, alignment);
-                    if (debug_fence_size + offset + size + debug_fence_size > remaining)
+                    auto offset    = align_offset(cur_ + fence_size, alignment);
+                    if (fence_size + offset + size + fence_size > remaining)
                         return nullptr;
 
-                    return allocate_unchecked(size, offset);
+                    return allocate_unchecked(size, offset, fence_size);
                 }
 
                 // same as allocate() but does not check the size
                 // note: pass it the align OFFSET, not the alignment
-                void* allocate_unchecked(std::size_t size,
-                                         std::size_t align_offset) FOONATHAN_NOEXCEPT
+                void* allocate_unchecked(std::size_t size, std::size_t align_offset,
+                                         std::size_t fence_size = debug_fence_size)
+                    FOONATHAN_NOEXCEPT
                 {
-                    bump(debug_fence_size, debug_magic::fence_memory);
+                    bump(fence_size, debug_magic::fence_memory);
                     bump(align_offset, debug_magic::alignment_memory);
                     auto mem = bump_return(size);
-                    bump(debug_fence_size, debug_magic::fence_memory);
+                    bump(fence_size, debug_magic::fence_memory);
                     return mem;
                 }
 
