@@ -40,6 +40,7 @@ set(tests
     default_allocator.cpp
     fallback_allocator.cpp
     iteration_allocator.cpp
+    joint_allocator.cpp
     memory_arena.cpp
     memory_pool.cpp
     memory_pool_collection.cpp

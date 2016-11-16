@@ -20,6 +20,8 @@ Several implementations:
 * memory stack
 * different memory pools
 * a portable, improved `alloca()` in the form of `temporary_allocator`
+* facilities for joint memory allocations: share a big memory block for the object
+and all dynamic memory allocations for its members
 
 Adapters, wrappers and storage classes:
 
