@@ -506,6 +506,14 @@ namespace foonathan
         class joint_allocator
         {
         public:
+#if defined(__GNUC__) && (!defined(_GLIBCXX_USE_CXX11_ABI) || _GLIBCXX_USE_CXX11_ABI == 0)
+            // std::string requires default constructor for the small string optimization when using gcc's old ABI
+            // so add one, but it must never be used for allocation
+            joint_allocator() FOONATHAN_NOEXCEPT : stack_(nullptr)
+            {
+            }
+#endif
+
             /// \effects Creates it using the joint memory of the given object.
             template <typename T>
             joint_allocator(joint_type<T>& j) FOONATHAN_NOEXCEPT : stack_(&detail::get_stack(j))
@@ -521,6 +529,7 @@ namespace foonathan
             /// or the joint memory block is exhausted.
             void* allocate_node(std::size_t size, std::size_t alignment)
             {
+                FOONATHAN_MEMORY_ASSERT(stack_);
                 auto mem = stack_->allocate(size, alignment);
                 if (!mem)
                     FOONATHAN_THROW(out_of_fixed_memory(info(), size));
@@ -531,6 +540,7 @@ namespace foonathan
             /// \notes It is only possible if it was the last allocation.
             void deallocate_node(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {
+                FOONATHAN_MEMORY_ASSERT(stack_);
                 auto end = static_cast<char*>(ptr) + size;
                 if (end == stack_->top())
                     stack_->unwind(ptr);

@@ -46,9 +46,9 @@ struct my_type : memory::joint_type<my_type>
     // you must pass *this as allocator to members where needed
     // (i.e. the object with the joint memory)
     my_type(memory::joint tag, const char* name)
-    : memory::joint_type<my_type>(tag), // pass metadata
-      str(name, *this),                 // create string
-      array({1, 2, 3, 4, 5}, *this)     // create array
+    : memory::joint_type<my_type>(tag),          // pass metadata
+      str(name, memory::joint_allocator(*this)), // create string
+      array({1, 2, 3, 4, 5}, *this)              // create array
     {
     }
 
@@ -64,8 +64,10 @@ struct my_type : memory::joint_type<my_type>
     // note: joint_array will always not compile
     my_type(memory::joint tag, const my_type& other)
     : memory::joint_type<my_type>(tag), // again: pass metadata
-      str(other.str, *this),            // important: pass *this as allocator
-      array(other.array, *this)         // dito
+      // note: str(other.str, *this) should work as well,
+      // but older GCC don't support it
+      str(other.str.c_str(), memory::joint_allocator(*this)), // important: pass *this as allocator
+      array(other.array, *this)                               // dito
     {
     }
 };
@@ -86,9 +88,9 @@ int main()
                                                // and keep alignment buffers in mind
                                                // if your size is too small,
                                                // it will throw an exception
-                                               memory::joint_size(10 * sizeof(char)
-                                                                  + 5 * sizeof(int) + 10),
-                                               "joint!");
+                                               memory::joint_size(20 * sizeof(char)
+                                                                  + 10 * sizeof(int) + 10),
+                                               "joint allocations!");
     // ptr has the type: memory::joint_ptr<my_type, memory::default_allocator>
     // it points to memory that is big enough for the type
     // followed by the specified number of bytes for the shared memory
