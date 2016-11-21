@@ -30,7 +30,7 @@ TEST_CASE("memory_pool", "[pool]")
         SECTION("normal alloc/dealloc")
         {
             std::vector<void*> ptrs;
-            auto capacity = pool.capacity_left();
+            auto               capacity = pool.capacity_left();
             for (std::size_t i = 0u; i != capacity / pool.node_size(); ++i)
                 ptrs.push_back(pool.allocate_node());
             REQUIRE(pool.capacity_left() == 0u);
@@ -45,7 +45,7 @@ TEST_CASE("memory_pool", "[pool]")
         SECTION("multiple block alloc/dealloc")
         {
             std::vector<void*> ptrs;
-            auto capacity = pool.capacity_left();
+            auto               capacity = pool.capacity_left();
             for (std::size_t i = 0u; i != capacity / pool.node_size(); ++i)
                 ptrs.push_back(pool.allocate_node());
             REQUIRE(pool.capacity_left() == 0u);

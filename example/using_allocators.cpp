@@ -9,9 +9,9 @@
 #include <iostream>
 #include <iterator>
 
-#include <foonathan/memory/container.hpp> // vector, list, list_node_size,...
-#include <foonathan/memory/memory_pool.hpp> // memory_pool
-#include <foonathan/memory/smart_ptr.hpp> // allocate_unique
+#include <foonathan/memory/container.hpp>        // vector, list, list_node_size,...
+#include <foonathan/memory/memory_pool.hpp>      // memory_pool
+#include <foonathan/memory/smart_ptr.hpp>        // allocate_unique
 #include <foonathan/memory/static_allocator.hpp> // static_allocator_storage, static_block_allocator
 #include <foonathan/memory/temporary_allocator.hpp> // temporary_allocator
 
@@ -23,10 +23,12 @@ void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
+    using namespace memory::literals;
+
     // a memory pool RawAllocator
     // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
     // list_node_size<int>::value is the size of each node of a std::list
-    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
+    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4_KiB);
 
     // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
@@ -52,7 +54,7 @@ int main()
     std::cout << *ptr << '\n';
 
     // static storage of size 4KiB
-    memory::static_allocator_storage<4096u> storage;
+    memory::static_allocator_storage<4_KiB> storage;
 
     // a memory pool again but this time with a BlockAllocator
     // this controls the internal allocations of the pool itself
@@ -61,12 +63,14 @@ int main()
     // we use a static_block_allocator that uses the static storage above
     // all allocations will use a memory block on the stack
     using static_pool_t = memory::memory_pool<memory::node_pool, memory::static_block_allocator>;
-    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4096u, storage);
+    static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4_KiB, storage);
 
     // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
     // see why I wrote these? :D
     // now we have a hash set that lives on the stack!
-    memory::unordered_set<int, static_pool_t> set(13, std::hash<int>{}, std::equal_to<int>{}, static_pool); // GCC 4.7 is missing the allocator-only ctor, breaks travis :(
+    memory::unordered_set<int, static_pool_t>
+        set(13, std::hash<int>{}, std::equal_to<int>{},
+            static_pool); // GCC 4.7 is missing the allocator-only ctor, breaks travis :(
 
     set.insert(3);
     set.insert(2);
@@ -92,14 +96,14 @@ void merge_sort(BiIter begin, BiIter end)
 
     // an allocator for temporary memory
     // is similar to alloca() but uses its own stack
-    // this stack is thread_local and created on the first call to this function
-    // as soon as the allocator object goes out of scope, everything allocated through it, will be freed
-    auto alloc = memory::make_temporary_allocator();
+    // this stack is thread_local and created the first time it's needed
+    // as soon as the allocator object goes out of scope everything allocated through it will be freed
+    memory::temporary_allocator alloc;
 
     // alias for std::vector<value_type, memory::std_allocator<value_type, memory::temporary_allocator>>
     // a std::vector using a temporary_allocator
     memory::vector<value_type, memory::temporary_allocator> first(begin, mid, alloc),
-                                                            second(mid, end, alloc);
+        second(mid, end, alloc);
 
     merge_sort(first.begin(), first.end());
     merge_sort(second.begin(), second.end());

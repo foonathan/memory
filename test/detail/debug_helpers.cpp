@@ -36,7 +36,8 @@ TEST_CASE("detail::debug_is_filled", "[detail][core]")
     REQUIRE(debug_is_filled(array, sizeof(array), debug_magic::freed_memory) == nullptr);
 
     array[5] = debug_magic::new_memory;
-    auto ptr = static_cast<debug_magic*>(debug_is_filled(array, sizeof(array), debug_magic::freed_memory));
+    auto ptr =
+        static_cast<debug_magic*>(debug_is_filled(array, sizeof(array), debug_magic::freed_memory));
 #if FOONATHAN_MEMORY_DEBUG_FILL
     REQUIRE(ptr == array + 5);
 #else
@@ -48,8 +49,8 @@ TEST_CASE("detail::debug_fill_new/free", "[detail][core]")
 {
     debug_magic array[10];
 
-    auto result = debug_fill_new(array, 8 * sizeof(debug_magic), sizeof(debug_magic));
-    auto offset = static_cast<debug_magic*>(result) - array;
+    auto result          = debug_fill_new(array, 8 * sizeof(debug_magic), sizeof(debug_magic));
+    auto offset          = static_cast<debug_magic*>(result) - array;
     auto expected_offset = debug_fence_size ? sizeof(debug_magic) : 0u;
     REQUIRE(offset == expected_offset);
 

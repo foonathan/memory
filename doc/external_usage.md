@@ -138,7 +138,7 @@ void merge_sort(RAIter begin, RAIter end)
         return;
     auto mid = begin + (end - begin) / 2;
 
-    auto alloc = memory::make_temporary_allocator(); // (1)
+    memory::temporary_allocator alloc; // (1)
     memory::vector<value_type, memory::temporary_allocator> first(begin, mid, alloc),
                                                             second(mid, end, alloc); // (2)
 
@@ -150,25 +150,44 @@ void merge_sort(RAIter begin, RAIter end)
 
 The usage of [temporary_allocator] is just as usual:
 At (1), the allocator is created.
-It must be created on the stack, so there is no public constructor,
-only the `make_temporary_allocator()` function that returns a new allocator object.
 Then it can be used to create the vectors as usual in (2).
 
-Temporary memory allocations are extremely fast, as they only need to adopt the pointer in the internal stack.
-Deallocations are a no-op, since they are done automatically when the scope of the allocator object is left.
-This is ensured by the constructor, who saves the current top of the stack, and the destructor, who simply sets the pointer back.
-For that reason, allocations must not be made from any object other than the last created one.
-Each thread has its own seperate, internal stack.
-It is only created, however, on the first call to `make_temporary_allocator()` to avoid the huge memory allocation when not needed.
-The size of the internal stack, can also be specified in the make function,
-if it is not the first one, it will be ignored.
-The stack can grow if the initial size is exhausted, although it may lead to a slow heap allocation.
+Behind the scenes, a little bit of more work is done.
+As mentioned the allocator uses its own internal memory stack, one per thread.
+By default a lot of magic ensures that there is a stack object created when needed and destroyed on thread exit.
+This internal stack is the [temporary_stack] and you can access it for the current thread through the `get_temporary_stack()` function, which is also called by the default constructor of the [temporary_allocator].
+If the stack wasn't already created for the current thread it will be by calling this function.
+Once a stack is created it will also be destroyed on thread exit.
 
+> This isn't quite true.
+> On some platforms it might only be destroyed on full program exit,
+> if thread exit can't be created.
+
+You can also use explicit lifetime control of the stack through the `temporary_stack_initializer` class.
+Its constructor will create the stack and the destructor will destroy it.
+This gives you more control than the "magic" done to ensure the destruction.
+
+Because the per-thread stack managment can has a little overhead,
+you can control it with the `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE` variable.
+If `2`, the behavior is as described here, with the fully automated managment.
+If `1`, you have to use the `temporary_stack_initializer` to ensure the destructor call,
+because the automated managment is disabled.
+And if `0`, there is no per-thread stack at all, calling `get_temporary_stack()` is not allowed;
+you have to create one yourself and pass it to the constructor of [temporary_allocator].
+
+The allocator itself now saves the current top of the stack in its constructor.
+Allocation will simply move the stack pointer and is such extremely fast.
+Deallocations are a no-op, because the destructor of the allocator will unwind to the saved position.
+You cannot move a temporary allocator, it is such not really a [RawAllocator].
+Because of the automatic unwinding in the destructor, you must not allocate from an allocator that isn't the last created object.
+If the internal stack is exhausted, it can grow although this may lead to a slow heap allocation
+and can thus be controled by a growth handler.
 
 [allocator_deallocator]: \ref foonathan::memory::allocator_deallocator
 [allocator_deleter]: \ref foonathan::memory::allocator_deleter
 [memory_pool]: \ref foonathan::memory::memory_pool
 [std_allocator]: \ref foonathan::memory::std_allocator
 [temporary_allocator]: \ref foonathan::memory::temporary_allocator
+[temporary_stack]: \ref foonathan::memory::temporary_stack
 [nodes]: md_doc_concepts.html#concept_node
 [RawAllocator]: md_doc_concepts.html#concept_rawallocator

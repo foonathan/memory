@@ -17,12 +17,12 @@ using namespace detail;
 
 TEST_CASE("memory_pool_collection", "[pool]")
 {
-    using pools = memory_pool_collection<node_pool, identity_buckets,
-                                        allocator_reference<test_allocator>>;
+    using pools =
+        memory_pool_collection<node_pool, identity_buckets, allocator_reference<test_allocator>>;
     test_allocator alloc;
     {
         const auto max_size = 16u;
-        pools pool(max_size, 1000, alloc);
+        pools      pool(max_size, 1000, alloc);
         REQUIRE(pool.max_node_size() == max_size);
         REQUIRE(pool.capacity_left() <= 1000u);
         REQUIRE(pool.next_capacity() >= 1000u);
@@ -33,11 +33,12 @@ TEST_CASE("memory_pool_collection", "[pool]")
 
         SECTION("normal alloc/dealloc")
         {
-            std::vector<void*> a, b;
+            std::vector<void *> a, b;
             for (auto i = 0u; i != 5u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
-                b.push_back(pool.allocate_node(5));
+                b.push_back(pool.try_allocate_node(5));
+                REQUIRE(b.back());
             }
             REQUIRE(alloc.no_allocated() == 1u);
             REQUIRE(pool.capacity_left() <= 1000u);
@@ -46,13 +47,13 @@ TEST_CASE("memory_pool_collection", "[pool]")
             std::shuffle(b.begin(), b.end(), std::mt19937{});
 
             for (auto ptr : a)
-                pool.deallocate_node(ptr, 1);
+                REQUIRE(pool.try_deallocate_node(ptr, 1));
             for (auto ptr : b)
                 pool.deallocate_node(ptr, 5);
         }
         SECTION("multiple block alloc/dealloc")
         {
-            std::vector<void*> a, b;
+            std::vector<void *> a, b;
             for (auto i = 0u; i != 1000u; ++i)
             {
                 a.push_back(pool.allocate_node(1));

@@ -17,9 +17,11 @@ Several implementations:
 * `heap_/malloc_/new_allocator`
 * virtual memory allocators
 * allocator using a static memory block located on the stack
-* memory stack
+* memory stack, `iteration_allocator`
 * different memory pools
 * a portable, improved `alloca()` in the form of `temporary_allocator`
+* facilities for joint memory allocations: share a big memory block for the object
+and all dynamic memory allocations for its members
 
 Adapters, wrappers and storage classes:
 
@@ -58,10 +60,12 @@ void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
+    using namespace memory::literals;
+
     // a memory pool RawAllocator
     // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
     // list_node_size<int>::value is the size of each node of a std::list
-    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
+    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4_KiB);
 
     // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
@@ -147,15 +151,13 @@ See `example/` for more.
 ## Installation
 
 This library can be used as [CMake] subdirectory.
-It is tested on GCC 4.7-4.9, Clang 3.4-3.5 and Visual Studio 2013. Newer versions should work too.
+It is tested on GCC 4.8-5.0, Clang 3.5 and Visual Studio 2013. Newer versions should work too.
 
 1. Fetch it, e.g. using [git submodules] `git submodule add https://github.com/foonathan/memory ext/memory` and `git submodule update --init --recursive`.
 
 2. Call `add_subdirectory(ext/memory)` or whatever your local path is to make it available in CMake.
 
-3. Simply call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link this library and setups the include search path.
-
-4. You need to activate C++11 at your target, if not already done, you can use [foonathan/compatibility] already available through `add_subdirectory()` and call `comp_target_features(your_target PUBLIC CPP11)`.
+3. Simply call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link this library and setups the include search path and compilation options.
 
 *Note: If during CMake you see an error message that compatibility is 
 not on the newest version, run `git submodule update 
@@ -170,12 +172,12 @@ You can also install the library:
 
 3. Repeat 1 and 2 for each build type/configuration you want to have (like `Debug`, `RelWithDebInfo` and `Release` or custom names).
 
-The use an installed library:
+To use an installed library:
 
 4. Call `find_package(foonathan_memory major.minor REQUIRED)` to find the library.
 
-5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` and activate C++11 to link to the library.
-
+5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
+  
 See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
 
 ## Documentation

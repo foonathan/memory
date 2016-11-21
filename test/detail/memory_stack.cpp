@@ -22,7 +22,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
     SECTION("allocate")
     {
         static_allocator_storage<1024> memory;
-        stack = fixed_memory_stack{&memory};
+        stack    = fixed_memory_stack{&memory};
         auto end = stack.top() + 1024;
 
         REQUIRE(stack.top() == reinterpret_cast<char*>(&memory));
@@ -66,7 +66,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
     SECTION("move")
     {
         static_allocator_storage<1024> memory;
-        auto end = reinterpret_cast<char*>(&memory) + 1024;
+        auto                           end = reinterpret_cast<char*>(&memory) + 1024;
 
         fixed_memory_stack other(reinterpret_cast<char*>(&memory));
         REQUIRE(other.top() == reinterpret_cast<char*>(&memory));

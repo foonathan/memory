@@ -9,7 +9,7 @@
 
 struct memory_info
 {
-    void *memory;
+    void*       memory;
     std::size_t size, alignment;
 };
 
@@ -21,7 +21,7 @@ public:
 
     void* allocate_node(std::size_t size, std::size_t alignment)
     {
-        auto mem = ::operator new(size);
+        auto mem        = ::operator new(size);
         last_allocated_ = {mem, size, alignment};
         allocated_[mem] = last_allocated_;
         return mem;
@@ -31,8 +31,8 @@ public:
     {
         ++dealloc_count_;
         auto iter = allocated_.find(node);
-        if (iter == allocated_.end() ||
-            iter->second.size != size || iter->second.alignment != alignment)
+        if (iter == allocated_.end() || iter->second.size != size
+            || iter->second.alignment != alignment)
         {
             last_valid_ = false;
             return;
@@ -81,7 +81,7 @@ private:
     std::unordered_map<void*, memory_info> allocated_;
     memory_info last_allocated_;
     std::size_t dealloc_count_ = 0u;
-    bool last_valid_ = true;
+    bool        last_valid_    = true;
 };
 
 #endif //FOONATHAN_MEMORY_TEST_TEST_ALLOCATOR_HPP

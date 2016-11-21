@@ -18,7 +18,7 @@ using namespace foonathan::memory;
 
 #include "benchmark.hpp"
 
-template <class Func, class ... Allocators>
+template <class Func, class... Allocators>
 void benchmark_node(std::size_t count, std::size_t size, Allocators&... allocators)
 {
     int dummy[] = {(std::cout << benchmark(Func{count}, allocators, size) << '|', 0)...};
@@ -37,25 +37,29 @@ void benchmark_node(std::initializer_list<std::size_t> counts,
     for (auto count : counts)
         for (auto size : node_sizes)
         {
-            auto heap_alloc = [&]{return heap_allocator{};};
-            auto new_alloc = [&]{return new_allocator{};};
+            auto heap_alloc = [&] { return heap_allocator{}; };
+            auto new_alloc  = [&] { return new_allocator{}; };
 
-            auto small_alloc = [&]{return memory_pool<small_node_pool>(size, count * size + 1024);};
-            auto node_alloc = [&]{return memory_pool<node_pool>(size, count * std::max(size, sizeof(char*)) + 1024);};
-            auto array_alloc = [&]{return memory_pool<array_pool>(size, count * std::max(size, sizeof(char*)) + 1024);};
+            auto small_alloc = [&] {
+                return memory_pool<small_node_pool>(size, count * size + 1024);
+            };
+            auto node_alloc = [&] {
+                return memory_pool<node_pool>(size, count * std::max(size, sizeof(char*)) + 1024);
+            };
+            auto array_alloc = [&] {
+                return memory_pool<array_pool>(size, count * std::max(size, sizeof(char*)) + 1024);
+            };
 
-            auto stack_alloc = [&]{return memory_stack<>(count * size);};
+            auto stack_alloc = [&] { return memory_stack<>(count * size); };
 
             std::cout << count << "\\*" << size << "|";
-            benchmark_node<Func>(count, size,
-                                 heap_alloc, new_alloc,
-                                 small_alloc, node_alloc, array_alloc,
-                                 stack_alloc);
+            benchmark_node<Func>(count, size, heap_alloc, new_alloc, small_alloc, node_alloc,
+                                 array_alloc, stack_alloc);
         }
     std::cout << '\n';
 }
 
-template <class Func, class Second, class ... Tail>
+template <class Func, class Second, class... Tail>
 void benchmark_node(std::initializer_list<std::size_t> counts,
                     std::initializer_list<std::size_t> node_sizes)
 {
@@ -63,16 +67,17 @@ void benchmark_node(std::initializer_list<std::size_t> counts,
     benchmark_node<Second, Tail...>(counts, node_sizes);
 }
 
-template<class Func, class ... Allocators>
+template <class Func, class... Allocators>
 void benchmark_array(std::size_t count, std::size_t array_size, std::size_t node_size,
-                    Allocators& ... allocators)
+                     Allocators&... allocators)
 {
-    int dummy[] = {(std::cout << benchmark(Func{count}, allocators, array_size, node_size) << '|', 0)...};
-    (void) dummy;
+    int dummy[] = {
+        (std::cout << benchmark(Func{count}, allocators, array_size, node_size) << '|', 0)...};
+    (void)dummy;
     std::cout << '\n';
 }
 
-template<class Func>
+template <class Func>
 void benchmark_array(std::initializer_list<std::size_t> counts,
                      std::initializer_list<std::size_t> node_sizes,
                      std::initializer_list<std::size_t> array_sizes)
@@ -88,24 +93,22 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
             {
                 auto mem_needed = count * std::max(node_size, sizeof(char*)) * array_size + 1024;
 
-                auto heap_alloc = [&]{return heap_allocator{};};
-                auto new_alloc = [&]{return new_allocator{};};
+                auto heap_alloc = [&] { return heap_allocator{}; };
+                auto new_alloc  = [&] { return new_allocator{}; };
 
-                auto node_alloc = [&]{return memory_pool<node_pool>(node_size, mem_needed);};
-                auto array_alloc = [&]{return memory_pool<array_pool>(node_size, mem_needed);};
+                auto node_alloc  = [&] { return memory_pool<node_pool>(node_size, mem_needed); };
+                auto array_alloc = [&] { return memory_pool<array_pool>(node_size, mem_needed); };
 
-                auto stack_alloc = [&]{return memory_stack<>(count * mem_needed);};
+                auto stack_alloc = [&] { return memory_stack<>(count * mem_needed); };
 
-                std::cout << count << "\\*" << node_size << "\\*" << array_size<< "|";
-                benchmark_array<Func>(count, array_size, node_size,
-                                     heap_alloc, new_alloc,
-                                     node_alloc, array_alloc,
-                                     stack_alloc);
+                std::cout << count << "\\*" << node_size << "\\*" << array_size << "|";
+                benchmark_array<Func>(count, array_size, node_size, heap_alloc, new_alloc,
+                                      node_alloc, array_alloc, stack_alloc);
             }
     std::cout << '\n';
 }
 
-template <class Func, class Second, class ... Tail>
+template <class Func, class Second, class... Tail>
 void benchmark_array(std::initializer_list<std::size_t> counts,
                      std::initializer_list<std::size_t> node_sizes,
                      std::initializer_list<std::size_t> array_sizes)
@@ -114,7 +117,7 @@ void benchmark_array(std::initializer_list<std::size_t> counts,
     benchmark_array<Second, Tail...>(counts, node_sizes, array_sizes);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     if (argc >= 2)
         sample_size = std::size_t(std::atoi(argv[1]));

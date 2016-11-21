@@ -11,7 +11,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/comp/comp_base.cmake)
 add_library(_foonathan_memory_comp_runner INTERFACE)
 set(_foonathan_memory_comp_include_path "${CMAKE_CURRENT_BINARY_DIR}")
 comp_target_features(_foonathan_memory_comp_runner INTERFACE
-        cpp11_lang/alignas cpp11_lang/alignof cpp11_lang/constexpr cpp11_lang/noexcept cpp11_lang/thread_local
+        cpp11_lang/alignas cpp11_lang/alignof cpp11_lang/constexpr
+        cpp11_lang/noexcept cpp11_lang/thread_local cpp11_lang/literal_op
         cpp11_lib/get_new_handler cpp11_lib/max_align_t cpp11_lib/mutex
         ts/pmr
         env/exception_support env/hosted_implementation
@@ -22,7 +23,7 @@ comp_target_features(_foonathan_memory_comp_runner INTERFACE
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/foonathan DESTINATION include/comp)
 
 function(_foonathan_use_comp target)
-    comp_target_features(${target} PRIVATE CPP11)
+    target_compile_options(${target} PUBLIC ${_foonathan_memory_comp_runner_COMP_COMPILE_OPTIONS})
     target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${_foonathan_memory_comp_include_path}>
                                                 $<INSTALL_INTERFACE:include/comp>)
 endfunction()

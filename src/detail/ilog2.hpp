@@ -20,21 +20,24 @@ namespace foonathan { namespace memory
             return (x & (x - 1)) == 0;
         }
 
+        FOONATHAN_CONSTEXPR_FNC std::size_t ilog2_base(std::uint64_t x)
+        {
+            return sizeof(x) * CHAR_BIT - foonathan_comp::clz(x);
+        }
+
         // ilog2() implementation, cuts part after the comma
         // e.g. 1 -> 0, 2 -> 1, 3 -> 1, 4 -> 2, 5 -> 2
-        template <typename UInt>
-        FOONATHAN_CONSTEXPR_FNC UInt ilog2(UInt x)
+        FOONATHAN_CONSTEXPR_FNC std::size_t ilog2(std::size_t x)
         {
-            return sizeof(x) * CHAR_BIT - foonathan_comp::clz(x) - 1;
+            return ilog2_base(x) - 1;
         }
 
         // ceiling ilog2() implementation, adds one if part after comma
         // e.g. 1 -> 0, 2 -> 1, 3 -> 2, 4 -> 2, 5 -> 3
-        template <typename UInt>
-        FOONATHAN_CONSTEXPR_FNC UInt ilog2_ceil(UInt x)
+        FOONATHAN_CONSTEXPR_FNC std::size_t ilog2_ceil(std::size_t x)
         {
             // only subtract one if power of two
-            return sizeof(x) * CHAR_BIT - foonathan_comp::clz(x) - UInt(is_power_of_two(x));
+            return ilog2_base(x) - std::size_t(is_power_of_two(x));
         }
     }
 }} // namespace foonathan::memory

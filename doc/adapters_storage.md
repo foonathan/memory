@@ -37,7 +37,7 @@ It does not take ownership, i.e. the passed allocator object must live longer th
 * For stateless allocators, it uses a `static` object in order to return a reference in `get_allocator()`.
 But this means that they don't actually depend on the lifetime of the given allocator and also can take temporaries.
 
-* For special allocators that already provide reference semantics (determinted through traits specialization), it behaves like a [direct_storage] policy.
+* For special allocators that already provide reference semantics (determined through traits specialization), it behaves like a [direct_storage] policy.
 
 In either case, the class is nothrow copyable and never actually moves the referred allocator, just copies the pointer.
 A copy of a [reference_storage] references the same allocator as the origin.

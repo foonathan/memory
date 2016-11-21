@@ -17,10 +17,10 @@ using namespace foonathan::memory;
 using namespace detail;
 
 template <class FreeList>
-void use_list_node(FreeList &list)
+void use_list_node(FreeList& list)
 {
     std::vector<void*> ptrs;
-    auto capacity = list.capacity();
+    auto               capacity = list.capacity();
     for (std::size_t i = 0u; i != capacity; ++i)
     {
         auto ptr = list.allocate();
@@ -40,7 +40,7 @@ void use_list_node(FreeList &list)
 }
 
 template <class FreeList>
-void check_list(FreeList &list, void *memory, std::size_t size)
+void check_list(FreeList& list, void* memory, std::size_t size)
 {
     auto old_cap = list.capacity();
 
@@ -62,7 +62,7 @@ void check_list(FreeList &list, void *memory, std::size_t size)
 }
 
 template <class FreeList>
-void check_move(FreeList &list)
+void check_move(FreeList& list)
 {
     static_allocator_storage<1024> memory;
     list.insert(&memory, 1024);
@@ -121,7 +121,7 @@ TEST_CASE("free_memory_list", "[detail][pool]")
     SECTION("multiple insert")
     {
         static_allocator_storage<1024> a;
-        static_allocator_storage<100> b;
+        static_allocator_storage<100>  b;
         static_allocator_storage<1337> c;
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
@@ -130,7 +130,7 @@ TEST_CASE("free_memory_list", "[detail][pool]")
     check_move(list);
 }
 
-void use_list_array(ordered_free_memory_list &list)
+void use_list_array(ordered_free_memory_list& list)
 {
     // just hoping to catch segfaults
 
@@ -183,7 +183,7 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
     SECTION("multiple insert")
     {
         static_allocator_storage<1024> a;
-        static_allocator_storage<100> b;
+        static_allocator_storage<100>  b;
         static_allocator_storage<1337> c;
         check_list(list, &a, 1024);
         use_list_array(list);
@@ -220,7 +220,7 @@ TEST_CASE("small_free_memory_list", "[detail][pool]")
     SECTION("multiple insert")
     {
         static_allocator_storage<1024> a;
-        static_allocator_storage<100> b;
+        static_allocator_storage<100>  b;
         static_allocator_storage<1337> c;
         check_list(list, &a, 1024);
         check_list(list, &b, 100);

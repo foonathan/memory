@@ -104,9 +104,11 @@ template <std::size_t N>
 struct test_block_allocator
 {
     static_allocator_storage<1024> blocks[N];
-    std::size_t i = 0;
+    std::size_t                    i = 0;
 
-    test_block_allocator(std::size_t) {}
+    test_block_allocator(std::size_t)
+    {
+    }
 
     ~test_block_allocator()
     {
@@ -214,9 +216,10 @@ TEST_CASE("memory_arena w/o caching", "[arena]")
     REQUIRE(arena.capacity() == 1u);
 }
 
+static_assert(
+    std::is_same<growing_block_allocator<>,
+                 foonathan::memory::make_block_allocator_t<growing_block_allocator<>>>::value,
+    "");
 static_assert(std::is_same<growing_block_allocator<>,
-                           foonathan::memory::make_block_allocator_t<growing_block_allocator<>>
-                          >::value, "");
-static_assert(std::is_same<growing_block_allocator<>,
-                           foonathan::memory::make_block_allocator_t<default_allocator>
-                          >::value, "");
+                           foonathan::memory::make_block_allocator_t<default_allocator>>::value,
+              "");

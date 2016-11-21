@@ -25,16 +25,16 @@ struct pmr_test_allocator
     void* allocate_array(std::size_t n, std::size_t size, std::size_t)
     {
         array_allocated += n * size;
-        return ::operator new(n * size);
+        return ::operator new(n* size);
     }
 
-    void deallocate_node(void *p, std::size_t size, std::size_t)
+    void deallocate_node(void* p, std::size_t size, std::size_t)
     {
         node_allocated -= size;
         ::operator delete(p);
     }
 
-    void deallocate_array(void *p, std::size_t n, std::size_t size, std::size_t)
+    void deallocate_array(void* p, std::size_t n, std::size_t size, std::size_t)
     {
         array_allocated -= n * size;
         ::operator delete(p);
@@ -88,5 +88,6 @@ TEST_CASE("memory_resource_adapter", "[adapter]")
 }
 
 // compilation checks
-template class foonathan::memory::allocator_storage<reference_storage<memory_resource_allocator>, no_mutex>;
+template class foonathan::memory::allocator_storage<reference_storage<memory_resource_allocator>,
+                                                    no_mutex>;
 template class foonathan::memory::allocator_traits<memory_resource_allocator>;

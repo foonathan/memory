@@ -17,47 +17,53 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <foonathan/alignof.hpp>
+
+template <typename TestType, class Debugger>
+struct node_size_storage
+{
+    static std::size_t size;
+};
+
+template <typename TT, class Debugger>
+std::size_t node_size_storage<TT, Debugger>::size = 0;
+
 // Obtains the node size for a container.
 // Since the node type is private to the implementation,
 // it cannot be accessed directly.
 // It is only available to the allocator through rebinding.
 // The allocator simply stores the size of the biggest type, it is rebound to,
 // as long as it is not the TestType, the actual value_type of the container.
-template <typename T, typename TestType>
-class node_size_debugger
-: public std::allocator<T>
+template <typename T, typename TestType, class Debugger>
+class node_size_debugger : public std::allocator<T>
 {
 public:
     template <typename Other>
     struct rebind
     {
-        using other = node_size_debugger<Other, TestType>;
+        using other = node_size_debugger<Other, TestType, Debugger>;
     };
 
     node_size_debugger()
-            : size_(0u)
     {
         if (!std::is_same<T, TestType>::value)
-            size_ = std::max(size_, sizeof(T));
+            node_size() = std::max(node_size(), sizeof(T));
     }
 
     template <typename U>
-    node_size_debugger(node_size_debugger<U, TestType> other)
-            : size_(other.size_)
+    node_size_debugger(node_size_debugger<U, TestType, Debugger>)
     {
         if (!std::is_same<T, TestType>::value)
-            size_ = std::max(size_, sizeof(T));
+            node_size() = std::max(node_size(), sizeof(T));
     }
 
-    std::size_t node_size() const
+    static std::size_t& node_size()
     {
-        return size_;
+        return node_size_storage<TestType, Debugger>::size;
     }
 
 private:
-    std::size_t size_;
-
-    template <typename U, typename TT>
+    template <typename U, typename TT, class Dbg>
     friend class node_size_debugger;
 };
 
@@ -65,7 +71,7 @@ struct hash
 {
     // note: not noexcept! this leads to a cached hash value
     template <typename T>
-    std::size_t operator()(const T &) const
+    std::size_t operator()(const T&) const
     {
         // quality doesn't matter
         return 0;
@@ -82,7 +88,7 @@ struct debug_forward_list
     template <typename T>
     std::size_t debug()
     {
-        std::forward_list<T, node_size_debugger<T, T>> list;
+        std::forward_list<T, node_size_debugger<T, T, debug_forward_list>> list;
         list.push_front(T());
         list.push_front(T());
         list.push_front(T());
@@ -100,7 +106,7 @@ struct debug_list
     template <typename T>
     std::size_t debug()
     {
-        std::list<T, node_size_debugger<T, T>> list;
+        std::list<T, node_size_debugger<T, T, debug_list>> list;
         list.push_front(T());
         list.push_front(T());
         list.push_front(T());
@@ -118,7 +124,7 @@ struct debug_set
     template <typename T>
     std::size_t debug()
     {
-        std::set<T, std::less<T>, node_size_debugger<T, T>> set;
+        std::set<T, std::less<T>, node_size_debugger<T, T, debug_set>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -136,7 +142,7 @@ struct debug_multiset
     template <typename T>
     std::size_t debug()
     {
-        std::multiset<T, std::less<T>, node_size_debugger<T, T>> set;
+        std::multiset<T, std::less<T>, node_size_debugger<T, T, debug_multiset>> set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -154,7 +160,8 @@ struct debug_unordered_set
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_set<T, hash, std::equal_to<T>, node_size_debugger<T, T>> set;
+        std::unordered_set<T, hash, std::equal_to<T>, node_size_debugger<T, T, debug_unordered_set>>
+            set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -172,7 +179,9 @@ struct debug_unordered_multiset
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multiset<T, hash, std::equal_to<T>, node_size_debugger<T, T>> set;
+        std::unordered_multiset<T, hash, std::equal_to<T>,
+                                node_size_debugger<T, T, debug_unordered_multiset>>
+            set;
         set.insert(T());
         set.insert(T());
         set.insert(T());
@@ -190,7 +199,8 @@ struct debug_map
     template <typename T>
     std::size_t debug()
     {
-        std::map<T, T, std::less<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::map<T, T, std::less<T>, node_size_debugger<type, type, debug_map>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -208,7 +218,8 @@ struct debug_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::multimap<T, T, std::less<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::multimap<T, T, std::less<T>, node_size_debugger<type, type, debug_multimap>> map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -226,7 +237,10 @@ struct debug_unordered_map
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_map<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::unordered_map<T, T, hash, std::equal_to<T>,
+                           node_size_debugger<type, type, debug_unordered_map>>
+            map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
@@ -244,11 +258,30 @@ struct debug_unordered_multimap
     template <typename T>
     std::size_t debug()
     {
-        std::unordered_multimap<T, T, hash, std::equal_to<T>, node_size_debugger<T, T>> map;
+        using type = std::pair<const T, T>;
+        std::unordered_multimap<T, T, hash, std::equal_to<T>,
+                                node_size_debugger<type, type, debug_unordered_multimap>>
+            map;
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         map.insert(std::make_pair(T(), T()));
         return map.get_allocator().node_size() - sizeof(typename decltype(map)::value_type);
+    }
+};
+
+struct debug_shared_ptr
+{
+    const char* name() const
+    {
+        return "shared_ptr";
+    }
+
+    template <typename T>
+    std::size_t debug()
+    {
+        auto ptr  = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr>());
+        auto ptr2 = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr>());
+        return node_size_debugger<T, T, debug_shared_ptr>::node_size();
     }
 };
 
@@ -258,10 +291,7 @@ std::size_t debug_single(Debugger debugger)
     return debugger.template debug<T>();
 }
 
-// All fundamental types that don't guarantee to have the same alignment (like int and unsigned int).
-// It thus covers all fundamental alignments and all possible node sizes.
-// Does not support extended alignments!
-using test_types = std::tuple<char, bool, short, int, long, long long, float, double, long double>;
+#include "test_types.hpp"
 
 // Maps the alignment of the test types to the base size of the node.
 // The base size of the node is the node size obtained via the allocator
@@ -271,15 +301,15 @@ using node_size_map = std::map<std::size_t, std::size_t>;
 
 struct debug_result
 {
-    const char *container_name;
+    const char*   container_name;
     node_size_map node_sizes;
 };
 
-template <class Debugger, typename ... Types>
+template <class Debugger, typename... Types>
 node_size_map debug_impl(Debugger debugger, std::tuple<Types...>)
 {
     node_size_map result;
-    int dummy[] = {(result[alignof(Types)] = debug_single<Types>(debugger), 0)...};
+    int dummy[] = {(result[FOONATHAN_ALIGNOF(Types)] = debug_single<Types>(debugger), 0)...};
     (void)dummy;
     return result;
 }

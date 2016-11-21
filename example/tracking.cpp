@@ -7,36 +7,40 @@
 
 #include <iostream>
 
-#include <foonathan/memory/container.hpp> // set, set_node_size
+#include <foonathan/memory/container.hpp>   // set, set_node_size
 #include <foonathan/memory/memory_pool.hpp> // memory_pool
-#include <foonathan/memory/tracking.hpp> // make_tracked_allocator
+#include <foonathan/memory/tracking.hpp>    // make_tracked_allocator
 
 // alias namespace foonathan::memory as memory for easier access
 #include <foonathan/memory/namespace_alias.hpp>
 
 int main()
 {
+    using namespace memory::literals;
+
     // tracker class that logs internal behavior of the allocator
     struct tracker
     {
-        void on_node_allocation(void *mem, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        void on_node_allocation(void* mem, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " node allocated: ";
             std::clog << mem << " (" << size << ") " << '\n';
         }
 
-        void on_array_allocation(void *mem, std::size_t count, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        void on_array_allocation(void* mem, std::size_t count, std::size_t size,
+                                 std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " array allocated: ";
             std::clog << mem << " (" << count << " * " << size << ") " << '\n';
         }
 
-        void on_node_deallocation(void *ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        void on_node_deallocation(void* ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " node deallocated: " << ptr << " \n";
         }
 
-        void on_array_deallocation(void *ptr, std::size_t, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        void on_array_deallocation(void* ptr, std::size_t, std::size_t,
+                                   std::size_t) FOONATHAN_NOEXCEPT
         {
             std::clog << this << " array deallocated: " << ptr << " \n";
         }
@@ -44,11 +48,15 @@ int main()
 
     // create a tracked memory_pool to see what kind of allocations are made
     // this can also take an already existing allocator
-    auto tracked_pool = memory::make_tracked_allocator(tracker{}, memory::memory_pool<>(memory::set_node_size<int>::value, 4096u));
+    auto tracked_pool =
+        memory::make_tracked_allocator(tracker{},
+                                       memory::memory_pool<>(memory::set_node_size<int>::value,
+                                                             4_KiB));
 
     // use the allocator as usual
     // decltype(tracked_pool) can be used below, too
-    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>> set(std::less<int>(), tracked_pool);
+    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>>
+        set(std::less<int>(), tracked_pool);
 
     set.insert(1);
     set.insert(2);
