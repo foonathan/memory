@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_SEGREGATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_SEGREGATOR_HPP_INCLUDED
 
+/// \file
+/// Class template \ref foonathan::memory::segregator and related classes.
+
 #include "detail/ebo_storage.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
@@ -33,7 +36,7 @@ namespace foonathan
 
             /// \returns `true` if `size` is less then or equal to the maximum size,
             /// `false` otherwise.
-            /// \notes A return value of `true` means that the allocator will be used for the allocation.
+            /// \note A return value of `true` means that the allocator will be used for the allocation.
             bool use_allocate_node(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {
                 return size <= max_size_;
@@ -41,7 +44,7 @@ namespace foonathan
 
             /// \returns `true` if `count * size` is less then or equal to the maximum size,
             /// `false` otherwise.
-            /// \notes A return value of `true` means that the allocator will be used for the allocation.
+            /// \note A return value of `true` means that the allocator will be used for the allocation.
             bool use_allocate_array(std::size_t count, std::size_t size,
                                     std::size_t) FOONATHAN_NOEXCEPT
             {
@@ -115,7 +118,7 @@ namespace foonathan
             }
         };
 
-        /// A \concept{concept_rawallocator,RawAllocator} that either uses the \concept{concept_segregatable,Segregatable| or the other `RawAllocator`.
+        /// A \concept{concept_rawallocator,RawAllocator} that either uses the \concept{concept_segregatable,Segregatable} or the other `RawAllocator`.
         /// It is a faster alternative to \ref fallback_allocator that doesn't require a composable allocator
         /// and decides about the allocator to use purely with the `Segregatable` based on size and alignment.
         /// \ingroup memory adapter
@@ -183,7 +186,7 @@ namespace foonathan
 
             /// @{
             /// \returns The maximum value of the fallback.
-            /// \notes It assumes that the fallback will be used for larger allocations,
+            /// \note It assumes that the fallback will be used for larger allocations,
             /// and the `Segregatable` for smaller ones.
             std::size_t max_node_size() const
             {
@@ -367,7 +370,7 @@ namespace foonathan
         /// Then the result is a simple \ref binary_segregator with those arguments.
         /// If you pass more than one, the last one must be a `RawAllocator` all others `Segregatable`,
         /// the result is `binary_segregator<Head, segregator<Tail...>>`.
-        /// \notes It will result in an allocator that tries each `Segregatable` in the order specified
+        /// \note It will result in an allocator that tries each `Segregatable` in the order specified
         /// using the last parameter as final fallback.
         /// \ingroup memory adapter
         template <class... Allocators>

@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_FALLBACK_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_FALLBACK_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+//// Class template \ref foonathan::memory::fallback_allocator.
+
 #include "detail/ebo_storage.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"

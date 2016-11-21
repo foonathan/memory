@@ -241,7 +241,7 @@ namespace foonathan
             /// The \c Mutex will be locked during the operation.
             /// \requires The allocator must be composable,
             /// i.e. \ref is_composable() must return `true`.
-            /// \notes This check is done at compile-time where possible,
+            /// \note This check is done at compile-time where possible,
             /// and at runtime in the case of type-erased storage.
             FOONATHAN_ENABLE_IF(composable::value)
             void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
@@ -322,7 +322,7 @@ namespace foonathan
 
             /// \returns Whether or not the stored allocator is composable,
             /// that is you can use the compositioning functions.
-            /// \notes Due to type-erased allocators,
+            /// \note Due to type-erased allocators,
             /// this function can not be `constexpr`.
             bool is_composable() const FOONATHAN_NOEXCEPT
             {

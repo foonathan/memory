@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+/// Class template \ref foonathan::memory::iteration_allocator.
+
 #include "detail/debug_helpers.hpp"
 #include "detail/memory_stack.hpp"
 #include "default_allocator.hpp"
@@ -93,7 +96,7 @@ namespace foonathan
             /// \effects Goes to the next internal stack.
             /// This will clear the stack whose \ref max_iterations() lifetime has reached,
             /// and use it for all allocations in this iteration.
-            /// \notes This function should be called at the end of the loop.
+            /// \note This function should be called at the end of the loop.
             void next_iteration() FOONATHAN_NOEXCEPT
             {
                 cur_ = (cur_ + 1) % N;

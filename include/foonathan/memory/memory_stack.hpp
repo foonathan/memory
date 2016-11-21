@@ -338,7 +338,7 @@ namespace foonathan
             }
 
             /// \returns Whether or not the unwinder will actually unwind.
-            /// \notes It will not unwind if it is in the moved-from state.
+            /// \note It will not unwind if it is in the moved-from state.
             bool will_unwind() const FOONATHAN_NOEXCEPT
             {
                 return stack_ != nullptr;

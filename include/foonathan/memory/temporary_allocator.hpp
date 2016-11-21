@@ -169,14 +169,14 @@ namespace foonathan
 
         /// Manually takes care of the lifetime of the per-thread \ref temporary_stack.
         /// The constructor will create it, if not already done, and the destructor will destroy it, if not already done.
-        /// \notes If there are multiple objects in a thread,
+        /// \note If there are multiple objects in a thread,
         /// this will lead to unnecessary construction and destruction of the stack.
         /// It is thus adviced to create one object on the top-level function of the thread, e.g. in `main()`.
-        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 2`, it is not necessary to use this class,
+        /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 2`, it is not necessary to use this class,
         /// the nifty counter will clean everything upon program termination.
         /// But it can still be used as an optimization if you have a thread that is terminated long before program exit.
         /// The automatic clean up will only occur much later.
-        /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, the use of this class has no effect,
+        /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, the use of this class has no effect,
         /// because the per-thread stack is disabled.
         /// \relatesalso temporary_stack
         class temporary_stack_initializer
@@ -186,19 +186,21 @@ namespace foonathan
 
             static const struct defer_create_t
             {
-                defer_create_t() FOONATHAN_NOEXCEPT {}
+                defer_create_t() FOONATHAN_NOEXCEPT
+                {
+                }
             } defer_create;
 
             /// \effects Does not create the per-thread stack.
             /// It will be created by the first call to \ref get_temporary_stack() in the current thread.
-            /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function has no effect.
+            /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function has no effect.
             temporary_stack_initializer(defer_create_t) FOONATHAN_NOEXCEPT
             {
             }
 
             /// \effects Creates the per-thread stack with the given default size if it wasn't already created.
             /// \requires `initial_size` must not be `0` if `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE != 0`.
-            /// \notes If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function will issue a warning in debug mode.
+            /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function will issue a warning in debug mode.
             /// This can be disabled by passing `0` as the initial size.
             temporary_stack_initializer(std::size_t initial_size = default_stack_size);
 
@@ -213,7 +215,7 @@ namespace foonathan
         /// if it wasn't already created.
         /// \returns The per-thread \ref temporary_stack.
         /// \requires There must be a per-thread temporary stack (\ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE must not be equal to `0`).
-        /// \notes If \ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE is equal to `1`,
+        /// \note If \ref FOONATHAN_MEMORY_TEMPORARY_STACK_MODE is equal to `1`,
         /// this function can create the temporary stack.
         /// But if there is no \ref temporary_stack_initializer, it won't be destroyed.
         /// \relatesalso temporary_stack
@@ -248,15 +250,15 @@ namespace foonathan
             void* allocate(std::size_t size, std::size_t alignment);
 
             /// \returns Whether or not the allocator object is active.
-            /// \notes The active allocator object is the last object created for one stack.
+            /// \note The active allocator object is the last object created for one stack.
             /// Moving changes the active allocator.
             bool is_active() const FOONATHAN_NOEXCEPT;
 
             /// \effects Instructs it to release unnecessary memory after automatic unwinding occurs.
             /// This will effectively forward to \ref memory_stack::shrink_to_fit() of the internal stack.
-            /// \notes Like the use of the \ref temporary_stack_initializer this can be used as an optimization,
+            /// \note Like the use of the \ref temporary_stack_initializer this can be used as an optimization,
             /// to tell when the thread's \ref temporary_stack isn't needed anymore and can be destroyed.
-            /// \notes It doesn't call shrink to fit immediately, only in the destructor!
+            /// \note It doesn't call shrink to fit immediately, only in the destructor!
             void shrink_to_fit() FOONATHAN_NOEXCEPT;
 
             /// \returns The internal stack the temporary allocator is using.

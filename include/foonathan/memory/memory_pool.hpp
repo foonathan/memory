@@ -156,7 +156,7 @@ namespace foonathan
 
             /// \effects Deallocates a single \concept{concept_node,node} but it does not be a result of a previous call to \ref allocate_node().
             /// \returns `true` if the node could be deallocated, `false` otherwise.
-            /// \notes Some free list implementations can deallocate any memory,
+            /// \note Some free list implementations can deallocate any memory,
             /// doesn't matter where it is coming from.
             bool try_deallocate_node(void* ptr) FOONATHAN_NOEXCEPT
             {
@@ -177,7 +177,7 @@ namespace foonathan
 
             /// \effects Deallocates an \concept{concept_array,array} but it does not be a result of a previous call to \ref allocate_array().
             /// \returns `true` if the node could be deallocated, `false` otherwise.
-            /// \notes Some free list implementations can deallocate any memory,
+            /// \note Some free list implementations can deallocate any memory,
             /// doesn't matter where it is coming from.
             bool try_deallocate_array(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
             {

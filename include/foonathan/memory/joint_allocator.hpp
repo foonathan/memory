@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_JOINT_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_JOINT_ALLOCATOR_HPP_INCLUDED
 
+/// \file
+/// Class template \ref foonathan::memory::joint_ptr, \ref foonathan::memory::joint_allocator and related.
+
 #include <initializer_list>
 #include <new>
 
@@ -135,7 +138,7 @@ namespace foonathan
         protected:
             /// \effects Creates the base class,
             /// the tag type cannot be created by the user.
-            /// \notes This ensures that you cannot create joint types yourself.
+            /// \note This ensures that you cannot create joint types yourself.
             joint_type(joint j) FOONATHAN_NOEXCEPT;
 
             joint_type(const joint_type&) = delete;
@@ -244,7 +247,7 @@ namespace foonathan
             /// @{
             /// \effects Reserves memory for the object and the additional size,
             /// and creates the object by forwarding the arguments to its constructor.
-            /// The \cocnept{concept_rawallocator,RawAllocator} will be used for the allocation.
+            /// The \concept{concept_rawallocator,RawAllocator} will be used for the allocation.
             template <typename... Args>
             joint_ptr(allocator_type& alloc, joint_size additional_size, Args&&... args)
             : joint_ptr(alloc)
@@ -537,7 +540,7 @@ namespace foonathan
             }
 
             /// \effects Deallocates the node, if possible.
-            /// \notes It is only possible if it was the last allocation.
+            /// \note It is only possible if it was the last allocation.
             void deallocate_node(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
             {
                 FOONATHAN_MEMORY_ASSERT(stack_);
@@ -585,7 +588,7 @@ namespace foonathan
         /// Specialization of \ref is_thread_safe_allocator to mark \ref joint_allocator as thread safe.
         /// This is an optimization to get rid of the mutex in \ref allocator_reference,
         /// as joint allocator must not be shared between threads.
-        /// \notes The allocator is *not* thread safe, it just must not be shared.
+        /// \note The allocator is *not* thread safe, it just must not be shared.
         template <>
         struct is_thread_safe_allocator<joint_allocator> : std::true_type
         {
@@ -600,7 +603,7 @@ namespace foonathan
         /// A joint allocator does not propagate on assignment
         /// and it is not allowed to use the regular copy/move constructor of allocator aware containers,
         /// instead it needs the copy/move constructor with allocator.
-        /// \notes This is required because the container constructor will end up copying/moving the allocator.
+        /// \note This is required because the container constructor will end up copying/moving the allocator.
         /// But this is not allowed as you need the allocator with the correct joined memory.
         /// Copying can be customized (i.e. forbidden), but sadly not move, so keep that in mind.
         /// \ingroup memory allocator
