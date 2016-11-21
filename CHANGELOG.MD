@@ -1,4 +1,4 @@
-# Upcoming
+# 0.6
 
 ## Tool
 
@@ -13,7 +13,7 @@
 
 ## Allocator
 
-* improved `temporary_allocator`: explicit seperation into `temporary_stack`, improved automatic creation
+* improved `temporary_allocator`: explicit separation into `temporary_stack`, improved automatic creation
 * new `memory_stack_raii_unwind` for automatic unwinding
 * new `iteration_allocator`
 * make allocators composable

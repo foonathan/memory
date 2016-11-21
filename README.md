@@ -17,7 +17,7 @@ Several implementations:
 * `heap_/malloc_/new_allocator`
 * virtual memory allocators
 * allocator using a static memory block located on the stack
-* memory stack
+* memory stack, `iteration_allocator`
 * different memory pools
 * a portable, improved `alloca()` in the form of `temporary_allocator`
 * facilities for joint memory allocations: share a big memory block for the object
@@ -60,10 +60,12 @@ void merge_sort(BiIter begin, BiIter end);
 
 int main()
 {
+    using namespace memory::literals;
+
     // a memory pool RawAllocator
     // allocates a memory block - initially 4KiB - and splits it into chunks of list_node_size<int>::value big
     // list_node_size<int>::value is the size of each node of a std::list
-    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4096u);
+    memory::memory_pool<> pool(memory::list_node_size<int>::value, 4_KiB);
 
     // just an alias for std::list<int, memory::std_allocator<int, memory::memory_pool<>>
     // a std::list using a memory_pool
