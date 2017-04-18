@@ -5,8 +5,8 @@
 The following listing shows how to use a [memory_pool] with a `std::list` container:
 
 ~~~{.cpp}
-#include <memory/container.hpp> // for list, list_node_size
-#include <memory/memory_pool.hpp> // for memory_pool
+# include <memory/container.hpp> // for list, list_node_size
+# include <memory/memory_pool.hpp> // for memory_pool
 
 int main()
 {
@@ -79,7 +79,7 @@ And like the container typedefs, there is an easier way to handle the most commo
 The following excerpt shows the handling of smart pointers:
 
 ~~~.cpp
-#include <memory/smart_ptr.hpp> // for allocate_XXX
+# include <memory/smart_ptr.hpp> // for allocate_XXX
 ...
 // assume we have a RawAllocator alloc
 auto unique_ptr = memory::allocate_unique<int>(alloc, 5); // (1)
@@ -123,11 +123,11 @@ but its own, separate stack for each thread obtained from the heap.
 Below is a simple implementation of a merge sort that uses a temporary buffer:
 
 ~~~.cpp
-#include <algorithm>
-#include <iterator>
+# include <algorithm>
+# include <iterator>
 
-#include <memory/container.hpp> // for memory::vector
-#include <memory/temporary_allocator.hpp> // for memory::temporary_allocator
+# include <memory/container.hpp> // for memory::vector
+# include <memory/temporary_allocator.hpp> // for memory::temporary_allocator
 
 template <typename RAIter>
 void merge_sort(RAIter begin, RAIter end)
