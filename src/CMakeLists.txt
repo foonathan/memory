@@ -88,6 +88,7 @@ endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
 _foonathan_use_comp(foonathan_memory)
+comp_target_features(foonathan_memory PRIVATE CPP11)
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
                                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
                                                    $<INSTALL_INTERFACE:${include_dest}> # for client in install mode
