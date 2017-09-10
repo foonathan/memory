@@ -21,9 +21,9 @@ TEST_CASE("iteration_allocator", "[stack]")
     REQUIRE(iter_alloc.capacity_left(0u) == 50);
     REQUIRE(iter_alloc.capacity_left(1u) == 50);
 
-    auto mem = iter_alloc.allocate(10, 1);
+    iter_alloc.allocate(10, 1);
     REQUIRE(iter_alloc.capacity_left() < 50);
-    auto mem2 = iter_alloc.allocate(4, 4);
+    iter_alloc.allocate(4, 4);
     REQUIRE(iter_alloc.capacity_left() < 50);
 
     REQUIRE(iter_alloc.capacity_left(1u) == 50);
@@ -32,7 +32,7 @@ TEST_CASE("iteration_allocator", "[stack]")
     REQUIRE(iter_alloc.capacity_left() == 50);
     REQUIRE(iter_alloc.capacity_left(0u) < 50);
 
-    mem = iter_alloc.allocate(10, 1);
+    iter_alloc.allocate(10, 1);
     REQUIRE(iter_alloc.capacity_left() < 50);
 
     iter_alloc.next_iteration();

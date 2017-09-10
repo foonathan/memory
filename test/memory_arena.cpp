@@ -40,10 +40,10 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
         REQUIRE(stack.empty());
         REQUIRE(!other.empty());
 
-        auto top = other.top();
-        REQUIRE(top.memory >= static_cast<void*>(&memory));
-        REQUIRE(top.size <= 1024);
-        REQUIRE(is_aligned(top.memory, max_alignment));
+        auto other_top = other.top();
+        REQUIRE(other_top.memory >= static_cast<void*>(&memory));
+        REQUIRE(other_top.size <= 1024);
+        REQUIRE(is_aligned(other_top.memory, max_alignment));
     }
 
     static_allocator_storage<1024> a, b, c;

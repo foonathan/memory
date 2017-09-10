@@ -35,10 +35,9 @@ namespace foonathan
             const void* allocator;
 
             /// \effects Creates it by giving it the name of the allocator and a pointer.
-            FOONATHAN_CONSTEXPR allocator_info(const char *name,
-                                               const void *allocator) FOONATHAN_NOEXCEPT
-                : name(name),
-                  allocator(allocator)
+            FOONATHAN_CONSTEXPR allocator_info(const char* n, const void* alloc) FOONATHAN_NOEXCEPT
+                : name(n),
+                  allocator(alloc)
             {
             }
 

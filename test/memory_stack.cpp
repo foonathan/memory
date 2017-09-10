@@ -120,10 +120,10 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(unwind.will_unwind());
 
         {
-            memory_stack_raii_unwind<decltype(stack)> unwind(stack);
+            memory_stack_raii_unwind<decltype(stack)> unwind2(stack);
             stack.allocate(10, 1);
-            unwind.release();
-            REQUIRE(!unwind.will_unwind());
+            unwind2.release();
+            REQUIRE(!unwind2.will_unwind());
         }
         REQUIRE(stack.top() > m);
         m = stack.top();

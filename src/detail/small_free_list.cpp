@@ -348,7 +348,7 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
 {
     if (auto c = make_chunk(alloc_chunk_, n))
         return c;
-    else if (auto c = make_chunk(dealloc_chunk_, n))
+    else if ((c = make_chunk(dealloc_chunk_, n)) != nullptr)
         return c;
 
     auto cur_forward  = alloc_chunk_->next;
@@ -358,7 +358,7 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) FOONATHAN_NOEXCEPT
     {
         if (auto c = make_chunk(cur_forward, n))
             return c;
-        else if (auto c = make_chunk(cur_backward, n))
+        else if ((c = make_chunk(cur_backward, n)) != nullptr)
             return c;
 
         cur_forward  = cur_forward->next;
@@ -379,7 +379,7 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char* node, chunk_base* 
     {
         if (auto c = from_chunk(first, node, actual_size))
             return c;
-        else if (auto c = from_chunk(last, node, actual_size))
+        else if ((c = from_chunk(last, node, actual_size)) != nullptr)
             return c;
 
         first = first->next;
@@ -394,7 +394,7 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char* node) FOONATHAN_NO
 
     if (auto c = from_chunk(dealloc_chunk_, node, actual_size))
         return c;
-    else if (auto c = from_chunk(alloc_chunk_, node, actual_size))
+    else if ((c = from_chunk(alloc_chunk_, node, actual_size)) != nullptr)
         return c;
     else if (less(dealloc_chunk_, node))
     {

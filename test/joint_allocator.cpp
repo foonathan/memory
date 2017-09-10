@@ -184,8 +184,8 @@ TEST_CASE("joint_allocator", "[allocator]")
         vector<int, joint_allocator> vec;
         int value;
 
-        joint_test(joint tag, int value, std::size_t size)
-        : joint_type(tag), vec(*this), value(value)
+        joint_test(joint tag, int val, std::size_t size)
+        : joint_type(tag), vec(*this), value(val)
         {
             vec.reserve(size);
             vec.push_back(42);
