@@ -112,6 +112,8 @@ namespace foonathan
             /// \requires The \c RawAllocator type is stateless, otherwise the body of this function will not compile.
             std_allocator() FOONATHAN_NOEXCEPT : alloc_reference(allocator_type{})
             {
+                static_assert(!alloc_reference::is_stateful::value,
+                              "default constructor must not be used for stateful allocators");
             }
 
             /// \effects Creates it from a reference to a \c RawAllocator.
