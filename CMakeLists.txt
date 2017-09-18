@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.1)
 project(FOONATHAN_MEMORY)
 
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
-set(FOONATHAN_MEMORY_VERSION_MINOR 5 CACHE STRING "minor version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_MINOR 6 CACHE STRING "minor version of memory" FORCE)
 set(FOONATHAN_MEMORY_VERSION "${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}"
                              CACHE STRING "version of memory" FORCE)
 
