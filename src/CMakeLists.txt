@@ -10,6 +10,7 @@ set(detail_header
         ${header_path}/detail/assert.hpp
         ${header_path}/detail/container_node_sizes.hpp
         ${header_path}/detail/debug_helpers.hpp
+        ${header_path}/detail/ebo_storage.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/lowlevel_allocator.hpp
