@@ -97,7 +97,8 @@ target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN
 target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY=1
                             FOONATHAN_MEMORY_VERSION_MAJOR=${FOONATHAN_MEMORY_VERSION_MAJOR}
-                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR})
+                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR}
+                            FOONATHAN_MEMORY_VERSION_PATCH=${FOONATHAN_MEMORY_VERSION_PATCH})
 
 # installation
 install(TARGETS foonathan_memory EXPORT foonathan_memory  DESTINATION ${lib_dest})
