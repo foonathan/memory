@@ -36,36 +36,50 @@ TEST_CASE("binary_segregator", "[adapter]")
     segregator s(threshold(8u, test_allocator{}));
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 0u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 0u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 0u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 0u);
 
     auto ptr = s.allocate_node(1u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 1u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 0u);
     s.deallocate_node(ptr, 1u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 1u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 0u);
 
     ptr = s.allocate_node(8u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 1u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 0u);
     s.deallocate_node(ptr, 8u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 2u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 0u);
 
     ptr = s.allocate_node(8u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 1u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 0u);
     s.deallocate_node(ptr, 8u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 3u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 0u);
 
     ptr = s.allocate_node(9u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 0u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 1u);
     s.deallocate_node(ptr, 9u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 3u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 1u);
 
     ptr = s.allocate_array(1u, 8u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 1u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 0u);
     s.deallocate_array(ptr, 1u, 8u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 4u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 1u);
 
     ptr = s.allocate_array(2u, 8u, 1u);
     REQUIRE(s.get_segregatable_allocator().no_allocated() == 0u);
     REQUIRE(s.get_fallback_allocator().no_allocated() == 1u);
     s.deallocate_array(ptr, 2u, 8u, 1u);
+    REQUIRE(s.get_segregatable_allocator().no_deallocated() == 4u);
+    REQUIRE(s.get_fallback_allocator().no_deallocated() == 2u);
 }
 
 TEST_CASE("segregator", "[adapter]")

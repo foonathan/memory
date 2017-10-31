@@ -102,7 +102,7 @@ namespace foonathan
         /// \ingroup memory allocator
         class joint
         {
-            joint(std::size_t capacity) FOONATHAN_NOEXCEPT : capacity(capacity)
+            joint(std::size_t cap) FOONATHAN_NOEXCEPT : capacity(cap)
             {
             }
 
@@ -122,7 +122,7 @@ namespace foonathan
         {
             std::size_t size;
 
-            explicit joint_size(std::size_t size) FOONATHAN_NOEXCEPT : size(size)
+            explicit joint_size(std::size_t s) FOONATHAN_NOEXCEPT : size(s)
             {
             }
         };

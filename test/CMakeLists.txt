@@ -49,6 +49,7 @@ set(tests
     segregator.cpp)
 
 add_executable(foonathan_memory_test ${tests})
+comp_target_features(foonathan_memory_test PUBLIC CPP11)
 target_link_libraries(foonathan_memory_test foonathan_memory)
 target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}

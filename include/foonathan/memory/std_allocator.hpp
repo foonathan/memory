@@ -112,6 +112,12 @@ namespace foonathan
             /// \requires The \c RawAllocator type is stateless, otherwise the body of this function will not compile.
             std_allocator() FOONATHAN_NOEXCEPT : alloc_reference(allocator_type{})
             {
+#if !defined(__GNUC__) || (defined(_GLIBCXX_USE_CXX11_ABI) && _GLIBCXX_USE_CXX11_ABI != 0)
+                // std::string requires default constructor for the small string optimization when using gcc's old ABI
+                // so don't assert then to allow joint allocator
+                static_assert(!alloc_reference::is_stateful::value,
+                              "default constructor must not be used for stateful allocators");
+#endif
             }
 
             /// \effects Creates it from a reference to a \c RawAllocator.
@@ -121,13 +127,14 @@ namespace foonathan
             /// If the requirement is not fulfilled this function does not participate in overload resolution.
             /// \note The caller has to ensure that the lifetime of the \c RawAllocator is at least as long as the lifetime
             /// of this \ref std_allocator object.
-            template <class RawAlloc,
-                      // MSVC seems to ignore access rights in decltype SFINAE below
-                      // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-                      FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
+            template <
+                class RawAlloc,
+                // MSVC seems to ignore access rights in decltype SFINAE below
+                // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
+                FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
             std_allocator(RawAlloc& alloc,
                           FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc)
+            : alloc_reference(alloc)
             {
             }
 
@@ -136,13 +143,14 @@ namespace foonathan
             /// \requires The \c RawAllocator is stateless
             /// and the expression <tt>allocator_reference<RawAllocator, Mutex>(alloc)</tt> is well-formed as above,
             /// otherwise this function does not participate in overload resolution.
-            template <class RawAlloc,
-                      // MSVC seems to ignore access rights in decltype SFINAE below
-                      // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
-                      FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
+            template <
+                class RawAlloc,
+                // MSVC seems to ignore access rights in decltype SFINAE below
+                // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
+                FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
             std_allocator(const RawAlloc& alloc,
                           FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc)
+            : alloc_reference(alloc)
             {
             }
 
@@ -161,13 +169,13 @@ namespace foonathan
             /// This is required by the \c Allcoator concept and simply takes the same \ref allocator_reference.
             template <typename U>
             std_allocator(const std_allocator<U, RawAllocator, Mutex>& alloc) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc.get_allocator())
+            : alloc_reference(alloc.get_allocator())
             {
             }
 
             template <typename U>
             std_allocator(std_allocator<U, RawAllocator, Mutex>& alloc) FOONATHAN_NOEXCEPT
-                : alloc_reference(alloc.get_allocator())
+            : alloc_reference(alloc.get_allocator())
             {
             }
             /// @}

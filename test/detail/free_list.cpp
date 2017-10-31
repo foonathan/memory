@@ -112,11 +112,15 @@ TEST_CASE("free_memory_list", "[detail][pool]")
     {
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
+
+        check_move(list);
     }
     SECTION("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
+
+        check_move(list);
     }
     SECTION("multiple insert")
     {
@@ -126,8 +130,9 @@ TEST_CASE("free_memory_list", "[detail][pool]")
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
         check_list(list, &c, 1337);
+
+        check_move(list);
     }
-    check_move(list);
 }
 
 void use_list_array(ordered_free_memory_list& list)
@@ -173,12 +178,16 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
         use_list_array(list);
+
+        check_move(list);
     }
     SECTION("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
         use_list_array(list);
+
+        check_move(list);
     }
     SECTION("multiple insert")
     {
@@ -191,8 +200,9 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
         use_list_array(list);
         check_list(list, &c, 1337);
         use_list_array(list);
+
+        check_move(list);
     }
-    check_move(list);
 }
 
 TEST_CASE("small_free_memory_list", "[detail][pool]")
@@ -206,16 +216,22 @@ TEST_CASE("small_free_memory_list", "[detail][pool]")
     {
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
+
+        check_move(list);
     }
     SECTION("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
+
+        check_move(list);
     }
     SECTION("big insert")
     {
         static_allocator_storage<4096> memory; // should use multiple chunks
         check_list(list, &memory, 4096);
+
+        check_move(list);
     }
     SECTION("multiple insert")
     {
@@ -225,6 +241,7 @@ TEST_CASE("small_free_memory_list", "[detail][pool]")
         check_list(list, &a, 1024);
         check_list(list, &b, 100);
         check_list(list, &c, 1337);
+
+        check_move(list);
     }
-    check_move(list);
 }

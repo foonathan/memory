@@ -1,3 +1,12 @@
+# 0.6-1
+
+* fix CMake configuration error
+* fix double free error in `segregator`
+* add `static_assert()` when default constructing a stateful `std_allocator`
+* fix various compiler warnings
+
+---
+
 # 0.6
 
 ## Tool

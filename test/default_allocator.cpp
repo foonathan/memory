@@ -23,21 +23,21 @@ void check_default_allocator(Allocator& alloc, std::size_t def_alignment = detai
 
     for (std::size_t i = 0u; i != 10u; ++i)
     {
-        auto ptr = alloc.allocate_node(i, 1);
-        REQUIRE(detail::is_aligned(ptr, def_alignment));
-        alloc.deallocate_node(ptr, i, 1);
+        auto node = alloc.allocate_node(i, 1);
+        REQUIRE(detail::is_aligned(node, def_alignment));
+        alloc.deallocate_node(node, i, 1);
     }
 
-    std::vector<void*> ptrs;
+    std::vector<void*> nodes;
     for (std::size_t i = 0u; i != 10u; ++i)
     {
-        auto ptr = alloc.allocate_node(i, 1);
-        REQUIRE(detail::is_aligned(ptr, def_alignment));
-        ptrs.push_back(ptr);
+        auto node = alloc.allocate_node(i, 1);
+        REQUIRE(detail::is_aligned(node, def_alignment));
+        nodes.push_back(node);
     }
 
     for (std::size_t i = 0u; i != 10u; ++i)
-        alloc.deallocate_node(ptrs[i], i, 1);
+        alloc.deallocate_node(nodes[i], i, 1);
 }
 
 TEST_CASE("heap_allocator", "[default_allocator]")

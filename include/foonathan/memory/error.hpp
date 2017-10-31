@@ -35,23 +35,22 @@ namespace foonathan
             const void* allocator;
 
             /// \effects Creates it by giving it the name of the allocator and a pointer.
-            FOONATHAN_CONSTEXPR allocator_info(const char *name,
-                                               const void *allocator) FOONATHAN_NOEXCEPT
-                : name(name),
-                  allocator(allocator)
+            FOONATHAN_CONSTEXPR_FNC allocator_info(const char* n, const void* alloc) FOONATHAN_NOEXCEPT
+                : name(n),
+                  allocator(alloc)
             {
             }
 
             /// @{
             /// \effects Compares two \ref allocator_info objects, they are equal, if the \ref allocator is the same.
             /// \returns The result of the comparision.
-            friend FOONATHAN_CONSTEXPR bool operator==(const allocator_info& a,
+            friend FOONATHAN_CONSTEXPR_FNC bool operator==(const allocator_info& a,
                                                        const allocator_info& b) FOONATHAN_NOEXCEPT
             {
                 return a.allocator == b.allocator;
             }
 
-            friend FOONATHAN_CONSTEXPR bool operator!=(const allocator_info& a,
+            friend FOONATHAN_CONSTEXPR_FNC bool operator!=(const allocator_info& a,
                                                        const allocator_info& b) FOONATHAN_NOEXCEPT
             {
                 return a.allocator != b.allocator;

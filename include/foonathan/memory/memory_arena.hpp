@@ -38,7 +38,7 @@ namespace foonathan
             }
 
             /// \effects Creates a memory block from a given starting address and size.
-            memory_block(void* mem, std::size_t size) FOONATHAN_NOEXCEPT : memory(mem), size(size)
+            memory_block(void* mem, std::size_t s) FOONATHAN_NOEXCEPT : memory(mem), size(s)
             {
             }
 
@@ -169,8 +169,7 @@ namespace foonathan
                     node*       prev;
                     std::size_t usable_size;
 
-                    node(node* prev, std::size_t size) FOONATHAN_NOEXCEPT : prev(prev),
-                                                                            usable_size(size)
+                    node(node* p, std::size_t size) FOONATHAN_NOEXCEPT : prev(p), usable_size(size)
                     {
                     }
 

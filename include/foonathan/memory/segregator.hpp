@@ -124,8 +124,8 @@ namespace foonathan
         /// \ingroup memory adapter
         template <class Segregatable, class RawAllocator>
         class binary_segregator
-            : FOONATHAN_EBO(
-                  detail::ebo_storage<1, typename allocator_traits<RawAllocator>::allocator_type>)
+        : FOONATHAN_EBO(
+              detail::ebo_storage<1, typename allocator_traits<RawAllocator>::allocator_type>)
         {
             using segregatable_traits = allocator_traits<typename Segregatable::allocator_type>;
             using fallback_traits     = allocator_traits<RawAllocator>;
@@ -152,7 +152,9 @@ namespace foonathan
                 if (get_segregatable().use_allocate_node(size, alignment))
                     return segregatable_traits::allocate_node(get_segregatable_allocator(), size,
                                                               alignment);
-                return fallback_traits::allocate_node(get_fallback_allocator(), size, alignment);
+                else
+                    return fallback_traits::allocate_node(get_fallback_allocator(), size,
+                                                          alignment);
             }
 
             void deallocate_node(void* ptr, std::size_t size,
@@ -161,7 +163,9 @@ namespace foonathan
                 if (get_segregatable().use_allocate_node(size, alignment))
                     segregatable_traits::deallocate_node(get_segregatable_allocator(), ptr, size,
                                                          alignment);
-                fallback_traits::deallocate_node(get_fallback_allocator(), ptr, size, alignment);
+                else
+                    fallback_traits::deallocate_node(get_fallback_allocator(), ptr, size,
+                                                     alignment);
             }
 
             void* allocate_array(std::size_t count, std::size_t size, std::size_t alignment)
@@ -169,8 +173,9 @@ namespace foonathan
                 if (get_segregatable().use_allocate_array(count, size, alignment))
                     return segregatable_traits::allocate_array(get_segregatable_allocator(), count,
                                                                size, alignment);
-                return fallback_traits::allocate_array(get_fallback_allocator(), count, size,
-                                                       alignment);
+                else
+                    return fallback_traits::allocate_array(get_fallback_allocator(), count, size,
+                                                           alignment);
             }
 
             void deallocate_array(void* array, std::size_t count, std::size_t size,
@@ -179,8 +184,9 @@ namespace foonathan
                 if (get_segregatable().use_allocate_array(count, size, alignment))
                     segregatable_traits::deallocate_array(get_segregatable_allocator(), array,
                                                           count, size, alignment);
-                fallback_traits::deallocate_array(get_fallback_allocator(), array, count, size,
-                                                  alignment);
+                else
+                    fallback_traits::deallocate_array(get_fallback_allocator(), array, count, size,
+                                                      alignment);
             }
             /// @}
 

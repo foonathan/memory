@@ -10,6 +10,7 @@ set(detail_header
         ${header_path}/detail/assert.hpp
         ${header_path}/detail/container_node_sizes.hpp
         ${header_path}/detail/debug_helpers.hpp
+        ${header_path}/detail/ebo_storage.hpp
         ${header_path}/detail/free_list.hpp
         ${header_path}/detail/free_list_array.hpp
         ${header_path}/detail/lowlevel_allocator.hpp
@@ -88,6 +89,7 @@ endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
 _foonathan_use_comp(foonathan_memory)
+comp_target_features(foonathan_memory PRIVATE CPP11)
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
                                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
                                                    $<INSTALL_INTERFACE:${include_dest}> # for client in install mode
@@ -96,7 +98,8 @@ target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN
 target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY=1
                             FOONATHAN_MEMORY_VERSION_MAJOR=${FOONATHAN_MEMORY_VERSION_MAJOR}
-                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR})
+                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR}
+                            FOONATHAN_MEMORY_VERSION_PATCH=${FOONATHAN_MEMORY_VERSION_PATCH})
 
 # installation
 install(TARGETS foonathan_memory EXPORT foonathan_memory  DESTINATION ${lib_dest})

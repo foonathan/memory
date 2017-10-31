@@ -35,9 +35,9 @@ namespace foonathan
                 const char* end;
 
                 stack_marker(std::size_t i, const detail::fixed_memory_stack& s,
-                             const char* end) FOONATHAN_NOEXCEPT : index(i),
-                                                                   top(s.top()),
-                                                                   end(end)
+                             const char* e) FOONATHAN_NOEXCEPT : index(i),
+                                                                 top(s.top()),
+                                                                 end(e)
                 {
                 }
 
