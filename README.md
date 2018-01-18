@@ -5,6 +5,11 @@
 The C++ STL allocator model has various flaws. For example, they are fixed to a certain type, because they are almost necessarily required to be templates. So you can't easily share a single allocator for multiple types. In addition, you can only get a copy from the containers and not the original allocator object. At least with C++11 they are allowed to be stateful and so can be made object not instance based. But still, the model has many flaws.
 Over the course of the years many solutions have been proposed. for example [EASTL]. This library is another. But instead of trying to change the STL, it works with the current implementation.
 
+[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://patreon.com/foonathan)
+
+If you like this project, consider supporting me on Patreon.
+It would really help!
+
 ## Features
 
 New allocator concepts:
@@ -209,6 +214,19 @@ struct raw_allocator
 
 A `RawAllocator` only needs to be moveable, all `Allocator` classes are `RawAllocators` too.
 Classes not providing the interface can specialize the `allocator_traits`, read more about [writing allocators here](http://foonathan.github.io/doc/memory/md_doc_writing_allocators.html) or about the technical details of the [concept here](http://foonathan.github.io/doc/memory/md_doc_concepts.html).
+
+## Acknowledgements
+
+This project is greatly supported by my [patrons](https://patreon.com/foonathan).
+In particular thanks to the individual supporters:
+
+* Kaido Kert
+
+And big thanks to the contributors as well:
+
+* @nicolastagliani
+* @bfierz
+* @Manu343726
 
 [EASTL]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html
 [CMake]: www.cmake.org
