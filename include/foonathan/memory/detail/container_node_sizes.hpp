@@ -5,6 +5,6 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_CONTAINER_NODE_SIZES_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_CONTAINER_NODE_SIZES_HPP_INCLUDED
 
-#include "container_node_sizes_impl.hpp"
+#include "../container_node_sizes_impl.hpp"
 
 #endif //FOONATHAN_MEMORY_DETAIL_CONTAINER_NODE_SIZES_HPP_INCLUDED
