@@ -1,3 +1,5 @@
 /doc/html
 /doc/*.tmp
 # Created by .ignore support plugin (hsz.mobi)
+
+build

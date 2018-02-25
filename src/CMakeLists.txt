@@ -92,8 +92,7 @@ _foonathan_use_comp(foonathan_memory)
 comp_target_features(foonathan_memory PRIVATE CPP11)
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
                                                    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # for generated files in build mode
-                                                   $<INSTALL_INTERFACE:${include_dest}> # for client in install mode
-                                                   $<INSTALL_INTERFACE:${lib_dest}> # for generated files in install mdoe
+                                                   $<INSTALL_INTERFACE:${FOONATHAN_MEMORY_INC_INSTALL_DIR}> # for client in install mode
                                             PRIVATE ${header_path}) # for source files
 target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY=1
@@ -101,8 +100,18 @@ target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR}
                             FOONATHAN_MEMORY_VERSION_PATCH=${FOONATHAN_MEMORY_VERSION_PATCH})
 
-# installation
-install(TARGETS foonathan_memory EXPORT foonathan_memory  DESTINATION ${lib_dest})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${lib_dest})
-install(FILES ${header}                                   DESTINATION ${include_dest}/foonathan/memory)
-install(FILES ${detail_header}                            DESTINATION ${include_dest}/foonathan/memory/detail)
+install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
+        RUNTIME       DESTINATION ${FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR}
+        LIBRARY       DESTINATION ${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}
+        ARCHIVE       DESTINATION ${FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR}
+        FRAMEWORK     DESTINATION ${FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR})
+
+# Write/install version file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/cmake/foonathan_memory-version.cmake"
+                                 VERSION ${FOONATHAN_MEMORY_VERSION}
+                                 COMPATIBILITY AnyNewerVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR})
+install(FILES ${header}                                   DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory)
+install(FILES ${detail_header}                            DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)

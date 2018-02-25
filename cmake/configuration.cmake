@@ -6,10 +6,39 @@
 # note: only include it in memory's top-level CMakeLists.txt, after compatibility.cmake
 
 # installation destinations
-set(tool_dest "bin") # for the nodesize_dbg, just ignore version and the like
-set(include_dest "include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") # header files
-set(main_lib_dest "lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") # library config file
-set(lib_dest "${main_lib_dest}/${CMAKE_BUILD_TYPE}") # build type dependend files (config_impl.hpp/library file)
+
+# Define Install Directories
+# Install stuff (default location is not some where on the system! for safty reasons)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE STRING "Install prefix (e.g. /usr/local/)" FORCE)
+endif()
+if(UNIX)
+    include(GNUInstallDirs)
+
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") 
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") 
+    set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+    set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+    set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}/cmake")
+    set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}")
+
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "bin") # for the nodesize_dbg, just ignore version and the like
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") # header files
+
+elseif(WIN32)
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") 
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") 
+    set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR   "bin/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+    set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR   "lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+    set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "bin/foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}/cmake")
+    set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}")
+else()
+	message(FATAL_ERROR "Could not set install folders for this platform!")
+endif()
 
 # what to build
 # examples/tests if toplevel directory (i.e. direct build, not as subdirectory) and hosted

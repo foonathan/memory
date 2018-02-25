@@ -28,10 +28,10 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
     add_subdirectory(tool)
 endif()
 
-# exporting
-configure_file(cmake/foonathan_memory-config-version.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake
-               @ONLY)
+# install readme and license
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_SOURCE_DIR}/README.md" DESTINATION ${FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR})
 
-install(FILES cmake/foonathan_memory-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake DESTINATION ${main_lib_dest})
-install(EXPORT foonathan_memory DESTINATION ${lib_dest})
+install(EXPORT foonathan_memoryTargets DESTINATION ${FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR}
+		                               FILE foonathan_memory-config.cmake)
+
+
