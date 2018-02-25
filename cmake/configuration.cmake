@@ -5,10 +5,11 @@
 # defines configuration options
 # note: only include it in memory's top-level CMakeLists.txt, after compatibility.cmake
 
+# set a debug postfix
+set(CMAKE_DEBUG_POSTFIX "-dbg")
+
 # installation destinations
 
-# Define Install Directories
-# Install stuff (default location is not some where on the system! for safty reasons)
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE STRING "Install prefix (e.g. /usr/local/)" FORCE)
 endif()
