@@ -5,8 +5,8 @@
 #ifndef FOONATHAN_MEMORY_DETAIL_EBO_STORAGE_HPP_INCLUDED
 #define FOONATHAN_MEMORY_DETAIL_EBO_STORAGE_HPP_INCLUDED
 
-#include "detail/utility.hpp"
-#include "config.hpp"
+#include "utility.hpp"
+#include "../config.hpp"
 
 namespace foonathan
 {

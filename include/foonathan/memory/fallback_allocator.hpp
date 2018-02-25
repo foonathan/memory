@@ -11,7 +11,7 @@
 #include "detail/ebo_storage.hpp"
 #include "detail/utility.hpp"
 #include "allocator_traits.hpp"
-#include "config.hpp"
+#include "../config.hpp"
 
 namespace foonathan
 {
