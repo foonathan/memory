@@ -37,7 +37,7 @@ if(UNIX)
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory") # header filestree
 
 elseif(WIN32)
-    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory")
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory")
     set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin") 
     set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR   "bin")
     set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR   "lib")
