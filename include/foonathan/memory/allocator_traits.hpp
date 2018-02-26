@@ -58,7 +58,7 @@ namespace foonathan
         /// \ingroup memory core
         template <class Allocator>
         struct allocator_is_raw_allocator
-            : FOONATHAN_EBO(detail::check_standard_allocator<Allocator>::valid)
+        : FOONATHAN_EBO(detail::check_standard_allocator<Allocator>::valid)
         {
         };
 
@@ -75,6 +75,12 @@ namespace foonathan
             // used to give priority to the functions
             struct error
             {
+                operator void*() const noexcept
+                {
+                    FOONATHAN_MEMORY_UNREACHABLE(
+                        "this is just to hide an error and move static_assert to the front");
+                    return nullptr;
+                }
             };
             struct std_concept : error
             {
@@ -176,7 +182,8 @@ namespace foonathan
                             error allocate_node(error, Allocator&, std::size_t, std::size_t)
             {
                 static_assert(invalid_allocator_concept<Allocator>::error,
-                              "type does not provide: void* allocate_node(std::size_t, "
+                              "type is not a RawAllocator as it does not provide: void* "
+                              "allocate_node(std::size_t, "
                               "std::size_t)");
                 return {};
             }
@@ -199,7 +206,8 @@ namespace foonathan
                     error deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
             {
                 static_assert(invalid_allocator_concept<Allocator>::error,
-                              "type does not provide: void deallocate_node(void*, std::size_t, "
+                              "type is not a RawAllocator as it does not provide: void "
+                              "deallocate_node(void*, std::size_t, "
                               "std::size_t)");
                 return error{};
             }
@@ -367,25 +375,23 @@ namespace foonathan
 
             template <typename T>
             struct has_invalid_alloc_function
-                : std::is_same<decltype(
-                                   traits_detail::allocate_node(traits_detail::full_concept{},
-                                                                std::declval<
-                                                                    typename allocator_traits<T>::
-                                                                        allocator_type&>(),
-                                                                0, 0)),
-                               traits_detail::error>
+            : std::is_same<decltype(
+                               traits_detail::allocate_node(traits_detail::full_concept{},
+                                                            std::declval<typename allocator_traits<
+                                                                T>::allocator_type&>(),
+                                                            0, 0)),
+                           traits_detail::error>
             {
             };
 
             template <typename T>
             struct has_invalid_dealloc_function
-                : std::is_same<decltype(
-                                   traits_detail::deallocate_node(traits_detail::full_concept{},
-                                                                  std::declval<
-                                                                      typename allocator_traits<T>::
-                                                                          allocator_type&>(),
-                                                                  nullptr, 0, 0)),
-                               traits_detail::error>
+            : std::is_same<
+                  decltype(traits_detail::deallocate_node(traits_detail::full_concept{},
+                                                          std::declval<typename allocator_traits<
+                                                              T>::allocator_type&>(),
+                                                          nullptr, 0, 0)),
+                  traits_detail::error>
             {
             };
 
@@ -396,9 +402,9 @@ namespace foonathan
 
             template <typename T>
             struct is_raw_allocator<T, std::integral_constant<bool, true>>
-                : std::integral_constant<bool, allocator_is_raw_allocator<T>::value
-                                                   && !(has_invalid_alloc_function<T>::value
-                                                        || has_invalid_dealloc_function<T>::value)>
+            : std::integral_constant<bool, allocator_is_raw_allocator<T>::value
+                                               && !(has_invalid_alloc_function<T>::value
+                                                    || has_invalid_dealloc_function<T>::value)>
             {
             };
         } // namespace detail
@@ -408,8 +414,8 @@ namespace foonathan
         /// \ingroup memory core
         template <typename T>
         struct is_raw_allocator
-            : detail::is_raw_allocator<T, decltype(detail::alloc_uses_default_traits(
-                                              std::declval<T&>()))>
+        : detail::is_raw_allocator<T,
+                                   decltype(detail::alloc_uses_default_traits(std::declval<T&>()))>
         {
         };
 
@@ -427,7 +433,8 @@ namespace foonathan
                     error try_allocate_node(error, Allocator&, std::size_t, std::size_t)
             {
                 static_assert(invalid_allocator_concept<Allocator>::error,
-                              "type does not provide: void* try_allocate_node(std::size_t, "
+                              "type is not a composable RawAllocator as it does not provide: void* "
+                              "try_allocate_node(std::size_t, "
                               "std::size_t)");
                 return {};
             }
@@ -444,7 +451,8 @@ namespace foonathan
                     error try_deallocate_node(error, Allocator&, void*, std::size_t, std::size_t)
             {
                 static_assert(invalid_allocator_concept<Allocator>::error,
-                              "type does not provide: bool try_deallocate_node(void*, std::size_t, "
+                              "type is not a composable RawAllocator as it does not provide: bool "
+                              "try_deallocate_node(void*, std::size_t, "
                               "std::size_t)");
                 return error{};
             }
@@ -547,25 +555,24 @@ namespace foonathan
 
             template <typename T>
             struct has_invalid_try_alloc_function
-                : std::is_same<decltype(
-                                   traits_detail::
-                                       try_allocate_node(traits_detail::full_concept{},
-                                                         std::declval<typename allocator_traits<T>::
-                                                                          allocator_type&>(),
-                                                         0, 0)),
-                               traits_detail::error>
+            : std::is_same<
+                  decltype(traits_detail::try_allocate_node(traits_detail::full_concept{},
+                                                            std::declval<typename allocator_traits<
+                                                                T>::allocator_type&>(),
+                                                            0, 0)),
+                  traits_detail::error>
             {
             };
 
             template <typename T>
             struct has_invalid_try_dealloc_function
-                : std::is_same<decltype(traits_detail::
-                                            try_deallocate_node(traits_detail::full_concept{},
-                                                                std::declval<
-                                                                    typename allocator_traits<T>::
-                                                                        allocator_type&>(),
-                                                                nullptr, 0, 0)),
-                               traits_detail::error>
+            : std::is_same<
+                  decltype(
+                      traits_detail::try_deallocate_node(traits_detail::full_concept{},
+                                                         std::declval<typename allocator_traits<
+                                                             T>::allocator_type&>(),
+                                                         nullptr, 0, 0)),
+                  traits_detail::error>
             {
             };
 
@@ -576,10 +583,9 @@ namespace foonathan
 
             template <typename T>
             struct is_composable_allocator<T, std::integral_constant<bool, true>>
-                : std::integral_constant<bool,
-                                         memory::is_raw_allocator<T>::value
-                                             && !(has_invalid_try_alloc_function<T>::value
-                                                  || has_invalid_try_dealloc_function<T>::value)>
+            : std::integral_constant<bool, memory::is_raw_allocator<T>::value
+                                               && !(has_invalid_try_alloc_function<T>::value
+                                                    || has_invalid_try_dealloc_function<T>::value)>
             {
             };
         } // namespace detail
@@ -589,9 +595,8 @@ namespace foonathan
         /// \ingroup memory core
         template <typename T>
         struct is_composable_allocator
-            : detail::is_composable_allocator<T,
-                                              decltype(detail::composable_alloc_uses_default_traits(
-                                                  std::declval<T&>()))>
+        : detail::is_composable_allocator<T, decltype(detail::composable_alloc_uses_default_traits(
+                                                 std::declval<T&>()))>
         {
         };
     }
