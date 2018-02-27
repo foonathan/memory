@@ -25,10 +25,8 @@ namespace foonathan
         /// \ingroup memory adapter
         template <class Default, class Fallback>
         class fallback_allocator
-            : FOONATHAN_EBO(
-                  detail::ebo_storage<0, typename allocator_traits<Default>::allocator_type>),
-              FOONATHAN_EBO(
-                  detail::ebo_storage<1, typename allocator_traits<Fallback>::allocator_type>)
+        : FOONATHAN_EBO(detail::ebo_storage<0, typename allocator_traits<Default>::allocator_type>),
+          FOONATHAN_EBO(detail::ebo_storage<1, typename allocator_traits<Fallback>::allocator_type>)
         {
             using default_traits             = allocator_traits<Default>;
             using default_composable_traits  = composable_allocator_traits<Default>;
@@ -44,6 +42,15 @@ namespace foonathan
             using is_stateful =
                 std::integral_constant<bool, default_traits::is_stateful::value
                                                  || fallback_traits::is_stateful::value>;
+
+            /// \effects Default constructs both allocators.
+            /// \notes This function only participates in overload resolution, if both allocators are not stateful.
+            FOONATHAN_ENABLE_IF(!is_stateful::value)
+            fallback_allocator()
+            : detail::ebo_storage<0, default_allocator_type>({}),
+              detail::ebo_storage<1, fallback_allocator_type>({})
+            {
+            }
 
             /// \effects Constructs the allocator by passing in the two allocators it has.
             explicit fallback_allocator(default_allocator_type&&  default_alloc,
