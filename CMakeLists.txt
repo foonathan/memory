@@ -13,6 +13,42 @@ set(FOONATHAN_MEMORY_VERSION_PATCH 1 CACHE STRING "patch version of memory" FORC
 set(FOONATHAN_MEMORY_VERSION "${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}.${FOONATHAN_MEMORY_VERSION_PATCH}"
                              CACHE STRING "version of memory" FORCE)
 
+
+# set a debug postfix
+set(CMAKE_DEBUG_POSTFIX "-dbg")
+
+# installation destinations
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE STRING "Install prefix (e.g. /usr/local/)" FORCE)
+endif()
+if(UNIX)
+    include(GNUInstallDirs)
+
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory") 
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}") 
+    set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
+    set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
+    set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
+
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/foonathan_memory/cmake")
+    set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/foonathan_memory")
+
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "bin") # for the nodesize_dbg, just ignore version and the like
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory") # header filestree
+
+elseif(WIN32)
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory")
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin") 
+    set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR   "bin")
+    set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR   "lib")
+    set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "bin")
+
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "cmake")
+    set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "./")
+else()
+	message(FATAL_ERROR "Could not set install folders for this platform!")
+endif()
+
 include(cmake/compatibility.cmake)
 include(cmake/configuration.cmake)
 
@@ -28,10 +64,10 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
     add_subdirectory(tool)
 endif()
 
-# exporting
-configure_file(cmake/foonathan_memory-config-version.cmake.in
-               ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake
-               @ONLY)
+# install readme and license
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_SOURCE_DIR}/README.md" DESTINATION ${FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR})
 
-install(FILES cmake/foonathan_memory-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/foonathan_memory-config-version.cmake DESTINATION ${main_lib_dest})
-install(EXPORT foonathan_memory DESTINATION ${lib_dest})
+install(EXPORT foonathan_memoryTargets DESTINATION ${FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR}
+		                               FILE foonathan_memory-config.cmake)
+
+

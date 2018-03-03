@@ -20,10 +20,10 @@ comp_target_features(_foonathan_memory_comp_runner INTERFACE
         PREFIX "FOONATHAN_" NAMESPACE "foonathan_comp"
         INCLUDE_PATH ${_foonathan_memory_comp_include_path}
         NOFLAGS)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/foonathan DESTINATION include/comp)
 
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/foonathan DESTINATION "${FOONATHAN_MEMORY_INC_INSTALL_DIR}/comp")
 function(_foonathan_use_comp target)
     target_compile_options(${target} PUBLIC ${_foonathan_memory_comp_runner_COMP_COMPILE_OPTIONS})
     target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${_foonathan_memory_comp_include_path}>
-                                                $<INSTALL_INTERFACE:include/comp>)
+                                                $<INSTALL_INTERFACE:${FOONATHAN_MEMORY_INC_INSTALL_DIR}/comp>)
 endfunction()
