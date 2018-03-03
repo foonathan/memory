@@ -5,12 +5,6 @@
 # defines configuration options
 # note: only include it in memory's top-level CMakeLists.txt, after compatibility.cmake
 
-# installation destinations
-set(tool_dest "bin") # for the nodesize_dbg, just ignore version and the like
-set(include_dest "include/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") # header files
-set(main_lib_dest "lib/foonathan_memory-${FOONATHAN_MEMORY_VERSION}") # library config file
-set(lib_dest "${main_lib_dest}/${CMAKE_BUILD_TYPE}") # build type dependend files (config_impl.hpp/library file)
-
 # what to build
 # examples/tests if toplevel directory (i.e. direct build, not as subdirectory) and hosted
 # tools if hosted
