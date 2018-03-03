@@ -75,7 +75,7 @@ namespace foonathan
             // used to give priority to the functions
             struct error
             {
-                operator void*() const noexcept
+                operator void*() const FOONATHAN_NOEXCEPT
                 {
                     FOONATHAN_MEMORY_UNREACHABLE(
                         "this is just to hide an error and move static_assert to the front");
