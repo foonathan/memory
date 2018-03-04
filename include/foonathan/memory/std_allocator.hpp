@@ -74,7 +74,12 @@ namespace foonathan
         /// synchronization is done via a \c Mutex which defaults to \ref default_mutex.
         /// \ingroup memory adapter
         template <typename T, class RawAllocator, class Mutex = default_mutex>
-        class std_allocator : FOONATHAN_EBO(public allocator_reference<RawAllocator, Mutex>)
+        class std_allocator :
+#if defined _MSC_VER && defined __clang__
+        FOONATHAN_EBO(protected allocator_reference<RawAllocator, Mutex>)
+#else
+        FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+#endif
         {
             using alloc_reference = allocator_reference<RawAllocator, Mutex>;
             // if it is any_allocator_reference an optimized implementation can be used
