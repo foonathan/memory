@@ -29,15 +29,21 @@ namespace foonathan
             using mutex      = Mutex;
             using value_type = Type;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deallocator must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_deallocator() FOONATHAN_NOEXCEPT = default;
+
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
             allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc)
+            : allocator_reference<RawAllocator, Mutex>(alloc)
             {
             }
 
             /// \effects Deallocates the memory given to it.
             /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type)) on the referenced allocator object.
+            /// \requires The deallocator must not have been created by the default constructor.
             void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
             {
                 this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
@@ -45,6 +51,7 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
+            /// \requires The deallocator must not be created by the default constructor.
             auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
                 std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
             {
@@ -57,7 +64,7 @@ namespace foonathan
         /// \ingroup memory adapter
         template <typename Type, class RawAllocator, class Mutex>
         class allocator_deallocator<Type[], RawAllocator, Mutex>
-            : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
         {
         public:
             using allocator_type =
@@ -65,18 +72,24 @@ namespace foonathan
             using mutex      = Mutex;
             using value_type = Type;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deallocator must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_deallocator() FOONATHAN_NOEXCEPT : size_(0u) {}
+
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
             allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc,
-                                  std::size_t size) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc),
-                  size_(size)
+                                  std::size_t                              size) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator, Mutex>(alloc),
+              size_(size)
             {
             }
 
             /// \effects Deallocates the memory given to it.
             /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object with the size given in the constructor.
+            /// \requires The deallocator must not have been created by the default constructor.
             void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
             {
                 this->deallocate_array(pointer, size_, sizeof(value_type),
@@ -85,6 +98,7 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
+            /// \requires The deallocator must not have been created by the default constructor.
             auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
                 std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
             {
@@ -92,7 +106,7 @@ namespace foonathan
             }
 
             /// \returns The size of the array that will be deallocated.
-            /// This is the same value as passed in the constructor.
+            /// This is the same value as passed in the constructor, or `0` if it was created by the default constructor.
             std::size_t array_size() const FOONATHAN_NOEXCEPT
             {
                 return size_;
@@ -114,16 +128,22 @@ namespace foonathan
             using mutex      = Mutex;
             using value_type = Type;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deleter must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_deleter() FOONATHAN_NOEXCEPT = default;
+
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
             allocator_deleter(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc)
+            : allocator_reference<RawAllocator, Mutex>(alloc)
             {
             }
 
             /// \effects Calls the destructor and deallocates the memory given to it.
             /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object for the deallocation.
+            /// \requires The deleter must not have been created by the default constructor.
             void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
             {
                 pointer->~value_type();
@@ -144,7 +164,7 @@ namespace foonathan
         /// \ingroup memory adapter
         template <typename Type, class RawAllocator, class Mutex>
         class allocator_deleter<Type[], RawAllocator, Mutex>
-            : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
         {
         public:
             using allocator_type =
@@ -152,18 +172,24 @@ namespace foonathan
             using mutex      = Mutex;
             using value_type = Type;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deleter must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_deleter() FOONATHAN_NOEXCEPT : size_(0u) {}
+
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
             allocator_deleter(allocator_reference<RawAllocator, mutex> alloc,
-                              std::size_t size) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc),
-                  size_(size)
+                              std::size_t                              size) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator, Mutex>(alloc),
+              size_(size)
             {
             }
 
             /// \effects Calls the destructors and deallocates the memory given to it.
             /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object with the size given in the constructor for the deallocation.
+            /// \requires The deleter must not have been created by the default constructor.
             void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
             {
                 for (auto cur = pointer; cur != pointer + size_; ++cur)
@@ -174,6 +200,7 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
+            /// \requires The deleter must not be created by the default constructor.
             auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
                 std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
             {
@@ -181,7 +208,7 @@ namespace foonathan
             }
 
             /// \returns The size of the array that will be deallocated.
-            /// This is the same value as passed in the constructor.
+            /// This is the same value as passed in the constructor, or `0` if it was created by the default constructor.
             std::size_t array_size() const FOONATHAN_NOEXCEPT
             {
                 return size_;

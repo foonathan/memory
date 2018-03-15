@@ -104,8 +104,9 @@ namespace foonathan
         /// \ingroup memory storage
         template <class StoragePolicy, class Mutex>
         class allocator_storage
-            : FOONATHAN_EBO(StoragePolicy, detail::mutex_storage<detail::mutex_for<
-                                               typename StoragePolicy::allocator_type, Mutex>>)
+        : FOONATHAN_EBO(StoragePolicy,
+                        detail::mutex_storage<
+                            detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>)
         {
             static_assert(
                 !detail::is_nested_policy<StoragePolicy>::value,
@@ -115,8 +116,8 @@ namespace foonathan
             using composable_traits =
                 composable_allocator_traits<typename StoragePolicy::allocator_type>;
             using composable   = is_composable_allocator<typename StoragePolicy::allocator_type>;
-            using actual_mutex = const detail::
-                mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
+            using actual_mutex = const detail::mutex_storage<
+                detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>;
 
         public:
             using allocator_type = typename StoragePolicy::allocator_type;
@@ -126,18 +127,20 @@ namespace foonathan
 
             /// \effects Creates it by default-constructing the \c StoragePolicy.
             /// \requires The \c StoragePolicy must be default-constructible.
+            /// \notes The default constructor may create an invalid allocator storage not associated with any allocator.
+            /// If that is the case, it must not be used.
             allocator_storage() = default;
 
             /// \effects Creates it by passing it an allocator.
             /// The allocator will be forwarded to the \c StoragePolicy, it decides whether it will be moved, its address stored or something else.
             /// \requires The expression <tt>new storage_policy(std::forward<Alloc>(alloc))</tt> must be well-formed,
             /// otherwise this constructor does not participate in overload resolution.
-            template <class Alloc,
-                      // MSVC seems to ignore access rights in SFINAE below
-                      // use this to prevent this constructor being chosen instead of move for types inheriting from it
-                      FOONATHAN_REQUIRES(
-                          (!std::is_base_of<allocator_storage,
-                                            typename std::decay<Alloc>::type>::value))>
+            template <
+                class Alloc,
+                // MSVC seems to ignore access rights in SFINAE below
+                // use this to prevent this constructor being chosen instead of move for types inheriting from it
+                FOONATHAN_REQUIRES(
+                    (!std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value))>
             allocator_storage(Alloc&& alloc,
                               FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
             : storage_policy(detail::forward<Alloc>(alloc))
@@ -159,15 +162,15 @@ namespace foonathan
             /// \effects Moves the \c allocator_storage object.
             /// A moved-out \c allocator_storage object must still store a valid allocator object.
             allocator_storage(allocator_storage&& other) FOONATHAN_NOEXCEPT
-                : storage_policy(detail::move(other)),
-                  detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
-                                                          Mutex>>(detail::move(other))
+            : storage_policy(detail::move(other)),
+              detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
+                                                      Mutex>>(detail::move(other))
             {
             }
 
             allocator_storage& operator=(allocator_storage&& other) FOONATHAN_NOEXCEPT
             {
-                storage_policy::operator=(detail::move(other));
+                storage_policy::                                 operator=(detail::move(other));
                 detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
                                                         Mutex>>::operator=(detail::move(other));
                 return *this;
@@ -355,7 +358,7 @@ namespace foonathan
 
             /// \effects Creates it by moving in an allocator object.
             direct_storage(allocator_type&& allocator) FOONATHAN_NOEXCEPT
-                : allocator_type(detail::move(allocator))
+            : allocator_type(detail::move(allocator))
             {
             }
 
@@ -363,7 +366,7 @@ namespace foonathan
             /// \effects Moves the \c direct_storage object.
             /// This will move the stored allocator.
             direct_storage(direct_storage&& other) FOONATHAN_NOEXCEPT
-                : allocator_type(detail::move(other))
+            : allocator_type(detail::move(other))
             {
             }
 
@@ -462,10 +465,10 @@ namespace foonathan
             {
             };
 
-            reference_stateful reference_type(std::true_type stateful, std::false_type shared);
+            reference_stateful  reference_type(std::true_type stateful, std::false_type shared);
             reference_stateless reference_type(std::false_type stateful, std::true_type shared);
             reference_stateless reference_type(std::false_type stateful, std::false_type shared);
-            reference_shared reference_type(std::true_type stateful, std::true_type shared);
+            reference_shared    reference_type(std::true_type stateful, std::true_type shared);
 
             template <class RawAllocator, class Tag>
             class reference_storage_impl;
@@ -475,13 +478,21 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_stateful>
             {
             protected:
+                reference_storage_impl() FOONATHAN_NOEXCEPT : alloc_(nullptr) {}
+
                 reference_storage_impl(RawAllocator& allocator) FOONATHAN_NOEXCEPT
-                    : alloc_(&allocator)
+                : alloc_(&allocator)
                 {
+                }
+
+                bool is_valid() const FOONATHAN_NOEXCEPT
+                {
+                    return alloc_ != nullptr;
                 }
 
                 RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
                 {
+                    FOONATHAN_MEMORY_ASSERT(alloc_ != nullptr);
                     return *alloc_;
                 }
 
@@ -494,8 +505,13 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_stateless>
             {
             protected:
-                reference_storage_impl(const RawAllocator&) FOONATHAN_NOEXCEPT
+                reference_storage_impl() FOONATHAN_NOEXCEPT = default;
+
+                reference_storage_impl(const RawAllocator&) FOONATHAN_NOEXCEPT {}
+
+                bool is_valid() const FOONATHAN_NOEXCEPT
                 {
+                    return true;
                 }
 
                 RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
@@ -510,8 +526,15 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_shared>
             {
             protected:
+                reference_storage_impl() FOONATHAN_NOEXCEPT = default;
+
                 reference_storage_impl(const RawAllocator& alloc) FOONATHAN_NOEXCEPT : alloc_(alloc)
                 {
+                }
+
+                bool is_valid() const FOONATHAN_NOEXCEPT
+                {
+                    return true;
                 }
 
                 RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
@@ -530,7 +553,7 @@ namespace foonathan
         /// If a \c RawAllocator is shared, it will be directly embedded inside \ref reference_storage since it already provides \ref allocator_reference like semantics, so there is no need to add them manually,<br>
         /// Specialize it for your own types, if they provide sharing semantics and can be copied.
         /// They also must provide an `operator==` to check whether two allocators refer to the same shared one.
-        /// \note This makes no guarantess about the lifetime of the shared object, the sharing allocators can either own or refer to a shared object.
+        /// \note This makes no guarantees about the lifetime of the shared object, the sharing allocators can either own or refer to a shared object.
         /// \ingroup memory storage
         template <class RawAllocator>
         struct is_shared_allocator : std::false_type
@@ -547,11 +570,11 @@ namespace foonathan
         template <class RawAllocator>
         class reference_storage
 #ifndef DOXYGEN
-            : FOONATHAN_EBO(detail::reference_storage_impl<
-                            typename allocator_traits<RawAllocator>::allocator_type,
-                            decltype(detail::reference_type(
-                                typename allocator_traits<RawAllocator>::is_stateful{},
-                                is_shared_allocator<RawAllocator>{}))>)
+        : FOONATHAN_EBO(detail::reference_storage_impl<
+                        typename allocator_traits<RawAllocator>::allocator_type,
+                        decltype(detail::reference_type(
+                            typename allocator_traits<RawAllocator>::is_stateful{},
+                            is_shared_allocator<RawAllocator>{}))>)
 #endif
         {
             using storage = detail::reference_storage_impl<
@@ -563,19 +586,23 @@ namespace foonathan
         public:
             using allocator_type = typename allocator_traits<RawAllocator>::allocator_type;
 
+            /// Default constructor.
+            /// \effects If the allocator is stateless, this has no effect and the object is usable as an allocator.
+            /// If the allocator is stateful, creates an invalid reference without any associated allocator.
+            /// Then it must not be used.
+            /// If the allocator is shared, default constructs the shared allocator.
+            /// If the shared allocator does not have a default constructor, this constructor is ill-formed.
+            reference_storage() FOONATHAN_NOEXCEPT = default;
+
             /// \effects Creates it from a stateless or shared allocator.
             /// It will not store anything, only creates the allocator as needed.
             /// \requires The \c RawAllocator is stateless or shared.
-            reference_storage(const allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc)
-            {
-            }
+            reference_storage(const allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
 
             /// \effects Creates it from a reference to a stateful allocator.
             /// It will store a pointer to this allocator object.
             /// \note The user has to take care that the lifetime of the reference does not exceed the allocator lifetime.
-            reference_storage(allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc)
-            {
-            }
+            reference_storage(allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
 
             /// @{
             /// \effects Copies the \c allocator_reference object.
@@ -584,7 +611,15 @@ namespace foonathan
             reference_storage& operator=(const reference_storage&) FOONATHAN_NOEXCEPT = default;
             /// @}
 
+            /// \returns Whether or not the reference is valid.
+            /// It is only invalid, if it was created by the default constructor and the allocator is stateful.
+            explicit operator bool() const FOONATHAN_NOEXCEPT
+            {
+                return storage::is_valid();
+            }
+
             /// \returns Returns a reference to the allocator.
+            /// \requires The reference must be valid.
             allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
             {
                 return storage::get_allocator();
@@ -660,9 +695,9 @@ namespace foonathan
 
                 // count 1 means node
                 virtual void* allocate_impl(std::size_t count, std::size_t size,
-                                            std::size_t alignment) = 0;
-                virtual void deallocate_impl(void* ptr, std::size_t count, std::size_t size,
-                                             std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+                                            std::size_t alignment)                      = 0;
+                virtual void  deallocate_impl(void* ptr, std::size_t count, std::size_t size,
+                                              std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
 
                 virtual void* try_allocate_impl(std::size_t count, std::size_t size,
                                                 std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
@@ -775,31 +810,27 @@ namespace foonathan
         private:
             template <class RawAllocator>
             class basic_allocator
-                : public base_allocator,
-                  private detail::reference_storage_impl<
-                      typename allocator_traits<RawAllocator>::allocator_type,
-                      decltype(detail::reference_type(typename allocator_traits<RawAllocator>::
-                                                          is_stateful{},
-                                                      is_shared_allocator<RawAllocator>{}))>
+            : public base_allocator,
+              private detail::reference_storage_impl<
+                  typename allocator_traits<RawAllocator>::allocator_type,
+                  decltype(
+                      detail::reference_type(typename allocator_traits<RawAllocator>::is_stateful{},
+                                             is_shared_allocator<RawAllocator>{}))>
             {
                 using traits     = allocator_traits<RawAllocator>;
                 using composable = is_composable_allocator<typename traits::allocator_type>;
                 using storage    = detail::reference_storage_impl<
                     typename allocator_traits<RawAllocator>::allocator_type,
-                    decltype(detail::reference_type(typename allocator_traits<RawAllocator>::
-                                                        is_stateful{},
+                    decltype(detail::reference_type(typename allocator_traits<
+                                                        RawAllocator>::is_stateful{},
                                                     is_shared_allocator<RawAllocator>{}))>;
 
             public:
                 // non stateful
-                basic_allocator(const RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc)
-                {
-                }
+                basic_allocator(const RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
 
                 // stateful
-                basic_allocator(RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc)
-                {
-                }
+                basic_allocator(RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
 
             private:
                 typename traits::allocator_type& get() const FOONATHAN_NOEXCEPT
