@@ -72,13 +72,22 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
     // but not the stack itself destroyed
 
 #if FOONATHAN_HAS_THREAD_LOCAL && !defined(__MINGW64__)
+
 // only use the thread exit detector if we have thread local and are not running on MinGW due to a bug
 // see: https://sourceforge.net/p/mingw-w64/bugs/527/
 #define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 1
+
 #else
 #define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 0
+
+#if defined(_MSC_VER)
+#pragma message(                                                                                   \
+    "thread_local doesn't support destructors, need to use the temporary_stack_initializer to ensure proper cleanup of the temporary memory")
+#else
 #warning                                                                                           \
     "thread_local doesn't support destructors, need to use the temporary_stack_initializer to ensure proper cleanup of the temporary memory"
+#endif
+
 #endif
 
 static class detail::temporary_stack_list
