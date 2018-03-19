@@ -17,9 +17,7 @@ using namespace foonathan::memory;
 
 namespace
 {
-    void default_growth_tracker(std::size_t) FOONATHAN_NOEXCEPT
-    {
-    }
+    void default_growth_tracker(std::size_t) FOONATHAN_NOEXCEPT {}
 
     using temporary_impl_allocator        = default_allocator;
     using temporary_impl_allocator_traits = allocator_traits<temporary_impl_allocator>;
@@ -64,14 +62,24 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
 }
 
 #if FOONATHAN_MEMORY_TEMPORARY_STACK_MODE >= 2
-// lifetime managment through the nifty counter and the list
-// note: I could have used a simple `thread_local` variable for the temporary stack
-// but this could lead to issues with destruction order
-// and more importantly I have to support platforms that can't handle non-trivial thread local's
-// hence I need to dynamically allocate the stack's and store them in a container
-// on program exit the container is iterated and all stack's are properly destroyed
-// if a thread exit can be detected, the dynamic memory of the stack is already released,
-// but not the stack itself destroyed
+    // lifetime managment through the nifty counter and the list
+    // note: I could have used a simple `thread_local` variable for the temporary stack
+    // but this could lead to issues with destruction order
+    // and more importantly I have to support platforms that can't handle non-trivial thread local's
+    // hence I need to dynamically allocate the stack's and store them in a container
+    // on program exit the container is iterated and all stack's are properly destroyed
+    // if a thread exit can be detected, the dynamic memory of the stack is already released,
+    // but not the stack itself destroyed
+
+#if FOONATHAN_HAS_THREAD_LOCAL && !defined(__MINGW64__)
+// only use the thread exit detector if we have thread local and are not running on MinGW due to a bug
+// see: https://sourceforge.net/p/mingw-w64/bugs/527/
+#define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 1
+#else
+#define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 0
+#warning                                                                                           \
+    "thread_local doesn't support destructors, need to use the temporary_stack_initializer to ensure proper cleanup of the temporary memory"
+#endif
 
 static class detail::temporary_stack_list
 {
@@ -137,20 +145,21 @@ public:
 namespace
 {
     FOONATHAN_THREAD_LOCAL std::size_t nifty_counter;
-    FOONATHAN_THREAD_LOCAL temporary_stack* stack = nullptr;
+    FOONATHAN_THREAD_LOCAL temporary_stack* temp_stack = nullptr;
 
-#if FOONATHAN_HAS_THREAD_LOCAL
+#if FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR
+    // don't use this on a bug
     thread_local struct thread_exit_detector_t
     {
         ~thread_exit_detector_t() FOONATHAN_NOEXCEPT
         {
-            if (stack)
+            if (temp_stack)
                 // clear automatically on thread exit, as the initializer's destructor does
                 // note: if another's thread_local variable destructor is called after this one
                 // and that destructor uses the temporary allocator
                 // the stack needs to grow again
                 // but who does temporary allocation in a destructor?!
-                temporary_stack_list_obj.clear(*stack);
+                temporary_stack_list_obj.clear(*temp_stack);
         }
     } thread_exit_detector;
 #endif
@@ -161,7 +170,7 @@ detail::temporary_stack_list_node::temporary_stack_list_node(int) FOONATHAN_NOEX
     next_ = temporary_stack_list_obj.first.load();
     while (!temporary_stack_list_obj.first.compare_exchange_weak(next_, this))
         ;
-#if FOONATHAN_HAS_THREAD_LOCAL
+#if FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR
     (void)&thread_exit_detector; // ODR-use it, so it will be created
 #endif
 }
@@ -173,29 +182,29 @@ detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() FOONATHAN_NOEXC
 
 detail::temporary_allocator_dtor_t::~temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT
 {
-    if (--nifty_counter == 0u && stack)
+    if (--nifty_counter == 0u && temp_stack)
         temporary_stack_list_obj.destroy();
 }
 
 temporary_stack_initializer::temporary_stack_initializer(std::size_t initial_size)
 {
-    if (!stack)
-        stack = temporary_stack_list_obj.create(initial_size);
+    if (!temp_stack)
+        temp_stack = temporary_stack_list_obj.create(initial_size);
 }
 
 temporary_stack_initializer::~temporary_stack_initializer() FOONATHAN_NOEXCEPT
 {
     // don't destroy, nifty counter does that
     // but can get rid of all the memory
-    if (stack)
-        temporary_stack_list_obj.clear(*stack);
+    if (temp_stack)
+        temporary_stack_list_obj.clear(*temp_stack);
 }
 
 temporary_stack& foonathan::memory::get_temporary_stack(std::size_t initial_size)
 {
-    if (!stack)
-        stack = temporary_stack_list_obj.create(initial_size);
-    return *stack;
+    if (!temp_stack)
+        temp_stack = temporary_stack_list_obj.create(initial_size);
+    return *temp_stack;
 }
 
 #elif FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 1
@@ -253,9 +262,7 @@ temporary_stack_initializer::temporary_stack_initializer(std::size_t initial_siz
                                  "to disable this message)");
 }
 
-temporary_stack_initializer::~temporary_stack_initializer()
-{
-}
+temporary_stack_initializer::~temporary_stack_initializer() {}
 
 temporary_stack& foonathan::memory::get_temporary_stack(std::size_t)
 {
@@ -268,9 +275,7 @@ temporary_stack& foonathan::memory::get_temporary_stack(std::size_t)
 
 const temporary_stack_initializer::defer_create_t temporary_stack_initializer::defer_create;
 
-temporary_allocator::temporary_allocator() : temporary_allocator(get_temporary_stack())
-{
-}
+temporary_allocator::temporary_allocator() : temporary_allocator(get_temporary_stack()) {}
 
 temporary_allocator::temporary_allocator(temporary_stack& stack)
 : unwind_(stack), prev_(stack.top_), shrink_to_fit_(false)
