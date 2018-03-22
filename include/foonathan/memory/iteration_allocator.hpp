@@ -41,8 +41,8 @@ namespace foonathan
         /// \ingroup memory allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
         class iteration_allocator
-            : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>),
-              FOONATHAN_EBO(detail::default_leak_checker<detail::iteration_allocator_leak_handler>)
+        : FOONATHAN_EBO(make_block_allocator_t<BlockOrRawAllocator, fixed_block_allocator>),
+          FOONATHAN_EBO(detail::default_leak_checker<detail::iteration_allocator_leak_handler>)
         {
             using leak_checker =
                 detail::default_leak_checker<detail::iteration_allocator_leak_handler>;
@@ -76,7 +76,7 @@ namespace foonathan
                 auto& stack = stacks_[cur_];
 
                 auto fence  = detail::debug_fence_size;
-                auto offset = detail::align_offset(stack.top(), alignment);
+                auto offset = detail::align_offset(stack.top() + fence, alignment);
                 if (!stack.top()
                     || (fence + offset + size + fence > std::size_t(block_end(cur_) - stack.top())))
                     FOONATHAN_THROW(out_of_fixed_memory(info(), size));

@@ -93,7 +93,7 @@ namespace foonathan
 
             private:
                 std::size_t fence_size() const FOONATHAN_NOEXCEPT;
-                void insert_impl(void* mem, std::size_t size) FOONATHAN_NOEXCEPT;
+                void        insert_impl(void* mem, std::size_t size) FOONATHAN_NOEXCEPT;
 
                 char*       first_;
                 std::size_t node_size_, capacity_;
@@ -117,7 +117,7 @@ namespace foonathan
 
                 ordered_free_memory_list(std::size_t node_size, void* mem,
                                          std::size_t size) FOONATHAN_NOEXCEPT
-                    : ordered_free_memory_list(node_size)
+                : ordered_free_memory_list(node_size)
                 {
                     insert(mem, size);
                 }

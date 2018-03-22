@@ -125,23 +125,23 @@ FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
 
 free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-    : first_(nullptr),
-      node_size_(node_size > min_element_size ? node_size : min_element_size),
-      capacity_(0u)
+: first_(nullptr),
+  node_size_(node_size > min_element_size ? node_size : min_element_size),
+  capacity_(0u)
 {
 }
 
 free_memory_list::free_memory_list(std::size_t node_size, void* mem,
                                    std::size_t size) FOONATHAN_NOEXCEPT
-    : free_memory_list(node_size)
+: free_memory_list(node_size)
 {
     insert(mem, size);
 }
 
 free_memory_list::free_memory_list(free_memory_list&& other) FOONATHAN_NOEXCEPT
-    : first_(other.first_),
-      node_size_(other.node_size_),
-      capacity_(other.capacity_)
+: first_(other.first_),
+  node_size_(other.node_size_),
+  capacity_(other.capacity_)
 {
     other.first_    = nullptr;
     other.capacity_ = 0u;
@@ -344,10 +344,10 @@ FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_alignment;
 
 ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-    : node_size_(node_size > min_element_size ? node_size : min_element_size),
-      capacity_(0u),
-      last_dealloc_(end_node()),
-      last_dealloc_prev_(begin_node())
+: node_size_(node_size > min_element_size ? node_size : min_element_size),
+  capacity_(0u),
+  last_dealloc_(end_node()),
+  last_dealloc_prev_(begin_node())
 {
     xor_list_set(begin_node(), nullptr, end_node());
     xor_list_set(end_node(), begin_node(), nullptr);

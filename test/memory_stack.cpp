@@ -139,4 +139,10 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(unwind2.get_marker() == m);
         REQUIRE(!unwind.will_unwind());
     }
+    SECTION("overaligned")
+    {
+        auto align = 2 * detail::max_alignment;
+        auto mem   = stack.allocate(align, align);
+        REQUIRE(detail::is_aligned(mem, align));
+    }
 }
