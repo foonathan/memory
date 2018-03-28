@@ -7,6 +7,8 @@
 
 #include <unordered_map>
 
+#include <foonathan/memory/heap_allocator.hpp>
+
 struct memory_info
 {
     void*       memory;
@@ -21,7 +23,7 @@ public:
 
     void* allocate_node(std::size_t size, std::size_t alignment)
     {
-        auto mem        = ::operator new(size);
+        auto mem        = foonathan::memory::heap_allocator().allocate_node(size, alignment);
         last_allocated_ = {mem, size, alignment};
         allocated_[mem] = last_allocated_;
         return mem;
@@ -39,7 +41,7 @@ public:
         }
         else
             allocated_.erase(iter);
-        ::operator delete(node);
+        foonathan::memory::heap_allocator().deallocate_node(node, size, alignment);
     }
 
     std::size_t max_node_size() const FOONATHAN_NOEXCEPT
@@ -79,9 +81,9 @@ public:
 
 private:
     std::unordered_map<void*, memory_info> allocated_;
-    memory_info last_allocated_;
-    std::size_t dealloc_count_ = 0u;
-    bool        last_valid_    = true;
+    memory_info                            last_allocated_;
+    std::size_t                            dealloc_count_ = 0u;
+    bool                                   last_valid_    = true;
 };
 
 #endif //FOONATHAN_MEMORY_TEST_TEST_ALLOCATOR_HPP
