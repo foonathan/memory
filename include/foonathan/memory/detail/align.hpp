@@ -29,12 +29,16 @@ namespace foonathan
 
             // returns the offset needed to align ptr for given alignment
             // alignment must be valid
-            inline std::size_t align_offset(void* ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
+            inline std::size_t align_offset(std::uintptr_t address,
+                                            std::size_t    alignment) FOONATHAN_NOEXCEPT
             {
                 FOONATHAN_MEMORY_ASSERT(is_valid_alignment(alignment));
-                auto address    = reinterpret_cast<std::uintptr_t>(ptr);
                 auto misaligned = address & (alignment - 1);
                 return misaligned != 0 ? (alignment - misaligned) : 0;
+            }
+            inline std::size_t align_offset(void* ptr, std::size_t alignment) FOONATHAN_NOEXCEPT
+            {
+                return align_offset(reinterpret_cast<std::uintptr_t>(ptr), alignment);
             }
 
             // whether or not the pointer is aligned for given alignment
@@ -51,7 +55,7 @@ namespace foonathan
             // returns the minimum alignment required for a node of given size
             std::size_t alignment_for(std::size_t size) FOONATHAN_NOEXCEPT;
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED

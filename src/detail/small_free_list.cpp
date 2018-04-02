@@ -24,7 +24,7 @@ struct foonathan::memory::detail::chunk : chunk_base
 
     // gives it the size of the memory block it is created in and the size of a node
     chunk(std::size_t total_memory, std::size_t node_size) FOONATHAN_NOEXCEPT
-        : chunk_base(static_cast<unsigned char>((total_memory - memory_offset) / node_size))
+    : chunk_base(static_cast<unsigned char>((total_memory - memory_offset) / node_size))
     {
         FOONATHAN_MEMORY_ASSERT((total_memory - memory_offset) / node_size <= max_nodes);
         FOONATHAN_MEMORY_ASSERT(capacity > 0);
@@ -156,32 +156,32 @@ namespace
             cur->prev   = end;
         }
     }
-}
+} // namespace
 
 FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t small_free_memory_list::min_element_alignment;
 
 small_free_memory_list::small_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
-    : node_size_(node_size),
-      capacity_(0u),
-      alloc_chunk_(&base_),
-      dealloc_chunk_(&base_)
+: node_size_(node_size),
+  capacity_(0u),
+  alloc_chunk_(&base_),
+  dealloc_chunk_(&base_)
 {
 }
 
 small_free_memory_list::small_free_memory_list(std::size_t node_size, void* mem,
                                                std::size_t size) FOONATHAN_NOEXCEPT
-    : small_free_memory_list(node_size)
+: small_free_memory_list(node_size)
 {
     insert(mem, size);
 }
 
 small_free_memory_list::small_free_memory_list(small_free_memory_list&& other) FOONATHAN_NOEXCEPT
-    : node_size_(other.node_size_),
-      capacity_(other.capacity_),
-      // reset markers for simplicity
-      alloc_chunk_(&base_),
-      dealloc_chunk_(&base_)
+: node_size_(other.node_size_),
+  capacity_(other.capacity_),
+  // reset markers for simplicity
+  alloc_chunk_(&base_),
+  dealloc_chunk_(&base_)
 {
     if (!other.empty())
     {
@@ -249,31 +249,40 @@ void small_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXC
 
     auto actual_size      = node_size_ + 2 * fence_size();
     auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
-    auto no_chunks        = size / total_chunk_size;
-    auto remainder        = size % total_chunk_size;
+    auto align_buffer     = align_offset(total_chunk_size, FOONATHAN_ALIGNOF(chunk));
 
-    auto memory = static_cast<char*>(mem);
-    auto prev   = static_cast<chunk_base*>(nullptr);
+    auto no_chunks = size / (total_chunk_size + align_buffer);
+    auto remainder = size % (total_chunk_size + align_buffer);
+
+    auto memory          = static_cast<char*>(mem);
+    auto construct_chunk = [&](std::size_t total_memory, std::size_t node_size) {
+        FOONATHAN_MEMORY_ASSERT(align_offset(memory, FOONATHAN_ALIGNOF(chunk)) == 0);
+        return ::new (static_cast<void*>(memory)) chunk(total_memory, node_size);
+    };
+
+    auto prev = static_cast<chunk_base*>(nullptr);
     for (auto i = std::size_t(0); i != no_chunks; ++i)
     {
-        auto c = ::new (static_cast<void*>(memory)) chunk(total_chunk_size, actual_size);
+        auto c = construct_chunk(total_chunk_size, actual_size);
 
         c->prev = prev;
         if (prev)
             prev->next = c;
-        prev           = c;
+        prev = c;
 
         memory += total_chunk_size;
+        memory += align_buffer;
     }
 
     auto new_nodes = no_chunks * chunk::max_nodes;
     if (remainder >= chunk::memory_offset + actual_size) // at least one node
     {
-        auto c  = ::new (static_cast<void*>(memory)) chunk(remainder, actual_size);
+        auto c = construct_chunk(remainder, actual_size);
+
         c->prev = prev;
         if (prev)
             prev->next = c;
-        prev           = c;
+        prev = c;
 
         new_nodes += c->no_nodes;
     }
