@@ -174,13 +174,13 @@ namespace foonathan
             /// This is required by the \c Allcoator concept and simply takes the same \ref allocator_reference.
             template <typename U>
             std_allocator(const std_allocator<U, RawAllocator, Mutex>& alloc) FOONATHAN_NOEXCEPT
-            : alloc_reference(alloc.get_allocator())
+            : alloc_reference(alloc)
             {
             }
 
             template <typename U>
             std_allocator(std_allocator<U, RawAllocator, Mutex>& alloc) FOONATHAN_NOEXCEPT
-            : alloc_reference(alloc.get_allocator())
+            : alloc_reference(alloc)
             {
             }
             /// @}
@@ -330,6 +330,9 @@ namespace foonathan
             template <typename T1, typename T2, class Impl, class Mut>
             friend bool operator==(const std_allocator<T1, Impl, Mut>& lhs,
                                    const std_allocator<T2, Impl, Mut>& rhs) FOONATHAN_NOEXCEPT;
+
+            template <typename U, class OtherRawAllocator, class OtherMutex>
+            friend class std_allocator;
         };
 
         /// \effects Compares two \ref std_allocator object, they are equal if either stateless or reference the same allocator.

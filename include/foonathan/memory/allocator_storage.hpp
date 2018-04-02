@@ -308,7 +308,6 @@ namespace foonathan
             /// It cannot be reassigned to point to another allocator object and only moving is supported, which is destructive.
             /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
             auto lock() FOONATHAN_NOEXCEPT
-
                 -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(
                     std::declval<storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
             {
@@ -646,6 +645,8 @@ namespace foonathan
             public:
                 using is_stateful = std::true_type;
 
+                virtual ~base_allocator() = default;
+
                 virtual void clone(void* storage) const FOONATHAN_NOEXCEPT = 0;
 
                 void* allocate_node(std::size_t size, std::size_t alignment)
@@ -782,7 +783,7 @@ namespace foonathan
 
             reference_storage& operator=(const reference_storage& other) FOONATHAN_NOEXCEPT
             {
-                // no cleanup necessary
+                get_allocator().~allocator_type();
                 other.get_allocator().clone(&storage_);
                 return *this;
             }
@@ -799,8 +800,10 @@ namespace foonathan
             }
 
         protected:
-            // basic_allocator is trivially destructible
-            ~reference_storage() FOONATHAN_NOEXCEPT = default;
+            ~reference_storage() FOONATHAN_NOEXCEPT
+            {
+                get_allocator().~allocator_type();
+            }
 
             bool is_composable() const FOONATHAN_NOEXCEPT
             {
