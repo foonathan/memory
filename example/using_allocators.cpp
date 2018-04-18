@@ -50,8 +50,15 @@ int main()
 
     // allocate a std::unique_ptr using the pool
     // memory::allocate_shared is also available
-    auto ptr = memory::allocate_unique<int>(pool, *list.begin());
+    memory::unique_ptr<int, memory::memory_pool<>> ptr =
+        memory::allocate_unique<int>(pool, *list.begin());
     std::cout << *ptr << '\n';
+
+    // by default every access to the allocator is locked by a mutex to ensure thread safety
+    // this can be prevented by specifying memory::no_mutex
+    memory::unique_ptr<int, memory::memory_pool<>, memory::no_mutex> ptr2 =
+        memory::allocate_unique<int, memory::no_mutex>(pool, *std::next(list.begin()));
+    std::cout << *ptr2 << '\n';
 
     // static storage of size 4KiB
     memory::static_allocator_storage<4_KiB> storage;

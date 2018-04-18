@@ -27,11 +27,11 @@ namespace foonathan
     {
         namespace detail
         {
-            template <typename T, class RawAllocator, typename... Args>
-            auto allocate_unique(allocator_reference<RawAllocator> alloc, Args&&... args)
-                -> std::unique_ptr<T, allocator_deleter<T, RawAllocator>>
+            template <typename T, class RawAllocator, class Mutex, typename... Args>
+            auto allocate_unique(allocator_reference<RawAllocator, Mutex> alloc, Args&&... args)
+                -> std::unique_ptr<T, allocator_deleter<T, RawAllocator, Mutex>>
             {
-                using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator>>;
+                using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator, Mutex>>;
 
                 auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
                 // raw_ptr deallocates memory in case of constructor exception
@@ -70,11 +70,13 @@ namespace foonathan
 #endif
             }
 
-            template <typename T, class RawAllocator>
-            auto allocate_array_unique(std::size_t size, allocator_reference<RawAllocator> alloc)
-                -> std::unique_ptr<T[], allocator_deleter<T[], RawAllocator>>
+            template <typename T, class RawAllocator, class Mutex>
+            auto allocate_array_unique(std::size_t                              size,
+                                       allocator_reference<RawAllocator, Mutex> alloc)
+                -> std::unique_ptr<T[], allocator_deleter<T[], RawAllocator, Mutex>>
             {
-                using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator>>;
+                using raw_ptr =
+                    std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator, Mutex>>;
 
                 auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
                 // raw_ptr deallocates memory in case of constructor exception
@@ -89,9 +91,9 @@ namespace foonathan
         /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
         /// It is an alias template using \ref allocator_deleter as \c Deleter class.
         /// \ingroup memory adapter
-        template <typename T, class RawAllocator>
+        template <typename T, class RawAllocator, class Mutex = default_mutex>
         FOONATHAN_ALIAS_TEMPLATE(unique_ptr,
-                                 std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
+                                 std::unique_ptr<T, allocator_deleter<T, RawAllocator, Mutex>>);
 
         /// Creates a \c std::unique_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
         /// \effects Allocates memory for the given type using the allocator
@@ -106,6 +108,17 @@ namespace foonathan
             std::unique_ptr<T, allocator_deleter<T, typename std::decay<RawAllocator>::type>>)
         {
             return detail::allocate_unique<T>(make_allocator_reference(
+                                                  detail::forward<RawAllocator>(alloc)),
+                                              detail::forward<Args>(args)...);
+        }
+
+        template <typename T, class Mutex, class RawAllocator, typename... Args>
+        auto allocate_unique(RawAllocator&& alloc, Args&&... args) -> FOONATHAN_REQUIRES_RET(
+            !std::is_array<T>::value,
+            std::unique_ptr<T,
+                            allocator_deleter<T, typename std::decay<RawAllocator>::type, Mutex>>)
+        {
+            return detail::allocate_unique<T>(make_allocator_reference<Mutex>(
                                                   detail::forward<RawAllocator>(alloc)),
                                               detail::forward<Args>(args)...);
         }
@@ -129,6 +142,18 @@ namespace foonathan
                                                              detail::forward<Args>(args)...);
         }
 
+        template <typename T, class Mutex, class RawAllocator, typename... Args>
+        auto allocate_unique(any_allocator, RawAllocator&& alloc, Args&&... args)
+            -> FOONATHAN_REQUIRES_RET(
+                !std::is_array<T>::value,
+                std::unique_ptr<T, allocator_deleter<T, any_allocator, Mutex>>)
+        {
+            return detail::allocate_unique<T, any_allocator>(make_allocator_reference<Mutex>(
+                                                                 detail::forward<RawAllocator>(
+                                                                     alloc)),
+                                                             detail::forward<Args>(args)...);
+        }
+
         /// Creates a \c std::unique_ptr owning an array using a \concept{concept_rawallocator,RawAllocator} for the allocation.
         /// \effects Allocates memory for an array of given size and value initializes each element inside of it.
         /// \returns A \c std::unique_ptr owning that array.
@@ -143,6 +168,18 @@ namespace foonathan
             return detail::allocate_array_unique<
                 typename std::remove_extent<T>::type>(size,
                                                       make_allocator_reference(
+                                                          detail::forward<RawAllocator>(alloc)));
+        }
+
+        template <typename T, class Mutex, class RawAllocator>
+        auto allocate_unique(RawAllocator&& alloc, std::size_t size) -> FOONATHAN_REQUIRES_RET(
+            std::is_array<T>::value,
+            std::unique_ptr<T,
+                            allocator_deleter<T, typename std::decay<RawAllocator>::type, Mutex>>)
+        {
+            return detail::allocate_array_unique<
+                typename std::remove_extent<T>::type>(size,
+                                                      make_allocator_reference<Mutex>(
                                                           detail::forward<RawAllocator>(alloc)));
         }
 
@@ -165,6 +202,19 @@ namespace foonathan
                                                                         alloc)));
         }
 
+        template <typename T, class Mutex, class RawAllocator>
+        auto allocate_unique(any_allocator, RawAllocator&& alloc, std::size_t size)
+            -> FOONATHAN_REQUIRES_RET(
+                std::is_array<T>::value,
+                std::unique_ptr<T, allocator_deleter<T, any_allocator, Mutex>>)
+        {
+            return detail::allocate_array_unique<typename std::remove_extent<T>::type,
+                                                 any_allocator>(size,
+                                                                make_allocator_reference<Mutex>(
+                                                                    detail::forward<RawAllocator>(
+                                                                        alloc)));
+        }
+
         /// Creates a \c std::shared_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
         /// It is similar to \c std::allocate_shared but uses a \c RawAllocator (and thus also supports any \c Allocator).
         /// \effects Calls \ref std_allocator::make_std_allocator to wrap the allocator and forwards to \c std::allocate_shared.
@@ -180,6 +230,14 @@ namespace foonathan
                                            detail::forward<Args>(args)...);
         }
 
+        template <typename T, class Mutex, class RawAllocator, typename... Args>
+        std::shared_ptr<T> allocate_shared(RawAllocator&& alloc, Args&&... args)
+        {
+            return std::allocate_shared<T>(make_std_allocator<T, Mutex>(
+                                               detail::forward<RawAllocator>(alloc)),
+                                           detail::forward<Args>(args)...);
+        }
+
 #if !defined(DOXYGEN)
 #include "detail/container_node_sizes.hpp"
 #else
@@ -191,7 +249,7 @@ namespace foonathan
         {
         };
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_SMART_PTR_HPP_INCLUDED
