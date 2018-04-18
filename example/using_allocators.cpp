@@ -60,6 +60,27 @@ int main()
         memory::allocate_unique<int, memory::no_mutex>(pool, *std::next(list.begin()));
     std::cout << *ptr2 << '\n';
 
+    struct base
+    {
+        virtual ~base() = default;
+
+        virtual const char* name() const = 0;
+    };
+
+    struct derived : base
+    {
+        const char* name() const override
+        {
+            return "derived";
+        }
+    };
+
+    // instead of using memory::unique_ptr<base, ...>, you have to use memory::unique_base_ptr<base, ...>,
+    // because the deleter has to remember the size of the derived type
+    memory::unique_base_ptr<base, memory::memory_pool<>> base_ptr =
+        memory::allocate_unique<derived>(pool);
+    std::cout << base_ptr->name() << '\n';
+
     // static storage of size 4KiB
     memory::static_allocator_storage<4_KiB> storage;
 
@@ -73,11 +94,11 @@ int main()
     static_pool_t static_pool(memory::unordered_set_node_size<int>::value, 4_KiB, storage);
 
     // again, just an alias for std::unordered_set<int, std::hash<int>, std::equal_to<int>, memory::std_allocator<int, static_pool_t>
-    // see why I wrote these? :D
+    // see why I wrote these?
     // now we have a hash set that lives on the stack!
     memory::unordered_set<int, static_pool_t>
         set(13, std::hash<int>{}, std::equal_to<int>{},
-            static_pool); // GCC 4.7 is missing the allocator-only ctor, breaks travis :(
+            static_pool); // (GCC 4.7 is missing the allocator-only ctor, breaks travis)
 
     set.insert(3);
     set.insert(2);

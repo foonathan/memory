@@ -89,11 +89,25 @@ namespace foonathan
         } // namespace detail
 
         /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
+        ///
         /// It is an alias template using \ref allocator_deleter as \c Deleter class.
         /// \ingroup memory adapter
         template <typename T, class RawAllocator, class Mutex = default_mutex>
         FOONATHAN_ALIAS_TEMPLATE(unique_ptr,
                                  std::unique_ptr<T, allocator_deleter<T, RawAllocator, Mutex>>);
+
+        /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator} and allows polymorphic types.
+        ///
+        /// It can only be created by converting a regular unique pointer to a pointer to a derived class,
+        /// and is meant to be used inside containers.
+        /// It is an alias template using \ref allocator_polymorphic_deleter as \c Deleter class.
+        /// \note It has a relatively high overhead, so only use it if you have to.
+        /// \ingroup memory adapter
+        template <class BaseType, class RawAllocator, class Mutex = default_mutex>
+        FOONATHAN_ALIAS_TEMPLATE(
+            unique_base_ptr,
+            std::unique_ptr<BaseType,
+                            allocator_polymorphic_deleter<BaseType, RawAllocator, Mutex>>);
 
         /// Creates a \c std::unique_ptr using a \concept{concept_rawallocator,RawAllocator} for the allocation.
         /// \effects Allocates memory for the given type using the allocator
