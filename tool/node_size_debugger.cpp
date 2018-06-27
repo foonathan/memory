@@ -18,9 +18,7 @@ struct simple_serializer
 {
     std::ostream& out;
 
-    void prefix() const
-    {
-    }
+    void prefix() const {}
 
     void operator()(const debug_result& result) const
     {
@@ -29,18 +27,14 @@ struct simple_serializer
             out << '\t' << pair.first << '=' << pair.second << '\n';
     }
 
-    void suffix() const
-    {
-    }
+    void suffix() const {}
 };
 
 struct verbose_serializer
 {
     std::ostream& out;
 
-    void prefix() const
-    {
-    }
+    void prefix() const {}
 
     void operator()(const debug_result& result) const
     {
@@ -50,9 +44,7 @@ struct verbose_serializer
                 << " is the base node size " << std::setw(2) << pair.second << ".\n";
     }
 
-    void suffix() const
-    {
-    }
+    void suffix() const {}
 };
 
 struct code_serializer
@@ -125,7 +117,8 @@ struct code_serializer
 using debuggers =
     std::tuple<debug_forward_list, debug_list, debug_set, debug_multiset, debug_unordered_set,
                debug_unordered_multiset, debug_map, debug_multimap, debug_unordered_map,
-               debug_unordered_multimap, debug_shared_ptr>;
+               debug_unordered_multimap, debug_shared_ptr_stateless, debug_shared_ptr_stateful,
+               debug_shared_ptr_stateful_mutex>;
 
 template <class Debugger, class Serializer>
 void serialize_single(const Serializer& serializer)

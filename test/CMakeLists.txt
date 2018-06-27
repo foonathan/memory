@@ -46,7 +46,8 @@ set(tests
     memory_pool_collection.cpp
     memory_resource_adapter.cpp
     memory_stack.cpp
-    segregator.cpp)
+    segregator.cpp
+    smart_ptr.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 comp_target_features(foonathan_memory_test PUBLIC CPP11)

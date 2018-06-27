@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <tuple>
 #include <type_traits>
 
@@ -28,20 +29,24 @@ struct node_size_storage
 template <typename TT, class Debugger>
 std::size_t node_size_storage<TT, Debugger>::size = 0;
 
+struct empty_payload
+{
+};
+
 // Obtains the node size for a container.
 // Since the node type is private to the implementation,
 // it cannot be accessed directly.
 // It is only available to the allocator through rebinding.
 // The allocator simply stores the size of the biggest type, it is rebound to,
 // as long as it is not the TestType, the actual value_type of the container.
-template <typename T, typename TestType, class Debugger>
-class node_size_debugger : public std::allocator<T>
+template <typename T, typename TestType, class Debugger, class AdditionalPayload = empty_payload>
+class node_size_debugger : public std::allocator<T>, private AdditionalPayload
 {
 public:
     template <typename Other>
     struct rebind
     {
-        using other = node_size_debugger<Other, TestType, Debugger>;
+        using other = node_size_debugger<Other, TestType, Debugger, AdditionalPayload>;
     };
 
     node_size_debugger()
@@ -51,7 +56,7 @@ public:
     }
 
     template <typename U>
-    node_size_debugger(node_size_debugger<U, TestType, Debugger>)
+    node_size_debugger(node_size_debugger<U, TestType, Debugger, AdditionalPayload>)
     {
         if (!std::is_same<T, TestType>::value)
             node_size() = std::max(node_size(), sizeof(T));
@@ -63,7 +68,7 @@ public:
     }
 
 private:
-    template <typename U, typename TT, class Dbg>
+    template <typename U, typename TT, class Dbg, class Payload>
     friend class node_size_debugger;
 };
 
@@ -269,19 +274,73 @@ struct debug_unordered_multimap
     }
 };
 
-struct debug_shared_ptr
+struct debug_shared_ptr_stateless
 {
     const char* name() const
     {
-        return "shared_ptr";
+        return "shared_ptr_stateless";
     }
 
     template <typename T>
     std::size_t debug()
     {
-        auto ptr  = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr>());
-        auto ptr2 = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr>());
-        return node_size_debugger<T, T, debug_shared_ptr>::node_size();
+        struct allocator_reference_payload
+        {
+        };
+
+        auto ptr = std::allocate_shared<T>(
+            node_size_debugger<T, T, debug_shared_ptr_stateless, allocator_reference_payload>());
+        auto ptr2 = std::allocate_shared<T>(
+            node_size_debugger<T, T, debug_shared_ptr_stateless, allocator_reference_payload>());
+        return node_size_debugger<T, T, debug_shared_ptr_stateless>::node_size();
+    }
+};
+
+struct debug_shared_ptr_stateful
+{
+    const char* name() const
+    {
+        return "shared_ptr_stateful";
+    }
+
+    template <typename T>
+    std::size_t debug()
+    {
+        struct allocator_reference_payload
+        {
+            void* ptr;
+        };
+
+        auto ptr = std::allocate_shared<T>(
+            node_size_debugger<T, T, debug_shared_ptr_stateful, allocator_reference_payload>());
+        auto ptr2 = std::allocate_shared<T>(
+            node_size_debugger<T, T, debug_shared_ptr_stateful, allocator_reference_payload>());
+        return node_size_debugger<T, T, debug_shared_ptr_stateful>::node_size();
+    }
+};
+
+struct debug_shared_ptr_stateful_mutex
+{
+    const char* name() const
+    {
+        return "shared_ptr_stateful_mutex";
+    }
+
+    template <typename T>
+    std::size_t debug()
+    {
+        struct allocator_reference_payload
+        {
+            typename std::aligned_storage<sizeof(std::mutex)>::type mutex;
+            void*                                                   ptr;
+        };
+
+        auto ptr = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr_stateful_mutex,
+                                                              allocator_reference_payload>());
+        auto ptr2 =
+            std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr_stateful_mutex,
+                                                       allocator_reference_payload>());
+        return node_size_debugger<T, T, debug_shared_ptr_stateful_mutex>::node_size();
     }
 };
 

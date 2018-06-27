@@ -148,15 +148,52 @@ namespace foonathan
         template <typename T, class RawAllocator, class Container = deque<T, RawAllocator>,
                   class Compare = std::less<T>>
         std::priority_queue<T, Container, Compare> make_priority_queue(RawAllocator& allocator,
-                                                                       Compare comp = {})
+                                                                       Compare       comp = {})
         {
             return std::priority_queue<T, Container, Compare>{detail::move(comp),
                                                               Container(allocator)};
         }
-/// @}
+        /// @}
 
 #if !defined(DOXYGEN)
+
 #include "detail/container_node_sizes.hpp"
+
+        /// \exclude
+        namespace detail
+        {
+            template <typename T, class StdAllocator>
+            struct shared_ptr_node_size
+            {
+                static_assert(sizeof(T) != sizeof(T), "unsupported allocator type");
+            };
+
+            template <typename T, class RawAllocator>
+            struct shared_ptr_node_size<T, std_allocator<T, RawAllocator, no_mutex>>
+            : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
+                               memory::shared_ptr_stateful_node_size<T>,
+                               memory::shared_ptr_stateless_node_size<T>>::type
+            {
+                static_assert(sizeof(std_allocator<T, RawAllocator, no_mutex>) <= sizeof(void*),
+                              "fix node size debugger");
+            };
+
+            template <typename T, class RawAllocator>
+            struct shared_ptr_node_size<T, std_allocator<T, RawAllocator, std::mutex>>
+            : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
+                               memory::shared_ptr_stateful_mutex_node_size<T>,
+                               memory::shared_ptr_stateless_node_size<T>>::type
+            {
+                static_assert(sizeof(std_allocator<T, RawAllocator, no_mutex>)
+                                  <= sizeof(void*) + sizeof(std::mutex),
+                              "fix node size debugger");
+            };
+        } // namespace detail
+
+        template <typename T, class StdAllocator>
+        struct shared_ptr_node_size : detail::shared_ptr_node_size<T, StdAllocator>
+        {
+        };
 #else
         /// \ingroup memory adapter
         /// @{
@@ -195,7 +232,7 @@ namespace foonathan
         /// \copydoc forward_list_node_size
         template <typename T>
         struct unordered_multiset_node_size
-            : std::integral_constant<std::size_t, implementation_defined>
+        : std::integral_constant<std::size_t, implementation_defined>
         {
         };
 
@@ -220,12 +257,26 @@ namespace foonathan
         /// \copydoc forward_list_node_size
         template <typename T>
         struct unordered_multimap_node_size
-            : std::integral_constant<std::size_t, implementation_defined>
+        : std::integral_constant<std::size_t, implementation_defined>
+        {
+        };
+
+        /// \copydoc forward_list_node_size
+        template <typename T, class StdAllocator>
+        struct shared_ptr_node_size : std::integral_constant<std::size_t, implementation_defined>
         {
         };
 /// @}
 #endif
-    }
-} // namespace foonathan::memory
+
+        /// The node size required by \ref allocate_shared.
+        /// \note This is similar to \ref shared_ptr_node_size but takes a \concept{concept_rawallocator,RawAllocator} instead.
+        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        struct allocate_shared_node_size
+        : shared_ptr_node_size<T, std_allocator<T, RawAllocator, Mutex>>
+        {
+        };
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_CONTAINER_HPP_INCLUDED
