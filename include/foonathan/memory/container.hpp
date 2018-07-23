@@ -178,6 +178,7 @@ namespace foonathan
                               "fix node size debugger");
             };
 
+#if FOONATHAN_HAS_MUTEX
             template <typename T, class RawAllocator>
             struct shared_ptr_node_size<T, std_allocator<T, RawAllocator, std::mutex>>
             : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
@@ -188,6 +189,7 @@ namespace foonathan
                                   <= sizeof(void*) + sizeof(std::mutex),
                               "fix node size debugger");
             };
+#endif
         } // namespace detail
 
         template <typename T, class StdAllocator>
