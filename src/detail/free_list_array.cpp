@@ -18,5 +18,5 @@ std::size_t log2_access_policy::index_from_size(std::size_t size) FOONATHAN_NOEX
 
 std::size_t log2_access_policy::size_from_index(std::size_t index) FOONATHAN_NOEXCEPT
 {
-    return 1 << index;
+    return std::size_t(1) << index;
 }

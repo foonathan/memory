@@ -54,7 +54,7 @@ namespace
 {
     std::size_t max_size() FOONATHAN_NOEXCEPT
     {
-        return std::allocator<char>().max_size();
+        return std::allocator_traits<std::allocator<char>>::max_size({});
     }
 }
 #else
