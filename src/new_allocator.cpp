@@ -57,7 +57,7 @@ void detail::new_allocator_impl::deallocate(void* ptr, std::size_t, size_t) FOON
 std::size_t detail::new_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
 {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
-    return std::allocator<char>().max_size();
+    return std::allocator_traits<std::allocator<char>>::max_size({});
 #else
     return std::size_t(-1);
 #endif

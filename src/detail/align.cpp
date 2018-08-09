@@ -18,5 +18,5 @@ bool foonathan::memory::detail::is_aligned(void *ptr, std::size_t alignment) FOO
 
 std::size_t foonathan::memory::detail::alignment_for(std::size_t size) FOONATHAN_NOEXCEPT
 {
-    return size >= max_alignment ? max_alignment : (1 << ilog2(size));
+    return size >= max_alignment ? max_alignment : (std::size_t(1) << ilog2(size));
 }
