@@ -33,18 +33,15 @@ namespace foonathan
             std::size_t size;   ///< The size of the memory block (might be \c 0).
 
             /// \effects Creates an invalid memory block with starting address \c nullptr and size \c 0.
-            memory_block() FOONATHAN_NOEXCEPT : memory_block(nullptr, std::size_t(0))
-            {
-            }
+            memory_block() FOONATHAN_NOEXCEPT : memory_block(nullptr, std::size_t(0)) {}
 
             /// \effects Creates a memory block from a given starting address and size.
-            memory_block(void* mem, std::size_t s) FOONATHAN_NOEXCEPT : memory(mem), size(s)
-            {
-            }
+            memory_block(void* mem, std::size_t s) FOONATHAN_NOEXCEPT : memory(mem), size(s) {}
 
             /// \effects Creates a memory block from a [begin,end) range.
             memory_block(void* begin, void* end) FOONATHAN_NOEXCEPT
-                : memory_block(begin, static_cast<char*>(end) - static_cast<char*>(begin))
+            : memory_block(begin, static_cast<std::size_t>(static_cast<char*>(end)
+                                                           - static_cast<char*>(begin)))
             {
             }
 
@@ -61,8 +58,9 @@ namespace foonathan
         {
             template <class BlockAllocator>
             std::true_type is_block_allocator_impl(
-                int, FOONATHAN_SFINAE(std::declval<memory_block&>() =
-                                          std::declval<BlockAllocator&>().allocate_block()),
+                int,
+                FOONATHAN_SFINAE(std::declval<memory_block&>() =
+                                     std::declval<BlockAllocator&>().allocate_block()),
                 FOONATHAN_SFINAE(std::declval<std::size_t&>() =
                                      std::declval<BlockAllocator&>().next_block_size()),
                 FOONATHAN_SFINAE(std::declval<BlockAllocator>().deallocate_block(memory_block{})));
@@ -101,16 +99,12 @@ namespace foonathan
             class memory_block_stack
             {
             public:
-                memory_block_stack() FOONATHAN_NOEXCEPT : head_(nullptr)
-                {
-                }
+                memory_block_stack() FOONATHAN_NOEXCEPT : head_(nullptr) {}
 
-                ~memory_block_stack() FOONATHAN_NOEXCEPT
-                {
-                }
+                ~memory_block_stack() FOONATHAN_NOEXCEPT {}
 
                 memory_block_stack(memory_block_stack&& other) FOONATHAN_NOEXCEPT
-                    : head_(other.head_)
+                : head_(other.head_)
                 {
                     other.head_ = nullptr;
                 }
@@ -322,9 +316,9 @@ namespace foonathan
             /// which is empty after that.
             /// This does not invalidate any memory blocks.
             memory_arena(memory_arena&& other) FOONATHAN_NOEXCEPT
-                : allocator_type(detail::move(other)),
-                  cache(detail::move(other)),
-                  used_(detail::move(other.used_))
+            : allocator_type(detail::move(other)),
+              cache(detail::move(other)),
+              used_(detail::move(other.used_))
             {
             }
 
@@ -449,7 +443,7 @@ namespace foonathan
         /// \ingroup memory adapter
         template <class RawAllocator = default_allocator, unsigned Num = 2, unsigned Den = 1>
         class growing_block_allocator
-            : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
+        : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
             static_assert(float(Num) / Den >= 1.0, "invalid growth factor");
 
@@ -546,7 +540,7 @@ namespace foonathan
             {
                 if (block_size_)
                 {
-                    auto mem = traits::allocate_array(get_allocator(), block_size_, 1,
+                    auto         mem = traits::allocate_array(get_allocator(), block_size_, 1,
                                                       detail::max_alignment);
                     memory_block block(mem, block_size_);
                     block_size_ = 0u;
@@ -619,7 +613,7 @@ namespace foonathan
         /// \ingroup memory core
         template <class BlockOrRawAllocator,
                   template <typename> class BlockAllocator = detail::default_block_wrapper>
-        using make_block_allocator_t                       = FOONATHAN_IMPL_DEFINED(
+        using make_block_allocator_t = FOONATHAN_IMPL_DEFINED(
             typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
                                       BlockOrRawAllocator,
                                       BlockAllocator<BlockOrRawAllocator>>::type);
@@ -633,9 +627,9 @@ namespace foonathan
         make_block_allocator_t<BlockOrRawAllocator> make_block_allocator(std::size_t block_size,
                                                                          Args&&... args)
         {
-            return detail::make_block_allocator<detail::default_block_wrapper>(
-                is_block_allocator<BlockOrRawAllocator>{}, block_size,
-                detail::forward<Args>(args)...);
+            return detail::make_block_allocator<
+                detail::default_block_wrapper>(is_block_allocator<BlockOrRawAllocator>{},
+                                               block_size, detail::forward<Args>(args)...);
         }
 
         template <template <class> class BlockAllocator, class BlockOrRawAllocator,
@@ -643,9 +637,9 @@ namespace foonathan
         make_block_allocator_t<BlockOrRawAllocator, BlockAllocator> make_block_allocator(
             std::size_t block_size, Args&&... args)
         {
-            return detail::
-                make_block_allocator<BlockAllocator>(is_block_allocator<BlockOrRawAllocator>{},
-                                                     block_size, detail::forward<Args>(args)...);
+            return detail::make_block_allocator<
+                BlockAllocator>(is_block_allocator<BlockOrRawAllocator>{}, block_size,
+                                detail::forward<Args>(args)...);
         }
         /// @}
 
@@ -693,7 +687,7 @@ namespace foonathan
             }
 #endif
         } // namespace literals
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED

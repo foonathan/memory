@@ -63,8 +63,8 @@ namespace foonathan
             /// i.e. the object must not have been passed to a constructor before.
             template <std::size_t Size>
             static_allocator(static_allocator_storage<Size>& storage) FOONATHAN_NOEXCEPT
-                : stack_(&storage),
-                  end_(stack_.top() + Size)
+            : stack_(&storage),
+              end_(stack_.top() + Size)
             {
             }
 
@@ -76,14 +76,12 @@ namespace foonathan
 
             /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
             /// It does nothing, deallocation is not supported by this allocator.
-            void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
-            {
-            }
+            void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT {}
 
             /// \returns The maximum node size which is the capacity remaining inside the \ref static_allocator_storage.
             std::size_t max_node_size() const FOONATHAN_NOEXCEPT
             {
-                return end_ - stack_.top();
+                return static_cast<std::size_t>(end_ - stack_.top());
             }
 
             /// \returns The maximum possible value since there is no alignment restriction
@@ -123,9 +121,9 @@ namespace foonathan
             template <std::size_t Size>
             static_block_allocator(std::size_t                     block_size,
                                    static_allocator_storage<Size>& storage) FOONATHAN_NOEXCEPT
-                : cur_(static_cast<char*>(static_cast<void*>(&storage))),
-                  end_(cur_ + Size),
-                  block_size_(block_size)
+            : cur_(static_cast<char*>(static_cast<void*>(&storage))),
+              end_(cur_ + Size),
+              block_size_(block_size)
             {
                 FOONATHAN_MEMORY_ASSERT(block_size <= Size);
                 FOONATHAN_MEMORY_ASSERT(Size % block_size == 0u);
@@ -137,9 +135,9 @@ namespace foonathan
             /// \effects Moves the block allocator, it transfers ownership over the \ref static_allocator_storage.
             /// This does not invalidate any memory blocks.
             static_block_allocator(static_block_allocator&& other) FOONATHAN_NOEXCEPT
-                : cur_(other.cur_),
-                  end_(other.end_),
-                  block_size_(other.block_size_)
+            : cur_(other.cur_),
+              end_(other.end_),
+              block_size_(other.block_size_)
             {
                 other.cur_ = other.end_ = nullptr;
                 other.block_size_       = 0;
@@ -185,7 +183,7 @@ namespace foonathan
             char *      cur_, *end_;
             std::size_t block_size_;
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif //FOONATHAN_MEMORY_STATIC_ALLOCATOR_HPP_INCLUDED

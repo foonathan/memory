@@ -74,16 +74,13 @@ namespace foonathan
         /// It does not prereserve any memory and will always reserve and commit combined.
         /// \ingroup memory allocator
         class virtual_memory_allocator
-            : FOONATHAN_EBO(
-                  detail::global_leak_checker<detail::virtual_memory_allocator_leak_handler>)
+        : FOONATHAN_EBO(detail::global_leak_checker<detail::virtual_memory_allocator_leak_handler>)
         {
         public:
             using is_stateful = std::false_type;
 
             virtual_memory_allocator() FOONATHAN_NOEXCEPT = default;
-            virtual_memory_allocator(virtual_memory_allocator&&) FOONATHAN_NOEXCEPT
-            {
-            }
+            virtual_memory_allocator(virtual_memory_allocator&&) FOONATHAN_NOEXCEPT {}
             ~virtual_memory_allocator() FOONATHAN_NOEXCEPT = default;
 
             virtual_memory_allocator& operator=(virtual_memory_allocator&&) FOONATHAN_NOEXCEPT
@@ -141,9 +138,9 @@ namespace foonathan
             /// \effects Moves the block allocator, it transfers ownership over the reserved area.
             /// This does not invalidate any memory blocks.
             virtual_block_allocator(virtual_block_allocator&& other) FOONATHAN_NOEXCEPT
-                : cur_(other.cur_),
-                  end_(other.end_),
-                  block_size_(other.block_size_)
+            : cur_(other.cur_),
+              end_(other.end_),
+              block_size_(other.block_size_)
             {
                 other.cur_ = other.end_ = nullptr;
                 other.block_size_       = 0;
@@ -187,7 +184,7 @@ namespace foonathan
             /// \returns The number of blocks that can be committed until it runs out of memory.
             std::size_t capacity_left() const FOONATHAN_NOEXCEPT
             {
-                return (end_ - cur_) / block_size_;
+                return static_cast<std::size_t>(end_ - cur_) / block_size_;
             }
 
         private:
@@ -196,7 +193,7 @@ namespace foonathan
             char *      cur_, *end_;
             std::size_t block_size_;
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif //FOONATHAN_MEMORY_VIRTUAL_MEMORY_HPP_INCLUDED
