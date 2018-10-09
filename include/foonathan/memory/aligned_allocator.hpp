@@ -54,6 +54,7 @@ namespace foonathan
             {
                 allocator_type::operator=(detail::move(other));
                 min_alignment_          = other.min_alignment_;
+                return *this;
             }
             /// @}
 
