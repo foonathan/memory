@@ -45,6 +45,7 @@ elseif(WIN32)
 
     set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "cmake")
     set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "./")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()
 	message(FATAL_ERROR "Could not set install folders for this platform!")
 endif()
