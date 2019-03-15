@@ -172,13 +172,13 @@ namespace memory
     template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(
         unordered_multimap,
-        std::unordered_multimap<Key, std::hash<Key>, std::equal_to<Key>,
+        std::unordered_multimap<Key, Value, std::hash<Key>, std::equal_to<Key>,
                                 std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>);
     /// \copydoc vector_scoped_alloc
     template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
     FOONATHAN_ALIAS_TEMPLATE(
         unordered_multimap_scoped_alloc,
-        std::unordered_multimap<Key, std::hash<Key>, std::equal_to<Key>,
+        std::unordered_multimap<Key, Value, std::hash<Key>, std::equal_to<Key>,
                                 std::scoped_allocator_adaptor<std_allocator<
                                     std::pair<const Key, Value>, RawAllocator, Mutex>>>);
 
