@@ -55,19 +55,26 @@ TEST_CASE("detail::debug_fill_new/free", "[detail][core]")
     REQUIRE(offset == expected_offset);
 
 #if FOONATHAN_MEMORY_DEBUG_FILL
+#if FOONATHAN_MEMORY_DEBUG_FENCE
     REQUIRE(array[0] == debug_magic::fence_memory);
-    for (auto i = 1; i <= 8; ++i)
-        REQUIRE(array[i] == debug_magic::new_memory);
     REQUIRE(array[9] == debug_magic::fence_memory);
+    const auto start = 1;
+#else
+    const auto start = 0;
+#endif
+    for (auto i = start; i < start + 8; ++i)
+        REQUIRE(array[i] == debug_magic::new_memory);
 #endif
 
     result = debug_fill_free(result, 8 * sizeof(debug_magic), sizeof(debug_magic));
     REQUIRE(static_cast<debug_magic*>(result) == array);
 
 #if FOONATHAN_MEMORY_DEBUG_FILL
+#if FOONATHAN_MEMORY_DEBUG_FENCE
     REQUIRE(array[0] == debug_magic::fence_memory);
-    for (auto i = 1; i <= 8; ++i)
-        REQUIRE(array[i] == debug_magic::freed_memory);
     REQUIRE(array[9] == debug_magic::fence_memory);
+#endif
+    for (auto i = start; i < start + 8; ++i)
+        REQUIRE(array[i] == debug_magic::freed_memory);
 #endif
 }
