@@ -224,6 +224,8 @@ namespace foonathan
             template <typename U>
             void destroy(U* p) FOONATHAN_NOEXCEPT
             {
+                // This is to avoid a MSVS 2015 'unreferenced formal parameter' warning
+                (void)p;
                 p->~U();
             }
 
