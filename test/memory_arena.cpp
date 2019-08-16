@@ -106,9 +106,7 @@ struct test_block_allocator
     static_allocator_storage<1024> blocks[N];
     std::size_t                    i = 0;
 
-    test_block_allocator(std::size_t)
-    {
-    }
+    test_block_allocator(std::size_t) {}
 
     ~test_block_allocator()
     {
@@ -223,3 +221,17 @@ static_assert(
 static_assert(std::is_same<growing_block_allocator<>,
                            foonathan::memory::make_block_allocator_t<default_allocator>>::value,
               "");
+
+template <class RawAlloc>
+using block_wrapper = growing_block_allocator<RawAlloc>;
+
+TEST_CASE("make_block_allocator", "[arena]")
+{
+    growing_block_allocator<heap_allocator> a1 = make_block_allocator<heap_allocator>(1024);
+    REQUIRE(a1.next_block_size() == 1024);
+
+    growing_block_allocator<heap_allocator> a2 =
+        make_block_allocator<block_wrapper, heap_allocator>(1024);
+    REQUIRE(a2.next_block_size() == 1024);
+}
+

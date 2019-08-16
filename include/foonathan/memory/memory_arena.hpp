@@ -592,14 +592,14 @@ namespace foonathan
             template <class RawAlloc>
             using default_block_wrapper = growing_block_allocator<RawAlloc>;
 
-            template <class BlockAllocator, typename... Args>
+            template <template <class...> class Wrapper, class BlockAllocator, typename... Args>
             BlockAllocator make_block_allocator(std::true_type, std::size_t block_size,
                                                 Args&&... args)
             {
                 return BlockAllocator(block_size, detail::forward<Args>(args)...);
             }
 
-            template <template <class> class Wrapper, class RawAlloc>
+            template <template <class...> class Wrapper, class RawAlloc>
             auto make_block_allocator(std::false_type, std::size_t block_size,
                                       RawAlloc alloc = RawAlloc()) -> Wrapper<RawAlloc>
             {
@@ -612,7 +612,7 @@ namespace foonathan
         /// Using this allows passing normal \concept{concept_rawallocator,RawAllocators} as \concept{concept_blockallocator,BlockAllocators}.
         /// \ingroup memory core
         template <class BlockOrRawAllocator,
-                  template <typename> class BlockAllocator = detail::default_block_wrapper>
+                  template <typename...> class BlockAllocator = detail::default_block_wrapper>
         using make_block_allocator_t = FOONATHAN_IMPL_DEFINED(
             typename std::conditional<is_block_allocator<BlockOrRawAllocator>::value,
                                       BlockOrRawAllocator,
@@ -628,18 +628,19 @@ namespace foonathan
                                                                          Args&&... args)
         {
             return detail::make_block_allocator<
-                detail::default_block_wrapper>(is_block_allocator<BlockOrRawAllocator>{},
-                                               block_size, detail::forward<Args>(args)...);
+                detail::default_block_wrapper,
+                BlockOrRawAllocator>(is_block_allocator<BlockOrRawAllocator>{}, block_size,
+                                     detail::forward<Args>(args)...);
         }
 
-        template <template <class> class BlockAllocator, class BlockOrRawAllocator,
+        template <template <class...> class BlockAllocator, class BlockOrRawAllocator,
                   typename... Args>
         make_block_allocator_t<BlockOrRawAllocator, BlockAllocator> make_block_allocator(
             std::size_t block_size, Args&&... args)
         {
             return detail::make_block_allocator<
-                BlockAllocator>(is_block_allocator<BlockOrRawAllocator>{}, block_size,
-                                detail::forward<Args>(args)...);
+                BlockAllocator, BlockOrRawAllocator>(is_block_allocator<BlockOrRawAllocator>{},
+                                                     block_size, detail::forward<Args>(args)...);
         }
         /// @}
 
