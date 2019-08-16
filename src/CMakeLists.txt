@@ -84,7 +84,7 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS AND (NOT CMAKE_CROSS_COMPILING))
             VERBATIM)
 else()
     message(WARNING "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
-    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "")
+    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
 endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
