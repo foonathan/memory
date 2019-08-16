@@ -55,5 +55,4 @@ target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
-enable_testing()
 add_test(NAME test COMMAND foonathan_memory_test)
