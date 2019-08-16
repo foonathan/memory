@@ -15,9 +15,9 @@ struct dummy_allocator
 {
     static std::size_t size;
 
-    void* allocate_node(std::size_t size, std::size_t)
+    void* allocate_node(std::size_t s, std::size_t)
     {
-        size = size;
+        size = s;
         return ::operator new(size);
     }
 
