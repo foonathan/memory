@@ -18,9 +18,6 @@ set(FOONATHAN_MEMORY_VERSION "${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMO
 set(CMAKE_DEBUG_POSTFIX "-dbg")
 
 # installation destinations
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE STRING "Install prefix (e.g. /usr/local/)" FORCE)
-endif()
 if(UNIX)
     include(GNUInstallDirs)
 
