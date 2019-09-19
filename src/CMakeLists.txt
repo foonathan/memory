@@ -111,7 +111,7 @@ install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
 
 # Write/install version file
 include(CMakePackageConfigHelpers)
-set(version_file "${CMAKE_CURRENT_BINARY_DIR}/cmake/foonathan_memory-version.cmake")
+set(version_file "${CMAKE_CURRENT_BINARY_DIR}/cmake/foonathan_memory-config-version.cmake")
 write_basic_package_version_file(${version_file}
                                  VERSION ${FOONATHAN_MEMORY_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
