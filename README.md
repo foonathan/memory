@@ -225,8 +225,15 @@ In particular thanks to the individual supporters:
 
 And big thanks to the contributors as well:
 
-* @nicolastagliani
 * @bfierz
+* @nicolastagliani
+* @cho3
+* @myd7349
+* @moazzamak
+* @maksqwe
+* @kaidokert
+* @gabyx
+* @MiguelCompany
 * @Manu343726
 
 [EASTL]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html

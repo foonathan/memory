@@ -1,11 +1,24 @@
+# Upcoming Changes
+
+# 0.6-2
+
+Various bug fixes, compiler warning workarounds and CMake improvements accumulated over past two years.
+Most notable changes:
+
+* cross compilation works now
+* `fallback_allocator` is default constructible if stateless
+* add `unique_base_ptr` to support a unique ptr to a base class
+* add `allocate_unique` overloads that take a custom mutex
+* allocator deleters are default constructible
+
+---
+
 # 0.6-1
 
 * fix CMake configuration error
 * fix double free error in `segregator`
 * add `static_assert()` when default constructing a stateful `std_allocator`
 * fix various compiler warnings
-
----
 
 # 0.6
 
