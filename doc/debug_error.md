@@ -21,7 +21,8 @@ If the handler returns, the exception will be thrown.
 If exceptions are disabled in the library any `throw` statement will be translated to a call to `std::abort()`,
 the handler functions are then especially useful as they will still be called.
 
-## <a name="debugging"></a>Debugging
+## Debugging
+<a name="debugging"></a>
 
 There are also facilities useful for tracking memory related errors.
 

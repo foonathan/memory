@@ -1,6 +1,7 @@
 # Concepts and overall requirements
 
-## <a name="concept_node"></a>Node
+## Node
+<a name="concept_node"></a>
 
 A *node* is the region of storage needed to hold a single object.
 This storage region is identified via a pointer which is the *address* of the node.
@@ -26,7 +27,8 @@ If it is bigger, the type is *over-aligned* in this node, otherwise, it is *norm
 *Example:* A node returned by a call to `allocate_node(sizeof(T), alignof(T))` of a [RawAllocator](#concept_rawallocator)
 always fulfills these requirements for the type `T`.
 
-## <a name="concept_array"></a>Array of nodes
+## Array of nodes
+<a name="concept_array"></a>
 
 An *array of nodes* is a sequence of nodes whose storage regions are consecutively in memory.
 The *address* of the array is simply the address of the first node in the array.
@@ -59,7 +61,8 @@ A call of the form `allocate_array(n, size, align)` where `align` is a stricter 
 and `size` is a multiple of `align` bigger than `sizeof(T)` returns an array of nodes
 where each node is over-aligned.
 
-## <a name="concept_rawallocator"></a>RawAllocator
+## RawAllocator
+<a name="concept_rawallocator"></a>
 
 A `RawAllocator` is the new type of allocator used in this library.
 Unlike the `Allocator` it does not work on a certain type directly,
@@ -190,7 +193,8 @@ Expression|RawAllocator|Fallback
 `ctraits::try_deallocate_node(alloc, node, size, alignment)` | `alloc.try_deallocate_node(node, size, alignment)` | non, required
 `ctraits::try_deallocate_array(alloc, array, count, size, alignment)` | `alloc.try_deallocate_array(array, count, size, alignment)` | `ctraits::try_deallocate_node(alloc, array, count * size, alignment)`
 
-## <a name="concept_blockallocator"></a>BlockAllocator
+## BlockAllocator
+<a name="concept_blockallocator"></a>
 
 Some allocator types manage huge memory blocks and returns part of them in their allocation functions.
 Such huge memory blocks are managed by a memory arena, implemented in the class [memory_arena].
@@ -237,7 +241,8 @@ private:
 };
 ```
 
-## <a name="concept_storagepolicy"></a>StoragePolicy
+## StoragePolicy
+<a name="concept_storagepolicy"></a>
 
 A `StoragePolicy` stores a [RawAllocator](#concept_rawallocator) and is used with the class template [allocator_storage].
 It specifies how the allocator is stored, i.e. whether it is stored directly or only a pointer to it.
@@ -286,7 +291,8 @@ private:
 };
 ```
 
-## <a name="concept_segregatable"><a/>Segregatable
+## Segregatable
+<a name="concept_segregatable"><a/>
 
 A `Segregatable` stores a [RawAllocator](#concept_rawallocator) and controls for which allocations it will be used.
 It is used in [binary_segregator].
@@ -338,7 +344,8 @@ private:
 };
 ```
 
-## <a name="concept_tracker"></a>Tracker
+## Tracker
+<a name="concept_tracker"></a>
 
 A `Tracker` tracks allocation and/or deallocation of a `RawAllocator` and is used in the class template [tracked_allocator].
 It is a moveable class that can be used as base class.
