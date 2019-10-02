@@ -1,5 +1,6 @@
 # memory
 
+![Project Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fwww.jonathanmueller.dev%2Fproject%2Fmemory%2Findex.json)
 [![Build Status](https://travis-ci.org/foonathan/memory.svg?branch=master)](https://travis-ci.org/foonathan/memory) [![Build status](https://ci.appveyor.com/api/projects/status/ef654yqyoqgvl472/branch/master?svg=true)](https://ci.appveyor.com/project/foonathan/memory/branch/master) [![License: Zlib](https://img.shields.io/badge/License-Zlib-lightgrey.svg)](https://opensource.org/licenses/Zlib)
 
 The C++ STL allocator model has various flaws. For example, they are fixed to a certain type, because they are almost necessarily required to be templates. So you can't easily share a single allocator for multiple types. In addition, you can only get a copy from the containers and not the original allocator object. At least with C++11 they are allowed to be stateful and so can be made object not instance based. But still, the model has many flaws.
