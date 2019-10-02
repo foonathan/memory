@@ -43,7 +43,7 @@
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Compared to the requirements an <code>AllocatorAwareContainer</code> has to fulfill, it is very easy to use a <code>RawAllocator</code> in a container. There is no need to worry about comparing allocators, <code>select_on_container_copy_construction()</code>, <code>propagate_on_container_move_assignment</code> or the undefined behavior that sometimes happens if you <code>swap()</code> a container.</p>
-<h1><a class="anchor" id="autotoc_md59"></a>
+<h1><a class="anchor" id="autotoc_md61"></a>
 The Allocator version</h1>
 <p>To demonstrate this, consider a simple <code>deep_copy_ptr</code>. <code>deep_copy_ptr</code> is like <code>std::unique_ptr</code> but provides a copy constructor which will perform a copy of the object. Unlike <code>std::unique_ptr</code> it will take a full-blown <code>Allocator</code>. Then it will be transformed to use a <a href="md_doc_concepts.html#concept_rawallocator">RawAllocator</a>. It is only meant to demonstrate the use of allocator classes and not to be a real use smart pointer class (it is pretty dumb, it copies the pointee on copy but invalidates on move...). So, this is it:</p>
 <div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">class</span> Allocator = std::allocator&lt;T&gt;&gt;</div>
@@ -190,7 +190,7 @@ The Allocator version</h1>
 <li>The copy constructor must call <code>traits::select_on_container_copy_construction()</code>, the move constructor can just move the allocator.</li>
 <li>Copy and Move assignment and <code>swap()</code> only exchange the container if the appropriate <code>traits::propagate_on_container_XXX</code> is <code>true</code>. This involves a lot of complexity since if it is <code>false</code> - which is the default! - the old memory has to be deallocated on the old allocator and the new memory allocated on the new allocator if the allocators aren't <em>equal</em> - even for move! Also note the <code>assert()</code> in <code>swap()</code>: Since <code>swap()</code> must not throw, it cannot do the reallocation if the propagation is <code>false</code>.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md60"></a>
+<h1><a class="anchor" id="autotoc_md62"></a>
 The RawAllocator version</h1>
 <p>This is now a step-by-step review of the changes in the version that uses a <a href="md_doc_concepts.html#concept_rawallocator">RawAllocator</a>.</p>
 <div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">class</span> RawAllocator = memory::default_allocator&gt;</div>

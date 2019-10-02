@@ -42,7 +42,7 @@
 <div class="title">Concepts and overall requirements </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md30"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md32"></a>
 Node</h1>
 <p><a class="anchor" id="concept_node"></a></p>
 <p>A <em>node</em> is the region of storage needed to hold a single object. This storage region is identified via a pointer which is the <em>address</em> of the node. The terms <em>node</em> and <em>address of the node</em> are used interchangeable.</p>
@@ -53,7 +53,7 @@ Node</h1>
 <li>The size of the node must be at least as big as the size of the type, returned by <code>sizeof(T)</code>.</li>
 </ul>
 <p><em>Example:</em> A node returned by a call to <code>allocate_node(sizeof(T), alignof(T))</code> of a <a href="#concept_rawallocator">RawAllocator</a> always fulfills these requirements for the type <code>T</code>.</p>
-<h1><a class="anchor" id="autotoc_md31"></a>
+<h1><a class="anchor" id="autotoc_md33"></a>
 Array of nodes</h1>
 <p><a class="anchor" id="concept_array"></a></p>
 <p>An <em>array of nodes</em> is a sequence of nodes whose storage regions are consecutively in memory. The <em>address</em> of the array is simply the address of the first node in the array. The terms <em>array</em> and <em>address of the array</em> are used interchangeable.</p>
@@ -66,7 +66,7 @@ Array of nodes</h1>
 <li>The size of each node must be at least <code>sizeof(T)</code> and a multiple of <code>alignof(T)</code>. This is required to ensure proper alignment of each node in the array. <em>Note:</em> To create over-aligned types in the nodes, the alignment must be the stricter alignment and the size must be a multiple of the stricter alignment.</li>
 </ul>
 <p><em>Example:</em> An array of nodes returned by a call to <code>allocate_array(n, sizeof(T), alignof(T))</code> of a <a href="#concept_rawallocator">RawAllocator</a> always fulfills these requirements for the type <code>T</code>. A call of the form <code>allocate_array(n, size, align)</code> where <code>align</code> is a stricter alignment and <code>size</code> is a multiple of <code>align</code> bigger than <code>sizeof(T)</code> returns an array of nodes where each node is over-aligned.</p>
-<h1><a class="anchor" id="autotoc_md32"></a>
+<h1><a class="anchor" id="autotoc_md34"></a>
 RawAllocator</h1>
 <p><a class="anchor" id="concept_rawallocator"></a></p>
 <p>A <code>RawAllocator</code> is the new type of allocator used in this library. Unlike the <code>Allocator</code> it does not work on a certain type directly, but only in terms of nodes and arrays of nodes. Thus it is unable to specify things like pointer types or construction function. It is only responsible for allocating and deallocating memory for nodes.</p>
@@ -133,7 +133,7 @@ RawAllocator</h1>
 <div class="line">    <span class="keywordtype">void</span> deallocate_node(<span class="keywordtype">void</span> *node, std::<span class="keywordtype">size_t</span> size, std::<span class="keywordtype">size_t</span> alignment) noexcept;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p><em>Note</em>: If a RawAllocator provides a member function for allocation/deallocation, it is not allowed to mix those two interfaces, i.e. allocate memory through the traits and deallocate through the member function or vice-versa. It is completely allowed that those functions do completely different things.</p>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md35"></a>
 Composable RawAllocator</h2>
 <p>A RawAllocator can be <em>composable</em>. Access to the composable (de)allocation functions is only done through the <a class="el" href="classfoonathan_1_1memory_1_1composable__allocator__traits.html">composable_allocator_traits</a>. It can be specialized for your own allocator types. The requirements for such a specialization are shown in the following table, where <code>ctraits</code> is <code>composable_allocator_traits&lt;RawAllocator</code>, <code>alloc</code> is an instance of type <code>traits::allocator_type</code>, <code>size</code> is a valid node size, <code>alignment</code> is a valid alignment, <code>count</code> is a valid array count, <code>node</code> is any non-null <a href="#concept_node">node</a> and <code>array</code> is any non-null <a href="#concept_array">array</a>:</p>
 <table class="markdownTable">
@@ -166,7 +166,7 @@ Composable RawAllocator</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>ctraits::try_deallocate_array(alloc, array, count, size, alignment)</code>  </td><td class="markdownTableBodyNone"><code>alloc.try_deallocate_array(array, count, size, alignment)</code>  </td><td class="markdownTableBodyNone"><code>ctraits::try_deallocate_node(alloc, array, count * size, alignment)</code>   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md34"></a>
+<h1><a class="anchor" id="autotoc_md36"></a>
 BlockAllocator</h1>
 <p><a class="anchor" id="concept_blockallocator"></a></p>
 <p>Some allocator types manage huge memory blocks and returns part of them in their allocation functions. Such huge memory blocks are managed by a memory arena, implemented in the class <a class="el" href="classfoonathan_1_1memory_1_1memory__arena.html">memory_arena</a>.</p>
@@ -210,7 +210,7 @@ BlockAllocator</h1>
 <div class="line"><span class="keyword">private</span>:</div>
 <div class="line">    std::size_t block_size_;    </div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md35"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md37"></a>
 StoragePolicy</h1>
 <p><a class="anchor" id="concept_storagepolicy"></a></p>
 <p>A <code>StoragePolicy</code> stores a <a href="#concept_rawallocator">RawAllocator</a> and is used with the class template <a class="el" href="classfoonathan_1_1memory_1_1allocator__storage.html">allocator_storage</a>. It specifies how the allocator is stored, i.e. whether it is stored directly or only a pointer to it. It must always store a <code>RawAllocator</code> instance. The <code>StoragePolicy</code> must be class that is nothrow moveable and be a valid base class, i.e. not <code>final</code>.</p>
@@ -255,7 +255,7 @@ StoragePolicy</h1>
 <div class="line"><span class="keyword">private</span>:</div>
 <div class="line">    allocator_type alloc_;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md36"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md38"></a>
 Segregatable</h1>
 <p><a class="anchor" id="concept_segregatable"></a></p>
 <p>A <code>Segregatable</code> stores a <a href="#concept_rawallocator">RawAllocator</a> and controls for which allocations it will be used. It is used in binary_segregator.</p>
@@ -307,7 +307,7 @@ Segregatable</h1>
 <div class="line"><span class="keyword">private</span>:</div>
 <div class="line">    allocator_type alloc_;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md37"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md39"></a>
 Tracker</h1>
 <p><a class="anchor" id="concept_tracker"></a></p>
 <p>A <code>Tracker</code> tracks allocation and/or deallocation of a <code>RawAllocator</code> and is used in the class template <a class="el" href="classfoonathan_1_1memory_1_1tracked__allocator.html">tracked_allocator</a>. It is a moveable class that can be used as base class. No operation on a <code>Tracker</code> may throw. The address of a <code>Tracker</code> can be used as a unique, runtime identifier for a certain <code>RawAllocator</code>.</p>

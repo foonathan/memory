@@ -46,7 +46,7 @@
 <p>The C++ STL allocator model has various flaws. For example, they are fixed to a certain type, because they are almost necessarily required to be templates. So you can't easily share a single allocator for multiple types. In addition, you can only get a copy from the containers and not the original allocator object. At least with C++11 they are allowed to be stateful and so can be made object not instance based. But still, the model has many flaws. Over the course of the years many solutions have been proposed. for example <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html">EASTL</a>. This library is another. But instead of trying to change the STL, it works with the current implementation.</p>
 <p><a href="https://patreon.com/foonathan"><img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Patreon" class="inline"/></a></p>
 <p>If you like this project, consider supporting me on Patreon. It would really help!</p>
-<h1><a class="anchor" id="autotoc_md74"></a>
+<h1><a class="anchor" id="autotoc_md76"></a>
 Features</h1>
 <p>New allocator concepts:</p>
 <ul>
@@ -79,7 +79,7 @@ Features</h1>
 <li>customizable error handling routines that can work with exceptions disabled</li>
 <li>everything except the STL adapters works on a freestanding environment</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md75"></a>
+<h1><a class="anchor" id="autotoc_md77"></a>
 Basic example</h1>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
@@ -184,7 +184,7 @@ Basic example</h1>
 <div class="line">    std::merge(first.begin(), first.end(), second.begin(), second.end(), begin);</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>See <code>example/</code> for more.</p>
-<h1><a class="anchor" id="autotoc_md76"></a>
+<h1><a class="anchor" id="autotoc_md78"></a>
 Installation</h1>
 <p>This library can be used as <a href="www.cmake.org">CMake</a> subdirectory. It is tested on GCC 4.8-5.0, Clang 3.5 and Visual Studio 2013. Newer versions should work too.</p>
 <ol type="1">
@@ -205,11 +205,11 @@ Installation</h1>
 <li>Call <code>target_link_libraries(your_target PUBLIC foonathan_memory)</code> to link to the library and setup all required options.</li>
 </ol>
 <p>See <a href="http://foonathan.github.io/doc/memory/md_doc_installation.html">http://foonathan.github.io/doc/memory/md_doc_installation.html</a> for a detailed guide.</p>
-<h1><a class="anchor" id="autotoc_md77"></a>
+<h1><a class="anchor" id="autotoc_md79"></a>
 Documentation</h1>
 <p>Full documentation can be found at <a href="http://foonathan.github.io/doc/memory">http://foonathan.github.io/doc/memory</a>.</p>
 <p>A tutorial is also available at <a href="http://foonathan.github.io/doc/memory/md_doc_tutorial.html">http://foonathan.github.io/doc/memory/md_doc_tutorial.html</a>.</p>
-<h1><a class="anchor" id="autotoc_md78"></a>
+<h1><a class="anchor" id="autotoc_md80"></a>
 RawAllocator</h1>
 <p>Below is the interface required for a <code>RawAllocator</code>, everything optional is marked:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>raw_allocator</div>
@@ -227,7 +227,7 @@ RawAllocator</h1>
 <div class="line">    std::size_t max_alignment() <span class="keyword">const</span>; <span class="comment">// optional, returns maximum fundamental alignment, i.e. alignof(std::max_align_t)</span></div>
 <div class="line">};</div>
 </div><!-- fragment --><p>A <code>RawAllocator</code> only needs to be moveable, all <code>Allocator</code> classes are <code>RawAllocators</code> too. Classes not providing the interface can specialize the <code>allocator_traits</code>, read more about <a href="http://foonathan.github.io/doc/memory/md_doc_writing_allocators.html">writing allocators here</a> or about the technical details of the <a href="http://foonathan.github.io/doc/memory/md_doc_concepts.html">concept here</a>.</p>
-<h1><a class="anchor" id="autotoc_md79"></a>
+<h1><a class="anchor" id="autotoc_md81"></a>
 Acknowledgements</h1>
 <p>This project is greatly supported by my <a href="https://patreon.com/foonathan">patrons</a>. In particular thanks to the individual supporters:</p>
 <ul>
@@ -235,8 +235,15 @@ Acknowledgements</h1>
 </ul>
 <p>And big thanks to the contributors as well:</p>
 <ul>
-<li>@nicolastagliani</li>
 <li>@bfierz</li>
+<li>@nicolastagliani</li>
+<li>@cho3</li>
+<li>@myd7349</li>
+<li>@moazzamak</li>
+<li>@maksqwe</li>
+<li>@kaidokert</li>
+<li>@gabyx</li>
+<li>@MiguelCompany</li>
 <li>@Manu343726 </li>
 </ul>
 </div></div><!-- contents -->

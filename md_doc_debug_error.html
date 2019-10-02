@@ -42,7 +42,7 @@
 <div class="title">Debugging options and error handling </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md39"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md41"></a>
 Error handling</h1>
 <p>By default, there are two exceptions thrown when something goes wrong.</p>
 <p>The class <a class="el" href="classfoonathan_1_1memory_1_1out__of__memory.html">out_of_memory</a> is thrown when a low-level allocator like a <a class="el" href="group__allocator.html#ga685770415c69bfd48710305754b978e7">heap_allocator</a> runs out of memory. It is inherited from <code>std::bad_alloc</code>.</p>
@@ -50,7 +50,7 @@ Error handling</h1>
 <p>This error handling mechanism can be configured to work without exceptions. Each exception class contains a static <code>handler</code> function which can be set to a user-defined function. This function gets called in the exception constructor. It takes information about the allocator such as name and address and some exception-related information, such as the size for which the allocation fails.</p>
 <p>The handler can do anything it wants, i.e. log the error. If the handler returns, the exception will be thrown.</p>
 <p>If exceptions are disabled in the library any <code>throw</code> statement will be translated to a call to <code>std::abort()</code>, the handler functions are then especially useful as they will still be called.</p>
-<h1><a class="anchor" id="autotoc_md40"></a>
+<h1><a class="anchor" id="autotoc_md42"></a>
 Debugging</h1>
 <p><a class="anchor" id="debugging"></a></p>
 <p>There are also facilities useful for tracking memory related errors.</p>
