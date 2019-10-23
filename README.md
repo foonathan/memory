@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/foonathan/memory.svg?branch=master)](https://travis-ci.org/foonathan/memory) [![Build status](https://ci.appveyor.com/api/projects/status/ef654yqyoqgvl472/branch/master?svg=true)](https://ci.appveyor.com/project/foonathan/memory/branch/master) [![License: Zlib](https://img.shields.io/badge/License-Zlib-lightgrey.svg)](https://opensource.org/licenses/Zlib)
 
 The C++ STL allocator model has various flaws. For example, they are fixed to a certain type, because they are almost necessarily required to be templates. So you can't easily share a single allocator for multiple types. In addition, you can only get a copy from the containers and not the original allocator object. At least with C++11 they are allowed to be stateful and so can be made object not instance based. But still, the model has many flaws.
-Over the course of the years many solutions have been proposed. for example [EASTL]. This library is another. But instead of trying to change the STL, it works with the current implementation.
+Over the course of the years many solutions have been proposed, for example [EASTL]. This library is another. But instead of trying to change the STL, it works with the current implementation.
 
 [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://patreon.com/foonathan)
 
@@ -184,13 +184,13 @@ To use an installed library:
 
 5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
   
-See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
+See https://foonathan.net/memory/md_doc_installation.html for a detailed guide.
 
 ## Documentation
 
-Full documentation can be found at http://foonathan.github.io/doc/memory.
+Full documentation can be found at https://foonathan.net/memory.
 
-A tutorial is also available at http://foonathan.github.io/doc/memory/md_doc_tutorial.html.
+A tutorial is also available at https://foonathan.net/memory/md_doc_tutorial.html.
 
 ## RawAllocator
 
@@ -214,7 +214,7 @@ struct raw_allocator
 ```
 
 A `RawAllocator` only needs to be moveable, all `Allocator` classes are `RawAllocators` too.
-Classes not providing the interface can specialize the `allocator_traits`, read more about [writing allocators here](http://foonathan.github.io/doc/memory/md_doc_writing_allocators.html) or about the technical details of the [concept here](http://foonathan.github.io/doc/memory/md_doc_concepts.html).
+Classes not providing the interface can specialize the `allocator_traits`, read more about [writing allocators here](https://foonathan.net/memory/md_doc_writing_allocators.html) or about the technical details of the [concept here](https://foonathan.net/memory/md_doc_concepts.html).
 
 ## Acknowledgements
 
