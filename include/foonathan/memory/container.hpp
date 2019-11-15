@@ -368,6 +368,7 @@ namespace foonathan
 /// @}
 #endif
 
+#if !defined(FOONATHAN_MEMORY_NO_NODE_SIZE)
         /// The node size required by \ref allocate_shared.
         /// \note This is similar to \ref shared_ptr_node_size but takes a
         /// \concept{concept_rawallocator,RawAllocator} instead.
@@ -376,6 +377,7 @@ namespace foonathan
         : shared_ptr_node_size<T, std_allocator<T, RawAllocator, Mutex>>
         {
         };
+#endif
     } // namespace memory
 } // namespace foonathan
 
