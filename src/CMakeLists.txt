@@ -77,9 +77,9 @@ set(src
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 # generate container_node_sizes.hpp
-if(FOONATHAN_MEMORY_BUILD_TOOLS AND (NOT CMAKE_CROSSCOMPILING))
+if(FOONATHAN_MEMORY_BUILD_TOOLS)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            COMMAND foonathan_memory_node_size_debugger --code --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+            COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${CMAKE_BINARY_DIR}/tool/nodesize_dbg --code --alignof "FOONATHAN_ALIGNOF(T)" ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             DEPENDS foonathan_memory_node_size_debugger
             VERBATIM)
 else()
