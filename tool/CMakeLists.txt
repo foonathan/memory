@@ -5,7 +5,10 @@
 # builds tools
 
 add_executable(foonathan_memory_node_size_debugger test_types.hpp node_size_debugger.hpp node_size_debugger.cpp)
-set_target_properties(foonathan_memory_node_size_debugger PROPERTIES LINK_FLAGS "-static")
+if (CMAKE_CROSSCOMPILING)
+    # statically link when cross compiling so emulator doesn't need library paths
+    set_target_properties(foonathan_memory_node_size_debugger PROPERTIES LINK_FLAGS "-static")
+endif()
 _foonathan_use_comp(foonathan_memory_node_size_debugger)
 comp_target_features(foonathan_memory_node_size_debugger PUBLIC CPP11)
 if (MSVC)
