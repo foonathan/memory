@@ -101,7 +101,8 @@ target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY_VERSION_PATCH=${FOONATHAN_MEMORY_VERSION_PATCH})
 
 set_target_properties(foonathan_memory PROPERTIES
-                                       OUTPUT_NAME "foonathan_memory-${FOONATHAN_MEMORY_VERSION}")
+                                       OUTPUT_NAME "foonathan_memory-${FOONATHAN_MEMORY_VERSION}"
+                                       POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
         RUNTIME       DESTINATION ${FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR}
