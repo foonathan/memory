@@ -141,7 +141,6 @@ The allocator adapter [aligned_allocator] wraps a [RawAllocator] and ensure a ce
 [direct_storage]: \ref foonathan::memory::direct_storage
 [reference_storage]: \ref foonathan::memory::reference_storage
 [any_reference_storage]: \ref foonathan::memory::any_reference_storage
-[default_mutex]: \ref foonathan::memory::default_mutex
 [std_allocator]: \ref foonathan::memory::std_allocator
 [any_std_allocator]: \ref foonathan::memory::any_std_allocator
 [aligned_allocator]: \ref foonathan::memory::aligned_allocator

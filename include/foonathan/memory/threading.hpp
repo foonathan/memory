@@ -6,7 +6,7 @@
 #define FOONATHAN_MEMORY_THREADING_HPP_INCLUDED
 
 /// \file
-/// The \ref foonathan::memory::default_mutex.
+/// The mutex types.
 
 #include <type_traits>
 
@@ -28,29 +28,15 @@ namespace foonathan
         /// \ingroup memory core
         struct no_mutex
         {
-            void lock() FOONATHAN_NOEXCEPT
-            {
-            }
+            void lock() FOONATHAN_NOEXCEPT {}
 
             bool try_lock() FOONATHAN_NOEXCEPT
             {
                 return true;
             }
 
-            void unlock() FOONATHAN_NOEXCEPT
-            {
-            }
+            void unlock() FOONATHAN_NOEXCEPT {}
         };
-
-#if FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE && FOONATHAN_HAS_MUTEX
-        using default_mutex = std::mutex;
-#else
-        /// The default \c Mutex type used as default template paremeter in, e.g. \ref allocator_reference.
-        /// If the CMake option \ref FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE is \c true and there is threading support,
-        /// it is \c std::mutex, else \ref no_mutex.
-        /// \ingroup memory core
-        using default_mutex = no_mutex;
-#endif
 
         /// Specifies whether or not a \concept{concept_rawallocator,RawAllocator} is thread safe as-is.
         /// This allows to use \ref no_mutex as an optimization.
@@ -59,7 +45,7 @@ namespace foonathan
         /// \ingroup memory core
         template <class RawAllocator>
         struct is_thread_safe_allocator
-            : std::integral_constant<bool, !allocator_traits<RawAllocator>::is_stateful::value>
+        : std::integral_constant<bool, !allocator_traits<RawAllocator>::is_stateful::value>
         {
         };
 
@@ -79,9 +65,7 @@ namespace foonathan
             {
             public:
                 mutex_storage() FOONATHAN_NOEXCEPT = default;
-                mutex_storage(const mutex_storage&) FOONATHAN_NOEXCEPT
-                {
-                }
+                mutex_storage(const mutex_storage&) FOONATHAN_NOEXCEPT {}
 
                 mutex_storage& operator=(const mutex_storage&) FOONATHAN_NOEXCEPT
                 {
@@ -111,12 +95,8 @@ namespace foonathan
             public:
                 mutex_storage() FOONATHAN_NOEXCEPT = default;
 
-                void lock() const FOONATHAN_NOEXCEPT
-                {
-                }
-                void unlock() const FOONATHAN_NOEXCEPT
-                {
-                }
+                void lock() const FOONATHAN_NOEXCEPT {}
+                void unlock() const FOONATHAN_NOEXCEPT {}
 
             protected:
                 ~mutex_storage() FOONATHAN_NOEXCEPT = default;
@@ -135,8 +115,8 @@ namespace foonathan
                 }
 
                 locked_allocator(locked_allocator&& other) FOONATHAN_NOEXCEPT
-                    : mutex_(other.mutex_),
-                      alloc_(other.alloc_)
+                : mutex_(other.mutex_),
+                  alloc_(other.alloc_)
                 {
                     other.mutex_ = nullptr;
                     other.alloc_ = nullptr;
@@ -173,7 +153,7 @@ namespace foonathan
                 return {a, m};
             }
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_THREADING_HPP_INCLUDED

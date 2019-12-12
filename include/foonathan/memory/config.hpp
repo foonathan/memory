@@ -78,10 +78,6 @@
 /// \ingroup memory core
 #define FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE 1
 
-/// Whether or not the \ref foonathan::memory::default_mutex will be \c std::mutex or \ref foonathan::memory::no_mutex.
-/// \ingroup memory core
-#define FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE 1
-
 /// Whether or not internal assertions in the library are enabled.
 /// \ingroup memory core
 #define FOONATHAN_MEMORY_DEBUG_ASSERT 1

@@ -3,7 +3,7 @@
 // found in the top-level directory of this distribution.
 
 #ifndef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
-    #error "do not include this file directly, use config.hpp"
+#error "do not include this file directly, use config.hpp"
 #endif
 
 #include <cstddef>
@@ -12,7 +12,6 @@
 // clang-format off
 #cmakedefine01 FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
 #define FOONATHAN_MEMORY_IMPL_DEFAULT_ALLOCATOR ${FOONATHAN_MEMORY_DEFAULT_ALLOCATOR}
-#cmakedefine01 FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_ASSERT
 #cmakedefine01 FOONATHAN_MEMORY_DEBUG_FILL
 #define FOONATHAN_MEMORY_DEBUG_FENCE ${FOONATHAN_MEMORY_DEBUG_FENCE}

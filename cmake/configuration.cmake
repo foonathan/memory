@@ -66,8 +66,6 @@ option(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
         "whether or not the size of the allocation will be checked" ON)
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
-option(FOONATHAN_MEMORY_THREAD_SAFE_REFERENCE
-    "whether or not allocator_reference is thread safe by default" ON)
 set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "<foonathan/pmr.hpp>" CACHE STRING
     "the header of the memory_resource class used")
 set(FOONATHAN_MEMORY_MEMORY_RESOURCE foonathan_comp::memory_resource CACHE STRING
