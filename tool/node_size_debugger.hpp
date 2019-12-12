@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <mutex>
 #include <tuple>
 #include <type_traits>
 
@@ -316,31 +315,6 @@ struct debug_shared_ptr_stateful
         auto ptr2 = std::allocate_shared<T>(
             node_size_debugger<T, T, debug_shared_ptr_stateful, allocator_reference_payload>());
         return node_size_debugger<T, T, debug_shared_ptr_stateful>::node_size();
-    }
-};
-
-struct debug_shared_ptr_stateful_mutex
-{
-    const char* name() const
-    {
-        return "shared_ptr_stateful_mutex";
-    }
-
-    template <typename T>
-    std::size_t debug()
-    {
-        struct allocator_reference_payload
-        {
-            typename std::aligned_storage<sizeof(std::mutex)>::type mutex;
-            void*                                                   ptr;
-        };
-
-        auto ptr = std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr_stateful_mutex,
-                                                              allocator_reference_payload>());
-        auto ptr2 =
-            std::allocate_shared<T>(node_size_debugger<T, T, debug_shared_ptr_stateful_mutex,
-                                                       allocator_reference_payload>());
-        return node_size_debugger<T, T, debug_shared_ptr_stateful_mutex>::node_size();
     }
 };
 

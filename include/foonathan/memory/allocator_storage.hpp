@@ -913,13 +913,13 @@ namespace foonathan
             mutable storage storage_;
         };
 
-        /// An alias template for \ref allocator_storage using the \ref reference_storage policy with a given \c Mutex.
+        /// An alias template for \ref allocator_storage using the \ref reference_storage policy.
         /// It will store a reference to the given allocator type. The tag type \ref any_allocator enables type-erasure.
-        /// The \c Mutex defaults to the \ref default_mutex.
+        /// Wrap the allocator in a \ref thread_safe_allocator if you want thread safety.
         /// \ingroup memory storage
-        template <class RawAllocator, class Mutex = default_mutex>
+        template <class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(allocator_reference,
-                                 allocator_storage<reference_storage<RawAllocator>, Mutex>);
+                                 allocator_storage<reference_storage<RawAllocator>, no_mutex>);
 
         /// \returns A new \ref allocator_reference object by forwarding the allocator to the constructor.
         /// \relates allocator_reference
@@ -930,46 +930,26 @@ namespace foonathan
             return {detail::forward<RawAllocator>(allocator)};
         }
 
-        /// \returns A new \ref allocator_reference object by forwarding the allocator to the constructor and specifying a custom \c Mutex.
-        /// \relates allocator_reference
-        template <class Mutex, class RawAllocator>
-        auto make_allocator_reference(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
-            -> allocator_reference<typename std::decay<RawAllocator>::type, Mutex>
-        {
-            return {detail::forward<RawAllocator>(allocator)};
-        }
-
         /// An alias for the \ref reference_storage specialization using type-erasure.
         /// \ingroup memory storage
         using any_reference_storage = reference_storage<any_allocator>;
 
-        /// A template alias for \ref allocator_storage using the \ref any_reference_storage with a given \c Mutex.
+        /// An alias for \ref allocator_storage using the \ref any_reference_storage.
         /// It will store a reference to any \concept{concept_rawallocator,RawAllocator}.
-        /// The \c Mutex defaults to \ref default_mutex.
         /// This is the same as passing the tag type \ref any_allocator to the alias \ref allocator_reference.
+        /// Wrap the allocator in a \ref thread_safe_allocator if you want thread safety.
         /// \ingroup memory storage
-        template <class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(any_allocator_reference,
-                                 allocator_storage<any_reference_storage, Mutex>);
+        using any_allocator_reference = allocator_storage<any_reference_storage, no_mutex>;
 
         /// \returns A new \ref any_allocator_reference object by forwarding the allocator to the constructor.
         /// \relates any_allocator_reference
         template <class RawAllocator>
         auto make_any_allocator_reference(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
-            -> any_allocator_reference<>
+            -> any_allocator_reference
         {
             return {detail::forward<RawAllocator>(allocator)};
         }
-
-        /// \returns A new \ref any_allocator_reference object by forwarding the allocator to the constructor and specifying a custom \c Mutex.
-        /// \relates any_allocator_reference
-        template <class Mutex, class RawAllocator>
-        auto make_any_allocator_reference(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
-            -> any_allocator_reference<Mutex>
-        {
-            return {detail::forward<RawAllocator>(allocator)};
-        }
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_ALLOCATOR_STORAGE_HPP_INCLUDED

@@ -54,12 +54,6 @@ int main()
         memory::allocate_unique<int>(pool, *list.begin());
     std::cout << *ptr << '\n';
 
-    // by default every access to the allocator is locked by a mutex to ensure thread safety
-    // this can be prevented by specifying memory::no_mutex
-    memory::unique_ptr<int, memory::memory_pool<>, memory::no_mutex> ptr2 =
-        memory::allocate_unique<int, memory::no_mutex>(pool, *std::next(list.begin()));
-    std::cout << *ptr2 << '\n';
-
     struct base
     {
         virtual ~base() = default;

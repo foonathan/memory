@@ -1,5 +1,17 @@
 # Upcoming Changes
 
+## Adapter
+
+BREAKING: Remove `Mutex` support from `allocator_reference` and consequently from `std_allocator`, `allocator_deleter`, ...
+Embedding the `Mutex` with the reference was *fundamentally* broken and unusable to ensure thread safety.
+Use a reference to a `thread_safe_allocator` instead, which actually guarantees thread safety.
+
+## Bugfixes
+
+* more CMake improvements
+
+---
+
 # 0.6-2
 
 Various bug fixes, compiler warning workarounds and CMake improvements accumulated over past two years.

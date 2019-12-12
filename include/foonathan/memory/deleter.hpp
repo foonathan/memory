@@ -21,19 +21,16 @@ namespace foonathan
         /// A deleter class that deallocates the memory through a specified \concept{concept_rawallocator,RawAllocator}.
         ///
         /// It deallocates memory for a specified type but does not call its destructors.
-        /// Only a reference to the \c RawAllocator is stored, access to it is synchronized by a given \c Mutex which defaults to \ref default_mutex.
         /// \ingroup memory adapter
-        template <typename Type, class RawAllocator, class Mutex = default_mutex>
-        class allocator_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename Type, class RawAllocator>
+        class allocator_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
             static_assert(!std::is_abstract<Type>::value,
                           "use allocator_polymorphic_deallocator for storing base classes");
 
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = Type;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = Type;
 
             /// \effects Creates it without any associated allocator.
             /// The deallocator must not be used if that is the case.
@@ -42,8 +39,8 @@ namespace foonathan
 
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
-            allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator, Mutex>(alloc)
+            allocator_deallocator(allocator_reference<RawAllocator> alloc) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator>(alloc)
             {
             }
 
@@ -58,27 +55,25 @@ namespace foonathan
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deallocator must not be created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
         };
 
         /// Specialization of \ref allocator_deallocator for array types.
         /// Otherwise the same behavior.
         /// \ingroup memory adapter
-        template <typename Type, class RawAllocator, class Mutex>
-        class allocator_deallocator<Type[], RawAllocator, Mutex>
-        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename Type, class RawAllocator>
+        class allocator_deallocator<Type[], RawAllocator>
+        : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
             static_assert(!std::is_abstract<Type>::value, "must not create polymorphic arrays");
 
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = Type;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = Type;
 
             /// \effects Creates it without any associated allocator.
             /// The deallocator must not be used if that is the case.
@@ -87,9 +82,9 @@ namespace foonathan
 
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
-            allocator_deallocator(allocator_reference<RawAllocator, mutex> alloc,
-                                  std::size_t                              size) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator, Mutex>(alloc),
+            allocator_deallocator(allocator_reference<RawAllocator> alloc,
+                                  std::size_t                       size) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator>(alloc),
               size_(size)
             {
             }
@@ -107,10 +102,10 @@ namespace foonathan
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deallocator must not have been created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
 
             /// \returns The size of the array that will be deallocated.
@@ -128,21 +123,18 @@ namespace foonathan
         ///
         /// It can only be created from a \ref allocator_deallocator and thus must only be used for smart pointers initialized by derived-to-base conversion of the pointer.
         /// \ingroup memory adapter
-        template <typename BaseType, class RawAllocator, class Mutex = default_mutex>
-        class allocator_polymorphic_deallocator
-        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename BaseType, class RawAllocator>
+        class allocator_polymorphic_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = BaseType;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = BaseType;
 
             /// \effects Creates it from a deallocator for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
-            allocator_polymorphic_deallocator(allocator_deallocator<T, RawAllocator, Mutex> dealloc)
-            : allocator_reference<RawAllocator, Mutex>(dealloc.get_allocator()),
+            allocator_polymorphic_deallocator(allocator_deallocator<T, RawAllocator> dealloc)
+            : allocator_reference<RawAllocator>(dealloc.get_allocator()),
               derived_size_(sizeof(T)),
               derived_alignment_(FOONATHAN_ALIGNOF(T))
             {
@@ -158,10 +150,10 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
 
         private:
@@ -171,17 +163,15 @@ namespace foonathan
         /// Similar to \ref allocator_deallocator but calls the destructors of the object.
         /// Otherwise behaves the same.
         /// \ingroup memory adapter
-        template <typename Type, class RawAllocator, class Mutex = default_mutex>
-        class allocator_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename Type, class RawAllocator>
+        class allocator_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
             static_assert(!std::is_abstract<Type>::value,
                           "use allocator_polymorphic_deleter for storing base classes");
 
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = Type;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = Type;
 
             /// \effects Creates it without any associated allocator.
             /// The deleter must not be used if that is the case.
@@ -190,8 +180,8 @@ namespace foonathan
 
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
-            allocator_deleter(allocator_reference<RawAllocator, mutex> alloc) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator, Mutex>(alloc)
+            allocator_deleter(allocator_reference<RawAllocator> alloc) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator>(alloc)
             {
             }
 
@@ -207,27 +197,25 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
         };
 
         /// Specialization of \ref allocator_deleter for array types.
         /// Otherwise the same behavior.
         /// \ingroup memory adapter
-        template <typename Type, class RawAllocator, class Mutex>
-        class allocator_deleter<Type[], RawAllocator, Mutex>
-        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename Type, class RawAllocator>
+        class allocator_deleter<Type[], RawAllocator>
+        : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
             static_assert(!std::is_abstract<Type>::value, "must not create polymorphic arrays");
 
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = Type;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = Type;
 
             /// \effects Creates it without any associated allocator.
             /// The deleter must not be used if that is the case.
@@ -236,9 +224,9 @@ namespace foonathan
 
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
-            allocator_deleter(allocator_reference<RawAllocator, mutex> alloc,
-                              std::size_t                              size) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator, Mutex>(alloc),
+            allocator_deleter(allocator_reference<RawAllocator> alloc,
+                              std::size_t                       size) FOONATHAN_NOEXCEPT
+            : allocator_reference<RawAllocator>(alloc),
               size_(size)
             {
             }
@@ -258,10 +246,10 @@ namespace foonathan
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deleter must not be created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
 
             /// \returns The size of the array that will be deallocated.
@@ -279,21 +267,18 @@ namespace foonathan
         /// Otherwise behaves the same.
         /// \note It has a relatively high space overhead, so only use it if you have to.
         /// \ingroup memory adapter
-        template <typename BaseType, class RawAllocator, class Mutex = default_mutex>
-        class allocator_polymorphic_deleter
-        : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename BaseType, class RawAllocator>
+        class allocator_polymorphic_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
         public:
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex      = Mutex;
-            using value_type = BaseType;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
+            using value_type     = BaseType;
 
             /// \effects Creates it from a deleter for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
-            allocator_polymorphic_deleter(allocator_deleter<T, RawAllocator, Mutex> deleter)
-            : allocator_reference<RawAllocator, Mutex>(deleter.get_allocator()),
+            allocator_polymorphic_deleter(allocator_deleter<T, RawAllocator> deleter)
+            : allocator_reference<RawAllocator>(deleter.get_allocator()),
               derived_size_(sizeof(T)),
               derived_alignment_(FOONATHAN_ALIGNOF(T))
             {
@@ -312,10 +297,10 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
 
         private:

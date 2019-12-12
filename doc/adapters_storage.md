@@ -42,7 +42,7 @@ But this means that they don't actually depend on the lifetime of the given allo
 In either case, the class is nothrow copyable and never actually moves the referred allocator, just copies the pointer.
 A copy of a [reference_storage] references the same allocator as the origin.
 
-The alias [allocator_reference] uses this storage policy with the [default_mutex].
+The alias [allocator_reference] uses this storage policy.
 
 ### Type-erased reference allocator storage
 

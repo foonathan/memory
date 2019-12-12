@@ -23,7 +23,7 @@ namespace foonathan
 {
     namespace memory
     {
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         class joint_ptr;
 
         template <typename T>
@@ -36,8 +36,8 @@ namespace foonathan
             {
             public:
                 joint_stack(void* mem, std::size_t cap) FOONATHAN_NOEXCEPT
-                    : stack_(static_cast<char*>(mem)),
-                      end_(static_cast<char*>(mem) + cap)
+                : stack_(static_cast<char*>(mem)),
+                  end_(static_cast<char*>(mem) + cap)
                 {
                 }
 
@@ -102,13 +102,11 @@ namespace foonathan
         /// \ingroup memory allocator
         class joint
         {
-            joint(std::size_t cap) FOONATHAN_NOEXCEPT : capacity(cap)
-            {
-            }
+            joint(std::size_t cap) FOONATHAN_NOEXCEPT : capacity(cap) {}
 
             std::size_t capacity;
 
-            template <typename T, class RawAllocator, class Mutex>
+            template <typename T, class RawAllocator>
             friend class joint_ptr;
             template <typename T>
             friend class joint_type;
@@ -122,9 +120,7 @@ namespace foonathan
         {
             std::size_t size;
 
-            explicit joint_size(std::size_t s) FOONATHAN_NOEXCEPT : size(s)
-            {
-            }
+            explicit joint_size(std::size_t s) FOONATHAN_NOEXCEPT : size(s) {}
         };
 
         /// CRTP base class for all objects that want to use joint memory.
@@ -186,7 +182,7 @@ namespace foonathan
 
         template <typename T>
         joint_type<T>::joint_type(joint j) FOONATHAN_NOEXCEPT
-            : stack_(detail::get_memory(*this), j.capacity)
+        : stack_(detail::get_memory(*this), j.capacity)
         {
             FOONATHAN_MEMORY_ASSERT(stack_.top() == detail::get_memory(*this));
             FOONATHAN_MEMORY_ASSERT(stack_.capacity_left() == j.capacity);
@@ -216,30 +212,28 @@ namespace foonathan
         /// The memory block will be managed by the given \concept{concept_rawallocator,RawAllocator},
         /// it is stored in an \ref allocator_reference and not owned by the pointer directly.
         /// \ingroup memory allocator
-        template <typename T, class RawAllocator, class Mutex /* = default_mutex*/>
-        class joint_ptr : FOONATHAN_EBO(allocator_reference<RawAllocator, Mutex>)
+        template <typename T, class RawAllocator>
+        class joint_ptr : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
             static_assert(std::is_base_of<joint_type<T>, T>::value,
                           "T must be derived of joint_type<T>");
 
         public:
-            using element_type = T;
-            using allocator_type =
-                typename allocator_reference<RawAllocator, Mutex>::allocator_type;
-            using mutex = Mutex;
+            using element_type   = T;
+            using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
 
             //=== constructors/destructor/assignment ===//
             /// @{
             /// \effects Creates it with a \concept{concept_rawallocator,RawAllocator}, but does not own a new object.
             explicit joint_ptr(allocator_type& alloc) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc),
-                  ptr_(nullptr)
+            : allocator_reference<RawAllocator>(alloc),
+              ptr_(nullptr)
             {
             }
 
             explicit joint_ptr(const allocator_type& alloc) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(alloc),
-                  ptr_(nullptr)
+            : allocator_reference<RawAllocator>(alloc),
+              ptr_(nullptr)
             {
             }
             /// @}
@@ -266,8 +260,8 @@ namespace foonathan
             /// \effects Move-constructs the pointer.
             /// Ownership will be transferred from `other` to the new object.
             joint_ptr(joint_ptr&& other) FOONATHAN_NOEXCEPT
-                : allocator_reference<RawAllocator, Mutex>(detail::move(other)),
-                  ptr_(other.ptr_)
+            : allocator_reference<RawAllocator>(detail::move(other)),
+              ptr_(other.ptr_)
             {
                 other.ptr_ = nullptr;
             }
@@ -298,8 +292,8 @@ namespace foonathan
             /// \effects Swaps to pointers and their ownership and allocator.
             friend void swap(joint_ptr& a, joint_ptr& b) FOONATHAN_NOEXCEPT
             {
-                detail::adl_swap(static_cast<allocator_reference<RawAllocator, Mutex>&>(a),
-                                 static_cast<allocator_reference<RawAllocator, Mutex>&>(b));
+                detail::adl_swap(static_cast<allocator_reference<RawAllocator>&>(a),
+                                 static_cast<allocator_reference<RawAllocator>&>(b));
                 detail::adl_swap(a.ptr_, b.ptr_);
             }
 
@@ -311,9 +305,10 @@ namespace foonathan
                 if (ptr_)
                 {
                     (**this).~element_type();
-                    this->deallocate_node(ptr_, sizeof(element_type)
-                                                    + detail::get_stack(*ptr_).capacity(
-                                                          detail::get_memory(*ptr_)),
+                    this->deallocate_node(ptr_,
+                                          sizeof(element_type)
+                                              + detail::get_stack(*ptr_).capacity(
+                                                  detail::get_memory(*ptr_)),
                                           FOONATHAN_ALIGNOF(element_type));
                     ptr_ = nullptr;
                 }
@@ -353,10 +348,10 @@ namespace foonathan
             }
 
             /// \returns A reference to the allocator it will use for the deallocation.
-            auto get_allocator() const FOONATHAN_NOEXCEPT -> decltype(
-                std::declval<allocator_reference<allocator_type, mutex>>().get_allocator())
+            auto get_allocator() const FOONATHAN_NOEXCEPT
+                -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
-                return this->allocator_reference<allocator_type, mutex>::get_allocator();
+                return this->allocator_reference<allocator_type>::get_allocator();
             }
 
         private:
@@ -390,14 +385,14 @@ namespace foonathan
         /// \returns `!ptr`,
         /// i.e. if `ptr` does not own anything.
         /// \relates joint_ptr
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator==(const joint_ptr<T, RawAllocator, Mutex>& ptr, std::nullptr_t)
+        template <typename T, class RawAllocator>
+        bool operator==(const joint_ptr<T, RawAllocator>& ptr, std::nullptr_t)
         {
             return !ptr;
         }
 
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator==(std::nullptr_t, const joint_ptr<T, RawAllocator, Mutex>& ptr)
+        template <typename T, class RawAllocator>
+        bool operator==(std::nullptr_t, const joint_ptr<T, RawAllocator>& ptr)
         {
             return ptr == nullptr;
         }
@@ -407,14 +402,14 @@ namespace foonathan
         /// \returns `ptr.get() == p`,
         /// i.e. if `ptr` ownws the object referred to by `p`.
         /// \relates joint_ptr
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator==(const joint_ptr<T, RawAllocator, Mutex>& ptr, T* p)
+        template <typename T, class RawAllocator>
+        bool operator==(const joint_ptr<T, RawAllocator>& ptr, T* p)
         {
             return ptr.get() == p;
         }
 
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator==(T* p, const joint_ptr<T, RawAllocator, Mutex>& ptr)
+        template <typename T, class RawAllocator>
+        bool operator==(T* p, const joint_ptr<T, RawAllocator>& ptr)
         {
             return ptr == p;
         }
@@ -424,14 +419,14 @@ namespace foonathan
         /// \returns `!(ptr == nullptr)`,
         /// i.e. if `ptr` does own something.
         /// \relates joint_ptr
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator!=(const joint_ptr<T, RawAllocator, Mutex>& ptr, std::nullptr_t)
+        template <typename T, class RawAllocator>
+        bool operator!=(const joint_ptr<T, RawAllocator>& ptr, std::nullptr_t)
         {
             return !(ptr == nullptr);
         }
 
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator!=(std::nullptr_t, const joint_ptr<T, RawAllocator, Mutex>& ptr)
+        template <typename T, class RawAllocator>
+        bool operator!=(std::nullptr_t, const joint_ptr<T, RawAllocator>& ptr)
         {
             return ptr != nullptr;
         }
@@ -441,14 +436,14 @@ namespace foonathan
         /// \returns `!(ptr == p)`,
         /// i.e. if `ptr` does not ownw the object referred to by `p`.
         /// \relates joint_ptr
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator!=(const joint_ptr<T, RawAllocator, Mutex>& ptr, T* p)
+        template <typename T, class RawAllocator>
+        bool operator!=(const joint_ptr<T, RawAllocator>& ptr, T* p)
         {
             return !(ptr == p);
         }
 
-        template <typename T, class RawAllocator, class Mutex>
-        bool operator!=(T* p, const joint_ptr<T, RawAllocator, Mutex>& ptr)
+        template <typename T, class RawAllocator>
+        bool operator!=(T* p, const joint_ptr<T, RawAllocator>& ptr)
         {
             return ptr != p;
         }
@@ -512,9 +507,7 @@ namespace foonathan
 #if defined(__GNUC__) && (!defined(_GLIBCXX_USE_CXX11_ABI) || _GLIBCXX_USE_CXX11_ABI == 0)
             // std::string requires default constructor for the small string optimization when using gcc's old ABI
             // so add one, but it must never be used for allocation
-            joint_allocator() FOONATHAN_NOEXCEPT : stack_(nullptr)
-            {
-            }
+            joint_allocator() FOONATHAN_NOEXCEPT : stack_(nullptr) {}
 #endif
 
             /// \effects Creates it using the joint memory of the given object.
@@ -586,7 +579,7 @@ namespace foonathan
         };
 
         /// Specialization of \ref is_thread_safe_allocator to mark \ref joint_allocator as thread safe.
-        /// This is an optimization to get rid of the mutex in \ref allocator_reference,
+        /// This is an optimization to get rid of the mutex in \ref allocator_storage,
         /// as joint allocator must not be shared between threads.
         /// \note The allocator is *not* thread safe, it just must not be shared.
         template <>
@@ -933,7 +926,7 @@ namespace foonathan
             value_type* ptr_;
             std::size_t size_;
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_JOINT_ALLOCATOR_HPP_INCLUDED

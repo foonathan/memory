@@ -38,13 +38,7 @@ TEST_CASE("allocate_shared", "[adapter]")
         REQUIRE(*ptr == 42);
         REQUIRE((dummy_allocator::size <= allocate_shared_node_size<int, dummy_allocator>::value));
     }
-    SECTION("stateful no mutex")
-    {
-        memory_pool<> pool(allocate_shared_node_size<int, memory_pool<>, no_mutex>::value, 1024);
-        auto          ptr = allocate_shared<int, no_mutex>(pool, 42);
-        REQUIRE(*ptr == 42);
-    }
-    SECTION("stateful mutex")
+    SECTION("stateful")
     {
         memory_pool<> pool(allocate_shared_node_size<int, memory_pool<>>::value, 1024);
         auto          ptr = allocate_shared<int>(pool, 42);

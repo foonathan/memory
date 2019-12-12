@@ -11,8 +11,8 @@
 
 using namespace foonathan::memory;
 
-template <typename T, class RawAllocator, class Mutex>
-void verify(const joint_ptr<T, RawAllocator, Mutex>& ptr, const RawAllocator& alloc, int value)
+template <typename T, class RawAllocator>
+void verify(const joint_ptr<T, RawAllocator>& ptr, const RawAllocator& alloc, int value)
 {
     REQUIRE(ptr);
     REQUIRE(ptr.get());
@@ -22,8 +22,8 @@ void verify(const joint_ptr<T, RawAllocator, Mutex>& ptr, const RawAllocator& al
     REQUIRE(ptr->value == value);
 }
 
-template <typename T, class RawAllocator, class Mutex>
-void verify_null(const joint_ptr<T, RawAllocator, Mutex>& ptr, const RawAllocator& alloc)
+template <typename T, class RawAllocator>
+void verify_null(const joint_ptr<T, RawAllocator>& ptr, const RawAllocator& alloc)
 {
     REQUIRE(!ptr);
     REQUIRE(ptr.get() == nullptr);
@@ -36,13 +36,9 @@ TEST_CASE("joint_ptr", "[allocator]")
     {
         int value;
 
-        joint_test(joint tag, int v) : joint_type(tag), value(v)
-        {
-        }
+        joint_test(joint tag, int v) : joint_type(tag), value(v) {}
 
-        joint_test(joint tag, const joint_test& other) : joint_type(tag), value(other.value)
-        {
-        }
+        joint_test(joint tag, const joint_test& other) : joint_type(tag), value(other.value) {}
     };
 
     test_allocator alloc;
@@ -182,10 +178,9 @@ TEST_CASE("joint_allocator", "[allocator]")
     struct joint_test : joint_type<joint_test>
     {
         vector<int, joint_allocator> vec;
-        int value;
+        int                          value;
 
-        joint_test(joint tag, int val, std::size_t size)
-        : joint_type(tag), vec(*this), value(val)
+        joint_test(joint tag, int val, std::size_t size) : joint_type(tag), vec(*this), value(val)
         {
             vec.reserve(size);
             vec.push_back(42);
@@ -231,9 +226,7 @@ TEST_CASE("joint_array", "[allocator]")
     {
         int value;
 
-        joint_test(joint tag, int v) : joint_type(tag), value(v)
-        {
-        }
+        joint_test(joint tag, int v) : joint_type(tag), value(v) {}
     };
 
     test_allocator alloc;

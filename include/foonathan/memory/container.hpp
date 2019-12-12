@@ -42,182 +42,173 @@ namespace foonathan
 
         /// Alias template for an STL container that uses a certain
         /// \concept{concept_rawallocator,RawAllocator}. It is just a shorthand for a passing in the \c
-        /// RawAllocator wrapped in a \ref foonathan::memory::std_allocator. The \c Mutex type defaults
-        /// to the \ref foonathan::memory::default_mutex.
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(vector, std::vector<T, std_allocator<T, RawAllocator, Mutex>>);
+        /// RawAllocator wrapped in a \ref foonathan::memory::std_allocator.
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(vector, std::vector<T, std_allocator<T, RawAllocator>>);
 
         /// Same as above but uses \c std::scoped_allocator_adaptor so the allocator is inherited by all
         /// nested containers.
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             vector_scoped_alloc,
-            std::vector<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::vector<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(deque, std::deque<T, std_allocator<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(deque, std::deque<T, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             deque_scoped_alloc,
-            std::deque<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::deque<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(list, std::list<T, std_allocator<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(list, std::list<T, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             list_scoped_alloc,
-            std::list<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::list<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(forward_list,
-                                 std::forward_list<T, std_allocator<T, RawAllocator, Mutex>>);
+                                 std::forward_list<T, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             forward_list_scoped_alloc,
-            std::forward_list<
-                T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::forward_list<T, std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(set,
-                                 std::set<T, std::less<T>, std_allocator<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(set, std::set<T, std::less<T>, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             set_scoped_alloc,
             std::set<T, std::less<T>,
-                     std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+                     std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(
-            multiset, std::multiset<T, std::less<T>, std_allocator<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(multiset,
+                                 std::multiset<T, std::less<T>, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             multiset_scoped_alloc,
             std::multiset<T, std::less<T>,
-                          std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+                          std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             map, std::map<Key, Value, std::less<Key>,
-                          std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>);
+                          std_allocator<std::pair<const Key, Value>, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             map_scoped_alloc,
             std::map<Key, Value, std::less<Key>,
                      std::scoped_allocator_adaptor<
-                         std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>>);
+                         std_allocator<std::pair<const Key, Value>, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
-            multimap,
-            std::multimap<Key, Value, std::less<Key>,
-                          std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>);
+            multimap, std::multimap<Key, Value, std::less<Key>,
+                                    std_allocator<std::pair<const Key, Value>, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             multimap_scoped_alloc,
             std::multimap<Key, Value, std::less<Key>,
                           std::scoped_allocator_adaptor<
-                              std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>>);
+                              std_allocator<std::pair<const Key, Value>, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(unordered_set,
-                                 std::unordered_set<T, std::hash<T>, std::equal_to<T>,
-                                                    std_allocator<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(
+            unordered_set,
+            std::unordered_set<T, std::hash<T>, std::equal_to<T>, std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_set_scoped_alloc,
-            std::unordered_set<
-                T, std::hash<T>, std::equal_to<T>,
-                std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::unordered_set<T, std::hash<T>, std::equal_to<T>,
+                               std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(unordered_multiset,
                                  std::unordered_multiset<T, std::hash<T>, std::equal_to<T>,
-                                                         std_allocator<T, RawAllocator, Mutex>>);
+                                                         std_allocator<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_multiset_scoped_alloc,
-            std::unordered_multiset<
-                T, std::hash<T>, std::equal_to<T>,
-                std::scoped_allocator_adaptor<std_allocator<T, RawAllocator, Mutex>>>);
+            std::unordered_multiset<T, std::hash<T>, std::equal_to<T>,
+                                    std::scoped_allocator_adaptor<std_allocator<T, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_map,
             std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>,
-                               std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>);
+                               std_allocator<std::pair<const Key, Value>, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_map_scoped_alloc,
             std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>,
-                               std::scoped_allocator_adaptor<std_allocator<
-                                   std::pair<const Key, Value>, RawAllocator, Mutex>>>);
+                               std::scoped_allocator_adaptor<
+                                   std_allocator<std::pair<const Key, Value>, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_multimap,
-            std::unordered_multimap<
-                Key, Value, std::hash<Key>, std::equal_to<Key>,
-                std_allocator<std::pair<const Key, Value>, RawAllocator, Mutex>>);
+            std::unordered_multimap<Key, Value, std::hash<Key>, std::equal_to<Key>,
+                                    std_allocator<std::pair<const Key, Value>, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename Key, typename Value, class RawAllocator, class Mutex = default_mutex>
+        template <typename Key, typename Value, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unordered_multimap_scoped_alloc,
             std::unordered_multimap<Key, Value, std::hash<Key>, std::equal_to<Key>,
-                                    std::scoped_allocator_adaptor<std_allocator<
-                                        std::pair<const Key, Value>, RawAllocator, Mutex>>>);
+                                    std::scoped_allocator_adaptor<
+                                        std_allocator<std::pair<const Key, Value>, RawAllocator>>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(stack, std::stack<T, deque<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(stack, std::stack<T, deque<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(stack_scoped_alloc,
-                                 std::stack<T, deque_scoped_alloc<T, RawAllocator, Mutex>>);
+                                 std::stack<T, deque_scoped_alloc<T, RawAllocator>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(queue, std::queue<T, deque<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(queue, std::queue<T, deque<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
+        template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(queue_scoped_alloc,
-                                 std::queue<T, deque_scoped_alloc<T, RawAllocator, Mutex>>);
+                                 std::queue<T, deque_scoped_alloc<T, RawAllocator>>);
 
         /// \copydoc vector
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(priority_queue,
-                                 std::priority_queue<T, deque<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(priority_queue, std::priority_queue<T, deque<T, RawAllocator>>);
         /// \copydoc vector_scoped_alloc_alloc
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(
-            priority_queue_scoped_alloc,
-            std::priority_queue<T, deque_scoped_alloc<T, RawAllocator, Mutex>>);
+        template <typename T, class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(priority_queue_scoped_alloc,
+                                 std::priority_queue<T, deque_scoped_alloc<T, RawAllocator>>);
 
         /// \copydoc vector
-        template <class RawAllocator, class Mutex = default_mutex>
-        FOONATHAN_ALIAS_TEMPLATE(string,
-                                 std::basic_string<char, std::char_traits<char>,
-                                                   std_allocator<char, RawAllocator, Mutex>>);
+        template <class RawAllocator>
+        FOONATHAN_ALIAS_TEMPLATE(
+            string,
+            std::basic_string<char, std::char_traits<char>, std_allocator<char, RawAllocator>>);
         /// @}
 
         /// @{
@@ -263,27 +254,15 @@ namespace foonathan
             };
 
             template <typename T, class RawAllocator>
-            struct shared_ptr_node_size<T, std_allocator<T, RawAllocator, no_mutex>>
+            struct shared_ptr_node_size<T, std_allocator<T, RawAllocator>>
             : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
                                memory::shared_ptr_stateful_node_size<T>,
                                memory::shared_ptr_stateless_node_size<T>>::type
             {
-                static_assert(sizeof(std_allocator<T, RawAllocator, no_mutex>) <= sizeof(void*),
+                static_assert(sizeof(std_allocator<T, RawAllocator>) <= sizeof(void*),
                               "fix node size debugger");
             };
 
-#if FOONATHAN_HAS_MUTEX
-            template <typename T, class RawAllocator>
-            struct shared_ptr_node_size<T, std_allocator<T, RawAllocator, std::mutex>>
-            : std::conditional<allocator_traits<RawAllocator>::is_stateful::value,
-                               memory::shared_ptr_stateful_mutex_node_size<T>,
-                               memory::shared_ptr_stateless_node_size<T>>::type
-            {
-                static_assert(sizeof(std_allocator<T, RawAllocator, no_mutex>)
-                                  <= sizeof(void*) + sizeof(std::mutex),
-                              "fix node size debugger");
-            };
-#endif
         } // namespace detail
 
         template <typename T, class StdAllocator>
@@ -372,9 +351,8 @@ namespace foonathan
         /// The node size required by \ref allocate_shared.
         /// \note This is similar to \ref shared_ptr_node_size but takes a
         /// \concept{concept_rawallocator,RawAllocator} instead.
-        template <typename T, class RawAllocator, class Mutex = default_mutex>
-        struct allocate_shared_node_size
-        : shared_ptr_node_size<T, std_allocator<T, RawAllocator, Mutex>>
+        template <typename T, class RawAllocator>
+        struct allocate_shared_node_size : shared_ptr_node_size<T, std_allocator<T, RawAllocator>>
         {
         };
 #endif
