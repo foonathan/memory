@@ -119,7 +119,7 @@ namespace
         // not enough continuous space
         return {nullptr, nullptr, nullptr, nullptr};
     }
-}
+} // namespace
 
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
@@ -228,8 +228,8 @@ std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
 
 std::size_t free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
 {
-    // node size is fence size
-    return debug_fence_size ? node_size_ : 0u;
+    // fence size is max alignment
+    return debug_fence_size ? max_alignment : 0u;
 }
 
 void free_memory_list::insert_impl(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
@@ -338,7 +338,7 @@ namespace
         FOONATHAN_MEMORY_UNREACHABLE("memory must be in some half or outside");
         return {nullptr, nullptr};
     }
-}
+} // namespace
 
 FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_size;
 FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_alignment;

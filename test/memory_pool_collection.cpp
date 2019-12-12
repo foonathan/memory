@@ -22,10 +22,10 @@ TEST_CASE("memory_pool_collection", "[pool]")
     test_allocator alloc;
     {
         const auto max_size = 16u;
-        pools      pool(max_size, 1000, alloc);
+        pools      pool(max_size, 2000, alloc);
         REQUIRE(pool.max_node_size() == max_size);
-        REQUIRE(pool.capacity_left() <= 1000u);
-        REQUIRE(pool.next_capacity() >= 1000u);
+        REQUIRE(pool.capacity_left() <= 2000u);
+        REQUIRE(pool.next_capacity() >= 2000u);
         REQUIRE(alloc.no_allocated() == 1u);
 
         for (auto i = 0u; i != max_size; ++i)
@@ -33,7 +33,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
 
         SECTION("normal alloc/dealloc")
         {
-            std::vector<void *> a, b;
+            std::vector<void*> a, b;
             for (auto i = 0u; i != 5u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
@@ -41,7 +41,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
                 REQUIRE(b.back());
             }
             REQUIRE(alloc.no_allocated() == 1u);
-            REQUIRE(pool.capacity_left() <= 1000u);
+            REQUIRE(pool.capacity_left() <= 2000u);
 
             std::shuffle(a.begin(), a.end(), std::mt19937{});
             std::shuffle(b.begin(), b.end(), std::mt19937{});
@@ -53,7 +53,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
         }
         SECTION("multiple block alloc/dealloc")
         {
-            std::vector<void *> a, b;
+            std::vector<void*> a, b;
             for (auto i = 0u; i != 1000u; ++i)
             {
                 a.push_back(pool.allocate_node(1));
