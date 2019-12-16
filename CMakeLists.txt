@@ -21,8 +21,8 @@ set(CMAKE_DEBUG_POSTFIX "-dbg")
 if(UNIX)
     include(GNUInstallDirs)
 
-    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory") 
-    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}") 
+    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory")
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
     set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
     set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
     set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
@@ -35,7 +35,7 @@ if(UNIX)
 
 elseif(WIN32)
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory")
-    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin") 
+    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin")
     set(FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR   "bin")
     set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR   "lib")
     set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "bin")
@@ -44,7 +44,7 @@ elseif(WIN32)
     set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "share/foonathan_memory")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()
-	message(FATAL_ERROR "Could not set install folders for this platform!")
+    message(FATAL_ERROR "Could not set install folders for this platform!")
 endif()
 
 include(cmake/compatibility.cmake)
@@ -67,6 +67,6 @@ endif()
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_SOURCE_DIR}/README.md" DESTINATION ${FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR})
 
 install(EXPORT foonathan_memoryTargets DESTINATION ${FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR}
-		                               FILE foonathan_memory-config.cmake)
+                                       FILE foonathan_memory-config.cmake)
 
 
