@@ -20,18 +20,8 @@ namespace foonathan
 {
     namespace memory
     {
-#if !defined(DOXYGEN)
-        template <class StoragePolicy, class Mutex>
-        class allocator_storage;
-#endif
-
         namespace detail
         {
-            // whether or not the allocator of the storage policy is a raw allocator itself
-            template <class StoragePolicy>
-            using is_nested_policy =
-                is_instantiation_of<allocator_storage, typename StoragePolicy::allocator_type>;
-
             template <class Alloc>
             void* try_allocate_node(std::true_type, Alloc& alloc, std::size_t size,
                                     std::size_t alignment) FOONATHAN_NOEXCEPT
@@ -100,7 +90,6 @@ namespace foonathan
         /// A \concept{concept_rawallocator,RawAllocator} that stores another allocator.
         /// The \concept{concept_storagepolicy,StoragePolicy} defines the allocator type being stored and how it is stored.
         /// The \c Mutex controls synchronization of the access.
-        /// \requires The \c StoragePolicy itself must not store an instance of this class.
         /// \ingroup memory storage
         template <class StoragePolicy, class Mutex>
         class allocator_storage
@@ -108,10 +97,6 @@ namespace foonathan
                         detail::mutex_storage<
                             detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>)
         {
-            static_assert(
-                !detail::is_nested_policy<StoragePolicy>::value,
-                "allocator_storage instantiated with another allocator_storage, double wrapping!");
-
             using traits = allocator_traits<typename StoragePolicy::allocator_type>;
             using composable_traits =
                 composable_allocator_traits<typename StoragePolicy::allocator_type>;
