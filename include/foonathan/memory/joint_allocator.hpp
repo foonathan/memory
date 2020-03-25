@@ -35,18 +35,17 @@ namespace foonathan
             class joint_stack
             {
             public:
-                joint_stack(void* mem, std::size_t cap) FOONATHAN_NOEXCEPT
-                : stack_(static_cast<char*>(mem)),
-                  end_(static_cast<char*>(mem) + cap)
+                joint_stack(void* mem, std::size_t cap) noexcept
+                : stack_(static_cast<char*>(mem)), end_(static_cast<char*>(mem) + cap)
                 {
                 }
 
-                void* allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                void* allocate(std::size_t size, std::size_t alignment) noexcept
                 {
                     return stack_.allocate(end_, size, alignment, 0u);
                 }
 
-                bool bump(std::size_t offset) FOONATHAN_NOEXCEPT
+                bool bump(std::size_t offset) noexcept
                 {
                     if (offset > std::size_t(end_ - stack_.top()))
                         return false;
@@ -54,32 +53,32 @@ namespace foonathan
                     return true;
                 }
 
-                char* top() FOONATHAN_NOEXCEPT
+                char* top() noexcept
                 {
                     return stack_.top();
                 }
 
-                const char* top() const FOONATHAN_NOEXCEPT
+                const char* top() const noexcept
                 {
                     return stack_.top();
                 }
 
-                void unwind(void* ptr) FOONATHAN_NOEXCEPT
+                void unwind(void* ptr) noexcept
                 {
                     stack_.unwind(static_cast<char*>(ptr));
                 }
 
-                std::size_t capacity(const char* mem) const FOONATHAN_NOEXCEPT
+                std::size_t capacity(const char* mem) const noexcept
                 {
                     return std::size_t(end_ - mem);
                 }
 
-                std::size_t capacity_left() const FOONATHAN_NOEXCEPT
+                std::size_t capacity_left() const noexcept
                 {
                     return std::size_t(end_ - top());
                 }
 
-                std::size_t capacity_used(const char* mem) const FOONATHAN_NOEXCEPT
+                std::size_t capacity_used(const char* mem) const noexcept
                 {
                     return std::size_t(top() - mem);
                 }
@@ -90,10 +89,10 @@ namespace foonathan
             };
 
             template <typename T>
-            detail::joint_stack& get_stack(joint_type<T>& obj) FOONATHAN_NOEXCEPT;
+            detail::joint_stack& get_stack(joint_type<T>& obj) noexcept;
 
             template <typename T>
-            const detail::joint_stack& get_stack(const joint_type<T>& obj) FOONATHAN_NOEXCEPT;
+            const detail::joint_stack& get_stack(const joint_type<T>& obj) noexcept;
         } // namespace detail
 
         /// Tag type that can't be created.
@@ -102,7 +101,7 @@ namespace foonathan
         /// \ingroup memory allocator
         class joint
         {
-            joint(std::size_t cap) FOONATHAN_NOEXCEPT : capacity(cap) {}
+            joint(std::size_t cap) noexcept : capacity(cap) {}
 
             std::size_t capacity;
 
@@ -120,7 +119,7 @@ namespace foonathan
         {
             std::size_t size;
 
-            explicit joint_size(std::size_t s) FOONATHAN_NOEXCEPT : size(s) {}
+            explicit joint_size(std::size_t s) noexcept : size(s) {}
         };
 
         /// CRTP base class for all objects that want to use joint memory.
@@ -135,7 +134,7 @@ namespace foonathan
             /// \effects Creates the base class,
             /// the tag type cannot be created by the user.
             /// \note This ensures that you cannot create joint types yourself.
-            joint_type(joint j) FOONATHAN_NOEXCEPT;
+            joint_type(joint j) noexcept;
 
             joint_type(const joint_type&) = delete;
             joint_type(joint_type&&)      = delete;
@@ -144,35 +143,34 @@ namespace foonathan
             detail::joint_stack stack_;
 
             template <typename U>
-            friend detail::joint_stack& detail::get_stack(joint_type<U>& obj) FOONATHAN_NOEXCEPT;
+            friend detail::joint_stack& detail::get_stack(joint_type<U>& obj) noexcept;
             template <typename U>
-            friend const detail::joint_stack& detail::get_stack(const joint_type<U>& obj)
-                FOONATHAN_NOEXCEPT;
+            friend const detail::joint_stack& detail::get_stack(const joint_type<U>& obj) noexcept;
         };
 
         namespace detail
         {
             template <typename T>
-            detail::joint_stack& get_stack(joint_type<T>& obj) FOONATHAN_NOEXCEPT
+            detail::joint_stack& get_stack(joint_type<T>& obj) noexcept
             {
                 return obj.stack_;
             }
 
             template <typename T>
-            const detail::joint_stack& get_stack(const joint_type<T>& obj) FOONATHAN_NOEXCEPT
+            const detail::joint_stack& get_stack(const joint_type<T>& obj) noexcept
             {
                 return obj.stack_;
             }
 
             template <typename T>
-            char* get_memory(joint_type<T>& obj) FOONATHAN_NOEXCEPT
+            char* get_memory(joint_type<T>& obj) noexcept
             {
                 auto mem = static_cast<void*>(&obj);
                 return static_cast<char*>(mem) + sizeof(T);
             }
 
             template <typename T>
-            const char* get_memory(const joint_type<T>& obj) FOONATHAN_NOEXCEPT
+            const char* get_memory(const joint_type<T>& obj) noexcept
             {
                 auto mem = static_cast<const void*>(&obj);
                 return static_cast<const char*>(mem) + sizeof(T);
@@ -181,8 +179,7 @@ namespace foonathan
         } // namespace detail
 
         template <typename T>
-        joint_type<T>::joint_type(joint j) FOONATHAN_NOEXCEPT
-        : stack_(detail::get_memory(*this), j.capacity)
+        joint_type<T>::joint_type(joint j) noexcept : stack_(detail::get_memory(*this), j.capacity)
         {
             FOONATHAN_MEMORY_ASSERT(stack_.top() == detail::get_memory(*this));
             FOONATHAN_MEMORY_ASSERT(stack_.capacity_left() == j.capacity);
@@ -225,15 +222,13 @@ namespace foonathan
             //=== constructors/destructor/assignment ===//
             /// @{
             /// \effects Creates it with a \concept{concept_rawallocator,RawAllocator}, but does not own a new object.
-            explicit joint_ptr(allocator_type& alloc) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator>(alloc),
-              ptr_(nullptr)
+            explicit joint_ptr(allocator_type& alloc) noexcept
+            : allocator_reference<RawAllocator>(alloc), ptr_(nullptr)
             {
             }
 
-            explicit joint_ptr(const allocator_type& alloc) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator>(alloc),
-              ptr_(nullptr)
+            explicit joint_ptr(const allocator_type& alloc) noexcept
+            : allocator_reference<RawAllocator>(alloc), ptr_(nullptr)
             {
             }
             /// @}
@@ -259,15 +254,14 @@ namespace foonathan
 
             /// \effects Move-constructs the pointer.
             /// Ownership will be transferred from `other` to the new object.
-            joint_ptr(joint_ptr&& other) FOONATHAN_NOEXCEPT
-            : allocator_reference<RawAllocator>(detail::move(other)),
-              ptr_(other.ptr_)
+            joint_ptr(joint_ptr&& other) noexcept
+            : allocator_reference<RawAllocator>(detail::move(other)), ptr_(other.ptr_)
             {
                 other.ptr_ = nullptr;
             }
 
             /// \effects Destroys the object and deallocates its storage.
-            ~joint_ptr() FOONATHAN_NOEXCEPT
+            ~joint_ptr() noexcept
             {
                 reset();
             }
@@ -275,7 +269,7 @@ namespace foonathan
             /// \effects Move-assings the pointer.
             /// The previously owned object will be destroyed,
             /// and ownership of `other` transferred.
-            joint_ptr& operator=(joint_ptr&& other) FOONATHAN_NOEXCEPT
+            joint_ptr& operator=(joint_ptr&& other) noexcept
             {
                 joint_ptr tmp(detail::move(other));
                 swap(*this, tmp);
@@ -283,14 +277,14 @@ namespace foonathan
             }
 
             /// \effects Same as `reset()`.
-            joint_ptr& operator=(std::nullptr_t) FOONATHAN_NOEXCEPT
+            joint_ptr& operator=(std::nullptr_t) noexcept
             {
                 reset();
                 return *this;
             }
 
             /// \effects Swaps to pointers and their ownership and allocator.
-            friend void swap(joint_ptr& a, joint_ptr& b) FOONATHAN_NOEXCEPT
+            friend void swap(joint_ptr& a, joint_ptr& b) noexcept
             {
                 detail::adl_swap(static_cast<allocator_reference<RawAllocator>&>(a),
                                  static_cast<allocator_reference<RawAllocator>&>(b));
@@ -300,7 +294,7 @@ namespace foonathan
             //=== modifiers ===//
             /// \effects Destroys the object it refers to,
             /// if there is any.
-            void reset() FOONATHAN_NOEXCEPT
+            void reset() noexcept
             {
                 if (ptr_)
                 {
@@ -309,7 +303,7 @@ namespace foonathan
                                           sizeof(element_type)
                                               + detail::get_stack(*ptr_).capacity(
                                                   detail::get_memory(*ptr_)),
-                                          FOONATHAN_ALIGNOF(element_type));
+                                          alignof(element_type));
                     ptr_ = nullptr;
                 }
             }
@@ -317,7 +311,7 @@ namespace foonathan
             //=== accessors ===//
             /// \returns `true` if the pointer does own an object,
             /// `false` otherwise.
-            explicit operator bool() const FOONATHAN_NOEXCEPT
+            explicit operator bool() const noexcept
             {
                 return ptr_ != nullptr;
             }
@@ -325,7 +319,7 @@ namespace foonathan
             /// \returns A reference to the object it owns.
             /// \requires The pointer must own an object,
             /// i.e. `operator bool()` must return `true`.
-            element_type& operator*() const FOONATHAN_NOEXCEPT
+            element_type& operator*() const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(ptr_);
                 return *get();
@@ -334,7 +328,7 @@ namespace foonathan
             /// \returns A pointer to the object it owns.
             /// \requires The pointer must own an object,
             /// i.e. `operator bool()` must return `true`.
-            element_type* operator->() const FOONATHAN_NOEXCEPT
+            element_type* operator->() const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(ptr_);
                 return get();
@@ -342,13 +336,13 @@ namespace foonathan
 
             /// \returns A pointer to the object it owns
             /// or `nullptr`, if it does not own any object.
-            element_type* get() const FOONATHAN_NOEXCEPT
+            element_type* get() const noexcept
             {
                 return static_cast<element_type*>(ptr_);
             }
 
             /// \returns A reference to the allocator it will use for the deallocation.
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -359,20 +353,25 @@ namespace foonathan
             void create(std::size_t additional_size, Args&&... args)
             {
                 auto mem = this->allocate_node(sizeof(element_type) + additional_size,
-                                               FOONATHAN_ALIGNOF(element_type));
+                                               alignof(element_type));
 
                 element_type* ptr = nullptr;
-                FOONATHAN_TRY
+#if FOONATHAN_HAS_EXCEPTION_SUPPORT
+                try
                 {
                     ptr = ::new (mem)
                         element_type(joint(additional_size), detail::forward<Args>(args)...);
                 }
-                FOONATHAN_CATCH_ALL
+                catch (...)
                 {
                     this->deallocate_node(mem, sizeof(element_type) + additional_size,
-                                          FOONATHAN_ALIGNOF(element_type));
-                    FOONATHAN_RETHROW;
+                                          alignof(element_type));
+                    throw;
                 }
+#else
+                ptr = ::new (mem)
+                    element_type(joint(additional_size), detail::forward<Args>(args)...);
+#endif
                 ptr_ = ptr;
             }
 
@@ -507,17 +506,17 @@ namespace foonathan
 #if defined(__GNUC__) && (!defined(_GLIBCXX_USE_CXX11_ABI) || _GLIBCXX_USE_CXX11_ABI == 0)
             // std::string requires default constructor for the small string optimization when using gcc's old ABI
             // so add one, but it must never be used for allocation
-            joint_allocator() FOONATHAN_NOEXCEPT : stack_(nullptr) {}
+            joint_allocator() noexcept : stack_(nullptr) {}
 #endif
 
             /// \effects Creates it using the joint memory of the given object.
             template <typename T>
-            joint_allocator(joint_type<T>& j) FOONATHAN_NOEXCEPT : stack_(&detail::get_stack(j))
+            joint_allocator(joint_type<T>& j) noexcept : stack_(&detail::get_stack(j))
             {
             }
 
-            joint_allocator(const joint_allocator& other) FOONATHAN_NOEXCEPT = default;
-            joint_allocator& operator=(const joint_allocator& other) FOONATHAN_NOEXCEPT = default;
+            joint_allocator(const joint_allocator& other) noexcept = default;
+            joint_allocator& operator=(const joint_allocator& other) noexcept = default;
 
             /// \effects Allocates a node with given properties.
             /// \returns A pointer to the new node.
@@ -534,7 +533,7 @@ namespace foonathan
 
             /// \effects Deallocates the node, if possible.
             /// \note It is only possible if it was the last allocation.
-            void deallocate_node(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+            void deallocate_node(void* ptr, std::size_t size, std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(stack_);
                 auto end = static_cast<char*>(ptr) + size;
@@ -543,28 +542,25 @@ namespace foonathan
             }
 
         private:
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::joint_allocator", this);
             }
 
             detail::joint_stack* stack_;
 
-            friend bool operator==(const joint_allocator& lhs,
-                                   const joint_allocator& rhs) FOONATHAN_NOEXCEPT;
+            friend bool operator==(const joint_allocator& lhs, const joint_allocator& rhs) noexcept;
         };
 
         /// @{
         /// \returns Whether `lhs` and `rhs` use the same joint memory for the allocation.
         /// \relates joint_allocator
-        inline bool operator==(const joint_allocator& lhs,
-                               const joint_allocator& rhs) FOONATHAN_NOEXCEPT
+        inline bool operator==(const joint_allocator& lhs, const joint_allocator& rhs) noexcept
         {
             return lhs.stack_ == rhs.stack_;
         }
 
-        inline bool operator!=(const joint_allocator& lhs,
-                               const joint_allocator& rhs) FOONATHAN_NOEXCEPT
+        inline bool operator!=(const joint_allocator& lhs, const joint_allocator& rhs) noexcept
         {
             return !(lhs == rhs);
         }
@@ -706,7 +702,7 @@ namespace foonathan
 
             /// \effects Destroys all objects,
             /// but does not release the storage.
-            ~joint_array() FOONATHAN_NOEXCEPT
+            ~joint_array() noexcept
             {
                 for (std::size_t i = 0u; i != size_; ++i)
                     ptr_[i].~T();
@@ -719,13 +715,13 @@ namespace foonathan
             /// @{
             /// \returns A reference to the `i`th object.
             /// \requires `i < size()`.
-            value_type& operator[](std::size_t i) FOONATHAN_NOEXCEPT
+            value_type& operator[](std::size_t i) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(i < size_);
                 return ptr_[i];
             }
 
-            const value_type& operator[](std::size_t i) const FOONATHAN_NOEXCEPT
+            const value_type& operator[](std::size_t i) const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(i < size_);
                 return ptr_[i];
@@ -735,12 +731,12 @@ namespace foonathan
             /// @{
             /// \returns A pointer to the first object.
             /// It points to contiguous memory and can be used to access the objects directly.
-            value_type* data() FOONATHAN_NOEXCEPT
+            value_type* data() noexcept
             {
                 return ptr_;
             }
 
-            const value_type* data() const FOONATHAN_NOEXCEPT
+            const value_type* data() const noexcept
             {
                 return ptr_;
             }
@@ -748,12 +744,12 @@ namespace foonathan
 
             /// @{
             /// \returns A random access iterator to the first element.
-            iterator begin() FOONATHAN_NOEXCEPT
+            iterator begin() noexcept
             {
                 return ptr_;
             }
 
-            const_iterator begin() const FOONATHAN_NOEXCEPT
+            const_iterator begin() const noexcept
             {
                 return ptr_;
             }
@@ -761,25 +757,25 @@ namespace foonathan
 
             /// @{
             /// \returns A random access iterator one past the last element.
-            iterator end() FOONATHAN_NOEXCEPT
+            iterator end() noexcept
             {
                 return ptr_ + size_;
             }
 
-            const_iterator end() const FOONATHAN_NOEXCEPT
+            const_iterator end() const noexcept
             {
                 return ptr_ + size_;
             }
             /// @}
 
             /// \returns The number of elements in the array.
-            std::size_t size() const FOONATHAN_NOEXCEPT
+            std::size_t size() const noexcept
             {
                 return size_;
             }
 
             /// \returns `true` if the array is empty, `false` otherwise.
-            bool empty() const FOONATHAN_NOEXCEPT
+            bool empty() const noexcept
             {
                 return size_ == 0u;
             }
@@ -792,7 +788,7 @@ namespace foonathan
             joint_array(allocate_only, detail::joint_stack& stack, std::size_t size)
             : ptr_(nullptr), size_(0u)
             {
-                ptr_ = static_cast<T*>(stack.allocate(size * sizeof(T), FOONATHAN_ALIGNOF(T)));
+                ptr_ = static_cast<T*>(stack.allocate(size * sizeof(T), alignof(T)));
                 if (!ptr_)
                     FOONATHAN_THROW(out_of_fixed_memory(info(), size * sizeof(T)));
             }
@@ -800,13 +796,12 @@ namespace foonathan
             class builder
             {
             public:
-                builder(detail::joint_stack& stack, T* ptr) FOONATHAN_NOEXCEPT : stack_(&stack),
-                                                                                 objects_(ptr),
-                                                                                 size_(0u)
+                builder(detail::joint_stack& stack, T* ptr) noexcept
+                : stack_(&stack), objects_(ptr), size_(0u)
                 {
                 }
 
-                ~builder() FOONATHAN_NOEXCEPT
+                ~builder() noexcept
                 {
                     for (std::size_t i = 0u; i != size_; ++i)
                         objects_[i].~T();
@@ -827,12 +822,12 @@ namespace foonathan
                     return ptr;
                 }
 
-                std::size_t size() const FOONATHAN_NOEXCEPT
+                std::size_t size() const noexcept
                 {
                     return size_;
                 }
 
-                std::size_t release() FOONATHAN_NOEXCEPT
+                std::size_t release() noexcept
                 {
                     auto res = size_;
                     size_    = 0u;
@@ -897,7 +892,7 @@ namespace foonathan
                 if (begin == end)
                     return;
 
-                ptr_ = static_cast<T*>(stack.allocate(sizeof(T), FOONATHAN_ALIGNOF(T)));
+                ptr_ = static_cast<T*>(stack.allocate(sizeof(T), alignof(T)));
                 if (!ptr_)
                     FOONATHAN_THROW(out_of_fixed_memory(info(), sizeof(T)));
 
@@ -918,7 +913,7 @@ namespace foonathan
                 size_ = b.release();
             }
 
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::joint_array", this};
             }

@@ -24,7 +24,7 @@ namespace foonathan
         {
             template <class Alloc>
             void* try_allocate_node(std::true_type, Alloc& alloc, std::size_t size,
-                                    std::size_t alignment) FOONATHAN_NOEXCEPT
+                                    std::size_t alignment) noexcept
             {
                 return composable_allocator_traits<Alloc>::try_allocate_node(alloc, size,
                                                                              alignment);
@@ -32,7 +32,7 @@ namespace foonathan
 
             template <class Alloc>
             void* try_allocate_array(std::true_type, Alloc& alloc, std::size_t count,
-                                     std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t size, std::size_t alignment) noexcept
             {
                 return composable_allocator_traits<Alloc>::try_allocate_array(alloc, count, size,
                                                                               alignment);
@@ -40,7 +40,7 @@ namespace foonathan
 
             template <class Alloc>
             bool try_deallocate_node(std::true_type, Alloc& alloc, void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 return composable_allocator_traits<Alloc>::try_deallocate_node(alloc, ptr, size,
                                                                                alignment);
@@ -48,15 +48,14 @@ namespace foonathan
 
             template <class Alloc>
             bool try_deallocate_array(std::true_type, Alloc& alloc, void* ptr, std::size_t count,
-                                      std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t size, std::size_t alignment) noexcept
             {
                 return composable_allocator_traits<Alloc>::try_deallocate_array(alloc, ptr, count,
                                                                                 size, alignment);
             }
 
             template <class Alloc>
-            void* try_allocate_node(std::false_type, Alloc&, std::size_t,
-                                    std::size_t) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::false_type, Alloc&, std::size_t, std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return nullptr;
@@ -64,7 +63,7 @@ namespace foonathan
 
             template <class Alloc>
             void* try_allocate_array(std::false_type, Alloc&, std::size_t, std::size_t,
-                                     std::size_t) FOONATHAN_NOEXCEPT
+                                     std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return nullptr;
@@ -72,7 +71,7 @@ namespace foonathan
 
             template <class Alloc>
             bool try_deallocate_node(std::false_type, Alloc&, void*, std::size_t,
-                                     std::size_t) FOONATHAN_NOEXCEPT
+                                     std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return false;
@@ -80,7 +79,7 @@ namespace foonathan
 
             template <class Alloc>
             bool try_deallocate_array(std::false_type, Alloc&, void*, std::size_t, std::size_t,
-                                      std::size_t) FOONATHAN_NOEXCEPT
+                                      std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_UNREACHABLE("Allocator is not compositioning");
                 return false;
@@ -146,14 +145,15 @@ namespace foonathan
             /// @{
             /// \effects Moves the \c allocator_storage object.
             /// A moved-out \c allocator_storage object must still store a valid allocator object.
-            allocator_storage(allocator_storage&& other) FOONATHAN_NOEXCEPT
+            allocator_storage(allocator_storage&& other) noexcept
             : storage_policy(detail::move(other)),
-              detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
-                                                      Mutex>>(detail::move(other))
+              detail::mutex_storage<
+                  detail::mutex_for<typename StoragePolicy::allocator_type, Mutex>>(
+                  detail::move(other))
             {
             }
 
-            allocator_storage& operator=(allocator_storage&& other) FOONATHAN_NOEXCEPT
+            allocator_storage& operator=(allocator_storage&& other) noexcept
             {
                 storage_policy::                                 operator=(detail::move(other));
                 detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
@@ -186,8 +186,7 @@ namespace foonathan
                 return traits::allocate_array(alloc, count, size, alignment);
             }
 
-            void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+            void deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
@@ -195,7 +194,7 @@ namespace foonathan
             }
 
             void deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                  std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t alignment) noexcept
             {
                 std::lock_guard<actual_mutex> lock(*this);
                 auto&&                        alloc = get_allocator();
@@ -232,7 +231,7 @@ namespace foonathan
             /// \note This check is done at compile-time where possible,
             /// and at runtime in the case of type-erased storage.
             FOONATHAN_ENABLE_IF(composable::value)
-            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::size_t size, std::size_t alignment) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
@@ -242,7 +241,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(composable::value)
             void* try_allocate_array(std::size_t count, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
@@ -251,8 +250,7 @@ namespace foonathan
             }
 
             FOONATHAN_ENABLE_IF(composable::value)
-            bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+            bool try_deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
@@ -262,7 +260,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(composable::value)
             bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t alignment) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(is_composable());
                 std::lock_guard<actual_mutex> lock(*this);
@@ -275,13 +273,13 @@ namespace foonathan
             /// \effects Forwards to the \c StoragePolicy.
             /// \returns Returns a reference to the stored allocator.
             /// \note This does not lock the \c Mutex.
-            auto get_allocator() FOONATHAN_NOEXCEPT
+            auto get_allocator() noexcept
                 -> decltype(std::declval<storage_policy>().get_allocator())
             {
                 return storage_policy::get_allocator();
             }
 
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<const storage_policy>().get_allocator())
             {
                 return storage_policy::get_allocator();
@@ -292,14 +290,13 @@ namespace foonathan
             /// \returns A proxy object that acts like a pointer to the stored allocator.
             /// It cannot be reassigned to point to another allocator object and only moving is supported, which is destructive.
             /// As long as the proxy object lives and is not moved from, the \c Mutex will be kept locked.
-            auto lock() FOONATHAN_NOEXCEPT
-                -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(
-                    std::declval<storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
+            auto lock() noexcept -> FOONATHAN_IMPL_DEFINED(decltype(detail::lock_allocator(
+                std::declval<storage_policy>().get_allocator(), std::declval<actual_mutex&>())))
             {
                 return detail::lock_allocator(get_allocator(), static_cast<actual_mutex&>(*this));
             }
 
-            auto lock() const FOONATHAN_NOEXCEPT -> FOONATHAN_IMPL_DEFINED(decltype(
+            auto lock() const noexcept -> FOONATHAN_IMPL_DEFINED(decltype(
                 detail::lock_allocator(std::declval<const storage_policy>().get_allocator(),
                                        std::declval<actual_mutex&>())))
             {
@@ -311,7 +308,7 @@ namespace foonathan
             /// that is you can use the compositioning functions.
             /// \note Due to type-erased allocators,
             /// this function can not be `constexpr`.
-            bool is_composable() const FOONATHAN_NOEXCEPT
+            bool is_composable() const noexcept
             {
                 return StoragePolicy::is_composable();
             }
@@ -341,7 +338,7 @@ namespace foonathan
             direct_storage() = default;
 
             /// \effects Creates it by moving in an allocator object.
-            direct_storage(allocator_type&& allocator) FOONATHAN_NOEXCEPT
+            direct_storage(allocator_type&& allocator) noexcept
             : allocator_type(detail::move(allocator))
             {
             }
@@ -349,12 +346,9 @@ namespace foonathan
             /// @{
             /// \effects Moves the \c direct_storage object.
             /// This will move the stored allocator.
-            direct_storage(direct_storage&& other) FOONATHAN_NOEXCEPT
-            : allocator_type(detail::move(other))
-            {
-            }
+            direct_storage(direct_storage&& other) noexcept : allocator_type(detail::move(other)) {}
 
-            direct_storage& operator=(direct_storage&& other) FOONATHAN_NOEXCEPT
+            direct_storage& operator=(direct_storage&& other) noexcept
             {
                 allocator_type::operator=(detail::move(other));
                 return *this;
@@ -363,21 +357,21 @@ namespace foonathan
 
             /// @{
             /// \returns A (\c const) reference to the stored allocator.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
-            const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            const allocator_type& get_allocator() const noexcept
             {
                 return *this;
             }
             /// @}
 
         protected:
-            ~direct_storage() FOONATHAN_NOEXCEPT = default;
+            ~direct_storage() noexcept = default;
 
-            bool is_composable() const FOONATHAN_NOEXCEPT
+            bool is_composable() const noexcept
             {
                 return is_composable_allocator<allocator_type>::value;
             }
@@ -394,7 +388,7 @@ namespace foonathan
         /// \returns A new \ref allocator_adapter object created by forwarding to the constructor.
         /// \relates allocator_adapter
         template <class RawAllocator>
-        auto make_allocator_adapter(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+        auto make_allocator_adapter(RawAllocator&& allocator) noexcept
             -> allocator_adapter<typename std::decay<RawAllocator>::type>
         {
             return {detail::forward<RawAllocator>(allocator)};
@@ -405,7 +399,7 @@ namespace foonathan
 /// The \c Mutex will default to \c std::mutex if threading is supported,
 /// otherwise there is no default.
 /// \ingroup memory
-#if FOONATHAN_HAS_THREADING_SUPPORT
+#if FOONATHAN_HOSTED_IMPLEMENTATION
         template <class RawAllocator, class Mutex = std::mutex>
         FOONATHAN_ALIAS_TEMPLATE(thread_safe_allocator,
                                  allocator_storage<direct_storage<RawAllocator>, Mutex>);
@@ -415,7 +409,7 @@ namespace foonathan
                                  allocator_storage<direct_storage<RawAllocator>, Mutex>);
 #endif
 
-#if FOONATHAN_HAS_THREADING_SUPPORT
+#if FOONATHAN_HOSTED_IMPLEMENTATION
         /// \returns A new \ref thread_safe_allocator object created by forwarding to the constructor/
         /// \relates thread_safe_allocator
         template <class RawAllocator>
@@ -462,19 +456,16 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_stateful>
             {
             protected:
-                reference_storage_impl() FOONATHAN_NOEXCEPT : alloc_(nullptr) {}
+                reference_storage_impl() noexcept : alloc_(nullptr) {}
 
-                reference_storage_impl(RawAllocator& allocator) FOONATHAN_NOEXCEPT
-                : alloc_(&allocator)
-                {
-                }
+                reference_storage_impl(RawAllocator& allocator) noexcept : alloc_(&allocator) {}
 
-                bool is_valid() const FOONATHAN_NOEXCEPT
+                bool is_valid() const noexcept
                 {
                     return alloc_ != nullptr;
                 }
 
-                RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+                RawAllocator& get_allocator() const noexcept
                 {
                     FOONATHAN_MEMORY_ASSERT(alloc_ != nullptr);
                     return *alloc_;
@@ -489,16 +480,16 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_stateless>
             {
             protected:
-                reference_storage_impl() FOONATHAN_NOEXCEPT = default;
+                reference_storage_impl() noexcept = default;
 
-                reference_storage_impl(const RawAllocator&) FOONATHAN_NOEXCEPT {}
+                reference_storage_impl(const RawAllocator&) noexcept {}
 
-                bool is_valid() const FOONATHAN_NOEXCEPT
+                bool is_valid() const noexcept
                 {
                     return true;
                 }
 
-                RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+                RawAllocator& get_allocator() const noexcept
                 {
                     static RawAllocator alloc;
                     return alloc;
@@ -510,18 +501,16 @@ namespace foonathan
             class reference_storage_impl<RawAllocator, reference_shared>
             {
             protected:
-                reference_storage_impl() FOONATHAN_NOEXCEPT = default;
+                reference_storage_impl() noexcept = default;
 
-                reference_storage_impl(const RawAllocator& alloc) FOONATHAN_NOEXCEPT : alloc_(alloc)
-                {
-                }
+                reference_storage_impl(const RawAllocator& alloc) noexcept : alloc_(alloc) {}
 
-                bool is_valid() const FOONATHAN_NOEXCEPT
+                bool is_valid() const noexcept
                 {
                     return true;
                 }
 
-                RawAllocator& get_allocator() const FOONATHAN_NOEXCEPT
+                RawAllocator& get_allocator() const noexcept
                 {
                     return alloc_;
                 }
@@ -576,43 +565,43 @@ namespace foonathan
             /// Then it must not be used.
             /// If the allocator is shared, default constructs the shared allocator.
             /// If the shared allocator does not have a default constructor, this constructor is ill-formed.
-            reference_storage() FOONATHAN_NOEXCEPT = default;
+            reference_storage() noexcept = default;
 
             /// \effects Creates it from a stateless or shared allocator.
             /// It will not store anything, only creates the allocator as needed.
             /// \requires The \c RawAllocator is stateless or shared.
-            reference_storage(const allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
+            reference_storage(const allocator_type& alloc) noexcept : storage(alloc) {}
 
             /// \effects Creates it from a reference to a stateful allocator.
             /// It will store a pointer to this allocator object.
             /// \note The user has to take care that the lifetime of the reference does not exceed the allocator lifetime.
-            reference_storage(allocator_type& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
+            reference_storage(allocator_type& alloc) noexcept : storage(alloc) {}
 
             /// @{
             /// \effects Copies the \c allocator_reference object.
             /// Only copies the pointer to it in the stateful case.
-            reference_storage(const reference_storage&) FOONATHAN_NOEXCEPT = default;
-            reference_storage& operator=(const reference_storage&) FOONATHAN_NOEXCEPT = default;
+            reference_storage(const reference_storage&) noexcept = default;
+            reference_storage& operator=(const reference_storage&) noexcept = default;
             /// @}
 
             /// \returns Whether or not the reference is valid.
             /// It is only invalid, if it was created by the default constructor and the allocator is stateful.
-            explicit operator bool() const FOONATHAN_NOEXCEPT
+            explicit operator bool() const noexcept
             {
                 return storage::is_valid();
             }
 
             /// \returns Returns a reference to the allocator.
             /// \requires The reference must be valid.
-            allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() const noexcept
             {
                 return storage::get_allocator();
             }
 
         protected:
-            ~reference_storage() FOONATHAN_NOEXCEPT = default;
+            ~reference_storage() noexcept = default;
 
-            bool is_composable() const FOONATHAN_NOEXCEPT
+            bool is_composable() const noexcept
             {
                 return is_composable_allocator<allocator_type>::value;
             }
@@ -632,7 +621,7 @@ namespace foonathan
 
                 virtual ~base_allocator() = default;
 
-                virtual void clone(void* storage) const FOONATHAN_NOEXCEPT = 0;
+                virtual void clone(void* storage) const noexcept = 0;
 
                 void* allocate_node(std::size_t size, std::size_t alignment)
                 {
@@ -644,52 +633,51 @@ namespace foonathan
                     return allocate_impl(count, size, alignment);
                 }
 
-                void deallocate_node(void* node, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                void deallocate_node(void* node, std::size_t size, std::size_t alignment) noexcept
                 {
                     deallocate_impl(node, 1, size, alignment);
                 }
 
                 void deallocate_array(void* array, std::size_t count, std::size_t size,
-                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t alignment) noexcept
                 {
                     deallocate_impl(array, count, size, alignment);
                 }
 
-                void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                void* try_allocate_node(std::size_t size, std::size_t alignment) noexcept
                 {
                     return try_allocate_impl(1, size, alignment);
                 }
 
                 void* try_allocate_array(std::size_t count, std::size_t size,
-                                         std::size_t alignment) FOONATHAN_NOEXCEPT
+                                         std::size_t alignment) noexcept
                 {
                     return try_allocate_impl(count, size, alignment);
                 }
 
                 bool try_deallocate_node(void* node, std::size_t size,
-                                         std::size_t alignment) FOONATHAN_NOEXCEPT
+                                         std::size_t alignment) noexcept
                 {
                     return try_deallocate_impl(node, 1, size, alignment);
                 }
 
                 bool try_deallocate_array(void* array, std::size_t count, std::size_t size,
-                                          std::size_t alignment) FOONATHAN_NOEXCEPT
+                                          std::size_t alignment) noexcept
                 {
                     return try_deallocate_impl(array, count, size, alignment);
                 }
 
                 // count 1 means node
                 virtual void* allocate_impl(std::size_t count, std::size_t size,
-                                            std::size_t alignment)                      = 0;
+                                            std::size_t alignment)            = 0;
                 virtual void  deallocate_impl(void* ptr, std::size_t count, std::size_t size,
-                                              std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+                                              std::size_t alignment) noexcept = 0;
 
                 virtual void* try_allocate_impl(std::size_t count, std::size_t size,
-                                                std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+                                                std::size_t alignment) noexcept = 0;
 
                 virtual bool try_deallocate_impl(void* ptr, std::size_t count, std::size_t size,
-                                                 std::size_t alignment) FOONATHAN_NOEXCEPT = 0;
+                                                 std::size_t alignment) noexcept = 0;
 
                 std::size_t max_node_size() const
                 {
@@ -706,7 +694,7 @@ namespace foonathan
                     return max(query::alignment);
                 }
 
-                virtual bool is_composable() const FOONATHAN_NOEXCEPT = 0;
+                virtual bool is_composable() const noexcept = 0;
 
             protected:
                 enum class query
@@ -726,7 +714,7 @@ namespace foonathan
             /// It will store a pointer to this allocator object.
             /// \note The user has to take care that the lifetime of the reference does not exceed the allocator lifetime.
             template <class RawAllocator>
-            reference_storage(RawAllocator& alloc) FOONATHAN_NOEXCEPT
+            reference_storage(RawAllocator& alloc) noexcept
             {
                 static_assert(sizeof(basic_allocator<RawAllocator>)
                                   <= sizeof(basic_allocator<default_instantiation>),
@@ -740,8 +728,7 @@ namespace foonathan
             template <class RawAllocator>
             reference_storage(
                 const RawAllocator& alloc,
-                FOONATHAN_REQUIRES(!allocator_traits<RawAllocator>::is_stateful::value))
-                FOONATHAN_NOEXCEPT
+                FOONATHAN_REQUIRES(!allocator_traits<RawAllocator>::is_stateful::value)) noexcept
             {
                 static_assert(sizeof(basic_allocator<RawAllocator>)
                                   <= sizeof(basic_allocator<default_instantiation>),
@@ -752,8 +739,7 @@ namespace foonathan
             /// \effects Creates it from the internal base class for the type-erasure.
             /// Has the same effect as if the actual stored allocator were passed to the other constructor overloads.
             /// \note This constructor is used internally to avoid double-nesting.
-            reference_storage(const FOONATHAN_IMPL_DEFINED(base_allocator)
-                              & alloc) FOONATHAN_NOEXCEPT
+            reference_storage(const FOONATHAN_IMPL_DEFINED(base_allocator) & alloc) noexcept
             {
                 alloc.clone(&storage_);
             }
@@ -761,12 +747,12 @@ namespace foonathan
             /// @{
             /// \effects Copies the \c reference_storage object.
             /// It only copies the pointer to the allocator.
-            reference_storage(const reference_storage& other) FOONATHAN_NOEXCEPT
+            reference_storage(const reference_storage& other) noexcept
             {
                 other.get_allocator().clone(&storage_);
             }
 
-            reference_storage& operator=(const reference_storage& other) FOONATHAN_NOEXCEPT
+            reference_storage& operator=(const reference_storage& other) noexcept
             {
                 get_allocator().~allocator_type();
                 other.get_allocator().clone(&storage_);
@@ -778,19 +764,19 @@ namespace foonathan
             /// The actual type is implementation-defined since it is the base class used in the type-erasure,
             /// but it provides the full \concept{concept_rawallocator,RawAllocator} member functions.
             /// \note There is no way to access any custom member functions of the allocator type.
-            allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() const noexcept
             {
                 auto mem = static_cast<void*>(&storage_);
                 return *static_cast<base_allocator*>(mem);
             }
 
         protected:
-            ~reference_storage() FOONATHAN_NOEXCEPT
+            ~reference_storage() noexcept
             {
                 get_allocator().~allocator_type();
             }
 
-            bool is_composable() const FOONATHAN_NOEXCEPT
+            bool is_composable() const noexcept
             {
                 return get_allocator().is_composable();
             }
@@ -815,18 +801,18 @@ namespace foonathan
 
             public:
                 // non stateful
-                basic_allocator(const RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
+                basic_allocator(const RawAllocator& alloc) noexcept : storage(alloc) {}
 
                 // stateful
-                basic_allocator(RawAllocator& alloc) FOONATHAN_NOEXCEPT : storage(alloc) {}
+                basic_allocator(RawAllocator& alloc) noexcept : storage(alloc) {}
 
             private:
-                typename traits::allocator_type& get() const FOONATHAN_NOEXCEPT
+                typename traits::allocator_type& get() const noexcept
                 {
                     return storage::get_allocator();
                 }
 
-                void clone(void* storage) const FOONATHAN_NOEXCEPT override
+                void clone(void* storage) const noexcept override
                 {
                     ::new (storage) basic_allocator(get());
                 }
@@ -842,7 +828,7 @@ namespace foonathan
                 }
 
                 void deallocate_impl(void* ptr, std::size_t count, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT override
+                                     std::size_t alignment) noexcept override
                 {
                     auto&& alloc = get();
                     if (count == 1u)
@@ -852,7 +838,7 @@ namespace foonathan
                 }
 
                 void* try_allocate_impl(std::size_t count, std::size_t size,
-                                        std::size_t alignment) FOONATHAN_NOEXCEPT override
+                                        std::size_t alignment) noexcept override
                 {
                     auto&& alloc = get();
                     if (count == 1u)
@@ -863,7 +849,7 @@ namespace foonathan
                 }
 
                 bool try_deallocate_impl(void* ptr, std::size_t count, std::size_t size,
-                                         std::size_t alignment) FOONATHAN_NOEXCEPT override
+                                         std::size_t alignment) noexcept override
                 {
                     auto&& alloc = get();
                     if (count == 1u)
@@ -874,7 +860,7 @@ namespace foonathan
                                                             alignment);
                 }
 
-                bool is_composable() const FOONATHAN_NOEXCEPT override
+                bool is_composable() const noexcept override
                 {
                     return composable::value;
                 }
@@ -893,9 +879,7 @@ namespace foonathan
             // use a stateful instantiation to determine size and alignment
             // base_allocator is stateful
             using default_instantiation = basic_allocator<base_allocator>;
-            using storage               = std::aligned_storage<sizeof(default_instantiation),
-                                                 FOONATHAN_ALIGNOF(default_instantiation)>::type;
-            mutable storage storage_;
+            alignas(default_instantiation) mutable char storage_[sizeof(default_instantiation)];
         };
 
         /// An alias template for \ref allocator_storage using the \ref reference_storage policy.
@@ -909,7 +893,7 @@ namespace foonathan
         /// \returns A new \ref allocator_reference object by forwarding the allocator to the constructor.
         /// \relates allocator_reference
         template <class RawAllocator>
-        auto make_allocator_reference(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+        auto make_allocator_reference(RawAllocator&& allocator) noexcept
             -> allocator_reference<typename std::decay<RawAllocator>::type>
         {
             return {detail::forward<RawAllocator>(allocator)};
@@ -929,7 +913,7 @@ namespace foonathan
         /// \returns A new \ref any_allocator_reference object by forwarding the allocator to the constructor.
         /// \relates any_allocator_reference
         template <class RawAllocator>
-        auto make_any_allocator_reference(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+        auto make_any_allocator_reference(RawAllocator&& allocator) noexcept
             -> any_allocator_reference
         {
             return {detail::forward<RawAllocator>(allocator)};

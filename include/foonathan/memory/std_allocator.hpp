@@ -112,7 +112,7 @@ namespace foonathan
             //=== constructor ===//
             /// \effects Default constructs it by storing a default constructed, stateless \c RawAllocator inside the reference.
             /// \requires The \c RawAllocator type is stateless, otherwise the body of this function will not compile.
-            std_allocator() FOONATHAN_NOEXCEPT : alloc_reference(allocator_type{})
+            std_allocator() noexcept : alloc_reference(allocator_type{})
             {
 #if !defined(__GNUC__) || (defined(_GLIBCXX_USE_CXX11_ABI) && _GLIBCXX_USE_CXX11_ABI != 0)
                 // std::string requires default constructor for the small string optimization when using gcc's old ABI
@@ -134,8 +134,7 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(RawAlloc& alloc,
-                          FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
+            std_allocator(RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(alloc))) noexcept
             : alloc_reference(alloc)
             {
             }
@@ -150,16 +149,13 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(const RawAlloc& alloc,
-                          FOONATHAN_SFINAE(alloc_reference(alloc))) FOONATHAN_NOEXCEPT
+            std_allocator(const RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(alloc))) noexcept
             : alloc_reference(alloc)
             {
             }
 
             /// \effects Creates it from another \ref allocator_reference using the same allocator type.
-            std_allocator(const alloc_reference& alloc) FOONATHAN_NOEXCEPT : alloc_reference(alloc)
-            {
-            }
+            std_allocator(const alloc_reference& alloc) noexcept : alloc_reference(alloc) {}
 
             /// \details Implicit conversion from any other \ref allocator_storage is forbidden
             /// to prevent accidentally wrapping another \ref allocator_storage inside a \ref allocator_reference.
@@ -170,14 +166,13 @@ namespace foonathan
             /// \effects Creates it from another \ref std_allocator allocating a different type.
             /// This is required by the \c Allcoator concept and simply takes the same \ref allocator_reference.
             template <typename U>
-            std_allocator(const std_allocator<U, RawAllocator>& alloc) FOONATHAN_NOEXCEPT
+            std_allocator(const std_allocator<U, RawAllocator>& alloc) noexcept
             : alloc_reference(alloc)
             {
             }
 
             template <typename U>
-            std_allocator(std_allocator<U, RawAllocator>& alloc) FOONATHAN_NOEXCEPT
-            : alloc_reference(alloc)
+            std_allocator(std_allocator<U, RawAllocator>& alloc) noexcept : alloc_reference(alloc)
             {
             }
             /// @}
@@ -203,7 +198,7 @@ namespace foonathan
             /// \effects Deallcoates memory using the underlying \concept{concept_rawallocator,RawAllocator}.
             /// It will forward to the deallocation function in the same way as in \ref allocate().
             /// \requires The pointer must come from a previous call to \ref allocate() with the same \c n on this object or any copy of it.
-            void deallocate(pointer p, size_type n) FOONATHAN_NOEXCEPT
+            void deallocate(pointer p, size_type n) noexcept
             {
                 deallocate_impl(is_any{}, p, n);
             }
@@ -219,7 +214,7 @@ namespace foonathan
 
             /// \effects Calls the destructor for an object of type \c U at given address.
             template <typename U>
-            void destroy(U* p) FOONATHAN_NOEXCEPT
+            void destroy(U* p) noexcept
             {
                 // This is to avoid a MSVS 2015 'unreferenced formal parameter' warning
                 (void)p;
@@ -229,7 +224,7 @@ namespace foonathan
             //=== getter ===//
             /// \returns The maximum size for an allocation which is <tt>max_array_size() / sizeof(value_type)</tt>.
             /// This is only an upper bound, not the exact maximum.
-            size_type max_size() const FOONATHAN_NOEXCEPT
+            size_type max_size() const noexcept
             {
                 return this->max_array_size() / sizeof(value_type);
             }
@@ -238,13 +233,13 @@ namespace foonathan
             /// \effects Returns a reference to the referenced allocator.
             /// \returns For stateful allocators: A (\c const) reference to the stored allocator.
             /// For stateless allocators: A temporary constructed allocator.
-            auto get_allocator() FOONATHAN_NOEXCEPT
+            auto get_allocator() noexcept
                 -> decltype(std::declval<alloc_reference>().get_allocator())
             {
                 return alloc_reference::get_allocator();
             }
 
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<const alloc_reference>().get_allocator())
             {
                 return alloc_reference::get_allocator();
@@ -255,62 +250,62 @@ namespace foonathan
             // any_allocator_reference: use virtual function which already does a dispatch on node/array
             void* allocate_impl(std::true_type, size_type n)
             {
-                return get_allocator()->allocate_impl(n, sizeof(T), FOONATHAN_ALIGNOF(T));
+                return get_allocator()->allocate_impl(n, sizeof(T), alignof(T));
             }
 
             void deallocate_impl(std::true_type, void* ptr, size_type n)
             {
-                get_allocator()->deallocate_impl(ptr, n, sizeof(T), FOONATHAN_ALIGNOF(T));
+                get_allocator()->deallocate_impl(ptr, n, sizeof(T), alignof(T));
             }
 
             // alloc_reference: decide between node/array
             void* allocate_impl(std::false_type, size_type n)
             {
                 if (n == 1)
-                    return this->allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
+                    return this->allocate_node(sizeof(T), alignof(T));
                 else
-                    return this->allocate_array(n, sizeof(T), FOONATHAN_ALIGNOF(T));
+                    return this->allocate_array(n, sizeof(T), alignof(T));
             }
 
             void deallocate_impl(std::false_type, void* ptr, size_type n)
             {
                 if (n == 1)
-                    this->deallocate_node(ptr, sizeof(T), FOONATHAN_ALIGNOF(T));
+                    this->deallocate_node(ptr, sizeof(T), alignof(T));
                 else
-                    this->deallocate_array(ptr, n, sizeof(T), FOONATHAN_ALIGNOF(T));
+                    this->deallocate_array(ptr, n, sizeof(T), alignof(T));
             }
 
             template <typename U> // stateful
-            bool equal_to_impl(std::true_type,
-                               const std_allocator<U, RawAllocator>& other) const FOONATHAN_NOEXCEPT
+            bool equal_to_impl(std::true_type, const std_allocator<U, RawAllocator>& other) const
+                noexcept
             {
                 return &get_allocator() == &other.get_allocator();
             }
 
             template <typename U> // non-stateful
-            bool equal_to_impl(std::false_type,
-                               const std_allocator<U, RawAllocator>&) const FOONATHAN_NOEXCEPT
+            bool equal_to_impl(std::false_type, const std_allocator<U, RawAllocator>&) const
+                noexcept
             {
                 return true;
             }
 
             template <typename U> // shared
-            bool equal_to(std::true_type,
-                          const std_allocator<U, RawAllocator>& other) const FOONATHAN_NOEXCEPT
+            bool equal_to(std::true_type, const std_allocator<U, RawAllocator>& other) const
+                noexcept
             {
                 return get_allocator() == other.get_allocator();
             }
 
             template <typename U> // not shared
-            bool equal_to(std::false_type,
-                          const std_allocator<U, RawAllocator>& other) const FOONATHAN_NOEXCEPT
+            bool equal_to(std::false_type, const std_allocator<U, RawAllocator>& other) const
+                noexcept
             {
                 return equal_to_impl(typename allocator_traits<RawAllocator>::is_stateful{}, other);
             }
 
             template <typename T1, typename T2, class Impl>
             friend bool operator==(const std_allocator<T1, Impl>& lhs,
-                                   const std_allocator<T2, Impl>& rhs) FOONATHAN_NOEXCEPT;
+                                   const std_allocator<T2, Impl>& rhs) noexcept;
 
             template <typename U, class OtherRawAllocator>
             friend class std_allocator;
@@ -321,7 +316,7 @@ namespace foonathan
         /// \relates std_allocator
         template <typename T, typename U, class Impl>
         bool operator==(const std_allocator<T, Impl>& lhs,
-                        const std_allocator<U, Impl>& rhs) FOONATHAN_NOEXCEPT
+                        const std_allocator<U, Impl>& rhs) noexcept
         {
             return lhs.equal_to(is_shared_allocator<Impl>{}, rhs);
         }
@@ -331,7 +326,7 @@ namespace foonathan
         /// \relates std_allocator
         template <typename T, typename U, class Impl>
         bool operator!=(const std_allocator<T, Impl>& lhs,
-                        const std_allocator<U, Impl>& rhs) FOONATHAN_NOEXCEPT
+                        const std_allocator<U, Impl>& rhs) noexcept
         {
             return !(lhs == rhs);
         }
@@ -339,7 +334,7 @@ namespace foonathan
         /// \returns A new \ref std_allocator for a given type using a certain allocator object.
         /// \relates std_allocator
         template <typename T, class RawAllocator>
-        auto make_std_allocator(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+        auto make_std_allocator(RawAllocator&& allocator) noexcept
             -> std_allocator<T, typename std::decay<RawAllocator>::type>
         {
             return {detail::forward<RawAllocator>(allocator)};
@@ -355,7 +350,7 @@ namespace foonathan
         /// \returns A new \ref any_std_allocator for a given type using a certain allocator object.
         /// \relates any_std_allocator
         template <typename T, class RawAllocator>
-        any_std_allocator<T> make_any_std_allocator(RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+        any_std_allocator<T> make_any_std_allocator(RawAllocator&& allocator) noexcept
         {
             return {detail::forward<RawAllocator>(allocator)};
         }

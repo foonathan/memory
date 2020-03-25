@@ -13,8 +13,6 @@
 #include "allocator_traits.hpp"
 #include "config.hpp"
 
-#include <foonathan/mutex.hpp>
-
 #if FOONATHAN_HOSTED_IMPLEMENTATION
 #include <mutex>
 #endif
@@ -28,14 +26,14 @@ namespace foonathan
         /// \ingroup memory core
         struct no_mutex
         {
-            void lock() FOONATHAN_NOEXCEPT {}
+            void lock() noexcept {}
 
-            bool try_lock() FOONATHAN_NOEXCEPT
+            bool try_lock() noexcept
             {
                 return true;
             }
 
-            void unlock() FOONATHAN_NOEXCEPT {}
+            void unlock() noexcept {}
         };
 
         /// Specifies whether or not a \concept{concept_rawallocator,RawAllocator} is thread safe as-is.
@@ -64,10 +62,10 @@ namespace foonathan
             class mutex_storage
             {
             public:
-                mutex_storage() FOONATHAN_NOEXCEPT = default;
-                mutex_storage(const mutex_storage&) FOONATHAN_NOEXCEPT {}
+                mutex_storage() noexcept = default;
+                mutex_storage(const mutex_storage&) noexcept {}
 
-                mutex_storage& operator=(const mutex_storage&) FOONATHAN_NOEXCEPT
+                mutex_storage& operator=(const mutex_storage&) noexcept
                 {
                     return *this;
                 }
@@ -77,13 +75,13 @@ namespace foonathan
                     mutex_.lock();
                 }
 
-                void unlock() const FOONATHAN_NOEXCEPT
+                void unlock() const noexcept
                 {
                     mutex_.unlock();
                 }
 
             protected:
-                ~mutex_storage() FOONATHAN_NOEXCEPT = default;
+                ~mutex_storage() noexcept = default;
 
             private:
                 mutable Mutex mutex_;
@@ -93,13 +91,13 @@ namespace foonathan
             class mutex_storage<no_mutex>
             {
             public:
-                mutex_storage() FOONATHAN_NOEXCEPT = default;
+                mutex_storage() noexcept = default;
 
-                void lock() const FOONATHAN_NOEXCEPT {}
-                void unlock() const FOONATHAN_NOEXCEPT {}
+                void lock() const noexcept {}
+                void unlock() const noexcept {}
 
             protected:
-                ~mutex_storage() FOONATHAN_NOEXCEPT = default;
+                ~mutex_storage() noexcept = default;
             };
 
             // non changeable pointer to an Allocator that keeps a lock
@@ -108,35 +106,33 @@ namespace foonathan
             class locked_allocator
             {
             public:
-                locked_allocator(Alloc& alloc, Mutex& m) FOONATHAN_NOEXCEPT : mutex_(&m),
-                                                                              alloc_(&alloc)
+                locked_allocator(Alloc& alloc, Mutex& m) noexcept : mutex_(&m), alloc_(&alloc)
                 {
                     mutex_->lock();
                 }
 
-                locked_allocator(locked_allocator&& other) FOONATHAN_NOEXCEPT
-                : mutex_(other.mutex_),
-                  alloc_(other.alloc_)
+                locked_allocator(locked_allocator&& other) noexcept
+                : mutex_(other.mutex_), alloc_(other.alloc_)
                 {
                     other.mutex_ = nullptr;
                     other.alloc_ = nullptr;
                 }
 
-                ~locked_allocator() FOONATHAN_NOEXCEPT
+                ~locked_allocator() noexcept
                 {
                     if (mutex_)
                         mutex_->unlock();
                 }
 
-                locked_allocator& operator=(locked_allocator&& other) FOONATHAN_NOEXCEPT = delete;
+                locked_allocator& operator=(locked_allocator&& other) noexcept = delete;
 
-                Alloc& operator*() const FOONATHAN_NOEXCEPT
+                Alloc& operator*() const noexcept
                 {
                     FOONATHAN_MEMORY_ASSERT(alloc_);
                     return *alloc_;
                 }
 
-                Alloc* operator->() const FOONATHAN_NOEXCEPT
+                Alloc* operator->() const noexcept
                 {
                     FOONATHAN_MEMORY_ASSERT(alloc_);
                     return alloc_;

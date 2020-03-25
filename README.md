@@ -163,11 +163,6 @@ It is tested on GCC 4.8-5.0, Clang 3.5 and Visual Studio 2013. Newer versions sh
 
 3. Simply call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link this library and setups the include search path and compilation options.
 
-*Note: If during CMake you see an error message that compatibility is 
-not on the newest version, run `git submodule update 
---recursive --remote` to force the compatiblity submodule of memory to 
-update to the latest version.*
-
 You can also install the library:
 
 1. Run `cmake -DCMAKE_BUILD_TYPE="buildtype" -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF .` inside the library sources.

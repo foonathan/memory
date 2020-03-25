@@ -9,6 +9,7 @@
 #endif
 
 #include <atomic>
+#include <cstdlib>
 
 #include "error.hpp"
 
@@ -16,7 +17,7 @@ using namespace foonathan::memory;
 
 namespace
 {
-    void default_leak_handler(const allocator_info& info, std::ptrdiff_t amount) FOONATHAN_NOEXCEPT
+    void default_leak_handler(const allocator_info& info, std::ptrdiff_t amount) noexcept
     {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
         if (amount > 0)
@@ -24,9 +25,10 @@ namespace
                          FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator,
                          std::size_t(amount));
         else
-            std::fprintf(stderr, "[%s] Allocator %s (at %p) has deallocated %zu bytes more than "
-                                 "ever allocated "
-                                 "(it's amazing you're able to see this message!).\n",
+            std::fprintf(stderr,
+                         "[%s] Allocator %s (at %p) has deallocated %zu bytes more than "
+                         "ever allocated "
+                         "(it's amazing you're able to see this message!).\n",
                          FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator,
                          std::size_t(-amount));
 #else
@@ -36,7 +38,7 @@ namespace
     }
 
     std::atomic<leak_handler> leak_h(default_leak_handler);
-}
+} // namespace
 
 leak_handler foonathan::memory::set_leak_handler(leak_handler h)
 {
@@ -50,11 +52,12 @@ leak_handler foonathan::memory::get_leak_handler()
 
 namespace
 {
-    void default_invalid_ptr_handler(const allocator_info& info, const void* ptr) FOONATHAN_NOEXCEPT
+    void default_invalid_ptr_handler(const allocator_info& info, const void* ptr) noexcept
     {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
-        std::fprintf(stderr, "[%s] Deallocation function of allocator %s (at %p) received invalid "
-                             "pointer %p\n",
+        std::fprintf(stderr,
+                     "[%s] Deallocation function of allocator %s (at %p) received invalid "
+                     "pointer %p\n",
                      FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, ptr);
 #endif
         (void)info;
@@ -63,7 +66,7 @@ namespace
     }
 
     std::atomic<invalid_pointer_handler> invalid_ptr_h(default_invalid_ptr_handler);
-}
+} // namespace
 
 invalid_pointer_handler foonathan::memory::set_invalid_pointer_handler(invalid_pointer_handler h)
 {
@@ -78,11 +81,12 @@ invalid_pointer_handler foonathan::memory::get_invalid_pointer_handler()
 namespace
 {
     void default_buffer_overflow_handler(const void* memory, std::size_t node_size,
-                                         const void* ptr) FOONATHAN_NOEXCEPT
+                                         const void* ptr) noexcept
     {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
-        std::fprintf(stderr, "[%s] Buffer overflow at address %p detected, corresponding memory "
-                             "block %p has only size %zu.",
+        std::fprintf(stderr,
+                     "[%s] Buffer overflow at address %p detected, corresponding memory "
+                     "block %p has only size %zu.",
                      FOONATHAN_MEMORY_LOG_PREFIX, ptr, memory, node_size);
 #endif
         (void)memory;
@@ -92,7 +96,7 @@ namespace
     }
 
     std::atomic<buffer_overflow_handler> buffer_overflow_h(default_buffer_overflow_handler);
-}
+} // namespace
 
 buffer_overflow_handler foonathan::memory::set_buffer_overflow_handler(buffer_overflow_handler h)
 {

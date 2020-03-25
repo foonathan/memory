@@ -21,14 +21,46 @@ namespace foonathan
     {
         namespace detail
         {
-            using foonathan_comp::move;
-            using foonathan_comp::forward;
+            // move - taken from http://stackoverflow.com/a/7518365
+            template <typename T>
+            typename std::remove_reference<T>::type&& move(T&& arg) noexcept
+            {
+                return static_cast<typename std::remove_reference<T>::type&&>(arg);
+            }
+            // forward - taken from http://stackoverflow.com/a/27501759
+            template <class T>
+            T&& forward(typename std::remove_reference<T>::type& t) noexcept
+            {
+                return static_cast<T&&>(t);
+            }
+            template <class T>
+            T&& forward(typename std::remove_reference<T>::type&& t) noexcept
+            {
+                static_assert(!std::is_lvalue_reference<T>::value,
+                              "Can not forward an rvalue as an lvalue.");
+                return static_cast<T&&>(t);
+            }
+
+            namespace swap_
+            {
+#if FOONATHAN_HOSTED_IMPLEMENTATION
+                using std::swap;
+#else
+                template <typename T>
+                void swap(T& a, T& b)
+                {
+                    T tmp = move(a);
+                    a     = move(b);
+                    b     = move(tmp);
+                }
+#endif
+            } // namespace swap_
 
             // ADL aware swap
             template <typename T>
-            void adl_swap(T& a, T& b) FOONATHAN_NOEXCEPT
+            void adl_swap(T& a, T& b) noexcept
             {
-                using foonathan_comp::swap;
+                using swap_::swap;
                 swap(a, b);
             }
 
@@ -80,7 +112,7 @@ namespace foonathan
             {
             };
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif //FOONATHAN_MEMORY_DETAIL_UTILITY_HPP

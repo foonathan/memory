@@ -18,28 +18,25 @@ namespace foonathan
             class ebo_storage : T
             {
             protected:
-                ebo_storage(const T& t) : T(t)
-                {
-                }
+                ebo_storage(const T& t) : T(t) {}
 
-                ebo_storage(T&& t)
-                    FOONATHAN_NOEXCEPT_IF(std::is_nothrow_move_constructible<T>::value)
+                ebo_storage(T&& t) noexcept(std::is_nothrow_move_constructible<T>::value)
                 : T(detail::move(t))
                 {
                 }
 
-                T& get() FOONATHAN_NOEXCEPT
+                T& get() noexcept
                 {
                     return *this;
                 }
 
-                const T& get() const FOONATHAN_NOEXCEPT
+                const T& get() const noexcept
                 {
                     return *this;
                 }
             };
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_EBO_STORAGE_HPP_INCLUDED

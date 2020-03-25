@@ -31,13 +31,13 @@ namespace foonathan
                 // actual number is calculated via policy
                 // memory is taken from fixed_memory_stack, it must be sufficient
                 free_list_array(fixed_memory_stack& stack, const char* end,
-                                std::size_t max_node_size) FOONATHAN_NOEXCEPT
+                                std::size_t max_node_size) noexcept
                     : no_elements_(AccessPolicy::index_from_size(max_node_size) - min_size_index
                                    + 1)
                 {
                     array_ =
                         static_cast<FreeList*>(stack.allocate(end, no_elements_ * sizeof(FreeList),
-                                                              FOONATHAN_ALIGNOF(FreeList)));
+                                                              alignof(FreeList)));
                     FOONATHAN_MEMORY_ASSERT(array_);
                     for (std::size_t i = 0u; i != no_elements_; ++i)
                     {
@@ -47,7 +47,7 @@ namespace foonathan
                 }
 
                 // move constructor, does not actually move the elements, just the pointer
-                free_list_array(free_list_array&& other) FOONATHAN_NOEXCEPT
+                free_list_array(free_list_array&& other) noexcept
                     : array_(other.array_),
                       no_elements_(other.no_elements_)
                 {
@@ -56,9 +56,9 @@ namespace foonathan
                 }
 
                 // destructor, does nothing, list must be trivially destructible!
-                ~free_list_array() FOONATHAN_NOEXCEPT = default;
+                ~free_list_array() noexcept = default;
 
-                free_list_array& operator=(free_list_array&& other) FOONATHAN_NOEXCEPT
+                free_list_array& operator=(free_list_array&& other) noexcept
                 {
                     array_       = other.array_;
                     no_elements_ = other.no_elements_;
@@ -69,7 +69,7 @@ namespace foonathan
                 }
 
                 // access free list for given size
-                FreeList& get(std::size_t node_size) const FOONATHAN_NOEXCEPT
+                FreeList& get(std::size_t node_size) const noexcept
                 {
                     auto i = AccessPolicy::index_from_size(node_size);
                     if (i < min_size_index)
@@ -78,13 +78,13 @@ namespace foonathan
                 }
 
                 // number of free lists
-                std::size_t size() const FOONATHAN_NOEXCEPT
+                std::size_t size() const noexcept
                 {
                     return no_elements_;
                 }
 
                 // maximum supported node size
-                std::size_t max_node_size() const FOONATHAN_NOEXCEPT
+                std::size_t max_node_size() const noexcept
                 {
                     return AccessPolicy::size_from_index(no_elements_ + min_size_index - 1);
                 }
@@ -104,12 +104,12 @@ namespace foonathan
             // creates a free list for each size!
             struct identity_access_policy
             {
-                static std::size_t index_from_size(std::size_t size) FOONATHAN_NOEXCEPT
+                static std::size_t index_from_size(std::size_t size) noexcept
                 {
                     return size;
                 }
 
-                static std::size_t size_from_index(std::size_t index) FOONATHAN_NOEXCEPT
+                static std::size_t size_from_index(std::size_t index) noexcept
                 {
                     return index;
                 }
@@ -119,8 +119,8 @@ namespace foonathan
             // this creates more nodes and never wastes more than half the size
             struct log2_access_policy
             {
-                static std::size_t index_from_size(std::size_t size) FOONATHAN_NOEXCEPT;
-                static std::size_t size_from_index(std::size_t index) FOONATHAN_NOEXCEPT;
+                static std::size_t index_from_size(std::size_t size) noexcept;
+                static std::size_t size_from_index(std::size_t index) noexcept;
             };
         } // namespace detail
     }

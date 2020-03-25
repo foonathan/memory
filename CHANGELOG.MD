@@ -1,5 +1,10 @@
 # Upcoming Changes
 
+BREAKING: Removed the use of the compatibility library to automatically generate macros and workaround for older compilers.
+The important compatibility workarounds like the `__builtin_clz` extension are still used, but workarounds for missing C++11 library features have been removed.
+In particular, the library now requires compiler support for `noexcept`, `constexpr`, `alignof` and `thread_local`.
+This means that GCC 4.8 and Visual Studio version 12.0 (both released in 2013), are now longer supported.
+
 ## Adapter
 
 BREAKING: Remove `Mutex` support from `allocator_reference` and consequently from `std_allocator`, `allocator_deleter`, ...

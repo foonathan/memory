@@ -35,14 +35,14 @@ namespace foonathan
                 const char* end;
 
                 stack_marker(std::size_t i, const detail::fixed_memory_stack& s,
-                             const char* e) FOONATHAN_NOEXCEPT : index(i),
+                             const char* e) noexcept : index(i),
                                                                  top(s.top()),
                                                                  end(e)
                 {
                 }
 
                 friend bool operator==(const stack_marker& lhs,
-                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                       const stack_marker& rhs) noexcept
                 {
                     if (lhs.index != rhs.index)
                         return false;
@@ -53,13 +53,13 @@ namespace foonathan
                 }
 
                 friend bool operator!=(const stack_marker& lhs,
-                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                       const stack_marker& rhs) noexcept
                 {
                     return !(rhs == lhs);
                 }
 
                 friend bool operator<(const stack_marker& lhs,
-                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                      const stack_marker& rhs) noexcept
                 {
                     if (lhs.index != rhs.index)
                         return lhs.index < rhs.index;
@@ -70,19 +70,19 @@ namespace foonathan
                 }
 
                 friend bool operator>(const stack_marker& lhs,
-                                      const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                      const stack_marker& rhs) noexcept
                 {
                     return rhs < lhs;
                 }
 
                 friend bool operator<=(const stack_marker& lhs,
-                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                       const stack_marker& rhs) noexcept
                 {
                     return !(rhs < lhs);
                 }
 
                 friend bool operator>=(const stack_marker& lhs,
-                                       const stack_marker& rhs) FOONATHAN_NOEXCEPT
+                                       const stack_marker& rhs) noexcept
                 {
                     return !(lhs < rhs);
                 }
@@ -155,7 +155,7 @@ namespace foonathan
             /// But it does not attempt a growth if the arena is empty.
             /// \returns A \concept{concept_node,node} with given size and alignment
             /// or `nullptr` if there wasn't enough memory available.
-            void* try_allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate(std::size_t size, std::size_t alignment) noexcept
             {
                 return stack_.allocate(block_end(), size, alignment);
             }
@@ -169,7 +169,7 @@ namespace foonathan
             using marker = FOONATHAN_IMPL_DEFINED(detail::stack_marker);
 
             /// \returns A marker to the current top of the stack.
-            marker top() const FOONATHAN_NOEXCEPT
+            marker top() const noexcept
             {
                 return {arena_.size() - 1, stack_, block_end()};
             }
@@ -182,7 +182,7 @@ namespace foonathan
             /// call \ref shrink_to_fit() to actually deallocate them.
             /// \requires The marker must point to memory that is still in use and was the whole time,
             /// i.e. it must have been pointed below the top at all time.
-            void unwind(marker m) FOONATHAN_NOEXCEPT
+            void unwind(marker m) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(m <= top());
                 detail::debug_check_pointer([&] { return m.index <= arena_.size() - 1; }, info(),
@@ -216,7 +216,7 @@ namespace foonathan
             /// \effects \ref unwind() does not actually do any deallocation of blocks on the \concept{concept_blockallocator,BlockAllocator},
             /// unused memory is stored in a cache for later reuse.
             /// This function clears that cache.
-            void shrink_to_fit() FOONATHAN_NOEXCEPT
+            void shrink_to_fit() noexcept
             {
                 arena_.shrink_to_fit();
             }
@@ -224,7 +224,7 @@ namespace foonathan
             /// \returns The amount of memory remaining in the current block.
             /// This is the number of bytes that are available for allocation
             /// before the cache or \concept{concept_blockallocator,BlockAllocator} needs to be used.
-            std::size_t capacity_left() const FOONATHAN_NOEXCEPT
+            std::size_t capacity_left() const noexcept
             {
                 return std::size_t(block_end() - stack_.top());
             }
@@ -233,25 +233,25 @@ namespace foonathan
             /// This function just forwards to the \ref memory_arena.
             /// \note All of it is available for the stack to use, but due to fences and alignment buffers,
             /// this may not be the exact amount of memory usable for the user.
-            std::size_t next_capacity() const FOONATHAN_NOEXCEPT
+            std::size_t next_capacity() const noexcept
             {
                 return arena_.next_block_size();
             }
 
             /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
             /// \requires It is undefined behavior to move this allocator out into another object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return arena_.get_allocator();
             }
 
         private:
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_stack", this};
             }
 
-            const char* block_end() const FOONATHAN_NOEXCEPT
+            const char* block_end() const noexcept
             {
                 auto block = arena_.current_block();
                 return static_cast<const char*>(block.memory) + block.size;
@@ -277,14 +277,14 @@ namespace foonathan
             using marker_type = typename stack_type::marker;
 
             /// \effects Same as `memory_stack_raii_unwind(stack, stack.top())`.
-            explicit memory_stack_raii_unwind(stack_type& stack) FOONATHAN_NOEXCEPT
+            explicit memory_stack_raii_unwind(stack_type& stack) noexcept
                 : memory_stack_raii_unwind(stack, stack.top())
             {
             }
 
             /// \effects Creates the unwinder by giving it the stack and the marker.
             /// \requires The stack must live longer than this object.
-            memory_stack_raii_unwind(stack_type& stack, marker_type marker) FOONATHAN_NOEXCEPT
+            memory_stack_raii_unwind(stack_type& stack, marker_type marker) noexcept
                 : marker_(marker),
                   stack_(&stack)
             {
@@ -292,7 +292,7 @@ namespace foonathan
 
             /// \effects Move constructs the unwinder by taking the saved position from `other`.
             /// `other.will_unwind()` will return `false` after it.
-            memory_stack_raii_unwind(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
+            memory_stack_raii_unwind(memory_stack_raii_unwind&& other) noexcept
                 : marker_(other.marker_),
                   stack_(other.stack_)
             {
@@ -301,7 +301,7 @@ namespace foonathan
 
             /// \effects Unwinds to the previously saved location,
             /// if there is any, by calling `unwind()`.
-            ~memory_stack_raii_unwind() FOONATHAN_NOEXCEPT
+            ~memory_stack_raii_unwind() noexcept
             {
                 if (stack_)
                     stack_->unwind(marker_);
@@ -309,7 +309,7 @@ namespace foonathan
 
             /// \effects Move assigns the unwinder by taking the saved position from `other`.
             /// `other.will_unwind()` will return `false` after it.
-            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind&& other) FOONATHAN_NOEXCEPT
+            memory_stack_raii_unwind& operator=(memory_stack_raii_unwind&& other) noexcept
             {
                 if (stack_)
                     stack_->unwind(marker_);
@@ -324,14 +324,14 @@ namespace foonathan
 
             /// \effects Removes the location without unwinding it.
             /// `will_unwind()` will return `false`.
-            void release() FOONATHAN_NOEXCEPT
+            void release() noexcept
             {
                 stack_ = nullptr;
             }
 
             /// \effects Unwinds to the saved location explictly.
             /// \requires `will_unwind()` must return `true`.
-            void unwind() FOONATHAN_NOEXCEPT
+            void unwind() noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(will_unwind());
                 stack_->unwind(marker_);
@@ -339,14 +339,14 @@ namespace foonathan
 
             /// \returns Whether or not the unwinder will actually unwind.
             /// \note It will not unwind if it is in the moved-from state.
-            bool will_unwind() const FOONATHAN_NOEXCEPT
+            bool will_unwind() const noexcept
             {
                 return stack_ != nullptr;
             }
 
             /// \returns The saved marker, if there is any.
             /// \requires `will_unwind()` must return `true`.
-            marker_type get_marker() const FOONATHAN_NOEXCEPT
+            marker_type get_marker() const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(will_unwind());
                 return marker_;
@@ -354,7 +354,7 @@ namespace foonathan
 
             /// \returns The stack it will unwind.
             /// \requires `will_unwind()` must return `true`.
-            stack_type& get_stack() const FOONATHAN_NOEXCEPT
+            stack_type& get_stack() const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT(will_unwind());
                 return *stack_;
@@ -401,13 +401,13 @@ namespace foonathan
             /// \effects Does nothing besides bookmarking for leak checking, if that is enabled.
             /// Actual deallocation can only be done via \ref memory_stack::unwind().
             static void deallocate_node(allocator_type& state, void*, std::size_t size,
-                                        std::size_t) FOONATHAN_NOEXCEPT
+                                        std::size_t) noexcept
             {
                 state.on_deallocate(size);
             }
 
             static void deallocate_array(allocator_type& state, void* ptr, std::size_t count,
-                                         std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                         std::size_t size, std::size_t alignment) noexcept
             {
                 deallocate_node(state, ptr, count * size, alignment);
             }
@@ -415,12 +415,12 @@ namespace foonathan
 
             /// @{
             /// \returns The maximum size which is \ref memory_stack::next_capacity().
-            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_node_size(const allocator_type& state) noexcept
             {
                 return state.next_capacity();
             }
 
-            static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_array_size(const allocator_type& state) noexcept
             {
                 return state.next_capacity();
             }
@@ -428,7 +428,7 @@ namespace foonathan
 
             /// \returns The maximum possible value since there is no alignment restriction
             /// (except indirectly through \ref memory_stack::next_capacity()).
-            static std::size_t max_alignment(const allocator_type&) FOONATHAN_NOEXCEPT
+            static std::size_t max_alignment(const allocator_type&) noexcept
             {
                 return std::size_t(-1);
             }
@@ -444,7 +444,7 @@ namespace foonathan
 
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_node(allocator_type& state, std::size_t size,
-                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+                                           std::size_t alignment) noexcept
             {
                 return state.try_allocate(size, alignment);
             }
@@ -452,7 +452,7 @@ namespace foonathan
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_array(allocator_type& state, std::size_t count,
                                             std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 return state.try_allocate(count * size, alignment);
             }
@@ -461,14 +461,14 @@ namespace foonathan
             /// \effects Does nothing.
             /// \returns Whether the memory will be deallocated by \ref memory_stack::unwind().
             static bool try_deallocate_node(allocator_type& state, void* ptr, std::size_t,
-                                            std::size_t) FOONATHAN_NOEXCEPT
+                                            std::size_t) noexcept
             {
                 return state.arena_.owns(ptr);
             }
 
             static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
                                              std::size_t size,
-                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+                                             std::size_t alignment) noexcept
             {
                 return try_deallocate_node(state, ptr, count * size, alignment);
             }

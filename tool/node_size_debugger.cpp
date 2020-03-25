@@ -77,7 +77,7 @@ struct code_serializer
          * template <typename T>
          * struct <name>_node_size
          * : std::integral_constant<std::size_t,
-         *    detail::<name>_node_size<FOONATHAN_ALIGNOF(T)>::value + sizeof(T)>
+         *    detail::<name>_node_size<alignof(T)>::value + sizeof(T)>
          * {};
          */
         auto newline = "\n";

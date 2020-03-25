@@ -33,7 +33,7 @@ namespace foonathan
             {
                 using raw_ptr = std::unique_ptr<T, allocator_deallocator<T, RawAllocator>>;
 
-                auto memory = alloc.allocate_node(sizeof(T), FOONATHAN_ALIGNOF(T));
+                auto memory = alloc.allocate_node(sizeof(T), alignof(T));
                 // raw_ptr deallocates memory in case of constructor exception
                 raw_ptr result(static_cast<T*>(memory), {alloc});
                 // call constructor
@@ -76,10 +76,10 @@ namespace foonathan
             {
                 using raw_ptr = std::unique_ptr<T[], allocator_deallocator<T[], RawAllocator>>;
 
-                auto memory = alloc.allocate_array(size, sizeof(T), FOONATHAN_ALIGNOF(T));
+                auto memory = alloc.allocate_array(size, sizeof(T), alignof(T));
                 // raw_ptr deallocates memory in case of constructor exception
                 raw_ptr result(static_cast<T*>(memory), {alloc, size});
-                construct(std::integral_constant<bool, FOONATHAN_NOEXCEPT_OP(T())>{}, result.get(),
+                construct(std::integral_constant<bool, noexcept_OP(T())>{}, result.get(),
                           result.get() + size);
                 // pass ownership to return value using a deleter that calls destructor
                 return {result.release(), {alloc, size}};

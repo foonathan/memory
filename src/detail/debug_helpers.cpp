@@ -14,7 +14,7 @@ using namespace foonathan::memory;
 using namespace detail;
 
 #if FOONATHAN_MEMORY_DEBUG_FILL
-    void detail::debug_fill(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
+    void detail::debug_fill(void *memory, std::size_t size, debug_magic m) noexcept
     {
         #if FOONATHAN_HOSTED_IMPLEMENTATION
             std::memset(memory, static_cast<int>(m), size);
@@ -26,7 +26,7 @@ using namespace detail;
         #endif
     }
 
-    void* detail::debug_is_filled(void *memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT
+    void* detail::debug_is_filled(void *memory, std::size_t size, debug_magic m) noexcept
     {
         auto byte = static_cast<unsigned char*>(memory);
         for (auto end = byte + size; byte != end; ++byte)
@@ -36,7 +36,7 @@ using namespace detail;
     }
 
     void* detail::debug_fill_new(void *memory,
-                         std::size_t node_size, std::size_t fence_size) FOONATHAN_NOEXCEPT
+                         std::size_t node_size, std::size_t fence_size) noexcept
     {
         if (!debug_fence_size)
             fence_size = 0u; // force override of fence_size
@@ -53,7 +53,7 @@ using namespace detail;
     }
 
     void* detail::debug_fill_free(void *memory,
-                            std::size_t node_size, std::size_t fence_size) FOONATHAN_NOEXCEPT
+                            std::size_t node_size, std::size_t fence_size) noexcept
     {
         if (!debug_fence_size)
             fence_size = 0u; // force override of fence_size
@@ -71,7 +71,7 @@ using namespace detail;
         return pre_fence;
     }
 
-    void detail::debug_fill_internal(void *memory, std::size_t size, bool free) FOONATHAN_NOEXCEPT
+    void detail::debug_fill_internal(void *memory, std::size_t size, bool free) noexcept
     {
         debug_fill(memory, size, free ? debug_magic::internal_freed_memory : debug_magic::internal_memory);
     }

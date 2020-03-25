@@ -8,17 +8,40 @@
 #ifndef FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 #define FOONATHAN_MEMORY_CONFIG_HPP_INCLUDED
 
+#include <cstddef>
+
 #if !defined(DOXYGEN)
 #define FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 #include "config_impl.hpp"
 #undef FOONATHAN_MEMORY_IMPL_IN_CONFIG_HPP
 #endif
 
-// general compatibility headers
-#include <foonathan/constexpr.hpp>
-#include <foonathan/noexcept.hpp>
-#include <foonathan/exception_support.hpp>
-#include <foonathan/hosted_implementation.hpp>
+// exception support
+#ifndef FOONATHAN_HAS_EXCEPTION_SUPPORT
+#if defined(__GNUC__) && !defined(__EXCEPTIONS)
+#define FOONATHAN_HAS_EXCEPTION_SUPPORT 0
+#elif defined(_MSC_VER) && !_HAS_EXCEPTIONS
+#define FOONATHAN_HAS_EXCEPTION_SUPPORT 0
+#else
+#define FOONATHAN_HAS_EXCEPTION_SUPPORT 1
+#endif
+#endif
+
+#if FOONATHAN_HAS_EXCEPTION_SUPPORT
+#define FOONATHAN_THROW(Ex) throw(Ex)
+#else
+#include <cstdlib>
+#define FOONATHAN_THROW(Ex) ((Ex), std::abort())
+#endif
+
+// hosted implementation
+#ifndef FOONATHAN_HOSTED_IMPLEMENTATION
+#if !_MSC_VER && !__STDC_HOSTED__
+#define FOONATHAN_HOSTED_IMPLEMENTATION 0
+#else
+#define FOONATHAN_HOSTED_IMPLEMENTATION 1
+#endif
+#endif
 
 // log prefix
 #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"

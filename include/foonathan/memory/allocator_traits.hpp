@@ -75,7 +75,7 @@ namespace foonathan
             // used to give priority to the functions
             struct error
             {
-                operator void*() const FOONATHAN_NOEXCEPT
+                operator void*() const noexcept
                 {
                     FOONATHAN_MEMORY_UNREACHABLE(
                         "this is just to hide an error and move static_assert to the front");
@@ -194,12 +194,12 @@ namespace foonathan
             // then error
             template <class Allocator>
             auto deallocate_node(full_concept, Allocator& alloc, void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.deallocate_node(ptr, size, alignment), void)
 
                     template <class Allocator>
                     auto deallocate_node(std_concept, Allocator& alloc, void* ptr, std::size_t size,
-                                         std::size_t) FOONATHAN_NOEXCEPT
+                                         std::size_t) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.deallocate(static_cast<char*>(ptr), size), void)
 
                     template <class Allocator>
@@ -232,14 +232,14 @@ namespace foonathan
             // then forward to deallocate_node()
             template <class Allocator>
             auto deallocate_array(full_concept, Allocator& alloc, void* ptr, std::size_t count,
-                                  std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t size, std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.deallocate_array(ptr, count, size, alignment),
                                               void)
 
                     template <class Allocator>
                     void deallocate_array(min_concept, Allocator& alloc, void* ptr,
                                           std::size_t count, std::size_t size,
-                                          std::size_t alignment) FOONATHAN_NOEXCEPT
+                                          std::size_t alignment) noexcept
             {
                 deallocate_node(full_concept{}, alloc, ptr, count * size, alignment);
             }
@@ -252,7 +252,7 @@ namespace foonathan
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.max_node_size(), std::size_t)
 
                     template <class Allocator>
-                    std::size_t max_node_size(min_concept, const Allocator&) FOONATHAN_NOEXCEPT
+                    std::size_t max_node_size(min_concept, const Allocator&) noexcept
             {
                 return std::size_t(-1);
             }
@@ -317,7 +317,7 @@ namespace foonathan
             }
 
             static void deallocate_node(allocator_type& state, void* node, std::size_t size,
-                                        std::size_t alignment) FOONATHAN_NOEXCEPT
+                                        std::size_t alignment) noexcept
             {
                 static_assert(allocator_is_raw_allocator<Allocator>::value,
                               "Allocator cannot be used as RawAllocator because it provides custom "
@@ -327,7 +327,7 @@ namespace foonathan
             }
 
             static void deallocate_array(allocator_type& state, void* array, std::size_t count,
-                                         std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                         std::size_t size, std::size_t alignment) noexcept
             {
                 static_assert(allocator_is_raw_allocator<Allocator>::value,
                               "Allocator cannot be used as RawAllocator because it provides custom "
@@ -426,7 +426,7 @@ namespace foonathan
             // otherwise error
             template <class Allocator>
             auto try_allocate_node(full_concept, Allocator& alloc, std::size_t size,
-                                   std::size_t alignment) FOONATHAN_NOEXCEPT
+                                   std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_allocate_node(size, alignment), void*)
 
                     template <class Allocator>
@@ -444,7 +444,7 @@ namespace foonathan
             // otherwise error
             template <class Allocator>
             auto try_deallocate_node(full_concept, Allocator& alloc, void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_deallocate_node(ptr, size, alignment), bool)
 
                     template <class Allocator>
@@ -462,7 +462,7 @@ namespace foonathan
             // then forward to try_allocate_node()
             template <class Allocator>
             auto try_allocate_array(full_concept, Allocator& alloc, std::size_t count,
-                                    std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                    std::size_t size, std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_allocate_array(count, size, alignment),
                                               void*)
 
@@ -478,7 +478,7 @@ namespace foonathan
             // then forward to try_deallocate_node()
             template <class Allocator>
             auto try_deallocate_array(full_concept, Allocator& alloc, void* ptr, std::size_t count,
-                                      std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t size, std::size_t alignment) noexcept
                 -> FOONATHAN_AUTO_RETURN_TYPE(alloc.try_deallocate_array(ptr, count, size,
                                                                          alignment),
                                               bool)
@@ -486,7 +486,7 @@ namespace foonathan
                     template <class Allocator>
                     bool try_deallocate_array(min_concept, Allocator& alloc, void* ptr,
                                               std::size_t count, std::size_t size,
-                                              std::size_t alignment) FOONATHAN_NOEXCEPT
+                                              std::size_t alignment) noexcept
             {
                 return try_deallocate_node(full_concept{}, alloc, ptr, count * size, alignment);
             }
@@ -503,7 +503,7 @@ namespace foonathan
             using allocator_type = typename allocator_traits<Allocator>::allocator_type;
 
             static void* try_allocate_node(allocator_type& state, std::size_t size,
-                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+                                           std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");
@@ -513,7 +513,7 @@ namespace foonathan
 
             static void* try_allocate_array(allocator_type& state, std::size_t count,
                                             std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");
@@ -522,7 +522,7 @@ namespace foonathan
             }
 
             static bool try_deallocate_node(allocator_type& state, void* node, std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");
@@ -532,7 +532,7 @@ namespace foonathan
 
             static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
                                              std::size_t size,
-                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+                                             std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");

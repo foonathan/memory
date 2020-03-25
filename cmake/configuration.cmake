@@ -8,17 +8,12 @@
 # what to build
 # examples/tests if toplevel directory (i.e. direct build, not as subdirectory) and hosted
 # tools if hosted
-if(COMP_HAS_HOSTED_IMPLEMENTATION)
-    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-        set(build_examples_tests 1)
-    else()
-        set(build_examples_test 0)
-    endif()
-    set(build_tools 1)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(build_examples_tests 1)
 else()
-    set(build_examples_tests 0)
-    set(build_tools 0)
+    set(build_examples_test 0)
 endif()
+set(build_tools 1)
 
 option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" ${build_examples_tests})
 option(FOONATHAN_MEMORY_BUILD_TESTS "whether or not to build the tests" ${build_examples_tests})
@@ -66,9 +61,9 @@ option(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
         "whether or not the size of the allocation will be checked" ON)
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "<foonathan/pmr.hpp>" CACHE STRING
+set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "<memory_resource>" CACHE STRING
     "the header of the memory_resource class used")
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE foonathan_comp::memory_resource CACHE STRING
+set(FOONATHAN_MEMORY_MEMORY_RESOURCE std::memory_resource CACHE STRING
     "the memory_resource class used")
 option(FOONATHAN_MEMORY_EXTERN_TEMPLATE
     "whether or not common template instantiations are already provided by the library" ON)

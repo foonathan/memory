@@ -29,7 +29,7 @@ public:
         return mem;
     }
 
-    void deallocate_node(void* node, std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+    void deallocate_node(void* node, std::size_t size, std::size_t alignment) noexcept
     {
         ++dealloc_count_;
         auto iter = allocated_.find(node);
@@ -44,37 +44,37 @@ public:
         foonathan::memory::heap_allocator().deallocate_node(node, size, alignment);
     }
 
-    std::size_t max_node_size() const FOONATHAN_NOEXCEPT
+    std::size_t max_node_size() const noexcept
     {
         return std::size_t(-1);
     }
 
-    bool last_deallocation_valid() FOONATHAN_NOEXCEPT
+    bool last_deallocation_valid() noexcept
     {
         return last_valid_;
     }
 
-    void reset_last_deallocation_valid() FOONATHAN_NOEXCEPT
+    void reset_last_deallocation_valid() noexcept
     {
         last_valid_ = true;
     }
 
-    memory_info last_allocated() const FOONATHAN_NOEXCEPT
+    memory_info last_allocated() const noexcept
     {
         return last_allocated_;
     }
 
-    std::size_t no_allocated() const FOONATHAN_NOEXCEPT
+    std::size_t no_allocated() const noexcept
     {
         return allocated_.size();
     }
 
-    std::size_t no_deallocated() const FOONATHAN_NOEXCEPT
+    std::size_t no_deallocated() const noexcept
     {
         return dealloc_count_;
     }
 
-    void reset_deallocation_count() FOONATHAN_NOEXCEPT
+    void reset_deallocation_count() noexcept
     {
         dealloc_count_ = 0u;
     }

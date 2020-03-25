@@ -57,7 +57,7 @@ namespace foonathan
                 }
             }
 
-            iteration_allocator(iteration_allocator&& other) FOONATHAN_NOEXCEPT
+            iteration_allocator(iteration_allocator&& other) noexcept
             : allocator_type(detail::move(other)),
               block_(other.block_),
               cur_(detail::move(other.cur_))
@@ -68,13 +68,13 @@ namespace foonathan
                 other.cur_ = N;
             }
 
-            ~iteration_allocator() FOONATHAN_NOEXCEPT
+            ~iteration_allocator() noexcept
             {
                 if (cur_ < N)
                     get_allocator().deallocate_block(block_);
             }
 
-            iteration_allocator& operator=(iteration_allocator&& other) FOONATHAN_NOEXCEPT
+            iteration_allocator& operator=(iteration_allocator&& other) noexcept
             {
                 allocator_type::operator=(detail::move(other));
                 block_                  = other.block_;
@@ -109,7 +109,7 @@ namespace foonathan
             /// similar to \ref allocate().
             /// \returns A \concept{concept_node,node| with given size and alignment
             /// or `nullptr` if the current stack does not have any memory left.
-            void* try_allocate(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate(std::size_t size, std::size_t alignment) noexcept
             {
                 auto& stack = stacks_[cur_];
                 return stack.allocate(block_end(cur_), size, alignment);
@@ -119,7 +119,7 @@ namespace foonathan
             /// This will clear the stack whose \ref max_iterations() lifetime has reached,
             /// and use it for all allocations in this iteration.
             /// \note This function should be called at the end of the loop.
-            void next_iteration() FOONATHAN_NOEXCEPT
+            void next_iteration() noexcept
             {
                 FOONATHAN_MEMORY_ASSERT_MSG(cur_ != N, "moved-from allocator");
                 cur_ = (cur_ + 1) % N;
@@ -128,52 +128,52 @@ namespace foonathan
 
             /// \returns The number of iteration each allocation will live.
             /// This is the template parameter `N`.
-            static std::size_t max_iterations() FOONATHAN_NOEXCEPT
+            static std::size_t max_iterations() noexcept
             {
                 return N;
             }
 
             /// \returns The index of the current iteration.
             /// This is modulo \ref max_iterations().
-            std::size_t cur_iteration() const FOONATHAN_NOEXCEPT
+            std::size_t cur_iteration() const noexcept
             {
                 return cur_;
             }
 
             /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the memory.
             /// \requires It is undefined behavior to move this allocator out into another object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
             /// \returns The amount of memory remaining in the stack with the given index.
             /// This is the number of bytes that are available for allocation.
-            std::size_t capacity_left(std::size_t i) const FOONATHAN_NOEXCEPT
+            std::size_t capacity_left(std::size_t i) const noexcept
             {
                 return std::size_t(block_end(i) - stacks_[i].top());
             }
 
             /// \returns The amount of memory remaining in the currently active stack.
-            std::size_t capacity_left() const FOONATHAN_NOEXCEPT
+            std::size_t capacity_left() const noexcept
             {
                 return capacity_left(cur_iteration());
             }
 
         private:
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::iteration_allocator", this};
             }
 
-            char* block_start(std::size_t i) const FOONATHAN_NOEXCEPT
+            char* block_start(std::size_t i) const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT_MSG(i <= N, "moved from state");
                 auto ptr = static_cast<char*>(block_.memory);
                 return ptr + (i * block_.size / N);
             }
 
-            char* block_end(std::size_t i) const FOONATHAN_NOEXCEPT
+            char* block_end(std::size_t i) const noexcept
             {
                 FOONATHAN_MEMORY_ASSERT_MSG(i < N, "moved from state");
                 return block_start(i + 1);
@@ -226,24 +226,24 @@ namespace foonathan
             /// \effects Does nothing.
             /// Actual deallocation can only be done via \ref memory_stack::unwind().
             static void deallocate_node(allocator_type&, void*, std::size_t,
-                                        std::size_t) FOONATHAN_NOEXCEPT
+                                        std::size_t) noexcept
             {
             }
 
             static void deallocate_array(allocator_type&, void*, std::size_t, std::size_t,
-                                         std::size_t) FOONATHAN_NOEXCEPT
+                                         std::size_t) noexcept
             {
             }
             /// @}
 
             /// @{
             /// \returns The maximum size which is \ref iteration_allocator::capacity_left().
-            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_node_size(const allocator_type& state) noexcept
             {
                 return state.capacity_left();
             }
 
-            static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_array_size(const allocator_type& state) noexcept
             {
                 return state.capacity_left();
             }
@@ -251,7 +251,7 @@ namespace foonathan
 
             /// \returns The maximum possible value since there is no alignment restriction
             /// (except indirectly through \ref memory_stack::next_capacity()).
-            static std::size_t max_alignment(const allocator_type&) FOONATHAN_NOEXCEPT
+            static std::size_t max_alignment(const allocator_type&) noexcept
             {
                 return std::size_t(-1);
             }
@@ -267,7 +267,7 @@ namespace foonathan
 
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_node(allocator_type& state, std::size_t size,
-                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+                                           std::size_t alignment) noexcept
             {
                 return state.try_allocate(size, alignment);
             }
@@ -275,7 +275,7 @@ namespace foonathan
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_array(allocator_type& state, std::size_t count,
                                             std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 return state.try_allocate(count * size, alignment);
             }
@@ -284,14 +284,14 @@ namespace foonathan
             /// \effects Does nothing.
             /// \returns Whether the memory will be deallocated by \ref memory_stack::unwind().
             static bool try_deallocate_node(allocator_type& state, void* ptr, std::size_t,
-                                            std::size_t) FOONATHAN_NOEXCEPT
+                                            std::size_t) noexcept
             {
                 return state.block_.contains(ptr);
             }
 
             static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
                                              std::size_t size,
-                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+                                             std::size_t alignment) noexcept
             {
                 return try_deallocate_node(state, ptr, count * size, alignment);
             }

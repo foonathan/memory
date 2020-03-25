@@ -47,7 +47,6 @@ else()
     message(FATAL_ERROR "Could not set install folders for this platform!")
 endif()
 
-include(cmake/compatibility.cmake)
 include(cmake/configuration.cmake)
 
 # subdirectories

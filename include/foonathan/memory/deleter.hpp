@@ -35,11 +35,11 @@ namespace foonathan
             /// \effects Creates it without any associated allocator.
             /// The deallocator must not be used if that is the case.
             /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
-            allocator_deallocator() FOONATHAN_NOEXCEPT = default;
+            allocator_deallocator() noexcept = default;
 
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
-            allocator_deallocator(allocator_reference<RawAllocator> alloc) FOONATHAN_NOEXCEPT
+            allocator_deallocator(allocator_reference<RawAllocator> alloc) noexcept
             : allocator_reference<RawAllocator>(alloc)
             {
             }
@@ -47,15 +47,15 @@ namespace foonathan
             /// \effects Deallocates the memory given to it.
             /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type)) on the referenced allocator object.
             /// \requires The deallocator must not have been created by the default constructor.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
-                this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
+                this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deallocator must not be created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -78,12 +78,12 @@ namespace foonathan
             /// \effects Creates it without any associated allocator.
             /// The deallocator must not be used if that is the case.
             /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
-            allocator_deallocator() FOONATHAN_NOEXCEPT : size_(0u) {}
+            allocator_deallocator() noexcept : size_(0u) {}
 
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
             allocator_deallocator(allocator_reference<RawAllocator> alloc,
-                                  std::size_t                       size) FOONATHAN_NOEXCEPT
+                                  std::size_t                       size) noexcept
             : allocator_reference<RawAllocator>(alloc),
               size_(size)
             {
@@ -93,16 +93,16 @@ namespace foonathan
             /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object with the size given in the constructor.
             /// \requires The deallocator must not have been created by the default constructor.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
                 this->deallocate_array(pointer, size_, sizeof(value_type),
-                                       FOONATHAN_ALIGNOF(value_type));
+                                       alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deallocator must not have been created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -110,7 +110,7 @@ namespace foonathan
 
             /// \returns The size of the array that will be deallocated.
             /// This is the same value as passed in the constructor, or `0` if it was created by the default constructor.
-            std::size_t array_size() const FOONATHAN_NOEXCEPT
+            std::size_t array_size() const noexcept
             {
                 return size_;
             }
@@ -136,21 +136,21 @@ namespace foonathan
             allocator_polymorphic_deallocator(allocator_deallocator<T, RawAllocator> dealloc)
             : allocator_reference<RawAllocator>(dealloc.get_allocator()),
               derived_size_(sizeof(T)),
-              derived_alignment_(FOONATHAN_ALIGNOF(T))
+              derived_alignment_(alignof(T))
             {
             }
 
             /// \effects Deallocates the memory given to it.
             /// Calls \c deallocate_node(pointer, size, alignment) on the referenced allocator object,
             /// where \c size and \c alignment are the values of the type it was created with.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
                 this->deallocate_node(pointer, derived_size_, derived_alignment_);
             }
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -176,11 +176,11 @@ namespace foonathan
             /// \effects Creates it without any associated allocator.
             /// The deleter must not be used if that is the case.
             /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
-            allocator_deleter() FOONATHAN_NOEXCEPT = default;
+            allocator_deleter() noexcept = default;
 
             /// \effects Creates it by passing it an \ref allocator_reference.
             /// It will store the reference to it and uses the referenced allocator object for the deallocation.
-            allocator_deleter(allocator_reference<RawAllocator> alloc) FOONATHAN_NOEXCEPT
+            allocator_deleter(allocator_reference<RawAllocator> alloc) noexcept
             : allocator_reference<RawAllocator>(alloc)
             {
             }
@@ -189,15 +189,15 @@ namespace foonathan
             /// Calls \c deallocate_node(pointer, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object for the deallocation.
             /// \requires The deleter must not have been created by the default constructor.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
                 pointer->~value_type();
-                this->deallocate_node(pointer, sizeof(value_type), FOONATHAN_ALIGNOF(value_type));
+                this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -220,12 +220,12 @@ namespace foonathan
             /// \effects Creates it without any associated allocator.
             /// The deleter must not be used if that is the case.
             /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
-            allocator_deleter() FOONATHAN_NOEXCEPT : size_(0u) {}
+            allocator_deleter() noexcept : size_(0u) {}
 
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
             allocator_deleter(allocator_reference<RawAllocator> alloc,
-                              std::size_t                       size) FOONATHAN_NOEXCEPT
+                              std::size_t                       size) noexcept
             : allocator_reference<RawAllocator>(alloc),
               size_(size)
             {
@@ -235,18 +235,18 @@ namespace foonathan
             /// Calls \c deallocate_array(pointer, size, sizeof(value_type), alignof(value_type))
             /// on the referenced allocator object with the size given in the constructor for the deallocation.
             /// \requires The deleter must not have been created by the default constructor.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
                 for (auto cur = pointer; cur != pointer + size_; ++cur)
                     cur->~value_type();
                 this->deallocate_array(pointer, size_, sizeof(value_type),
-                                       FOONATHAN_ALIGNOF(value_type));
+                                       alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
             /// \requires The deleter must not be created by the default constructor.
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();
@@ -254,7 +254,7 @@ namespace foonathan
 
             /// \returns The size of the array that will be deallocated.
             /// This is the same value as passed in the constructor, or `0` if it was created by the default constructor.
-            std::size_t array_size() const FOONATHAN_NOEXCEPT
+            std::size_t array_size() const noexcept
             {
                 return size_;
             }
@@ -280,16 +280,16 @@ namespace foonathan
             allocator_polymorphic_deleter(allocator_deleter<T, RawAllocator> deleter)
             : allocator_reference<RawAllocator>(deleter.get_allocator()),
               derived_size_(sizeof(T)),
-              derived_alignment_(FOONATHAN_ALIGNOF(T))
+              derived_alignment_(alignof(T))
             {
                 FOONATHAN_MEMORY_ASSERT(std::size_t(derived_size_) == sizeof(T)
-                                        && std::size_t(derived_alignment_) == FOONATHAN_ALIGNOF(T));
+                                        && std::size_t(derived_alignment_) == alignof(T));
             }
 
             /// \effects Deallocates the memory given to it.
             /// Calls \c deallocate_node(pointer, size, alignment) on the referenced allocator object,
             /// where \c size and \c alignment are the values of the type it was created with.
-            void operator()(value_type* pointer) FOONATHAN_NOEXCEPT
+            void operator()(value_type* pointer) noexcept
             {
                 pointer->~value_type();
                 this->deallocate_node(pointer, derived_size_, derived_alignment_);
@@ -297,7 +297,7 @@ namespace foonathan
 
             /// \returns The reference to the allocator.
             /// It has the same type as the call to \ref allocator_reference::get_allocator().
-            auto get_allocator() const FOONATHAN_NOEXCEPT
+            auto get_allocator() const noexcept
                 -> decltype(std::declval<allocator_reference<allocator_type>>().get_allocator())
             {
                 return this->allocator_reference<allocator_type>::get_allocator();

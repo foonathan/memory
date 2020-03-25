@@ -17,8 +17,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <foonathan/alignof.hpp>
-
 template <typename TestType, class Debugger>
 struct node_size_storage
 {
@@ -342,7 +340,7 @@ template <class Debugger, typename... Types>
 node_size_map debug_impl(Debugger debugger, std::tuple<Types...>)
 {
     node_size_map result;
-    int dummy[] = {(result[FOONATHAN_ALIGNOF(Types)] = debug_single<Types>(debugger), 0)...};
+    int           dummy[] = {(result[alignof(Types)] = debug_single<Types>(debugger), 0)...};
     (void)dummy;
     return result;
 }

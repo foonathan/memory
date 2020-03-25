@@ -6,7 +6,7 @@ This library can either be used [CMake]'s `add_subdirectory()` command or instal
 
 * git
 * CMake version 3.1 or higher
-* GCC 4.8 or higher, or clang 3.5 or higher or Visual Studio 12 or higher
+* GCC 4.9 or higher, or clang 3.5 or higher or Visual Studio 14 or higher
 
 ## As subdirectory of your project
 
@@ -19,10 +19,6 @@ Simply run:
 2. `git submodule update --init --recursive`. This will fetches the latest commits from all submodules `memory` itself is using.
 
 If you later want to update your local copy to the latest version, simply run: `git submodule update --recursive --remote`.
-
-*Note: Run this command also if you get an error message during CMake 
-telling you that a newer version of compatibility is required. This will 
-update the compatibility submodule to its newest version.*
 
 ### 2. CMake Setup
 
@@ -44,7 +40,6 @@ Everything is under the subdirectory `foonathan/memory` so write `#include <foon
 ## Installing the library
 
 Download or clone the source for the library version you want to install.
-Run `git submodule update --init --recursive` to fetch the libary's submodules.
 You can build the library inside the source directory, it will not be needed after the installation.
 
 For each build type, run `cmake -DCMAKE_BUILD_TYPE="buildtype" -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF .` with possible other [options] to configure, then simply `cmake --build . -- install` to build and install the library.
@@ -80,9 +75,8 @@ Then simply include the headers, everything is under the subdirectory `foonathan
 
 To use the library with other build-systems, add `${CMAKE_INSTALL_PREFIX}/include/foonathan_memory-${major}.${minor}` and `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}` to your include directories path.
 Link to the library file in `${CMAKE_INSTALL_PREFIX}/lib/foonathan_memory-${major}.${minor}/${CMAKE_BUILD_TYPE}` and enable the right C++ standard for your configuration.
- This is at least C++11, but because of the automatic feature detection of my [compatibility library], it may be higher if your compiler supports more.
 
-You should also gobally define the `FOONATHAN_MEMORY` macro as `1` and the `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR` macros as the corresponding values.
+You should also globally define the `FOONATHAN_MEMORY` macro as `1` and the `FOONATHAN_MEMORY_VERSION_MAJOR/MINOR` macros as the corresponding values.
 
 [CMake]: www.cmake.org
 [git submodule]: http://git-scm.com/docs/git-submodule

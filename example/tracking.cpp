@@ -21,26 +21,26 @@ int main()
     // tracker class that logs internal behavior of the allocator
     struct tracker
     {
-        void on_node_allocation(void* mem, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+        void on_node_allocation(void* mem, std::size_t size, std::size_t) noexcept
         {
             std::clog << this << " node allocated: ";
             std::clog << mem << " (" << size << ") " << '\n';
         }
 
         void on_array_allocation(void* mem, std::size_t count, std::size_t size,
-                                 std::size_t) FOONATHAN_NOEXCEPT
+                                 std::size_t) noexcept
         {
             std::clog << this << " array allocated: ";
             std::clog << mem << " (" << count << " * " << size << ") " << '\n';
         }
 
-        void on_node_deallocation(void* ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        void on_node_deallocation(void* ptr, std::size_t, std::size_t) noexcept
         {
             std::clog << this << " node deallocated: " << ptr << " \n";
         }
 
         void on_array_deallocation(void* ptr, std::size_t, std::size_t,
-                                   std::size_t) FOONATHAN_NOEXCEPT
+                                   std::size_t) noexcept
         {
             std::clog << this << " array deallocated: " << ptr << " \n";
         }

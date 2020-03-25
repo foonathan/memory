@@ -17,19 +17,20 @@ namespace foonathan
         {
             // handles a failed assertion
             void handle_failed_assert(const char* msg, const char* file, int line,
-                                      const char* fnc) FOONATHAN_NOEXCEPT;
+                                      const char* fnc) noexcept;
 
             void handle_warning(const char* msg, const char* file, int line,
-                                const char* fnc) FOONATHAN_NOEXCEPT;
+                                const char* fnc) noexcept;
 
 // note: debug assertion macros don't use fully qualified name
 // because they should only be used in this library, where the whole namespace is available
 // can be override via command line definitions
 #if FOONATHAN_MEMORY_DEBUG_ASSERT && !defined(FOONATHAN_MEMORY_ASSERT)
 #define FOONATHAN_MEMORY_ASSERT(Expr)                                                              \
-    static_cast<void>((Expr) || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed",    \
-                                                              __FILE__, __LINE__, __func__),       \
-                                 true))
+    static_cast<void>((Expr)                                                                       \
+                      || (detail::handle_failed_assert("Assertion \"" #Expr "\" failed", __FILE__, \
+                                                       __LINE__, __func__),                        \
+                          true))
 
 #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)                                                     \
     static_cast<void>((Expr)                                                                       \
@@ -49,7 +50,8 @@ namespace foonathan
 #define FOONATHAN_MEMORY_WARNING(Msg)
 #endif
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_ASSERT_HPP_INCLUDED
+

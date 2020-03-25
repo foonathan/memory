@@ -163,7 +163,7 @@ TEST_CASE("allocator_traits", "[core]")
             return nullptr;
         }
 
-        void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        void deallocate_node(void*, std::size_t, std::size_t) noexcept
         {
             dealloc_node = true;
         }
@@ -183,7 +183,7 @@ TEST_CASE("allocator_traits", "[core]")
             return nullptr;
         }
 
-        void deallocate(char*, std::size_t) FOONATHAN_NOEXCEPT
+        void deallocate(char*, std::size_t) noexcept
         {
             dealloc = true;
         }
@@ -243,7 +243,7 @@ TEST_CASE("allocator_traits", "[core]")
                 return nullptr;
             }
 
-            void deallocate_array(void*, std::size_t, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            void deallocate_array(void*, std::size_t, std::size_t, std::size_t) noexcept
             {
                 dealloc_array = true;
             }
@@ -366,7 +366,7 @@ TEST_CASE("composable_allocator_traits")
             return nullptr;
         }
 
-        void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        void deallocate_node(void*, std::size_t, std::size_t) noexcept
         {
         }
 
@@ -376,7 +376,7 @@ TEST_CASE("composable_allocator_traits")
             return nullptr;
         }
 
-        bool try_deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+        bool try_deallocate_node(void*, std::size_t, std::size_t) noexcept
         {
             dealloc_node = true;
             return true;
@@ -409,7 +409,7 @@ TEST_CASE("composable_allocator_traits")
             }
 
             bool try_deallocate_array(void*, std::size_t, std::size_t,
-                                      std::size_t) FOONATHAN_NOEXCEPT
+                                      std::size_t) noexcept
             {
                 dealloc_array = true;
                 return true;

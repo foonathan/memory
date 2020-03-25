@@ -58,7 +58,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.last_allocated().size == sizeof(joint_test) + 10u);
-        REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
+        REQUIRE(alloc.last_allocated().alignment == alignof(joint_test));
         REQUIRE(alloc.no_deallocated() == 0u);
     }
     SECTION("move constructor")
@@ -158,7 +158,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.last_allocated().size == sizeof(joint_test) + 10u);
-        REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
+        REQUIRE(alloc.last_allocated().alignment == alignof(joint_test));
         REQUIRE(alloc.no_deallocated() == 0u);
 
         auto ptr2 = clone_joint(alloc, *ptr1);
@@ -166,7 +166,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
         REQUIRE(alloc.no_allocated() == 2u);
         REQUIRE(alloc.last_allocated().size == sizeof(joint_test));
-        REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
+        REQUIRE(alloc.last_allocated().alignment == alignof(joint_test));
         REQUIRE(alloc.no_deallocated() == 0u);
     }
 
@@ -200,7 +200,7 @@ TEST_CASE("joint_allocator", "[allocator]")
 
     REQUIRE(alloc.no_allocated() == 1u);
     REQUIRE(alloc.last_allocated().size == sizeof(joint_test) + 10 * sizeof(int));
-    REQUIRE(alloc.last_allocated().alignment == FOONATHAN_ALIGNOF(joint_test));
+    REQUIRE(alloc.last_allocated().alignment == alignof(joint_test));
 }
 
 template <typename T>

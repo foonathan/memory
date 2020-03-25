@@ -27,22 +27,22 @@ namespace foonathan
             class temporary_block_allocator
             {
             public:
-                explicit temporary_block_allocator(std::size_t block_size) FOONATHAN_NOEXCEPT;
+                explicit temporary_block_allocator(std::size_t block_size) noexcept;
 
                 memory_block allocate_block();
 
                 void deallocate_block(memory_block block);
 
-                std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+                std::size_t next_block_size() const noexcept
                 {
                     return block_size_;
                 }
 
                 using growth_tracker = void (*)(std::size_t size);
 
-                growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT;
+                growth_tracker set_growth_tracker(growth_tracker t) noexcept;
 
-                growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT;
+                growth_tracker get_growth_tracker() noexcept;
 
             private:
                 growth_tracker tracker_;
@@ -58,13 +58,13 @@ namespace foonathan
             {
             public:
                 // doesn't add into list
-                temporary_stack_list_node() FOONATHAN_NOEXCEPT : in_use_(true)
+                temporary_stack_list_node() noexcept : in_use_(true)
                 {
                 }
 
-                temporary_stack_list_node(int) FOONATHAN_NOEXCEPT;
+                temporary_stack_list_node(int) noexcept;
 
-                ~temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                ~temporary_stack_list_node() noexcept
                 {
                 }
 
@@ -78,22 +78,22 @@ namespace foonathan
             static class temporary_allocator_dtor_t
             {
             public:
-                temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
-                ~temporary_allocator_dtor_t() FOONATHAN_NOEXCEPT;
+                temporary_allocator_dtor_t() noexcept;
+                ~temporary_allocator_dtor_t() noexcept;
             } temporary_allocator_dtor;
 #else
             class temporary_stack_list_node
             {
             protected:
-                temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                temporary_stack_list_node() noexcept
                 {
                 }
 
-                temporary_stack_list_node(int) FOONATHAN_NOEXCEPT
+                temporary_stack_list_node(int) noexcept
                 {
                 }
 
-                ~temporary_stack_list_node() FOONATHAN_NOEXCEPT
+                ~temporary_stack_list_node() noexcept
                 {
                 }
             };
@@ -117,13 +117,13 @@ namespace foonathan
             /// A \c nullptr sets the default \ref growth_tracker.
             /// Each thread has its own, separate tracker.
             /// \returns The previous \ref growth_tracker. This is never \c nullptr.
-            growth_tracker set_growth_tracker(growth_tracker t) FOONATHAN_NOEXCEPT
+            growth_tracker set_growth_tracker(growth_tracker t) noexcept
             {
                 return stack_.get_allocator().set_growth_tracker(t);
             }
 
             /// \returns The current \ref growth_tracker. This is never \c nullptr.
-            growth_tracker get_growth_tracker() FOONATHAN_NOEXCEPT
+            growth_tracker get_growth_tracker() noexcept
             {
                 return stack_.get_allocator().get_growth_tracker();
             }
@@ -136,7 +136,7 @@ namespace foonathan
             }
 
             /// \returns `next_capacity()` of the internal `memory_stack`.
-            std::size_t next_capacity() const FOONATHAN_NOEXCEPT
+            std::size_t next_capacity() const noexcept
             {
                 return stack_.next_capacity();
             }
@@ -149,12 +149,12 @@ namespace foonathan
 
             using marker = detail::temporary_stack_impl::marker;
 
-            marker top() const FOONATHAN_NOEXCEPT
+            marker top() const noexcept
             {
                 return stack_.top();
             }
 
-            void unwind(marker m) FOONATHAN_NOEXCEPT
+            void unwind(marker m) noexcept
             {
                 stack_.unwind(m);
             }
@@ -182,11 +182,11 @@ namespace foonathan
         class temporary_stack_initializer
         {
         public:
-            static FOONATHAN_CONSTEXPR std::size_t default_stack_size = 4096u;
+            static constexpr std::size_t default_stack_size = 4096u;
 
             static const struct defer_create_t
             {
-                defer_create_t() FOONATHAN_NOEXCEPT
+                defer_create_t() noexcept
                 {
                 }
             } defer_create;
@@ -194,7 +194,7 @@ namespace foonathan
             /// \effects Does not create the per-thread stack.
             /// It will be created by the first call to \ref get_temporary_stack() in the current thread.
             /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function has no effect.
-            temporary_stack_initializer(defer_create_t) FOONATHAN_NOEXCEPT
+            temporary_stack_initializer(defer_create_t) noexcept
             {
             }
 
@@ -205,7 +205,7 @@ namespace foonathan
             temporary_stack_initializer(std::size_t initial_size = default_stack_size);
 
             /// \effects Destroys the per-thread stack if it isn't already destroyed.
-            ~temporary_stack_initializer() FOONATHAN_NOEXCEPT;
+            ~temporary_stack_initializer() noexcept;
 
             temporary_stack_initializer(temporary_stack_initializer&&) = delete;
             temporary_stack_initializer& operator=(temporary_stack_initializer&&) = delete;
@@ -239,7 +239,7 @@ namespace foonathan
             /// \effects Creates it by giving it the \ref temporary_stack it uses for allocation.
             explicit temporary_allocator(temporary_stack& stack);
 
-            ~temporary_allocator() FOONATHAN_NOEXCEPT;
+            ~temporary_allocator() noexcept;
 
             temporary_allocator(temporary_allocator&&) = delete;
             temporary_allocator& operator=(temporary_allocator&&) = delete;
@@ -252,18 +252,18 @@ namespace foonathan
             /// \returns Whether or not the allocator object is active.
             /// \note The active allocator object is the last object created for one stack.
             /// Moving changes the active allocator.
-            bool is_active() const FOONATHAN_NOEXCEPT;
+            bool is_active() const noexcept;
 
             /// \effects Instructs it to release unnecessary memory after automatic unwinding occurs.
             /// This will effectively forward to \ref memory_stack::shrink_to_fit() of the internal stack.
             /// \note Like the use of the \ref temporary_stack_initializer this can be used as an optimization,
             /// to tell when the thread's \ref temporary_stack isn't needed anymore and can be destroyed.
             /// \note It doesn't call shrink to fit immediately, only in the destructor!
-            void shrink_to_fit() FOONATHAN_NOEXCEPT;
+            void shrink_to_fit() noexcept;
 
             /// \returns The internal stack the temporary allocator is using.
             /// \requires `is_active()` must return `true`.
-            temporary_stack& get_stack() const FOONATHAN_NOEXCEPT
+            temporary_stack& get_stack() const noexcept
             {
                 return unwind_.get_stack();
             }
@@ -311,24 +311,24 @@ namespace foonathan
             /// \effects Does nothing besides bookmarking for leak checking, if that is enabled.
             /// Actual deallocation will be done automatically if the allocator object goes out of scope.
             static void deallocate_node(const allocator_type&, void*, std::size_t,
-                                        std::size_t) FOONATHAN_NOEXCEPT
+                                        std::size_t) noexcept
             {
             }
 
             static void deallocate_array(const allocator_type&, void*, std::size_t, std::size_t,
-                                         std::size_t) FOONATHAN_NOEXCEPT
+                                         std::size_t) noexcept
             {
             }
             /// @}
 
             /// @{
             /// \returns The maximum size which is \ref memory_stack::next_capacity() of the internal stack.
-            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_node_size(const allocator_type& state) noexcept
             {
                 return state.get_stack().next_capacity();
             }
 
-            static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_array_size(const allocator_type& state) noexcept
             {
                 return max_node_size(state);
             }
@@ -336,7 +336,7 @@ namespace foonathan
 
             /// \returns The maximum possible value since there is no alignment restriction
             /// (except indirectly through \ref memory_stack::next_capacity()).
-            static std::size_t max_alignment(const allocator_type&) FOONATHAN_NOEXCEPT
+            static std::size_t max_alignment(const allocator_type&) noexcept
             {
                 return std::size_t(-1);
             }

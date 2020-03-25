@@ -26,7 +26,7 @@ namespace
         char* next;  // first after
 
         // number of nodes in the interval
-        std::size_t size(std::size_t node_size) const FOONATHAN_NOEXCEPT
+        std::size_t size(std::size_t node_size) const noexcept
         {
             // last is inclusive, so add actual_size to it
             // note: cannot use next, might not be directly after
@@ -41,7 +41,7 @@ namespace
     // assumes list is not empty
     // similar to list_search_array()
     interval list_search_array(char* first, std::size_t bytes_needed,
-                               std::size_t node_size) FOONATHAN_NOEXCEPT
+                               std::size_t node_size) noexcept
     {
         interval i;
         i.prev  = nullptr;
@@ -82,7 +82,7 @@ namespace
     // similar to list_search_array()
     // begin/end are proxy nodes
     interval xor_list_search_array(char* begin, char* end, std::size_t bytes_needed,
-                                   std::size_t node_size) FOONATHAN_NOEXCEPT
+                                   std::size_t node_size) noexcept
     {
         interval i;
         i.prev  = begin;
@@ -121,10 +121,10 @@ namespace
     }
 } // namespace
 
-FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_size;
-FOONATHAN_CONSTEXPR std::size_t free_memory_list::min_element_alignment;
+constexpr std::size_t free_memory_list::min_element_size;
+constexpr std::size_t free_memory_list::min_element_alignment;
 
-free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
+free_memory_list::free_memory_list(std::size_t node_size) noexcept
 : first_(nullptr),
   node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u)
@@ -132,13 +132,13 @@ free_memory_list::free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
 }
 
 free_memory_list::free_memory_list(std::size_t node_size, void* mem,
-                                   std::size_t size) FOONATHAN_NOEXCEPT
+                                   std::size_t size) noexcept
 : free_memory_list(node_size)
 {
     insert(mem, size);
 }
 
-free_memory_list::free_memory_list(free_memory_list&& other) FOONATHAN_NOEXCEPT
+free_memory_list::free_memory_list(free_memory_list&& other) noexcept
 : first_(other.first_),
   node_size_(other.node_size_),
   capacity_(other.capacity_)
@@ -147,21 +147,21 @@ free_memory_list::free_memory_list(free_memory_list&& other) FOONATHAN_NOEXCEPT
     other.capacity_ = 0u;
 }
 
-free_memory_list& free_memory_list::operator=(free_memory_list&& other) FOONATHAN_NOEXCEPT
+free_memory_list& free_memory_list::operator=(free_memory_list&& other) noexcept
 {
     free_memory_list tmp(detail::move(other));
     swap(*this, tmp);
     return *this;
 }
 
-void foonathan::memory::detail::swap(free_memory_list& a, free_memory_list& b) FOONATHAN_NOEXCEPT
+void foonathan::memory::detail::swap(free_memory_list& a, free_memory_list& b) noexcept
 {
     detail::adl_swap(a.first_, b.first_);
     detail::adl_swap(a.node_size_, b.node_size_);
     detail::adl_swap(a.capacity_, b.capacity_);
 }
 
-void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
+void free_memory_list::insert(void* mem, std::size_t size) noexcept
 {
     FOONATHAN_MEMORY_ASSERT(mem);
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, alignment()));
@@ -170,7 +170,7 @@ void free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
     insert_impl(mem, size);
 }
 
-void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
+void* free_memory_list::allocate() noexcept
 {
     FOONATHAN_MEMORY_ASSERT(!empty());
     --capacity_;
@@ -180,7 +180,7 @@ void* free_memory_list::allocate() FOONATHAN_NOEXCEPT
     return debug_fill_new(mem, node_size_, fence_size());
 }
 
-void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
+void* free_memory_list::allocate(std::size_t n) noexcept
 {
     FOONATHAN_MEMORY_ASSERT(!empty());
     if (n <= node_size_)
@@ -201,7 +201,7 @@ void* free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     return debug_fill_new(i.first, n, fence_size());
 }
 
-void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
+void free_memory_list::deallocate(void* ptr) noexcept
 {
     ++capacity_;
 
@@ -210,7 +210,7 @@ void free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
     first_ = node;
 }
 
-void free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+void free_memory_list::deallocate(void* ptr, std::size_t n) noexcept
 {
     if (n <= node_size_)
         deallocate(ptr);
@@ -221,18 +221,18 @@ void free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
     }
 }
 
-std::size_t free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+std::size_t free_memory_list::alignment() const noexcept
 {
     return alignment_for(node_size_);
 }
 
-std::size_t free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
+std::size_t free_memory_list::fence_size() const noexcept
 {
     // fence size is max alignment
     return debug_fence_size ? max_alignment : 0u;
 }
 
-void free_memory_list::insert_impl(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
+void free_memory_list::insert_impl(void* mem, std::size_t size) noexcept
 {
     auto actual_size = node_size_ + 2 * fence_size();
     auto no_nodes    = size / actual_size;
@@ -254,7 +254,7 @@ namespace
 {
     // converts a block into a linked list
     void xor_link_block(void* memory, std::size_t node_size, std::size_t no_nodes, char* prev,
-                        char* next) FOONATHAN_NOEXCEPT
+                        char* next) noexcept
     {
         auto cur = static_cast<char*>(memory);
         xor_list_change(prev, next, cur); // change next pointer of prev
@@ -279,7 +279,7 @@ namespace
     // finds position to insert memory to keep list ordered
     // first_prev -> first -> ... (memory somewhere here) ... -> last -> last_next
     pos find_pos_interval(const allocator_info& info, char* memory, char* first_prev, char* first,
-                          char* last, char* last_next) FOONATHAN_NOEXCEPT
+                          char* last, char* last_next) noexcept
     {
         // note: first_prev/last_next can be the proxy nodes, then first_prev isn't necessarily less than first!
         FOONATHAN_MEMORY_ASSERT(less(first, memory) && less(memory, last));
@@ -313,7 +313,7 @@ namespace
 
     // finds the position in the entire list
     pos find_pos(const allocator_info& info, char* memory, char* begin_node, char* end_node,
-                 char* last_dealloc, char* last_dealloc_prev) FOONATHAN_NOEXCEPT
+                 char* last_dealloc, char* last_dealloc_prev) noexcept
     {
         auto first = xor_list_get_other(begin_node, nullptr);
         auto last  = xor_list_get_other(end_node, nullptr);
@@ -340,10 +340,10 @@ namespace
     }
 } // namespace
 
-FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_size;
-FOONATHAN_CONSTEXPR std::size_t ordered_free_memory_list::min_element_alignment;
+constexpr std::size_t ordered_free_memory_list::min_element_size;
+constexpr std::size_t ordered_free_memory_list::min_element_alignment;
 
-ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONATHAN_NOEXCEPT
+ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) noexcept
 : node_size_(node_size > min_element_size ? node_size : min_element_size),
   capacity_(0u),
   last_dealloc_(end_node()),
@@ -354,7 +354,7 @@ ordered_free_memory_list::ordered_free_memory_list(std::size_t node_size) FOONAT
 }
 
 ordered_free_memory_list::ordered_free_memory_list(ordered_free_memory_list&& other)
-    FOONATHAN_NOEXCEPT : node_size_(other.node_size_),
+    noexcept : node_size_(other.node_size_),
                          capacity_(other.capacity_)
 {
     if (!other.empty())
@@ -383,7 +383,7 @@ ordered_free_memory_list::ordered_free_memory_list(ordered_free_memory_list&& ot
 }
 
 void foonathan::memory::detail::swap(ordered_free_memory_list& a,
-                                     ordered_free_memory_list& b) FOONATHAN_NOEXCEPT
+                                     ordered_free_memory_list& b) noexcept
 {
     auto a_first = xor_list_get_other(a.begin_node(), nullptr);
     auto a_last  = xor_list_get_other(a.end_node(), nullptr);
@@ -428,7 +428,7 @@ void foonathan::memory::detail::swap(ordered_free_memory_list& a,
     b.last_dealloc_      = xor_list_get_other(b.last_dealloc_prev_, nullptr);
 }
 
-void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
+void ordered_free_memory_list::insert(void* mem, std::size_t size) noexcept
 {
     FOONATHAN_MEMORY_ASSERT(mem);
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, alignment()));
@@ -437,7 +437,7 @@ void ordered_free_memory_list::insert(void* mem, std::size_t size) FOONATHAN_NOE
     insert_impl(mem, size);
 }
 
-void* ordered_free_memory_list::allocate() FOONATHAN_NOEXCEPT
+void* ordered_free_memory_list::allocate() noexcept
 {
     FOONATHAN_MEMORY_ASSERT(!empty());
 
@@ -460,7 +460,7 @@ void* ordered_free_memory_list::allocate() FOONATHAN_NOEXCEPT
     return debug_fill_new(node, node_size_, fence_size());
 }
 
-void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
+void* ordered_free_memory_list::allocate(std::size_t n) noexcept
 {
     FOONATHAN_MEMORY_ASSERT(!empty());
 
@@ -488,7 +488,7 @@ void* ordered_free_memory_list::allocate(std::size_t n) FOONATHAN_NOEXCEPT
     return debug_fill_new(i.first, n, fence_size());
 }
 
-void ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
+void ordered_free_memory_list::deallocate(void* ptr) noexcept
 {
     auto node = static_cast<char*>(debug_fill_free(ptr, node_size_, fence_size()));
 
@@ -504,7 +504,7 @@ void ordered_free_memory_list::deallocate(void* ptr) FOONATHAN_NOEXCEPT
     last_dealloc_prev_ = p.prev;
 }
 
-void ordered_free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+void ordered_free_memory_list::deallocate(void* ptr, std::size_t n) noexcept
 {
     if (n <= node_size_)
         deallocate(ptr);
@@ -518,18 +518,18 @@ void ordered_free_memory_list::deallocate(void* ptr, std::size_t n) FOONATHAN_NO
     }
 }
 
-std::size_t ordered_free_memory_list::alignment() const FOONATHAN_NOEXCEPT
+std::size_t ordered_free_memory_list::alignment() const noexcept
 {
     return alignment_for(node_size_);
 }
 
-std::size_t ordered_free_memory_list::fence_size() const FOONATHAN_NOEXCEPT
+std::size_t ordered_free_memory_list::fence_size() const noexcept
 {
     // node size is fence size
     return debug_fence_size ? node_size_ : 0u;
 }
 
-char* ordered_free_memory_list::insert_impl(void* mem, std::size_t size) FOONATHAN_NOEXCEPT
+char* ordered_free_memory_list::insert_impl(void* mem, std::size_t size) noexcept
 {
     auto actual_size = node_size_ + 2 * fence_size();
     auto no_nodes    = size / actual_size;
@@ -552,13 +552,13 @@ char* ordered_free_memory_list::insert_impl(void* mem, std::size_t size) FOONATH
     return p.prev;
 }
 
-char* ordered_free_memory_list::begin_node() FOONATHAN_NOEXCEPT
+char* ordered_free_memory_list::begin_node() noexcept
 {
     void* mem = &begin_proxy_;
     return static_cast<char*>(mem);
 }
 
-char* ordered_free_memory_list::end_node() FOONATHAN_NOEXCEPT
+char* ordered_free_memory_list::end_node() noexcept
 {
     void* mem = &end_proxy_;
     return static_cast<char*>(mem);

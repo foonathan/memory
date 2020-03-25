@@ -20,7 +20,6 @@ There are the following variables available to configure it:
 * `FOONATHAN_MEMORY_EXTERN_TEMPLATE`: If active the library provides already the definition of common instantiations of its class templates. This can speed up compilation time of user code since the compiler does not need to generate the definition each time the class instantiation is used (this compilation time is done when compiling the library and the size of the library binary increases). Default is `ON`.
 
 * `FOONATHAN_MEMORY_DEFAULT_ALLOCATOR`: The default allocator used by the higher level allocator classes. One of the low level allocators (see \ref foonathan::memory::default_allocator). Default is `heap_allocator`.
-* `FOONATHAN_MEMORY_MEMORY_RESOURCE` and `FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER`: Specifye th memory resource class used. The first one is the full name including namespace, the second one the header (including `"..."` or `<...>` that needs to be included for it. Default is `foonathan_comp::memory_resource` and `"foonathan/memory_resource.hpp"` to use the version of foonathan/compatibility.
 * `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE`: The `temporary_allocator` uses a `temporary_stack` for its allocation.
 This option controls how and if a global, per-thread instance of it is managed.
 If `2` it is automatically managed and created on-demand, if `1` you need explicit lifetime control through the `temporary_stack_initializer` class and if `0` there is no stack created automatically.

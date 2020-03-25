@@ -10,8 +10,6 @@
 
 #include <type_traits>
 
-#include <foonathan/literal_op.hpp>
-
 #include "detail/debug_helpers.hpp"
 #include "detail/assert.hpp"
 #include "detail/utility.hpp"
@@ -33,20 +31,20 @@ namespace foonathan
             std::size_t size;   ///< The size of the memory block (might be \c 0).
 
             /// \effects Creates an invalid memory block with starting address \c nullptr and size \c 0.
-            memory_block() FOONATHAN_NOEXCEPT : memory_block(nullptr, std::size_t(0)) {}
+            memory_block() noexcept : memory_block(nullptr, std::size_t(0)) {}
 
             /// \effects Creates a memory block from a given starting address and size.
-            memory_block(void* mem, std::size_t s) FOONATHAN_NOEXCEPT : memory(mem), size(s) {}
+            memory_block(void* mem, std::size_t s) noexcept : memory(mem), size(s) {}
 
             /// \effects Creates a memory block from a [begin,end) range.
-            memory_block(void* begin, void* end) FOONATHAN_NOEXCEPT
+            memory_block(void* begin, void* end) noexcept
             : memory_block(begin, static_cast<std::size_t>(static_cast<char*>(end)
                                                            - static_cast<char*>(begin)))
             {
             }
 
             /// \returns Whether or not a pointer is inside the memory.
-            bool contains(const void* address) const FOONATHAN_NOEXCEPT
+            bool contains(const void* address) const noexcept
             {
                 auto mem  = static_cast<const char*>(memory);
                 auto addr = static_cast<const char*>(address);
@@ -89,8 +87,8 @@ namespace foonathan
         /// The (tiny) overhead for the cache can then be disabled.
         /// An example is \ref memory_pool.
         /// \ingroup memory core
-        FOONATHAN_CONSTEXPR bool cached_arena   = true;
-        FOONATHAN_CONSTEXPR bool uncached_arena = false;
+        constexpr bool cached_arena   = true;
+        constexpr bool uncached_arena = false;
         /// @}
 
         namespace detail
@@ -99,24 +97,23 @@ namespace foonathan
             class memory_block_stack
             {
             public:
-                memory_block_stack() FOONATHAN_NOEXCEPT : head_(nullptr) {}
+                memory_block_stack() noexcept : head_(nullptr) {}
 
-                ~memory_block_stack() FOONATHAN_NOEXCEPT {}
+                ~memory_block_stack() noexcept {}
 
-                memory_block_stack(memory_block_stack&& other) FOONATHAN_NOEXCEPT
-                : head_(other.head_)
+                memory_block_stack(memory_block_stack&& other) noexcept : head_(other.head_)
                 {
                     other.head_ = nullptr;
                 }
 
-                memory_block_stack& operator=(memory_block_stack&& other) FOONATHAN_NOEXCEPT
+                memory_block_stack& operator=(memory_block_stack&& other) noexcept
                 {
                     memory_block_stack tmp(detail::move(other));
                     swap(*this, tmp);
                     return *this;
                 }
 
-                friend void swap(memory_block_stack& a, memory_block_stack& b) FOONATHAN_NOEXCEPT
+                friend void swap(memory_block_stack& a, memory_block_stack& b) noexcept
                 {
                     detail::adl_swap(a.head_, b.head_);
                 }
@@ -131,31 +128,31 @@ namespace foonathan
                 static const std::size_t implementation_offset;
 
                 // pushes a memory block
-                void push(allocated_mb block) FOONATHAN_NOEXCEPT;
+                void push(allocated_mb block) noexcept;
 
                 // pops a memory block and returns the original block
-                allocated_mb pop() FOONATHAN_NOEXCEPT;
+                allocated_mb pop() noexcept;
 
                 // steals the top block from another stack
-                void steal_top(memory_block_stack& other) FOONATHAN_NOEXCEPT;
+                void steal_top(memory_block_stack& other) noexcept;
 
                 // returns the last pushed() inserted memory block
-                inserted_mb top() const FOONATHAN_NOEXCEPT
+                inserted_mb top() const noexcept
                 {
                     FOONATHAN_MEMORY_ASSERT(head_);
                     auto mem = static_cast<void*>(head_);
                     return {static_cast<char*>(mem) + node::offset, head_->usable_size};
                 }
 
-                bool empty() const FOONATHAN_NOEXCEPT
+                bool empty() const noexcept
                 {
                     return head_ == nullptr;
                 }
 
-                bool owns(const void* ptr) const FOONATHAN_NOEXCEPT;
+                bool owns(const void* ptr) const noexcept;
 
                 // O(n) size
-                std::size_t size() const FOONATHAN_NOEXCEPT;
+                std::size_t size() const noexcept;
 
             private:
                 struct node
@@ -163,9 +160,7 @@ namespace foonathan
                     node*       prev;
                     std::size_t usable_size;
 
-                    node(node* p, std::size_t size) FOONATHAN_NOEXCEPT : prev(p), usable_size(size)
-                    {
-                    }
+                    node(node* p, std::size_t size) noexcept : prev(p), usable_size(size) {}
 
                     static const std::size_t div_alignment;
                     static const std::size_t mod_offset;
@@ -182,22 +177,22 @@ namespace foonathan
             class memory_arena_cache<cached_arena>
             {
             protected:
-                bool cache_empty() const FOONATHAN_NOEXCEPT
+                bool cache_empty() const noexcept
                 {
                     return cached_.empty();
                 }
 
-                std::size_t cache_size() const FOONATHAN_NOEXCEPT
+                std::size_t cache_size() const noexcept
                 {
                     return cached_.size();
                 }
 
-                std::size_t cached_block_size() const FOONATHAN_NOEXCEPT
+                std::size_t cached_block_size() const noexcept
                 {
                     return cached_.top().size;
                 }
 
-                bool take_from_cache(detail::memory_block_stack& used) FOONATHAN_NOEXCEPT
+                bool take_from_cache(detail::memory_block_stack& used) noexcept
                 {
                     if (cached_.empty())
                         return false;
@@ -206,14 +201,13 @@ namespace foonathan
                 }
 
                 template <class BlockAllocator>
-                void do_deallocate_block(BlockAllocator&,
-                                         detail::memory_block_stack& used) FOONATHAN_NOEXCEPT
+                void do_deallocate_block(BlockAllocator&, detail::memory_block_stack& used) noexcept
                 {
                     cached_.steal_top(used);
                 }
 
                 template <class BlockAllocator>
-                void do_shrink_to_fit(BlockAllocator& alloc) FOONATHAN_NOEXCEPT
+                void do_shrink_to_fit(BlockAllocator& alloc) noexcept
                 {
                     detail::memory_block_stack to_dealloc;
                     // pop from cache and push to temporary stack
@@ -233,35 +227,35 @@ namespace foonathan
             class memory_arena_cache<uncached_arena>
             {
             protected:
-                bool cache_empty() const FOONATHAN_NOEXCEPT
+                bool cache_empty() const noexcept
                 {
                     return true;
                 }
 
-                std::size_t cache_size() const FOONATHAN_NOEXCEPT
+                std::size_t cache_size() const noexcept
                 {
                     return 0u;
                 }
 
-                std::size_t cached_block_size() const FOONATHAN_NOEXCEPT
+                std::size_t cached_block_size() const noexcept
                 {
                     return 0u;
                 }
 
-                bool take_from_cache(detail::memory_block_stack&) FOONATHAN_NOEXCEPT
+                bool take_from_cache(detail::memory_block_stack&) noexcept
                 {
                     return false;
                 }
 
                 template <class BlockAllocator>
                 void do_deallocate_block(BlockAllocator&             alloc,
-                                         detail::memory_block_stack& used) FOONATHAN_NOEXCEPT
+                                         detail::memory_block_stack& used) noexcept
                 {
                     alloc.deallocate_block(used.pop());
                 }
 
                 template <class BlockAllocator>
-                void do_shrink_to_fit(BlockAllocator&) FOONATHAN_NOEXCEPT
+                void do_shrink_to_fit(BlockAllocator&) noexcept
                 {
                 }
             };
@@ -301,7 +295,7 @@ namespace foonathan
             }
 
             /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.
-            ~memory_arena() FOONATHAN_NOEXCEPT
+            ~memory_arena() noexcept
             {
                 // clear cache
                 shrink_to_fit();
@@ -315,14 +309,14 @@ namespace foonathan
             /// The new arena takes ownership over all the memory blocks from the other arena object,
             /// which is empty after that.
             /// This does not invalidate any memory blocks.
-            memory_arena(memory_arena&& other) FOONATHAN_NOEXCEPT
+            memory_arena(memory_arena&& other) noexcept
             : allocator_type(detail::move(other)),
               cache(detail::move(other)),
               used_(detail::move(other.used_))
             {
             }
 
-            memory_arena& operator=(memory_arena&& other) FOONATHAN_NOEXCEPT
+            memory_arena& operator=(memory_arena&& other) noexcept
             {
                 memory_arena tmp(detail::move(other));
                 swap(*this, tmp);
@@ -332,7 +326,7 @@ namespace foonathan
 
             /// \effects Swaps to memory arena objects.
             /// This does not invalidate any memory blocks.
-            friend void swap(memory_arena& a, memory_arena& b) FOONATHAN_NOEXCEPT
+            friend void swap(memory_arena& a, memory_arena& b) noexcept
             {
                 detail::adl_swap(static_cast<allocator_type&>(a), static_cast<allocator_type&>(b));
                 detail::adl_swap(static_cast<cache&>(a), static_cast<cache&>(b));
@@ -356,7 +350,7 @@ namespace foonathan
 
             /// \returns The current memory block.
             /// This is the memory block that will be deallocated by the next call to \ref deallocate_block().
-            memory_block current_block() const FOONATHAN_NOEXCEPT
+            memory_block current_block() const noexcept
             {
                 return used_.top();
             }
@@ -365,7 +359,7 @@ namespace foonathan
             /// The current memory block is the block on top of the stack of blocks.
             /// If caching is enabled, it does not really deallocate it but puts it onto a cache for later use,
             /// use \ref shrink_to_fit() to purge that cache.
-            void deallocate_block() FOONATHAN_NOEXCEPT
+            void deallocate_block() noexcept
             {
                 auto block = used_.top();
                 detail::debug_fill_internal(block.memory, block.size, true);
@@ -373,7 +367,7 @@ namespace foonathan
             }
 
             /// \returns If `ptr` is in memory owned by the arena.
-            bool owns(const void* ptr) const FOONATHAN_NOEXCEPT
+            bool owns(const void* ptr) const noexcept
             {
                 return used_.owns(ptr);
             }
@@ -381,26 +375,26 @@ namespace foonathan
             /// \effects Purges the cache of unused memory blocks by returning them.
             /// The memory blocks will be deallocated in reversed order of allocation.
             /// Does nothing if caching is disabled.
-            void shrink_to_fit() FOONATHAN_NOEXCEPT
+            void shrink_to_fit() noexcept
             {
                 this->do_shrink_to_fit(get_allocator());
             }
 
             /// \returns The capacity of the arena, i.e. how many blocks are used and cached.
-            std::size_t capacity() const FOONATHAN_NOEXCEPT
+            std::size_t capacity() const noexcept
             {
                 return size() + cache_size();
             }
 
             /// \returns The size of the cache, i.e. how many blocks can be allocated without allocation.
-            std::size_t cache_size() const FOONATHAN_NOEXCEPT
+            std::size_t cache_size() const noexcept
             {
                 return cache::cache_size();
             }
 
             /// \returns The size of the arena, i.e. how many blocks are in use.
             /// It is always smaller or equal to the \ref capacity().
-            std::size_t size() const FOONATHAN_NOEXCEPT
+            std::size_t size() const noexcept
             {
                 return used_.size();
             }
@@ -409,7 +403,7 @@ namespace foonathan
             /// i.e. of the next call to \ref allocate_block().
             /// If there are blocks in the cache, returns size of the next one.
             /// Otherwise forwards to the \concept{concept_blockallocator,BlockAllocator} and subtracts an implementation offset.
-            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            std::size_t next_block_size() const noexcept
             {
                 return this->cache_empty() ?
                            allocator_type::next_block_size()
@@ -419,7 +413,7 @@ namespace foonathan
 
             /// \returns A reference of the \concept{concept_blockallocator,BlockAllocator} object.
             /// \requires It is undefined behavior to move this allocator out into another object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
@@ -456,9 +450,8 @@ namespace foonathan
             /// By default, it uses a default-constructed allocator object and a growth factor of \c 2.
             /// \requires \c block_size must be greater than 0.
             explicit growing_block_allocator(std::size_t    block_size,
-                                             allocator_type alloc = allocator_type())
-                FOONATHAN_NOEXCEPT : allocator_type(detail::move(alloc)),
-                                     block_size_(block_size)
+                                             allocator_type alloc = allocator_type()) noexcept
+            : allocator_type(detail::move(alloc)), block_size_(block_size)
             {
             }
 
@@ -477,28 +470,28 @@ namespace foonathan
             /// \effects Deallocates a previously allocated memory block.
             /// This does not decrease the block size.
             /// \requires \c block must be previously returned by a call to \ref allocate_block().
-            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+            void deallocate_block(memory_block block) noexcept
             {
                 traits::deallocate_array(get_allocator(), block.memory, block.size, 1,
                                          detail::max_alignment);
             }
 
             /// \returns The size of the memory block returned by the next call to \ref allocate_block().
-            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            std::size_t next_block_size() const noexcept
             {
                 return block_size_;
             }
 
             /// \returns A reference to the used \concept{concept_rawallocator,RawAllocator} object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
             /// \returns The growth factor.
-            static float growth_factor() FOONATHAN_NOEXCEPT
+            static float growth_factor() noexcept
             {
-                static FOONATHAN_CONSTEXPR auto factor = float(Num) / Den;
+                static constexpr auto factor = float(Num) / Den;
                 return factor;
             }
 
@@ -527,9 +520,8 @@ namespace foonathan
             /// \effects Creates it by passing it the size of the block and the allocator object.
             /// \requires \c block_size must be greater than 0,
             explicit fixed_block_allocator(std::size_t    block_size,
-                                           allocator_type alloc = allocator_type())
-                FOONATHAN_NOEXCEPT : allocator_type(detail::move(alloc)),
-                                     block_size_(block_size)
+                                           allocator_type alloc = allocator_type()) noexcept
+            : allocator_type(detail::move(alloc)), block_size_(block_size)
             {
             }
 
@@ -551,7 +543,7 @@ namespace foonathan
 
             /// \effects Deallocates the previously allocated memory block.
             /// It also resets and allows a new call again.
-            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+            void deallocate_block(memory_block block) noexcept
             {
                 detail::debug_check_pointer([&] { return block_size_ == 0u; }, info(),
                                             block.memory);
@@ -561,19 +553,19 @@ namespace foonathan
             }
 
             /// \returns The size of the next block which is either the initial size or \c 0.
-            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            std::size_t next_block_size() const noexcept
             {
                 return block_size_;
             }
 
             /// \returns A reference to the used \concept{concept_rawallocator,RawAllocator} object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
         private:
-            allocator_info info() FOONATHAN_NOEXCEPT
+            allocator_info info() noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::fixed_block_allocator", this};
             }
@@ -646,47 +638,39 @@ namespace foonathan
 
         namespace literals
         {
-/// Syntax sugar to express sizes with unit prefixes.
-/// \returns The number of bytes `value` is in the given unit.
-/// \ingroup memory core
-/// @{
-#if FOONATHAN_HAS_LITERAL_OP
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _KiB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            /// Syntax sugar to express sizes with unit prefixes.
+            /// \returns The number of bytes `value` is in the given unit.
+            /// \ingroup memory core
+            /// @{
+            constexpr std::size_t operator"" _KiB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _KB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            constexpr std::size_t operator"" _KB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1000);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _MiB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            constexpr std::size_t operator"" _MiB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1024 * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _MB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            constexpr std::size_t operator"" _MB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1000 * 1000);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _GiB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            constexpr std::size_t operator"" _GiB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1024 * 1024 * 1024);
             }
 
-            FOONATHAN_CONSTEXPR_FNC std::size_t operator"" _GB(unsigned long long value)
-                FOONATHAN_NOEXCEPT
+            constexpr std::size_t operator"" _GB(unsigned long long value) noexcept
             {
                 return std::size_t(value * 1000 * 1000 * 1000);
             }
-#endif
         } // namespace literals
     }     // namespace memory
 } // namespace foonathan

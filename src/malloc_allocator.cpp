@@ -11,7 +11,7 @@
 
 using namespace foonathan::memory;
 
-allocator_info detail::malloc_allocator_impl::info() FOONATHAN_NOEXCEPT
+allocator_info detail::malloc_allocator_impl::info() noexcept
 {
     return {FOONATHAN_MEMORY_LOG_PREFIX "::malloc_allocator", nullptr};
 }

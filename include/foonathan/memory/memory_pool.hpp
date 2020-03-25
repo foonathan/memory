@@ -52,7 +52,7 @@ namespace foonathan
             using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
             using pool_type      = PoolType;
 
-            static FOONATHAN_CONSTEXPR std::size_t min_node_size =
+            static constexpr std::size_t min_node_size =
                 FOONATHAN_IMPL_DEFINED(free_list::min_element_size);
 
             /// \effects Creates it by specifying the size each \concept{concept_node,node} will have,
@@ -71,7 +71,7 @@ namespace foonathan
 
             /// \effects Destroys the \ref memory_pool by returning all memory blocks,
             /// regardless of properly deallocated back to the \concept{concept_blockallocator,BlockAllocator}.
-            ~memory_pool() FOONATHAN_NOEXCEPT
+            ~memory_pool() noexcept
             {
             }
 
@@ -80,14 +80,14 @@ namespace foonathan
             /// i.e. the moved from pool is completely empty and the new one has all its memory.
             /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
             /// even when passing it memory that was previously allocated by this object.
-            memory_pool(memory_pool&& other) FOONATHAN_NOEXCEPT
+            memory_pool(memory_pool&& other) noexcept
                 : leak_checker(detail::move(other)),
                   arena_(detail::move(other.arena_)),
                   free_list_(detail::move(other.free_list_))
             {
             }
 
-            memory_pool& operator=(memory_pool&& other) FOONATHAN_NOEXCEPT
+            memory_pool& operator=(memory_pool&& other) noexcept
             {
                 leak_checker::operator=(detail::move(other));
                 arena_                = detail::move(other.arena_);
@@ -113,7 +113,7 @@ namespace foonathan
             /// \effects Allocates a single \concept{concept_node,node} similar to \ref allocate_node().
             /// But if the free list is empty, a new block will *not* be allocated.
             /// \returns A suitable aligned node of size \ref node_size() or `nullptr`.
-            void* try_allocate_node() FOONATHAN_NOEXCEPT
+            void* try_allocate_node() noexcept
             {
                 return free_list_.empty() ? nullptr : free_list_.allocate();
             }
@@ -141,7 +141,7 @@ namespace foonathan
             /// But it will never allocate a new memory block.
             /// \returns An array of \c n nodes of size \ref node_size() suitable aligned
             /// or `nullptr`.
-            void* try_allocate_array(std::size_t n) FOONATHAN_NOEXCEPT
+            void* try_allocate_array(std::size_t n) noexcept
             {
                 return try_allocate_array(n, node_size());
             }
@@ -149,7 +149,7 @@ namespace foonathan
             /// \effects Deallocates a single \concept{concept_node,node} by putting it back onto the free list.
             /// \requires \c ptr must be a result from a previous call to \ref allocate_node() on the same free list,
             /// i.e. either this allocator object or a new object created by moving this to it.
-            void deallocate_node(void* ptr) FOONATHAN_NOEXCEPT
+            void deallocate_node(void* ptr) noexcept
             {
                 free_list_.deallocate(ptr);
             }
@@ -158,7 +158,7 @@ namespace foonathan
             /// \returns `true` if the node could be deallocated, `false` otherwise.
             /// \note Some free list implementations can deallocate any memory,
             /// doesn't matter where it is coming from.
-            bool try_deallocate_node(void* ptr) FOONATHAN_NOEXCEPT
+            bool try_deallocate_node(void* ptr) noexcept
             {
                 if (!arena_.owns(ptr))
                     return false;
@@ -169,7 +169,7 @@ namespace foonathan
             /// \effects Deallocates an \concept{concept_array,array} by putting it back onto the free list.
             /// \requires \c ptr must be a result from a previous call to \ref allocate_array() with the same \c n on the same free list,
             /// i.e. either this allocator object or a new object created by moving this to it.
-            void deallocate_array(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+            void deallocate_array(void* ptr, std::size_t n) noexcept
             {
                 FOONATHAN_MEMORY_ASSERT_MSG(pool_type::value, "does not support array allocations");
                 free_list_.deallocate(ptr, n * node_size());
@@ -179,14 +179,14 @@ namespace foonathan
             /// \returns `true` if the node could be deallocated, `false` otherwise.
             /// \note Some free list implementations can deallocate any memory,
             /// doesn't matter where it is coming from.
-            bool try_deallocate_array(void* ptr, std::size_t n) FOONATHAN_NOEXCEPT
+            bool try_deallocate_array(void* ptr, std::size_t n) noexcept
             {
                 return try_deallocate_array(ptr, n, node_size());
             }
 
             /// \returns The size of each \concept{concept_node,node} in the pool,
             /// this is either the same value as in the constructor or \c min_node_size if the value was too small.
-            std::size_t node_size() const FOONATHAN_NOEXCEPT
+            std::size_t node_size() const noexcept
             {
                 return free_list_.node_size();
             }
@@ -194,7 +194,7 @@ namespace foonathan
             /// \effects Returns the total amount of bytes remaining on the free list.
             /// Divide it by \ref node_size() to get the number of nodes that can be allocated without growing the arena.
             /// \note Array allocations may lead to a growth even if the capacity_left left is big enough.
-            std::size_t capacity_left() const FOONATHAN_NOEXCEPT
+            std::size_t capacity_left() const noexcept
             {
                 return free_list_.capacity() * node_size();
             }
@@ -202,20 +202,20 @@ namespace foonathan
             /// \returns The size of the next memory block after the free list gets empty and the arena grows.
             /// \ref capacity_left() will increase by this amount.
             /// \note Due to fence memory in debug mode this cannot be just divided by the \ref node_size() to get the number of nodes.
-            std::size_t next_capacity() const FOONATHAN_NOEXCEPT
+            std::size_t next_capacity() const noexcept
             {
                 return free_list_.usable_size(arena_.next_block_size());
             }
 
             /// \returns A reference to the \concept{concept_blockallocator,BlockAllocator} used for managing the arena.
             /// \requires It is undefined behavior to move this allocator out into another object.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return arena_.get_allocator();
             }
 
         private:
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::memory_pool", this};
             }
@@ -239,14 +239,14 @@ namespace foonathan
                 return mem;
             }
 
-            void* try_allocate_array(std::size_t n, std::size_t node_size) FOONATHAN_NOEXCEPT
+            void* try_allocate_array(std::size_t n, std::size_t node_size) noexcept
             {
                 return !pool_type::value || free_list_.empty() ? nullptr :
                                                                  free_list_.allocate(n * node_size);
             }
 
             bool try_deallocate_array(void* ptr, std::size_t n,
-                                      std::size_t node_size) FOONATHAN_NOEXCEPT
+                                      std::size_t node_size) noexcept
             {
                 if (!pool_type::value || !arena_.owns(ptr))
                     return false;
@@ -268,7 +268,7 @@ namespace foonathan
 #endif
 
         template <class Type, class Alloc>
-        FOONATHAN_CONSTEXPR std::size_t memory_pool<Type, Alloc>::min_node_size;
+        constexpr std::size_t memory_pool<Type, Alloc>::min_node_size;
 
         /// Specialization of the \ref allocator_traits for \ref memory_pool classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
@@ -320,7 +320,7 @@ namespace foonathan
 
             /// \effects Just forwards to \ref memory_pool::deallocate_node().
             static void deallocate_node(allocator_type& state, void* node, std::size_t size,
-                                        std::size_t) FOONATHAN_NOEXCEPT
+                                        std::size_t) noexcept
             {
                 state.deallocate_node(node);
                 state.on_deallocate(size);
@@ -328,27 +328,27 @@ namespace foonathan
 
             /// \effects Forwards to \ref memory_pool::deallocate_array() with the same size adjustment.
             static void deallocate_array(allocator_type& state, void* array, std::size_t count,
-                                         std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                                         std::size_t size, std::size_t) noexcept
             {
                 state.free_list_.deallocate(array, count * size);
                 state.on_deallocate(count * size);
             }
 
             /// \returns The maximum size of each node which is \ref memory_pool::node_size().
-            static std::size_t max_node_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_node_size(const allocator_type& state) noexcept
             {
                 return state.node_size();
             }
 
             /// \returns An upper bound on the maximum array size which is \ref memory_pool::next_capacity().
-            static std::size_t max_array_size(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_array_size(const allocator_type& state) noexcept
             {
                 return state.next_capacity();
             }
 
             /// \returns The maximum alignment which is the next bigger power of two if less than \c alignof(std::max_align_t)
             /// or the maximum alignment itself otherwise.
-            static std::size_t max_alignment(const allocator_type& state) FOONATHAN_NOEXCEPT
+            static std::size_t max_alignment(const allocator_type& state) noexcept
             {
                 return state.free_list_.alignment();
             }
@@ -367,7 +367,7 @@ namespace foonathan
             /// \returns The result of \ref memory_pool::try_allocate_node()
             /// or `nullptr` if the allocation size was too big.
             static void* try_allocate_node(allocator_type& state, std::size_t size,
-                                           std::size_t alignment) FOONATHAN_NOEXCEPT
+                                           std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state) || alignment > traits::max_alignment(state))
                     return nullptr;
@@ -381,7 +381,7 @@ namespace foonathan
             /// or `nullptr` if it was unable to allocate.
             static void* try_allocate_array(allocator_type& state, std::size_t count,
                                             std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state)
                     || count * size > traits::max_array_size(state)
@@ -393,7 +393,7 @@ namespace foonathan
             /// \effects Just forwards to \ref memory_pool::try_deallocate_node().
             /// \returns Whether the deallocation was successful.
             static bool try_deallocate_node(allocator_type& state, void* node, std::size_t size,
-                                            std::size_t alignment) FOONATHAN_NOEXCEPT
+                                            std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state) || alignment > traits::max_alignment(state))
                     return false;
@@ -404,7 +404,7 @@ namespace foonathan
             /// \returns Whether the deallocation was successful.
             static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
                                              std::size_t size,
-                                             std::size_t alignment) FOONATHAN_NOEXCEPT
+                                             std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state)
                     || count * size > traits::max_array_size(state)

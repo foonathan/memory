@@ -23,7 +23,7 @@ namespace foonathan
 
             template <class Tracker, class BlockAllocator>
             void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator>& alloc,
-                             Tracker* t) FOONATHAN_NOEXCEPT
+                             Tracker* t) noexcept
             {
                 alloc.tracker_ = t;
             }
@@ -52,14 +52,14 @@ namespace foonathan
                     return block;
                 }
 
-                void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+                void deallocate_block(memory_block block) noexcept
                 {
                     if (tracker_) // on last call tracker_ is nullptr again
                         tracker_->on_allocator_shrinking(block.memory, block.size);
                     BlockAllocator::deallocate_block(block);
                 }
 
-                std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+                std::size_t next_block_size() const noexcept
                 {
                     return BlockAllocator::next_block_size();
                 }
@@ -68,7 +68,7 @@ namespace foonathan
                 Tracker* tracker_;
 
                 friend void set_tracker<>(deeply_tracked_block_allocator&,
-                                          Tracker*) FOONATHAN_NOEXCEPT;
+                                          Tracker*) noexcept;
             };
         } // namespace detail
 
@@ -89,12 +89,12 @@ namespace foonathan
             /// @{
             /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
             /// It will embed both objects.
-            explicit tracked_block_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+            explicit tracked_block_allocator(tracker t = {}) noexcept
                 : tracker(detail::move(t))
             {
             }
 
-            tracked_block_allocator(tracker t, allocator_type&& alloc) FOONATHAN_NOEXCEPT
+            tracked_block_allocator(tracker t, allocator_type&& alloc) noexcept
                 : tracker(detail::move(t)),
                   allocator_type(detail::move(alloc))
             {
@@ -119,26 +119,26 @@ namespace foonathan
             }
 
             /// \effects Calls <tt>Tracker::on_allocator_shrinking()</tt> and forwards to the allocator.
-            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+            void deallocate_block(memory_block block) noexcept
             {
                 this->on_allocator_shrinking(block.memory, block.size);
                 allocator_type::deallocate_block(block);
             }
 
             /// \returns The next block size as returned by the allocator.
-            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            std::size_t next_block_size() const noexcept
             {
                 return allocator_type::next_block_size();
             }
 
             /// @{
             /// \returns A (const) reference to the used allocator.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
-            const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            const allocator_type& get_allocator() const noexcept
             {
                 return *this;
             }
@@ -146,12 +146,12 @@ namespace foonathan
 
             /// @{
             /// \returns A (const) reference to the tracker.
-            tracker& get_tracker() FOONATHAN_NOEXCEPT
+            tracker& get_tracker() noexcept
             {
                 return *this;
             }
 
-            const tracker& get_tracker() const FOONATHAN_NOEXCEPT
+            const tracker& get_tracker() const noexcept
             {
                 return *this;
             }
@@ -191,12 +191,12 @@ namespace foonathan
             /// \effects Creates it by giving it a \concept{concept_tracker,tracker} and the tracked \concept{concept_rawallocator,RawAllocator}.
             /// It will embed both objects.
             /// \note This will never call the <tt>Tracker::on_allocator_growth()</tt> function.
-            explicit tracked_allocator(tracker t = {}) FOONATHAN_NOEXCEPT
+            explicit tracked_allocator(tracker t = {}) noexcept
                 : tracked_allocator(detail::move(t), allocator_type{})
             {
             }
 
-            tracked_allocator(tracker t, allocator_type&& allocator) FOONATHAN_NOEXCEPT
+            tracked_allocator(tracker t, allocator_type&& allocator) noexcept
                 : tracker(detail::move(t)),
                   allocator_type(detail::move(allocator))
             {
@@ -206,7 +206,7 @@ namespace foonathan
 
             /// \effects Destroys both tracker and allocator.
             /// \note This will never call the <tt>Tracker::on_allocator_shrinking()</tt> function.
-            ~tracked_allocator() FOONATHAN_NOEXCEPT
+            ~tracked_allocator() noexcept
             {
                 detail::set_tracker(get_allocator().get_allocator(),
                                     static_cast<tracker*>(nullptr));
@@ -214,14 +214,14 @@ namespace foonathan
 
             /// @{
             /// \effects Moving moves both the tracker and the allocator.
-            tracked_allocator(tracked_allocator&& other) FOONATHAN_NOEXCEPT
+            tracked_allocator(tracked_allocator&& other) noexcept
                 : tracker(detail::move(other)),
                   allocator_type(detail::move(other))
             {
                 detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
             }
 
-            tracked_allocator& operator=(tracked_allocator&& other) FOONATHAN_NOEXCEPT
+            tracked_allocator& operator=(tracked_allocator&& other) noexcept
             {
                 tracker::operator       =(detail::move(other));
                 allocator_type::operator=(detail::move(other));
@@ -243,7 +243,7 @@ namespace foonathan
             /// \effects Calls the composable node allocation function.
             /// If allocation was successful, also calls `Tracker::on_node_allocation()`.
             /// \returns The result of `try_allocate_node()`.
-            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::size_t size, std::size_t alignment) noexcept
             {
                 auto mem = composable_traits::try_allocate_node(get_allocator(), size, alignment);
                 if (mem)
@@ -265,7 +265,7 @@ namespace foonathan
             /// If allocation was succesful, also calls `Tracker::on_array_allocation()`.
             /// \returns The result of `try_allocate_array()`.
             void* try_allocate_array(std::size_t count, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 auto mem =
                     composable_traits::try_allocate_array(get_allocator(), count, size, alignment);
@@ -277,7 +277,7 @@ namespace foonathan
             /// \effects Calls <tt>Tracker::on_node_deallocation()</tt> and forwards to the allocator's <tt>deallocate_node()</tt>.
             /// If shrinking occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_shrinking()</tt>.
             void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
             {
                 this->on_node_deallocation(ptr, size, alignment);
                 traits::deallocate_node(get_allocator(), ptr, size, alignment);
@@ -287,7 +287,7 @@ namespace foonathan
             /// If it was succesful, also calls `Tracker::on_node_deallocation()`.
             /// \returns The result of `try_deallocate_node()`.
             bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 auto res =
                     composable_traits::try_deallocate_node(get_allocator(), ptr, size, alignment);
@@ -299,7 +299,7 @@ namespace foonathan
             /// \effects Calls <tt>Tracker::on_array_deallocation()</tt> and forwards to the allocator's <tt>deallocate_array()</tt>.
             /// If shrinking occurs and the allocator is deeply tracked, also calls <tt>Tracker::on_allocator_shrinking()</tt>.
             void deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                  std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t alignment) noexcept
             {
                 this->on_array_deallocation(ptr, count, size, alignment);
                 traits::deallocate_array(get_allocator(), ptr, count, size, alignment);
@@ -309,7 +309,7 @@ namespace foonathan
             /// If it was succesful, also calls `Tracker::on_array_deallocation()`.
             /// \returns The result of `try_deallocate_array()`.
             bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t alignment) noexcept
             {
                 auto res = composable_traits::try_deallocate_array(ptr, count, size, alignment);
                 if (res)
@@ -337,12 +337,12 @@ namespace foonathan
 
             /// @{
             /// \returns A (\c const) reference to the wrapped allocator.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
-            const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            const allocator_type& get_allocator() const noexcept
             {
                 return *this;
             }
@@ -350,12 +350,12 @@ namespace foonathan
 
             /// @{
             /// \returns A (\c const) reference to the tracker.
-            tracker& get_tracker() FOONATHAN_NOEXCEPT
+            tracker& get_tracker() noexcept
             {
                 return *this;
             }
 
-            const tracker& get_tracker() const FOONATHAN_NOEXCEPT
+            const tracker& get_tracker() const noexcept
             {
                 return *this;
             }

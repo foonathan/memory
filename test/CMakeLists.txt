@@ -8,7 +8,6 @@ add_executable(foonathan_memory_profiling benchmark.hpp profiling.cpp)
 target_link_libraries(foonathan_memory_profiling foonathan_memory)
 target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
-comp_target_features(foonathan_memory_profiling PUBLIC CPP11)
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
     file(DOWNLOAD
@@ -33,6 +32,7 @@ set(tests
     detail/debug_helpers.cpp
     detail/free_list.cpp
     detail/free_list_array.cpp
+    detail/ilog2.cpp
     detail/memory_stack.cpp
     aligned_allocator.cpp
     allocator_traits.cpp
@@ -49,7 +49,6 @@ set(tests
     smart_ptr.cpp)
 
 add_executable(foonathan_memory_test ${tests})
-comp_target_features(foonathan_memory_test PUBLIC CPP11)
 target_link_libraries(foonathan_memory_test foonathan_memory)
 target_include_directories(foonathan_memory_test PRIVATE
                             ${CMAKE_CURRENT_BINARY_DIR}

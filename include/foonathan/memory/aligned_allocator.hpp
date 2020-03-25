@@ -44,13 +44,13 @@ namespace foonathan
             /// @{
             /// \effects Moves the \c aligned_allocator object.
             /// It simply moves the underlying allocator.
-            aligned_allocator(aligned_allocator&& other) FOONATHAN_NOEXCEPT
+            aligned_allocator(aligned_allocator&& other) noexcept
                 : allocator_type(detail::move(other)),
                   min_alignment_(other.min_alignment_)
             {
             }
 
-            aligned_allocator& operator=(aligned_allocator&& other) FOONATHAN_NOEXCEPT
+            aligned_allocator& operator=(aligned_allocator&& other) noexcept
             {
                 allocator_type::operator=(detail::move(other));
                 min_alignment_          = other.min_alignment_;
@@ -76,7 +76,7 @@ namespace foonathan
             }
 
             void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -84,7 +84,7 @@ namespace foonathan
             }
 
             void deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                  std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -97,7 +97,7 @@ namespace foonathan
             /// If the \c alignment is less than the \c min_alignment(), it is set to the minimum alignment.
             /// \requires The underyling allocator must be composable.
             FOONATHAN_ENABLE_IF(composable::value)
-            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::size_t size, std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -106,7 +106,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(composable::value)
             void* try_allocate_array(std::size_t count, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -116,7 +116,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(composable::value)
             bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -126,7 +126,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(composable::value)
             bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -155,19 +155,19 @@ namespace foonathan
 
             /// @{
             /// \returns A reference to the underlying allocator.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
-            const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            const allocator_type& get_allocator() const noexcept
             {
                 return *this;
             }
             /// @}
 
             /// \returns The minimum alignment.
-            std::size_t min_alignment() const FOONATHAN_NOEXCEPT
+            std::size_t min_alignment() const noexcept
             {
                 return min_alignment_;
             }
@@ -188,7 +188,7 @@ namespace foonathan
         /// \relates aligned_allocator
         template <class RawAllocator>
         auto make_aligned_allocator(std::size_t    min_alignment,
-                                    RawAllocator&& allocator) FOONATHAN_NOEXCEPT
+                                    RawAllocator&& allocator) noexcept
             -> aligned_allocator<typename std::decay<RawAllocator>::type>
         {
             return aligned_allocator<

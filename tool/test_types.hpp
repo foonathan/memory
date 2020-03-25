@@ -9,8 +9,6 @@
 #include <tuple>
 
 #if !defined(_MSC_VER)
-#include <foonathan/alignof.hpp>
-#include <foonathan/constexpr.hpp>
 
 // erases duplicate alignments
 // adopted from https://github.com/irrequietus/clause/blob/alignutil/clause/ample/storage/alignutil.hh
@@ -66,13 +64,13 @@ namespace detail
     {
         using M1<T...>::C;
 
-        static auto C(int (*)[FOONATHAN_ALIGNOF(X)]) -> X;
+        static auto C(int (*)[alignof(X)]) -> X;
 
-        static std::size_t FOONATHAN_CONSTEXPR min_val =
-            FOONATHAN_ALIGNOF(X) < M1<T...>::min_val ? FOONATHAN_ALIGNOF(X) : M1<T...>::min_val;
+        static std::size_t constexpr min_val =
+            alignof(X) < M1<T...>::min_val ? alignof(X) : M1<T...>::min_val;
 
-        static std::size_t FOONATHAN_CONSTEXPR max_val =
-            FOONATHAN_ALIGNOF(X) > M1<T...>::max_val ? FOONATHAN_ALIGNOF(X) : M1<T...>::max_val;
+        static std::size_t constexpr max_val =
+            alignof(X) > M1<T...>::max_val ? alignof(X) : M1<T...>::max_val;
 
         template <template <typename...> class W>
         using rebind = W<X, T...>;
@@ -81,9 +79,9 @@ namespace detail
     template <>
     struct M1<>
     {
-        static M1<>        C(...);
-        static std::size_t FOONATHAN_CONSTEXPR min_val = 1;
-        static std::size_t FOONATHAN_CONSTEXPR max_val = 1;
+        static M1<> C(...);
+        static std::size_t constexpr min_val = 1;
+        static std::size_t constexpr max_val = 1;
 
         template <template <typename...> class W>
         using rebind = W<>;
@@ -93,7 +91,7 @@ namespace detail
     struct M2 : W
     {
         using W::C;
-        static auto C(int (*)[FOONATHAN_ALIGNOF(X)]) -> M1<>;
+        static auto C(int (*)[alignof(X)]) -> M1<>;
     };
 
     template <typename...>
@@ -106,7 +104,7 @@ namespace detail
      */
     template <typename S, typename A, template <typename...> class W, typename... X, typename... Y>
     struct M4<S, W<A, X...>, W<Y...>>
-        : M4<M2<S, A>, W<X...>, W<Y..., decltype(S::C((int (*)[FOONATHAN_ALIGNOF(A)])(nullptr)))>>
+    : M4<M2<S, A>, W<X...>, W<Y..., decltype(S::C((int (*)[alignof(A)])(nullptr)))>>
     {
     };
 
@@ -171,9 +169,9 @@ namespace detail
      *       `M4 partial specializations match through ordering.
      */
     template <typename... X>
-    using M7 =
-        M0<M5<M3<>, M0<M4<M1<decltype(M1<X...>::C((int (*)[FOONATHAN_ALIGNOF(X)])(nullptr)))...>,
-                          M3<X...>, M3<>>>>>;
+    using M7 = M0<
+        M5<M3<>,
+           M0<M4<M1<decltype(M1<X...>::C((int (*)[alignof(X)])(nullptr)))...>, M3<X...>, M3<>>>>>;
 
     /*~
      * @note The final result is given by this template alias, instantiating to a
@@ -195,7 +193,7 @@ namespace detail
      */
     template <template <typename...> class W, typename... X>
     using unisorted_aligned_wrap = typename unisorted_aligned_<X...>::template rebind<W>;
-}
+} // namespace detail
 
 // All fundamental types that don't guarantee to have the same alignment (like int and unsigned int).
 // It thus covers all fundamental alignments and all possible node sizes.

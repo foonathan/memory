@@ -30,7 +30,7 @@ namespace foonathan
         /// It must be thread safe.
         /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::malloc is used as fallback.
         /// \ingroup memory allocator
-        void* heap_alloc(std::size_t size) FOONATHAN_NOEXCEPT;
+        void* heap_alloc(std::size_t size) noexcept;
 
         /// Deallocates heap memory.
         /// This function is used by the \ref heap_allocator to allocate the heap memory.
@@ -41,25 +41,25 @@ namespace foonathan
         /// It must be thread safe.
         /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::free is used as fallback.
         /// \ingroup memory allocator
-        void heap_dealloc(void* ptr, std::size_t size) FOONATHAN_NOEXCEPT;
+        void heap_dealloc(void* ptr, std::size_t size) noexcept;
 
         namespace detail
         {
             struct heap_allocator_impl
             {
-                static allocator_info info() FOONATHAN_NOEXCEPT;
+                static allocator_info info() noexcept;
 
-                static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                static void* allocate(std::size_t size, std::size_t) noexcept
                 {
                     return heap_alloc(size);
                 }
 
-                static void deallocate(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                static void deallocate(void* ptr, std::size_t size, std::size_t) noexcept
                 {
                     heap_dealloc(ptr, size);
                 }
 
-                static std::size_t max_node_size() FOONATHAN_NOEXCEPT;
+                static std::size_t max_node_size() noexcept;
             };
 
             FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(heap_allocator_impl,

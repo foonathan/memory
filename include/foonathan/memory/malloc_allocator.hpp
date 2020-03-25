@@ -33,19 +33,19 @@ namespace foonathan
         {
             struct malloc_allocator_impl
             {
-                static allocator_info info() FOONATHAN_NOEXCEPT;
+                static allocator_info info() noexcept;
 
-                static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+                static void* allocate(std::size_t size, std::size_t) noexcept
                 {
                     return std::malloc(size);
                 }
 
-                static void deallocate(void* ptr, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+                static void deallocate(void* ptr, std::size_t, std::size_t) noexcept
                 {
                     std::free(ptr);
                 }
 
-                static std::size_t max_node_size() FOONATHAN_NOEXCEPT
+                static std::size_t max_node_size() noexcept
                 {
                     return std::allocator_traits<std::allocator<char>>::max_size({});
                 }

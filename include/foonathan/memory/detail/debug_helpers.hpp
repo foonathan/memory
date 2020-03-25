@@ -8,8 +8,6 @@
 #include <atomic>
 #include <type_traits>
 
-#include <foonathan/thread_local.hpp>
-
 #include "../config.hpp"
 
 namespace foonathan
@@ -22,51 +20,47 @@ namespace foonathan
         namespace detail
         {
             using debug_fill_enabled = std::integral_constant<bool, FOONATHAN_MEMORY_DEBUG_FILL>;
-            FOONATHAN_CONSTEXPR std::size_t debug_fence_size =
+            constexpr std::size_t debug_fence_size =
                 FOONATHAN_MEMORY_DEBUG_FILL ? FOONATHAN_MEMORY_DEBUG_FENCE : 0u;
 
 #if FOONATHAN_MEMORY_DEBUG_FILL
             // fills size bytes of memory with debug_magic
-            void debug_fill(void* memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT;
+            void debug_fill(void* memory, std::size_t size, debug_magic m) noexcept;
 
             // returns nullptr if memory is filled with debug_magic
             // else returns pointer to mismatched byte
-            void* debug_is_filled(void* memory, std::size_t size, debug_magic m) FOONATHAN_NOEXCEPT;
+            void* debug_is_filled(void* memory, std::size_t size, debug_magic m) noexcept;
 
             // fills fence, new and fence
             // returns after fence
             void* debug_fill_new(void* memory, std::size_t node_size,
-                                 std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT;
+                                 std::size_t fence_size = debug_fence_size) noexcept;
 
             // fills free memory and returns memory starting at fence
             void* debug_fill_free(void* memory, std::size_t node_size,
-                                  std::size_t fence_size = debug_fence_size) FOONATHAN_NOEXCEPT;
+                                  std::size_t fence_size = debug_fence_size) noexcept;
 
             // fills internal memory
-            void debug_fill_internal(void* memory, std::size_t size, bool free) FOONATHAN_NOEXCEPT;
+            void debug_fill_internal(void* memory, std::size_t size, bool free) noexcept;
 #else
-            inline void debug_fill(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT
-            {
-            }
+            inline void debug_fill(void*, std::size_t, debug_magic) noexcept {}
 
-            inline void* debug_is_filled(void*, std::size_t, debug_magic) FOONATHAN_NOEXCEPT
+            inline void* debug_is_filled(void*, std::size_t, debug_magic) noexcept
             {
                 return nullptr;
             }
 
-            inline void* debug_fill_new(void* memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            inline void* debug_fill_new(void* memory, std::size_t, std::size_t) noexcept
             {
                 return memory;
             }
 
-            inline void* debug_fill_free(void* memory, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            inline void* debug_fill_free(void* memory, std::size_t, std::size_t) noexcept
             {
                 return static_cast<char*>(memory);
             }
 
-            inline void debug_fill_internal(void*, std::size_t, bool) FOONATHAN_NOEXCEPT
-            {
-            }
+            inline void debug_fill_internal(void*, std::size_t, bool) noexcept {}
 #endif
 
             void debug_handle_invalid_ptr(const allocator_info& info, void* ptr);
@@ -108,27 +102,17 @@ namespace foonathan
             class no_leak_checker
             {
             public:
-                no_leak_checker() FOONATHAN_NOEXCEPT
-                {
-                }
-                no_leak_checker(no_leak_checker&&) FOONATHAN_NOEXCEPT
-                {
-                }
-                ~no_leak_checker() FOONATHAN_NOEXCEPT
-                {
-                }
+                no_leak_checker() noexcept {}
+                no_leak_checker(no_leak_checker&&) noexcept {}
+                ~no_leak_checker() noexcept {}
 
-                no_leak_checker& operator=(no_leak_checker&&) FOONATHAN_NOEXCEPT
+                no_leak_checker& operator=(no_leak_checker&&) noexcept
                 {
                     return *this;
                 }
 
-                void on_allocate(std::size_t) FOONATHAN_NOEXCEPT
-                {
-                }
-                void on_deallocate(std::size_t) FOONATHAN_NOEXCEPT
-                {
-                }
+                void on_allocate(std::size_t) noexcept {}
+                void on_deallocate(std::size_t) noexcept {}
             };
 
             // does leak checking per-object
@@ -137,35 +121,33 @@ namespace foonathan
             class object_leak_checker : Handler
             {
             public:
-                object_leak_checker() FOONATHAN_NOEXCEPT : allocated_(0)
-                {
-                }
+                object_leak_checker() noexcept : allocated_(0) {}
 
-                object_leak_checker(object_leak_checker&& other) FOONATHAN_NOEXCEPT
-                    : allocated_(other.allocated_)
+                object_leak_checker(object_leak_checker&& other) noexcept
+                : allocated_(other.allocated_)
                 {
                     other.allocated_ = 0;
                 }
 
-                ~object_leak_checker() FOONATHAN_NOEXCEPT
+                ~object_leak_checker() noexcept
                 {
                     if (allocated_ != 0)
                         this->operator()(allocated_);
                 }
 
-                object_leak_checker& operator=(object_leak_checker&& other) FOONATHAN_NOEXCEPT
+                object_leak_checker& operator=(object_leak_checker&& other) noexcept
                 {
                     allocated_       = other.allocated_;
                     other.allocated_ = 0;
                     return *this;
                 }
 
-                void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
+                void on_allocate(std::size_t size) noexcept
                 {
                     allocated_ += std::ptrdiff_t(size);
                 }
 
-                void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
+                void on_deallocate(std::size_t size) noexcept
                 {
                     allocated_ -= std::ptrdiff_t(size);
                 }
@@ -196,27 +178,21 @@ namespace foonathan
                     }
                 };
 
-                global_leak_checker_impl() FOONATHAN_NOEXCEPT
-                {
-                }
-                global_leak_checker_impl(global_leak_checker_impl&&) FOONATHAN_NOEXCEPT
-                {
-                }
-                ~global_leak_checker_impl() FOONATHAN_NOEXCEPT
-                {
-                }
+                global_leak_checker_impl() noexcept {}
+                global_leak_checker_impl(global_leak_checker_impl&&) noexcept {}
+                ~global_leak_checker_impl() noexcept {}
 
-                global_leak_checker_impl& operator=(global_leak_checker_impl&&) FOONATHAN_NOEXCEPT
+                global_leak_checker_impl& operator=(global_leak_checker_impl&&) noexcept
                 {
                     return *this;
                 }
 
-                void on_allocate(std::size_t size) FOONATHAN_NOEXCEPT
+                void on_allocate(std::size_t size) noexcept
                 {
                     allocated_ += std::ptrdiff_t(size);
                 }
 
-                void on_deallocate(std::size_t size) FOONATHAN_NOEXCEPT
+                void on_deallocate(std::size_t size) noexcept
                 {
                     allocated_ -= std::ptrdiff_t(size);
                 }
@@ -253,7 +229,7 @@ namespace foonathan
             using default_leak_checker = no_leak_checker<Handler>;
 #endif
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DEBUG_HELPERS_HPP_INCLUDED

@@ -9,18 +9,17 @@
 #endif
 
 #include <new>
-#include <foonathan/get_new_handler.hpp>
 
 #include "error.hpp"
 
 using namespace foonathan::memory;
 
-allocator_info detail::new_allocator_impl::info() FOONATHAN_NOEXCEPT
+allocator_info detail::new_allocator_impl::info() noexcept
 {
     return {FOONATHAN_MEMORY_LOG_PREFIX "::new_allocator", nullptr};
 }
 
-void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_NOEXCEPT
+void* detail::new_allocator_impl::allocate(std::size_t size, size_t) noexcept
 {
     void* memory = nullptr;
     while (true)
@@ -29,17 +28,21 @@ void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_N
         if (memory)
             break;
 
-        auto handler = foonathan_comp::get_new_handler();
+        auto handler = std::get_new_handler();
         if (handler)
         {
-            FOONATHAN_TRY
+#if FOONATHAN_HAS_EXCEPTION_SUPPORT
+            try
             {
                 handler();
             }
-            FOONATHAN_CATCH_ALL
+            catch (...)
             {
                 return nullptr;
             }
+#else
+            handler();
+#endif
         }
         else
         {
@@ -49,12 +52,12 @@ void* detail::new_allocator_impl::allocate(std::size_t size, size_t) FOONATHAN_N
     return memory;
 }
 
-void detail::new_allocator_impl::deallocate(void* ptr, std::size_t, size_t) FOONATHAN_NOEXCEPT
+void detail::new_allocator_impl::deallocate(void* ptr, std::size_t, size_t) noexcept
 {
     ::operator delete(ptr);
 }
 
-std::size_t detail::new_allocator_impl::max_node_size() FOONATHAN_NOEXCEPT
+std::size_t detail::new_allocator_impl::max_node_size() noexcept
 {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     return std::allocator_traits<std::allocator<char>>::max_size({});

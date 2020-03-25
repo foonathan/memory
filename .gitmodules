@@ -1,4 +1,0 @@
-[submodule "cmake/comp"]
-    path = cmake/comp
-    url = https://github.com/foonathan/compatibility.git
-    branch = git-submodule

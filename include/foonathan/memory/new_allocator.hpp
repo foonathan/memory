@@ -25,13 +25,13 @@ namespace foonathan
         {
             struct new_allocator_impl
             {
-                static allocator_info info() FOONATHAN_NOEXCEPT;
+                static allocator_info info() noexcept;
 
-                static void* allocate(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT;
+                static void* allocate(std::size_t size, std::size_t) noexcept;
 
-                static void deallocate(void* ptr, std::size_t size, std::size_t) FOONATHAN_NOEXCEPT;
+                static void deallocate(void* ptr, std::size_t size, std::size_t) noexcept;
 
-                static std::size_t max_node_size() FOONATHAN_NOEXCEPT;
+                static std::size_t max_node_size() noexcept;
             };
 
             FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(new_allocator_impl,

@@ -6,11 +6,7 @@ build_script:
   - appveyor DownloadFile http://releases.llvm.org/5.0.1/LLVM-5.0.1-win64.exe -FileName llvm-installer.exe
   - start /WAIT llvm-installer.exe /S /D=C:\"Program Files\LLVM"
 
-  - cmd: mkdir build-12 && cd build-12
-  - cmd: cmake -G"Visual Studio 12" -DFOONATHAN_MEMORY_BUILD_EXAMPLES=OFF -DFOONATHAN_MEMORY_BUILD_TESTS=OFF ..\
-  - cmd: cmake --build . -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-
-  - cmd: cd ..\ && mkdir build-14-debug && cd build-14-debug\
+  - cmd: mkdir build-14-debug && cd build-14-debug\
   - cmd: cmake -G"Visual Studio 14" -DCMAKE_BUILD_TYPE=Debug ..\
   - cmd: cmake --build . --config Debug -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - cmd: test\Debug\foonathan_memory_test.exe

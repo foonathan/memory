@@ -18,7 +18,7 @@ void* static_allocator::allocate_node(std::size_t size, std::size_t alignment)
     return mem;
 }
 
-allocator_info static_allocator::info() const FOONATHAN_NOEXCEPT
+allocator_info static_allocator::info() const noexcept
 {
     return {FOONATHAN_MEMORY_LOG_PREFIX "::static_allocator", this};
 }
@@ -36,7 +36,7 @@ memory_block static_block_allocator::allocate_block()
     return {mem, block_size_};
 }
 
-void static_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEXCEPT
+void static_block_allocator::deallocate_block(memory_block block) noexcept
 {
     detail::
         debug_check_pointer([&] { return static_cast<char*>(block.memory) + block.size == cur_; },
@@ -44,7 +44,7 @@ void static_block_allocator::deallocate_block(memory_block block) FOONATHAN_NOEX
     cur_ -= block_size_;
 }
 
-allocator_info static_block_allocator::info() const FOONATHAN_NOEXCEPT
+allocator_info static_block_allocator::info() const noexcept
 {
     return {FOONATHAN_MEMORY_LOG_PREFIX "::static_block_allocator", this};
 }

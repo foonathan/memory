@@ -83,7 +83,7 @@ namespace foonathan
             }
 
             void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
             {
                 auto res = default_composable_traits::try_deallocate_node(get_default_allocator(),
                                                                           ptr, size, alignment);
@@ -93,7 +93,7 @@ namespace foonathan
             }
 
             void deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                  std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t alignment) noexcept
             {
                 auto res =
                     default_composable_traits::try_deallocate_array(get_default_allocator(), ptr,
@@ -109,7 +109,7 @@ namespace foonathan
             /// If that fails, uses the compositioning function of the `fallback_allocator_type`.
             /// \requires The `fallback_allocator_type` msut be composable.
             FOONATHAN_ENABLE_IF(fallback_composable::value)
-            void* try_allocate_node(std::size_t size, std::size_t alignment) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::size_t size, std::size_t alignment) noexcept
             {
                 auto ptr = default_composable_traits::try_allocate_node(get_default_allocator(),
                                                                         size, alignment);
@@ -121,7 +121,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(fallback_composable::value)
             void* allocate_array(std::size_t count, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
             {
                 auto ptr = default_composable_traits::try_allocate_array(get_default_allocator(),
                                                                          count, size, alignment);
@@ -133,7 +133,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(fallback_composable::value)
             bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
             {
                 auto res = default_composable_traits::try_deallocate_node(get_default_allocator(),
                                                                           ptr, size, alignment);
@@ -145,7 +145,7 @@ namespace foonathan
 
             FOONATHAN_ENABLE_IF(fallback_composable::value)
             bool try_deallocate_array(void* ptr, std::size_t count, std::size_t size,
-                                      std::size_t alignment) FOONATHAN_NOEXCEPT
+                                      std::size_t alignment) noexcept
             {
                 auto res =
                     default_composable_traits::try_deallocate_array(get_default_allocator(), ptr,
@@ -184,12 +184,12 @@ namespace foonathan
 
             /// @{
             /// \returns A (`const`) reference to the default allocator.
-            default_allocator_type& get_default_allocator() FOONATHAN_NOEXCEPT
+            default_allocator_type& get_default_allocator() noexcept
             {
                 return detail::ebo_storage<0, default_allocator_type>::get();
             }
 
-            const default_allocator_type& get_default_allocator() const FOONATHAN_NOEXCEPT
+            const default_allocator_type& get_default_allocator() const noexcept
             {
                 return detail::ebo_storage<0, default_allocator_type>::get();
             }
@@ -197,12 +197,12 @@ namespace foonathan
 
             /// @{
             /// \returns A (`const`) reference to the fallback allocator.
-            fallback_allocator_type& get_fallback_allocator() FOONATHAN_NOEXCEPT
+            fallback_allocator_type& get_fallback_allocator() noexcept
             {
                 return detail::ebo_storage<1, fallback_allocator_type>::get();
             }
 
-            const fallback_allocator_type& get_fallback_allocator() const FOONATHAN_NOEXCEPT
+            const fallback_allocator_type& get_fallback_allocator() const noexcept
             {
                 return detail::ebo_storage<1, fallback_allocator_type>::get();
             }

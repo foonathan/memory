@@ -35,7 +35,7 @@ namespace foonathan
             const void* allocator;
 
             /// \effects Creates it by giving it the name of the allocator and a pointer.
-            FOONATHAN_CONSTEXPR_FNC allocator_info(const char* n, const void* alloc) FOONATHAN_NOEXCEPT
+            constexpr allocator_info(const char* n, const void* alloc) noexcept
                 : name(n),
                   allocator(alloc)
             {
@@ -44,14 +44,14 @@ namespace foonathan
             /// @{
             /// \effects Compares two \ref allocator_info objects, they are equal, if the \ref allocator is the same.
             /// \returns The result of the comparision.
-            friend FOONATHAN_CONSTEXPR_FNC bool operator==(const allocator_info& a,
-                                                       const allocator_info& b) FOONATHAN_NOEXCEPT
+            friend constexpr bool operator==(const allocator_info& a,
+                                                       const allocator_info& b) noexcept
             {
                 return a.allocator == b.allocator;
             }
 
-            friend FOONATHAN_CONSTEXPR_FNC bool operator!=(const allocator_info& a,
-                                                       const allocator_info& b) FOONATHAN_NOEXCEPT
+            friend constexpr bool operator!=(const allocator_info& a,
+                                                       const allocator_info& b) noexcept
             {
                 return a.allocator != b.allocator;
             }
@@ -94,17 +94,17 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
 
             /// \returns The \ref allocator_info passed to it in the constructor.
-            const allocator_info& allocator() const FOONATHAN_NOEXCEPT
+            const allocator_info& allocator() const noexcept
             {
                 return info_;
             }
 
             /// \returns The amount of memory that was tried to be allocated.
             /// This is the value passed in the constructor.
-            std::size_t failed_allocation_size() const FOONATHAN_NOEXCEPT
+            std::size_t failed_allocation_size() const noexcept
             {
                 return amount_;
             }
@@ -130,7 +130,7 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
         };
 
         /// The exception class thrown when an allocation size is bigger than the supported maximum.
@@ -178,24 +178,24 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
 
             /// \returns The \ref allocator_info passed to it in the constructor.
-            const allocator_info& allocator() const FOONATHAN_NOEXCEPT
+            const allocator_info& allocator() const noexcept
             {
                 return info_;
             }
 
             /// \returns The size or alignment value that was passed to the allocation function
             /// which was too big. This is the same value passed to the constructor.
-            std::size_t passed_value() const FOONATHAN_NOEXCEPT
+            std::size_t passed_value() const noexcept
             {
                 return passed_;
             }
 
             /// \returns An upper bound on the maximum supported size/alignment.
             /// It is only an upper bound, values below can fail, but values above will always fail.
-            std::size_t supported_value() const FOONATHAN_NOEXCEPT
+            std::size_t supported_value() const noexcept
             {
                 return supported_;
             }
@@ -220,7 +220,7 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
         };
 
         /// The exception class thrown when the array size exceeds the supported maximum,
@@ -238,7 +238,7 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
         };
 
         /// The exception class thrown when the alignment exceeds the supported maximum,
@@ -257,7 +257,7 @@ namespace foonathan
 
             /// \returns A static NTBS that describes the error.
             /// It does not contain any specific information since there is no memory for formatting.
-            const char* what() const FOONATHAN_NOEXCEPT override;
+            const char* what() const noexcept override;
         };
 
         namespace detail

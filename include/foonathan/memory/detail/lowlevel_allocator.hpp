@@ -39,17 +39,17 @@ namespace foonathan
             public:
                 using is_stateful = std::false_type;
 
-                lowlevel_allocator() FOONATHAN_NOEXCEPT
+                lowlevel_allocator() noexcept
                 {
                 }
-                lowlevel_allocator(lowlevel_allocator&&) FOONATHAN_NOEXCEPT
+                lowlevel_allocator(lowlevel_allocator&&) noexcept
                 {
                 }
-                ~lowlevel_allocator() FOONATHAN_NOEXCEPT
+                ~lowlevel_allocator() noexcept
                 {
                 }
 
-                lowlevel_allocator& operator=(lowlevel_allocator&&) FOONATHAN_NOEXCEPT
+                lowlevel_allocator& operator=(lowlevel_allocator&&) noexcept
                 {
                     return *this;
                 }
@@ -68,7 +68,7 @@ namespace foonathan
                 }
 
                 void deallocate_node(void* node, std::size_t size,
-                                     std::size_t alignment) FOONATHAN_NOEXCEPT
+                                     std::size_t alignment) noexcept
                 {
                     auto actual_size = size + (debug_fence_size ? 2 * max_alignment : 0u);
 
@@ -78,7 +78,7 @@ namespace foonathan
                     this->on_deallocate(actual_size);
                 }
 
-                std::size_t max_node_size() const FOONATHAN_NOEXCEPT
+                std::size_t max_node_size() const noexcept
                 {
                     return Functor::max_node_size();
                 }

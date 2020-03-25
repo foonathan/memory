@@ -37,7 +37,7 @@ namespace foonathan
             /// \returns `true` if `size` is less then or equal to the maximum size,
             /// `false` otherwise.
             /// \note A return value of `true` means that the allocator will be used for the allocation.
-            bool use_allocate_node(std::size_t size, std::size_t) FOONATHAN_NOEXCEPT
+            bool use_allocate_node(std::size_t size, std::size_t) noexcept
             {
                 return size <= max_size_;
             }
@@ -46,19 +46,19 @@ namespace foonathan
             /// `false` otherwise.
             /// \note A return value of `true` means that the allocator will be used for the allocation.
             bool use_allocate_array(std::size_t count, std::size_t size,
-                                    std::size_t) FOONATHAN_NOEXCEPT
+                                    std::size_t) noexcept
             {
                 return count * size <= max_size_;
             }
 
             /// @{
             /// \returns A reference to the allocator it owns.
-            allocator_type& get_allocator() FOONATHAN_NOEXCEPT
+            allocator_type& get_allocator() noexcept
             {
                 return *this;
             }
 
-            const allocator_type& get_allocator() const FOONATHAN_NOEXCEPT
+            const allocator_type& get_allocator() const noexcept
             {
                 return *this;
             }
@@ -92,27 +92,27 @@ namespace foonathan
             }
 
             /// \requires Must not be called.
-            void deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            void deallocate_node(void*, std::size_t, std::size_t) noexcept
             {
                 FOONATHAN_MEMORY_UNREACHABLE("cannot be called with proper values");
             }
 
             /// \effects Does nothing.
             /// \returns Always returns `nullptr`.
-            void* try_allocate_node(std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            void* try_allocate_node(std::size_t, std::size_t) noexcept
             {
                 return nullptr;
             }
 
             /// \effects Does nothing.
             /// \returns Always returns `false`.
-            bool try_deallocate_node(void*, std::size_t, std::size_t) FOONATHAN_NOEXCEPT
+            bool try_deallocate_node(void*, std::size_t, std::size_t) noexcept
             {
                 return false;
             }
 
         private:
-            allocator_info info() const FOONATHAN_NOEXCEPT
+            allocator_info info() const noexcept
             {
                 return {FOONATHAN_MEMORY_LOG_PREFIX "::null_allocator", this};
             }
@@ -158,7 +158,7 @@ namespace foonathan
             }
 
             void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT
+                                 std::size_t alignment) noexcept
             {
                 if (get_segregatable().use_allocate_node(size, alignment))
                     segregatable_traits::deallocate_node(get_segregatable_allocator(), ptr, size,
@@ -179,7 +179,7 @@ namespace foonathan
             }
 
             void deallocate_array(void* array, std::size_t count, std::size_t size,
-                                  std::size_t alignment) FOONATHAN_NOEXCEPT
+                                  std::size_t alignment) noexcept
             {
                 if (get_segregatable().use_allocate_array(count, size, alignment))
                     segregatable_traits::deallocate_array(get_segregatable_allocator(), array,
@@ -213,12 +213,12 @@ namespace foonathan
             /// @{
             /// \returns A reference to the segregatable allocator.
             /// This is the one primarily used.
-            segregatable_allocator_type& get_segregatable_allocator() FOONATHAN_NOEXCEPT
+            segregatable_allocator_type& get_segregatable_allocator() noexcept
             {
                 return get_segregatable().get_allocator();
             }
 
-            const segregatable_allocator_type& get_segregatable_allocator() const FOONATHAN_NOEXCEPT
+            const segregatable_allocator_type& get_segregatable_allocator() const noexcept
             {
                 return get_segregatable().get_allocator();
             }
@@ -227,19 +227,19 @@ namespace foonathan
             /// @{
             /// \returns A reference to the fallback allocator.
             /// It will be used if the \concept{concept_segregator,Segregator} doesn't want the alloction.
-            fallback_allocator_type& get_fallback_allocator() FOONATHAN_NOEXCEPT
+            fallback_allocator_type& get_fallback_allocator() noexcept
             {
                 return detail::ebo_storage<1, fallback_allocator_type>::get();
             }
 
-            const fallback_allocator_type& get_fallback_allocator() const FOONATHAN_NOEXCEPT
+            const fallback_allocator_type& get_fallback_allocator() const noexcept
             {
                 return detail::ebo_storage<1, fallback_allocator_type>::get();
             }
             /// @}
 
         private:
-            segregatable& get_segregatable() FOONATHAN_NOEXCEPT
+            segregatable& get_segregatable() noexcept
             {
                 return s_;
             }

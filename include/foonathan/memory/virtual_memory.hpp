@@ -47,28 +47,28 @@ namespace foonathan
         /// or \c nullptr in case of error.
         /// \note The memory may not be used, it must first be commited.
         /// \ingroup memory allocator
-        void* virtual_memory_reserve(std::size_t no_pages) FOONATHAN_NOEXCEPT;
+        void* virtual_memory_reserve(std::size_t no_pages) noexcept;
 
         /// Releases reserved virtual memory.
         /// \effects Returns previously reserved pages to the system.
         /// \requires \c pages must come from a previous call to \ref virtual_memory_reserve with the same \c calc_no_pages,
         /// it must not be \c nullptr.
         /// \ingroup memory allocator
-        void virtual_memory_release(void* pages, std::size_t no_pages) FOONATHAN_NOEXCEPT;
+        void virtual_memory_release(void* pages, std::size_t no_pages) noexcept;
 
         /// Commits reserved virtual memory.
         /// \effects Marks \c calc_no_pages pages starting at the given address available for use.
         /// \returns The beginning of the committed area, i.e. \c memory, or \c nullptr in case of error.
         /// \requires The memory must be previously reserved.
         /// \ingroup memory allocator
-        void* virtual_memory_commit(void* memory, std::size_t no_pages) FOONATHAN_NOEXCEPT;
+        void* virtual_memory_commit(void* memory, std::size_t no_pages) noexcept;
 
         /// Decommits commited virtual memory.
         /// \effects Puts commited memory back in the reserved state.
         /// \requires \c memory must come from a previous call to \ref virtual_memory_commit with the same \c calc_no_pages
         /// it must not be \c nullptr.
         /// \ingroup memory allocator
-        void virtual_memory_decommit(void* memory, std::size_t no_pages) FOONATHAN_NOEXCEPT;
+        void virtual_memory_decommit(void* memory, std::size_t no_pages) noexcept;
 
         /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using the virtual memory allocation functions.
         /// It does not prereserve any memory and will always reserve and commit combined.
@@ -79,11 +79,11 @@ namespace foonathan
         public:
             using is_stateful = std::false_type;
 
-            virtual_memory_allocator() FOONATHAN_NOEXCEPT = default;
-            virtual_memory_allocator(virtual_memory_allocator&&) FOONATHAN_NOEXCEPT {}
-            ~virtual_memory_allocator() FOONATHAN_NOEXCEPT = default;
+            virtual_memory_allocator() noexcept = default;
+            virtual_memory_allocator(virtual_memory_allocator&&) noexcept {}
+            ~virtual_memory_allocator() noexcept = default;
 
-            virtual_memory_allocator& operator=(virtual_memory_allocator&&) FOONATHAN_NOEXCEPT
+            virtual_memory_allocator& operator=(virtual_memory_allocator&&) noexcept
             {
                 return *this;
             }
@@ -101,13 +101,13 @@ namespace foonathan
             /// \effects A \concept{concept_rawallocator,RawAllocator} deallocation function.
             /// It calls \ref virtual_memory_decommit followed by \ref virtual_memory_release for the deallocation.
             void deallocate_node(void* node, std::size_t size,
-                                 std::size_t alignment) FOONATHAN_NOEXCEPT;
+                                 std::size_t alignment) noexcept;
 
             /// \returns The maximum node size by returning the maximum value.
-            std::size_t max_node_size() const FOONATHAN_NOEXCEPT;
+            std::size_t max_node_size() const noexcept;
 
             /// \returns The maximum alignment which is the same as the \ref virtual_memory_page_size.
-            std::size_t max_alignment() const FOONATHAN_NOEXCEPT;
+            std::size_t max_alignment() const noexcept;
         };
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
@@ -132,12 +132,12 @@ namespace foonathan
             explicit virtual_block_allocator(std::size_t block_size, std::size_t no_blocks);
 
             /// \effects Releases the reserved virtual memory.
-            ~virtual_block_allocator() FOONATHAN_NOEXCEPT;
+            ~virtual_block_allocator() noexcept;
 
             /// @{
             /// \effects Moves the block allocator, it transfers ownership over the reserved area.
             /// This does not invalidate any memory blocks.
-            virtual_block_allocator(virtual_block_allocator&& other) FOONATHAN_NOEXCEPT
+            virtual_block_allocator(virtual_block_allocator&& other) noexcept
             : cur_(other.cur_),
               end_(other.end_),
               block_size_(other.block_size_)
@@ -146,7 +146,7 @@ namespace foonathan
                 other.block_size_       = 0;
             }
 
-            virtual_block_allocator& operator=(virtual_block_allocator&& other) FOONATHAN_NOEXCEPT
+            virtual_block_allocator& operator=(virtual_block_allocator&& other) noexcept
             {
                 virtual_block_allocator tmp(detail::move(other));
                 swap(*this, tmp);
@@ -157,7 +157,7 @@ namespace foonathan
             /// \effects Swaps the ownership over the reserved memory.
             /// This does not invalidate any memory blocks.
             friend void swap(virtual_block_allocator& a,
-                             virtual_block_allocator& b) FOONATHAN_NOEXCEPT
+                             virtual_block_allocator& b) noexcept
             {
                 detail::adl_swap(a.cur_, b.cur_);
                 detail::adl_swap(a.end_, b.end_);
@@ -173,22 +173,22 @@ namespace foonathan
             /// This block will be returned again on the next call to \ref allocate_block().
             /// \requires \c block must be the current top block of the memory,
             /// this is guaranteed by \ref memory_arena.
-            void deallocate_block(memory_block block) FOONATHAN_NOEXCEPT;
+            void deallocate_block(memory_block block) noexcept;
 
             /// \returns The next block size, this is the block size of the constructor.
-            std::size_t next_block_size() const FOONATHAN_NOEXCEPT
+            std::size_t next_block_size() const noexcept
             {
                 return block_size_;
             }
 
             /// \returns The number of blocks that can be committed until it runs out of memory.
-            std::size_t capacity_left() const FOONATHAN_NOEXCEPT
+            std::size_t capacity_left() const noexcept
             {
                 return static_cast<std::size_t>(end_ - cur_) / block_size_;
             }
 
         private:
-            allocator_info info() FOONATHAN_NOEXCEPT;
+            allocator_info info() noexcept;
 
             char *      cur_, *end_;
             std::size_t block_size_;
