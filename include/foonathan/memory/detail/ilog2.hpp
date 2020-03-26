@@ -30,8 +30,8 @@ namespace foonathan
                 return sizeof(value) * CHAR_BIT - __builtin_clzll(value);
 #else
                 // Adapted from https://stackoverflow.com/a/40943402
-                std::size_t   clz = 64;
-                std::uint64_t c   = 32;
+                std::size_t clz = 64;
+                std::size_t c   = 32;
                 do
                 {
                     auto tmp = x >> c;
@@ -42,7 +42,7 @@ namespace foonathan
                     }
                     c = c >> 1;
                 } while (c != 0);
-                clz -= x;
+                clz -= x ? 1 : 0;
 
                 return 64 - clz;
 #endif
