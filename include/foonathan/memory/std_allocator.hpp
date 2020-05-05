@@ -250,12 +250,12 @@ namespace foonathan
             // any_allocator_reference: use virtual function which already does a dispatch on node/array
             void* allocate_impl(std::true_type, size_type n)
             {
-                return get_allocator()->allocate_impl(n, sizeof(T), alignof(T));
+                return get_allocator().allocate_impl(n, sizeof(T), alignof(T));
             }
 
             void deallocate_impl(std::true_type, void* ptr, size_type n)
             {
-                get_allocator()->deallocate_impl(ptr, n, sizeof(T), alignof(T));
+                get_allocator().deallocate_impl(ptr, n, sizeof(T), alignof(T));
             }
 
             // alloc_reference: decide between node/array
