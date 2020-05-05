@@ -32,13 +32,11 @@ namespace foonathan
                 // memory is taken from fixed_memory_stack, it must be sufficient
                 free_list_array(fixed_memory_stack& stack, const char* end,
                                 std::size_t max_node_size) noexcept
-                    : no_elements_(AccessPolicy::index_from_size(max_node_size) - min_size_index
-                                   + 1)
+                : no_elements_(AccessPolicy::index_from_size(max_node_size) - min_size_index + 1)
                 {
-                    array_ =
-                        static_cast<FreeList*>(stack.allocate(end, no_elements_ * sizeof(FreeList),
-                                                              alignof(FreeList)));
-                    FOONATHAN_MEMORY_ASSERT(array_);
+                    array_ = static_cast<FreeList*>(
+                        stack.allocate(end, no_elements_ * sizeof(FreeList), alignof(FreeList)));
+                    FOONATHAN_MEMORY_ASSERT_MSG(array_, "insufficient memory for free lists");
                     for (std::size_t i = 0u; i != no_elements_; ++i)
                     {
                         auto node_size = AccessPolicy::size_from_index(i + min_size_index);
@@ -48,8 +46,7 @@ namespace foonathan
 
                 // move constructor, does not actually move the elements, just the pointer
                 free_list_array(free_list_array&& other) noexcept
-                    : array_(other.array_),
-                      no_elements_(other.no_elements_)
+                : array_(other.array_), no_elements_(other.no_elements_)
                 {
                     other.array_       = nullptr;
                     other.no_elements_ = 0u;
@@ -123,7 +120,7 @@ namespace foonathan
                 static std::size_t size_from_index(std::size_t index) noexcept;
             };
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif //FOONATHAN_MEMORY_DETAIL_FREE_LIST_ARRAY_HPP
