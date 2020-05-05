@@ -89,7 +89,7 @@ namespace foonathan
         /// A \c std::unique_ptr that deletes using a \concept{concept_rawallocator,RawAllocator}.
         ///
         /// It is an alias template using \ref allocator_deleter as \c Deleter class.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(unique_ptr,
                                  std::unique_ptr<T, allocator_deleter<T, RawAllocator>>);
@@ -100,7 +100,7 @@ namespace foonathan
         /// and is meant to be used inside containers.
         /// It is an alias template using \ref allocator_polymorphic_deleter as \c Deleter class.
         /// \note It has a relatively high overhead, so only use it if you have to.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class BaseType, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(
             unique_base_ptr,
@@ -112,7 +112,7 @@ namespace foonathan
         /// \returns A \c std::unique_ptr owning that memory.
         /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
         /// the caller has to ensure that the object lives as long as the smart pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator, typename... Args>
         auto allocate_unique(RawAllocator&& alloc, Args&&... args) -> FOONATHAN_REQUIRES_RET(
             !std::is_array<T>::value,
@@ -130,7 +130,7 @@ namespace foonathan
         /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that memory.
         /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
         /// the caller has to ensure that the object lives as long as the smart pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator, typename... Args>
         auto allocate_unique(any_allocator, RawAllocator&& alloc, Args&&... args)
             -> FOONATHAN_REQUIRES_RET(!std::is_array<T>::value,
@@ -147,7 +147,7 @@ namespace foonathan
         /// \returns A \c std::unique_ptr owning that array.
         /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
         /// the caller has to ensure that the object lives as long as the smart pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator>
         auto allocate_unique(RawAllocator&& alloc, std::size_t size) -> FOONATHAN_REQUIRES_RET(
             std::is_array<T>::value,
@@ -165,7 +165,7 @@ namespace foonathan
         /// \returns A \c std::unique_ptr with a type-erased allocator reference owning that array.
         /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the deleter,
         /// the caller has to ensure that the object lives as long as the smart pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator>
         auto allocate_unique(any_allocator, RawAllocator&& alloc, std::size_t size)
             -> FOONATHAN_REQUIRES_RET(std::is_array<T>::value,
@@ -184,7 +184,7 @@ namespace foonathan
         /// \returns A \c std::shared_ptr created using \c std::allocate_shared.
         /// \note If the allocator is stateful a reference to the \c RawAllocator will be stored inside the shared pointer,
         /// the caller has to ensure that the object lives as long as the smart pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator, typename... Args>
         std::shared_ptr<T> allocate_shared(RawAllocator&& alloc, Args&&... args)
         {
@@ -198,7 +198,7 @@ namespace foonathan
 #else
         /// Contains the node size needed for a `std::shared_ptr`.
         /// These classes are auto-generated and only available if the tools are build and without cross-compiling.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T>
         struct shared_ptr_node_size : std::integral_constant<std::size_t, implementation_defined>
         {

@@ -21,7 +21,7 @@ namespace foonathan
     {
         /// A \concept{concept_rawallocator,RawAllocator} adapter that ensures a minimum alignment.
         /// It adjusts the alignment value so that it is always larger than the minimum and forwards to the specified allocator.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class RawAllocator>
         class aligned_allocator : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
@@ -45,8 +45,7 @@ namespace foonathan
             /// \effects Moves the \c aligned_allocator object.
             /// It simply moves the underlying allocator.
             aligned_allocator(aligned_allocator&& other) noexcept
-                : allocator_type(detail::move(other)),
-                  min_alignment_(other.min_alignment_)
+            : allocator_type(detail::move(other)), min_alignment_(other.min_alignment_)
             {
             }
 
@@ -75,8 +74,7 @@ namespace foonathan
                 return traits::allocate_array(get_allocator(), count, size, alignment);
             }
 
-            void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) noexcept
+            void deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -115,8 +113,7 @@ namespace foonathan
             }
 
             FOONATHAN_ENABLE_IF(composable::value)
-            bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) noexcept
+            bool try_deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 if (min_alignment_ > alignment)
                     alignment = min_alignment_;
@@ -187,15 +184,14 @@ namespace foonathan
         /// \returns A new \ref aligned_allocator created by forwarding the parameters to the constructor.
         /// \relates aligned_allocator
         template <class RawAllocator>
-        auto make_aligned_allocator(std::size_t    min_alignment,
-                                    RawAllocator&& allocator) noexcept
+        auto make_aligned_allocator(std::size_t min_alignment, RawAllocator&& allocator) noexcept
             -> aligned_allocator<typename std::decay<RawAllocator>::type>
         {
             return aligned_allocator<
                 typename std::decay<RawAllocator>::type>{min_alignment,
                                                          detail::forward<RawAllocator>(allocator)};
         }
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_ALIGNED_ALLOCATOR_HPP_INCLUDED

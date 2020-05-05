@@ -33,7 +33,7 @@ namespace foonathan
         /// effectively releasing all of its memory.
         /// Any memory allocated will thus be usable for `N` iterations of the loop.
         /// This type of allocator is a generalization of the double frame allocator.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <std::size_t N, class BlockOrRawAllocator = default_allocator>
         class iteration_allocator
         : FOONATHAN_EBO(detail::iteration_block_allocator<BlockOrRawAllocator>)
@@ -107,7 +107,7 @@ namespace foonathan
 
             /// \effects Allocates a memory block of given size and alignment
             /// similar to \ref allocate().
-            /// \returns A \concept{concept_node,node| with given size and alignment
+            /// \returns A \concept{concept_node,node} with given size and alignment
             /// or `nullptr` if the current stack does not have any memory left.
             void* try_allocate(std::size_t size, std::size_t alignment) noexcept
             {
@@ -188,7 +188,7 @@ namespace foonathan
         };
 
         /// An alias for \ref iteration_allocator for two iterations.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class BlockOrRawAllocator = default_allocator>
         FOONATHAN_ALIAS_TEMPLATE(double_frame_allocator,
                                  iteration_allocator<2, BlockOrRawAllocator>);
@@ -200,7 +200,7 @@ namespace foonathan
         /// Specialization of the \ref allocator_traits for \ref iteration_allocator.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <std::size_t N, class BlockAllocator>
         class allocator_traits<iteration_allocator<N, BlockAllocator>>
         {
@@ -225,8 +225,7 @@ namespace foonathan
             /// @{
             /// \effects Does nothing.
             /// Actual deallocation can only be done via \ref memory_stack::unwind().
-            static void deallocate_node(allocator_type&, void*, std::size_t,
-                                        std::size_t) noexcept
+            static void deallocate_node(allocator_type&, void*, std::size_t, std::size_t) noexcept
             {
             }
 
@@ -258,7 +257,7 @@ namespace foonathan
         };
 
         /// Specialization of the \ref composable_allocator_traits for \ref iteration_allocator classes.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <std::size_t N, class BlockAllocator>
         class composable_allocator_traits<iteration_allocator<N, BlockAllocator>>
         {
@@ -274,8 +273,7 @@ namespace foonathan
 
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_array(allocator_type& state, std::size_t count,
-                                            std::size_t size,
-                                            std::size_t alignment) noexcept
+                                            std::size_t size, std::size_t alignment) noexcept
             {
                 return state.try_allocate(count * size, alignment);
             }
@@ -290,8 +288,7 @@ namespace foonathan
             }
 
             static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
-                                             std::size_t size,
-                                             std::size_t alignment) noexcept
+                                             std::size_t size, std::size_t alignment) noexcept
             {
                 return try_deallocate_node(state, ptr, count * size, alignment);
             }

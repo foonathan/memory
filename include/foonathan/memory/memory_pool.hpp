@@ -40,10 +40,10 @@ namespace foonathan
         /// for example in a node based container like \c std::list.
         /// It is not so good for different allocation sizes and has some drawbacks for arrays
         /// as described in \ref memory_pool_type.hpp.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <typename PoolType = node_pool, class BlockOrRawAllocator = default_allocator>
         class memory_pool
-            : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_leak_handler>)
+        : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_leak_handler>)
         {
             using free_list    = typename PoolType::type;
             using leak_checker = detail::default_leak_checker<detail::memory_pool_leak_handler>;
@@ -71,9 +71,7 @@ namespace foonathan
 
             /// \effects Destroys the \ref memory_pool by returning all memory blocks,
             /// regardless of properly deallocated back to the \concept{concept_blockallocator,BlockAllocator}.
-            ~memory_pool() noexcept
-            {
-            }
+            ~memory_pool() noexcept {}
 
             /// @{
             /// \effects Moving a \ref memory_pool object transfers ownership over the free list,
@@ -81,9 +79,9 @@ namespace foonathan
             /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
             /// even when passing it memory that was previously allocated by this object.
             memory_pool(memory_pool&& other) noexcept
-                : leak_checker(detail::move(other)),
-                  arena_(detail::move(other.arena_)),
-                  free_list_(detail::move(other.free_list_))
+            : leak_checker(detail::move(other)),
+              arena_(detail::move(other.arena_)),
+              free_list_(detail::move(other.free_list_))
             {
             }
 
@@ -127,17 +125,13 @@ namespace foonathan
             /// \requires \c n must be valid \concept{concept_array,array count}.
             void* allocate_array(std::size_t n)
             {
-                detail::check_allocation_size<bad_array_size>(n * node_size(),
-                                                              [&] {
-                                                                  return pool_type::value ?
-                                                                             next_capacity() :
-                                                                             0;
-                                                              },
-                                                              info());
+                detail::check_allocation_size<bad_array_size>(
+                    n * node_size(), [&] { return pool_type::value ? next_capacity() : 0; },
+                    info());
                 return allocate_array(n, node_size());
             }
 
-            /// \effects Allocates an \concept{concept_array,array| of nodes similar to \ref allocate_array().
+            /// \effects Allocates an \concept{concept_array,array} of nodes similar to \ref allocate_array().
             /// But it will never allocate a new memory block.
             /// \returns An array of \c n nodes of size \ref node_size() suitable aligned
             /// or `nullptr`.
@@ -245,8 +239,7 @@ namespace foonathan
                                                                  free_list_.allocate(n * node_size);
             }
 
-            bool try_deallocate_array(void* ptr, std::size_t n,
-                                      std::size_t node_size) noexcept
+            bool try_deallocate_array(void* ptr, std::size_t n, std::size_t node_size) noexcept
             {
                 if (!pool_type::value || !arena_.owns(ptr))
                     return false;
@@ -255,7 +248,7 @@ namespace foonathan
             }
 
             memory_arena<allocator_type, false> arena_;
-            free_list free_list_;
+            free_list                           free_list_;
 
             friend allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
             friend composable_allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>;
@@ -273,7 +266,7 @@ namespace foonathan
         /// Specialization of the \ref allocator_traits for \ref memory_pool classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref memory_pool::allocate_node() and this \c allocate_node().
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <typename PoolType, class ImplRawAllocator>
         class allocator_traits<memory_pool<PoolType, ImplRawAllocator>>
         {
@@ -289,9 +282,8 @@ namespace foonathan
             {
                 detail::check_allocation_size<bad_node_size>(size, max_node_size(state),
                                                              state.info());
-                detail::check_allocation_size<bad_alignment>(alignment,
-                                                             [&] { return max_alignment(state); },
-                                                             state.info());
+                detail::check_allocation_size<bad_alignment>(
+                    alignment, [&] { return max_alignment(state); }, state.info());
                 auto mem = state.allocate_node();
                 state.on_allocate(size);
                 return mem;
@@ -308,9 +300,8 @@ namespace foonathan
             {
                 detail::check_allocation_size<bad_node_size>(size, max_node_size(state),
                                                              state.info());
-                detail::check_allocation_size<bad_alignment>(alignment,
-                                                             [&] { return max_alignment(state); },
-                                                             state.info());
+                detail::check_allocation_size<bad_alignment>(
+                    alignment, [&] { return max_alignment(state); }, state.info());
                 detail::check_allocation_size<bad_array_size>(count * size, max_array_size(state),
                                                               state.info());
                 auto mem = state.allocate_array(count, size);
@@ -355,7 +346,7 @@ namespace foonathan
         };
 
         /// Specialization of the \ref composable_allocator_traits for \ref memory_pool classes.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <typename PoolType, class BlockOrRawAllocator>
         class composable_allocator_traits<memory_pool<PoolType, BlockOrRawAllocator>>
         {
@@ -380,8 +371,7 @@ namespace foonathan
             /// \returns A \concept{concept_array,array} with specified properties
             /// or `nullptr` if it was unable to allocate.
             static void* try_allocate_array(allocator_type& state, std::size_t count,
-                                            std::size_t size,
-                                            std::size_t alignment) noexcept
+                                            std::size_t size, std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state)
                     || count * size > traits::max_array_size(state)
@@ -403,8 +393,7 @@ namespace foonathan
             /// \effects Forwards to \ref memory_pool::deallocate_array() with the same size adjustment.
             /// \returns Whether the deallocation was successful.
             static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
-                                             std::size_t size,
-                                             std::size_t alignment) noexcept
+                                             std::size_t size, std::size_t alignment) noexcept
             {
                 if (size > traits::max_node_size(state)
                     || count * size > traits::max_array_size(state)
@@ -423,7 +412,7 @@ namespace foonathan
         extern template class composable_allocator_traits<memory_pool<array_pool>>;
         extern template class composable_allocator_traits<memory_pool<small_node_pool>>;
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED

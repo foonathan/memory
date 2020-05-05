@@ -45,7 +45,7 @@ namespace foonathan
         } // namespace traits_detail
 
         /// Controls the propagation of a \ref std_allocator for a certain \concept{concept_rawallocator,RawAllocator}.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class RawAllocator>
         struct propagation_traits
         {
@@ -70,7 +70,7 @@ namespace foonathan
 
         /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a "normal" \c Allocator.
         /// It allows using a \c RawAllocator anywhere a \c Allocator is required.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T, class RawAllocator>
         class std_allocator :
 #if defined _MSC_VER && defined __clang__
@@ -276,29 +276,29 @@ namespace foonathan
             }
 
             template <typename U> // stateful
-            bool equal_to_impl(std::true_type, const std_allocator<U, RawAllocator>& other) const
-                noexcept
+            bool equal_to_impl(std::true_type,
+                               const std_allocator<U, RawAllocator>& other) const noexcept
             {
                 return &get_allocator() == &other.get_allocator();
             }
 
             template <typename U> // non-stateful
-            bool equal_to_impl(std::false_type, const std_allocator<U, RawAllocator>&) const
-                noexcept
+            bool equal_to_impl(std::false_type,
+                               const std_allocator<U, RawAllocator>&) const noexcept
             {
                 return true;
             }
 
             template <typename U> // shared
-            bool equal_to(std::true_type, const std_allocator<U, RawAllocator>& other) const
-                noexcept
+            bool equal_to(std::true_type,
+                          const std_allocator<U, RawAllocator>& other) const noexcept
             {
                 return get_allocator() == other.get_allocator();
             }
 
             template <typename U> // not shared
-            bool equal_to(std::false_type, const std_allocator<U, RawAllocator>& other) const
-                noexcept
+            bool equal_to(std::false_type,
+                          const std_allocator<U, RawAllocator>& other) const noexcept
             {
                 return equal_to_impl(typename allocator_traits<RawAllocator>::is_stateful{}, other);
             }
@@ -343,7 +343,7 @@ namespace foonathan
         /// An alias template for \ref std_allocator using a type-erased \concept{concept_rawallocator,RawAllocator}.
         /// This is the same as using a \ref std_allocator with the tag type \ref any_allocator.
         /// The implementation is optimized to call fewer virtual functions.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename T>
         FOONATHAN_ALIAS_TEMPLATE(any_std_allocator, std_allocator<T, any_allocator>);
 

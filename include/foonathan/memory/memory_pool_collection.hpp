@@ -35,7 +35,7 @@ namespace foonathan
         /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each size.
         /// That means that for each possible size up to an upper bound there will be a seperate free list.
         /// Allocating a node will not waste any memory.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         struct identity_buckets
         {
             using type = detail::identity_access_policy;
@@ -44,7 +44,7 @@ namespace foonathan
         /// A \c BucketDistribution for \ref memory_pool_collection defining that there is a bucket, i.e. pool, for each power of two.
         /// That means for each power of two up to an upper bound there will be a separate free list.
         /// Allocating a node will only waste half of the memory.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         struct log2_buckets
         {
             using type = detail::log2_access_policy;
@@ -56,12 +56,11 @@ namespace foonathan
         /// Allocating a node of given size will use the appropriate free list.<br>
         /// This allocator is ideal for \concept{concept_node,node} allocations in any order but with a predefined set of sizes,
         /// not only one size like \ref memory_pool.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class PoolType, class BucketDistribution,
                   class BlockOrRawAllocator = default_allocator>
         class memory_pool_collection
-            : FOONATHAN_EBO(
-                  detail::default_leak_checker<detail::memory_pool_collection_leak_handler>)
+        : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_pool_collection_leak_handler>)
         {
             using free_list_array =
                 detail::free_list_array<typename PoolType::type, typename BucketDistribution::type>;
@@ -98,10 +97,10 @@ namespace foonathan
             /// That means that it is not allowed to call \ref deallocate_node() on a moved-from allocator
             /// even when passing it memory that was previously allocated by this object.
             memory_pool_collection(memory_pool_collection&& other) noexcept
-                : leak_checker(detail::move(other)),
-                  arena_(detail::move(other.arena_)),
-                  stack_(detail::move(other.stack_)),
-                  pools_(detail::move(other.pools_))
+            : leak_checker(detail::move(other)),
+              arena_(detail::move(other.arena_)),
+              stack_(detail::move(other.stack_)),
+              pools_(detail::move(other.pools_))
             {
             }
 
@@ -127,9 +126,8 @@ namespace foonathan
             /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed or a \ref bad_node_size exception if the node size is too big.
             void* allocate_node(std::size_t node_size)
             {
-                detail::check_allocation_size<bad_node_size>(node_size,
-                                                             [&] { return max_node_size(); },
-                                                             info());
+                detail::check_allocation_size<bad_node_size>(
+                    node_size, [&] { return max_node_size(); }, info());
                 auto& pool = pools_.get(node_size);
                 if (pool.empty())
                 {
@@ -145,7 +143,7 @@ namespace foonathan
             /// \effects Allocates a \concept{concept_node,node} of given size.
             /// It is similar to \ref allocate_node() but will return `nullptr` on any failure,
             /// instead of growing the arnea and possibly throwing.
-            /// \returns A \concept{concept_node,node| of given size suitable aligned
+            /// \returns A \concept{concept_node,node} of given size suitable aligned
             /// or `nullptr` in case of failure.
             void* try_allocate_node(std::size_t node_size) noexcept
             {
@@ -172,9 +170,8 @@ namespace foonathan
             /// \c node_size must be valid \concept{concept_node,node size}.
             void* allocate_array(std::size_t count, std::size_t node_size)
             {
-                detail::check_allocation_size<bad_node_size>(node_size,
-                                                             [&] { return max_node_size(); },
-                                                             info());
+                detail::check_allocation_size<bad_node_size>(
+                    node_size, [&] { return max_node_size(); }, info());
 
                 auto& pool = pools_.get(node_size);
 
@@ -184,12 +181,9 @@ namespace foonathan
                 if (!mem)
                 {
                     // use stack for allocation
-                    detail::check_allocation_size<bad_array_size>(count * node_size,
-                                                                  [&] {
-                                                                      return next_capacity()
-                                                                             - pool.alignment() + 1;
-                                                                  },
-                                                                  info());
+                    detail::check_allocation_size<bad_array_size>(
+                        count * node_size, [&] { return next_capacity() - pool.alignment() + 1; },
+                        info());
                     mem = reserve_memory(pool, count * node_size).memory;
                     FOONATHAN_MEMORY_ASSERT(mem);
                 }
@@ -200,7 +194,7 @@ namespace foonathan
             /// \effects Allocates a \concept{concept_array,array} of given size.
             /// It is similar to \ref allocate_node() but will return `nullptr` on any failure,
             /// instead of growing the arnea and possibly throwing.
-            /// \returns A \concept{concept_array,array| of given size suitable aligned
+            /// \returns A \concept{concept_array,array} of given size suitable aligned
             /// or `nullptr` in case of failure.
             void* try_allocate_array(std::size_t count, std::size_t node_size) noexcept
             {
@@ -239,8 +233,7 @@ namespace foonathan
             /// \effects Deallocates an \concept{concept_array,array} by putting it back onto the free list.
             /// \requires \c ptr must be a result from a previous call to \ref allocate_array() with the same sizes on the same free list,
             /// i.e. either this allocator object or a new object created by moving this to it.
-            void deallocate_array(void* ptr, std::size_t count,
-                                  std::size_t node_size) noexcept
+            void deallocate_array(void* ptr, std::size_t count, std::size_t node_size) noexcept
             {
                 pools_.get(node_size).deallocate(ptr, count * node_size);
             }
@@ -249,8 +242,7 @@ namespace foonathan
             /// But it checks if it can deallocate this memory.
             /// \returns `true` if the array could be deallocated,
             /// `false` otherwise.
-            bool try_deallocate_array(void* ptr, std::size_t count,
-                                      std::size_t node_size) noexcept
+            bool try_deallocate_array(void* ptr, std::size_t count, std::size_t node_size) noexcept
             {
                 if (!pool_type::value || node_size > max_node_size() || !arena_.owns(ptr))
                     return false;
@@ -351,8 +343,7 @@ namespace foonathan
                 return false;
             }
 
-            void try_reserve_memory(typename pool_type::type& pool,
-                                    std::size_t               capacity) noexcept
+            void try_reserve_memory(typename pool_type::type& pool, std::size_t capacity) noexcept
             {
                 auto mem = stack_.allocate(block_end(), capacity, detail::max_alignment);
                 if (!mem)
@@ -378,8 +369,8 @@ namespace foonathan
             }
 
             memory_arena<allocator_type, false> arena_;
-            detail::fixed_memory_stack stack_;
-            free_list_array            pools_;
+            detail::fixed_memory_stack          stack_;
+            free_list_array                     pools_;
 
             friend allocator_traits<memory_pool_collection>;
         };
@@ -396,7 +387,7 @@ namespace foonathan
 
         /// An alias for \ref memory_pool_collection using the \ref identity_buckets policy
         /// and a \c PoolType defaulting to \ref node_pool.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class PoolType = node_pool, class ImplAllocator = default_allocator>
         FOONATHAN_ALIAS_TEMPLATE(bucket_allocator,
                                  memory_pool_collection<PoolType, identity_buckets, ImplAllocator>);
@@ -407,7 +398,7 @@ namespace foonathan
         /// Specialization of the \ref allocator_traits for \ref memory_pool_collection classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref memory_pool_collection::allocate_node() and this \c allocate_node().
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class Pool, class BucketDist, class RawAllocator>
         class allocator_traits<memory_pool_collection<Pool, BucketDist, RawAllocator>>
         {
@@ -423,11 +414,8 @@ namespace foonathan
                                        std::size_t alignment)
             {
                 // node already checked
-                detail::check_allocation_size<bad_alignment>(alignment,
-                                                             [&] {
-                                                                 return detail::alignment_for(size);
-                                                             },
-                                                             state.info());
+                detail::check_allocation_size<bad_alignment>(
+                    alignment, [&] { return detail::alignment_for(size); }, state.info());
                 auto mem = state.allocate_node(size);
                 state.on_allocate(size);
                 return mem;
@@ -440,11 +428,8 @@ namespace foonathan
                                         std::size_t alignment)
             {
                 // node and array already checked
-                detail::check_allocation_size<bad_alignment>(alignment,
-                                                             [&] {
-                                                                 return detail::alignment_for(size);
-                                                             },
-                                                             state.info());
+                detail::check_allocation_size<bad_alignment>(
+                    alignment, [&] { return detail::alignment_for(size); }, state.info());
                 auto mem = state.allocate_array(count, size);
                 state.on_allocate(count * size);
                 return mem;
@@ -488,7 +473,7 @@ namespace foonathan
         };
 
         /// Specialization of the \ref composable_allocator_traits for \ref memory_pool_collection classes.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class Pool, class BucketDist, class RawAllocator>
         class composable_allocator_traits<memory_pool_collection<Pool, BucketDist, RawAllocator>>
         {
@@ -510,8 +495,7 @@ namespace foonathan
             /// \returns The result of \ref memory_pool_collection::try_allocate_array()
             /// or `nullptr` if the allocation size was too big.
             static void* try_allocate_array(allocator_type& state, std::size_t count,
-                                            std::size_t size,
-                                            std::size_t alignment) noexcept
+                                            std::size_t size, std::size_t alignment) noexcept
             {
                 if (count * size > traits::max_array_size(state)
                     || alignment > traits::max_alignment(state))
@@ -532,8 +516,7 @@ namespace foonathan
             /// \effects Forwards to \ref memory_pool_collection::deallocate_array().
             /// \returns Whether the deallocation was successful.
             static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
-                                             std::size_t size,
-                                             std::size_t alignment) noexcept
+                                             std::size_t size, std::size_t alignment) noexcept
             {
                 if (count * size > traits::max_array_size(state)
                     || alignment > traits::max_alignment(state))
@@ -544,31 +527,31 @@ namespace foonathan
 
 #if FOONATHAN_MEMORY_EXTERN_TEMPLATE
         extern template class allocator_traits<memory_pool_collection<node_pool, identity_buckets>>;
-        extern template class allocator_traits<memory_pool_collection<array_pool,
-                                                                      identity_buckets>>;
-        extern template class allocator_traits<memory_pool_collection<small_node_pool,
-                                                                      identity_buckets>>;
+        extern template class allocator_traits<
+            memory_pool_collection<array_pool, identity_buckets>>;
+        extern template class allocator_traits<
+            memory_pool_collection<small_node_pool, identity_buckets>>;
 
         extern template class allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
         extern template class allocator_traits<memory_pool_collection<array_pool, log2_buckets>>;
-        extern template class allocator_traits<memory_pool_collection<small_node_pool,
-                                                                      log2_buckets>>;
+        extern template class allocator_traits<
+            memory_pool_collection<small_node_pool, log2_buckets>>;
 
-        extern template class composable_allocator_traits<memory_pool_collection<node_pool,
-                                                                                 identity_buckets>>;
-        extern template class composable_allocator_traits<memory_pool_collection<array_pool,
-                                                                                 identity_buckets>>;
-        extern template class composable_allocator_traits<memory_pool_collection<small_node_pool,
-                                                                                 identity_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<node_pool, identity_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<array_pool, identity_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<small_node_pool, identity_buckets>>;
 
-        extern template class composable_allocator_traits<memory_pool_collection<node_pool,
-                                                                                 log2_buckets>>;
-        extern template class composable_allocator_traits<memory_pool_collection<array_pool,
-                                                                                 log2_buckets>>;
-        extern template class composable_allocator_traits<memory_pool_collection<small_node_pool,
-                                                                                 log2_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<node_pool, log2_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<array_pool, log2_buckets>>;
+        extern template class composable_allocator_traits<
+            memory_pool_collection<small_node_pool, log2_buckets>>;
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED

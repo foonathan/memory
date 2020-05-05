@@ -19,7 +19,7 @@ namespace foonathan
     {
         /// Contains information about an allocator.
         /// It can be used for logging in the various handler functions.
-        /// \ingroup memory core
+        /// \ingroup core
         struct allocator_info
         {
             /// The name of the allocator.
@@ -36,8 +36,7 @@ namespace foonathan
 
             /// \effects Creates it by giving it the name of the allocator and a pointer.
             constexpr allocator_info(const char* n, const void* alloc) noexcept
-                : name(n),
-                  allocator(alloc)
+            : name(n), allocator(alloc)
             {
             }
 
@@ -45,13 +44,13 @@ namespace foonathan
             /// \effects Compares two \ref allocator_info objects, they are equal, if the \ref allocator is the same.
             /// \returns The result of the comparision.
             friend constexpr bool operator==(const allocator_info& a,
-                                                       const allocator_info& b) noexcept
+                                             const allocator_info& b) noexcept
             {
                 return a.allocator == b.allocator;
             }
 
             friend constexpr bool operator!=(const allocator_info& a,
-                                                       const allocator_info& b) noexcept
+                                             const allocator_info& b) noexcept
             {
                 return a.allocator != b.allocator;
             }
@@ -62,7 +61,7 @@ namespace foonathan
         /// It is derived from \c std::bad_alloc.
         /// This can happen if a low level allocation function like \c std::malloc() runs out of memory.
         /// Throwing can be prohibited by the handler function.
-        /// \ingroup memory core
+        /// \ingroup core
         class out_of_memory : public std::bad_alloc
         {
         public:
@@ -118,7 +117,7 @@ namespace foonathan
         /// thrown when a low-level allocator with a fixed size runs out of memory.
         /// For example, thrown by \ref fixed_block_allocator or \ref static_allocator.<br>
         /// It is derived from \ref out_of_memory but does not provide its own handler.
-        /// \ingroup memory core
+        /// \ingroup core
         class out_of_fixed_memory : public out_of_memory
         {
         public:
@@ -144,7 +143,7 @@ namespace foonathan
         /// since it always depends on fence memory, alignment buffer and the like.
         /// \note A user should only \c catch for \c bad_allocation_size, not the derived classes.
         /// \note Most checks will only be done if \ref FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE is \c true.
-        /// \ingroup memory core
+        /// \ingroup core
         class bad_allocation_size : public std::bad_alloc
         {
         public:
@@ -208,7 +207,7 @@ namespace foonathan
         /// The exception class thrown when the node size exceeds the supported maximum,
         /// i.e. it is bigger than \c max_node_size().
         /// It is derived from \ref bad_allocation_size but does not override the handler.
-        /// \ingroup memory core
+        /// \ingroup core
         class bad_node_size : public bad_allocation_size
         {
         public:
@@ -226,7 +225,7 @@ namespace foonathan
         /// The exception class thrown when the array size exceeds the supported maximum,
         /// i.e. it is bigger than \c max_array_size().
         /// It is derived from \ref bad_allocation_size but does not override the handler.
-        /// \ingroup memory core
+        /// \ingroup core
         class bad_array_size : public bad_allocation_size
         {
         public:
@@ -244,7 +243,7 @@ namespace foonathan
         /// The exception class thrown when the alignment exceeds the supported maximum,
         /// i.e. it is bigger than \c max_alignment().
         /// It is derived from \ref bad_allocation_size but does not override the handler.
-        /// \ingroup memory core
+        /// \ingroup core
         class bad_alignment : public bad_allocation_size
         {
         public:
@@ -280,10 +279,11 @@ namespace foonathan
             void check_allocation_size(std::size_t passed, std::size_t supported,
                                        const allocator_info& info)
             {
-                check_allocation_size<Ex>(passed, [&] { return supported; }, info);
+                check_allocation_size<Ex>(
+                    passed, [&] { return supported; }, info);
             }
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_ERROR_HPP_INCLUDED

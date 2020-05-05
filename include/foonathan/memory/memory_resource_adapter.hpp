@@ -69,11 +69,11 @@ namespace foonathan
     namespace memory
     {
         /// The \c memory_resource abstract base class used in the implementation.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         FOONATHAN_ALIAS_TEMPLATE(memory_resource, foonathan_memory_pmr::memory_resource);
 
         /// Wraps a \concept{concept_rawallocator,RawAllocator} and makes it a \ref memory_resource.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class RawAllocator>
         class memory_resource_adapter
         : public memory_resource,
@@ -145,7 +145,7 @@ namespace foonathan
         };
 
         /// Wraps a \ref memory_resource and makes it a \concept{concept_rawallocator,RawAllocator}.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         class memory_resource_allocator
         {
         public:
@@ -209,7 +209,7 @@ namespace foonathan
 
         /// Specialization of \ref is_shared_allocator to mark \ref memory_resource_allocator as shared.
         /// This allows using it as \ref allocator_reference directly.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <>
         struct is_shared_allocator<memory_resource_allocator> : std::true_type
         {

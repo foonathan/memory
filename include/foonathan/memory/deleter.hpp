@@ -21,7 +21,7 @@ namespace foonathan
         /// A deleter class that deallocates the memory through a specified \concept{concept_rawallocator,RawAllocator}.
         ///
         /// It deallocates memory for a specified type but does not call its destructors.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename Type, class RawAllocator>
         class allocator_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
@@ -64,7 +64,7 @@ namespace foonathan
 
         /// Specialization of \ref allocator_deallocator for array types.
         /// Otherwise the same behavior.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename Type, class RawAllocator>
         class allocator_deallocator<Type[], RawAllocator>
         : FOONATHAN_EBO(allocator_reference<RawAllocator>)
@@ -84,8 +84,7 @@ namespace foonathan
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
             allocator_deallocator(allocator_reference<RawAllocator> alloc,
                                   std::size_t                       size) noexcept
-            : allocator_reference<RawAllocator>(alloc),
-              size_(size)
+            : allocator_reference<RawAllocator>(alloc), size_(size)
             {
             }
 
@@ -95,8 +94,7 @@ namespace foonathan
             /// \requires The deallocator must not have been created by the default constructor.
             void operator()(value_type* pointer) noexcept
             {
-                this->deallocate_array(pointer, size_, sizeof(value_type),
-                                       alignof(value_type));
+                this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
@@ -122,7 +120,7 @@ namespace foonathan
         /// A deleter class that deallocates the memory of a derived type through a specified \concept{concept_rawallocator,RawAllocator}.
         ///
         /// It can only be created from a \ref allocator_deallocator and thus must only be used for smart pointers initialized by derived-to-base conversion of the pointer.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename BaseType, class RawAllocator>
         class allocator_polymorphic_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
@@ -162,7 +160,7 @@ namespace foonathan
 
         /// Similar to \ref allocator_deallocator but calls the destructors of the object.
         /// Otherwise behaves the same.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename Type, class RawAllocator>
         class allocator_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
@@ -206,7 +204,7 @@ namespace foonathan
 
         /// Specialization of \ref allocator_deleter for array types.
         /// Otherwise the same behavior.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename Type, class RawAllocator>
         class allocator_deleter<Type[], RawAllocator>
         : FOONATHAN_EBO(allocator_reference<RawAllocator>)
@@ -224,10 +222,8 @@ namespace foonathan
 
             /// \effects Creates it by passing it an \ref allocator_reference and the size of the array that will be deallocated.
             /// It will store the reference to the allocator and uses the referenced allocator object for the deallocation.
-            allocator_deleter(allocator_reference<RawAllocator> alloc,
-                              std::size_t                       size) noexcept
-            : allocator_reference<RawAllocator>(alloc),
-              size_(size)
+            allocator_deleter(allocator_reference<RawAllocator> alloc, std::size_t size) noexcept
+            : allocator_reference<RawAllocator>(alloc), size_(size)
             {
             }
 
@@ -239,8 +235,7 @@ namespace foonathan
             {
                 for (auto cur = pointer; cur != pointer + size_; ++cur)
                     cur->~value_type();
-                this->deallocate_array(pointer, size_, sizeof(value_type),
-                                       alignof(value_type));
+                this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
             }
 
             /// \returns The reference to the allocator.
@@ -266,7 +261,7 @@ namespace foonathan
         /// Similar to \ref allocator_polymorphic_deallocator but calls the destructors of the object.
         /// Otherwise behaves the same.
         /// \note It has a relatively high space overhead, so only use it if you have to.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <typename BaseType, class RawAllocator>
         class allocator_polymorphic_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {

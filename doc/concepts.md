@@ -292,7 +292,7 @@ private:
 ```
 
 ## Segregatable
-<a name="concept_segregatable"><a/>
+<a name="concept_segregatable"></a>
 
 A `Segregatable` stores a [RawAllocator](#concept_rawallocator) and controls for which allocations it will be used.
 It is used in [binary_segregator].

@@ -8,8 +8,6 @@
 /// \file
 /// Convenient namespace alias.
 
-/// \defgroup memory memory
-
 /// \defgroup core Core components
 
 /// \defgroup allocator Allocator implementations

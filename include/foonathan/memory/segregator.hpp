@@ -19,7 +19,7 @@ namespace foonathan
     namespace memory
     {
         /// A \concept{concept_segregatable,Segregatable} that allocates until a maximum size.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class RawAllocator>
         class threshold_segregatable : FOONATHAN_EBO(allocator_traits<RawAllocator>::allocator_type)
         {
@@ -45,8 +45,7 @@ namespace foonathan
             /// \returns `true` if `count * size` is less then or equal to the maximum size,
             /// `false` otherwise.
             /// \note A return value of `true` means that the allocator will be used for the allocation.
-            bool use_allocate_array(std::size_t count, std::size_t size,
-                                    std::size_t) noexcept
+            bool use_allocate_array(std::size_t count, std::size_t size, std::size_t) noexcept
             {
                 return count * size <= max_size_;
             }
@@ -80,7 +79,7 @@ namespace foonathan
 
         /// A composable \concept{concept_rawallocator,RawAllocator} that will always fail.
         /// This is useful for compositioning or as last resort in \ref binary_segregator.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         class null_allocator
         {
         public:
@@ -121,7 +120,7 @@ namespace foonathan
         /// A \concept{concept_rawallocator,RawAllocator} that either uses the \concept{concept_segregatable,Segregatable} or the other `RawAllocator`.
         /// It is a faster alternative to \ref fallback_allocator that doesn't require a composable allocator
         /// and decides about the allocator to use purely with the `Segregatable` based on size and alignment.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class Segregatable, class RawAllocator>
         class binary_segregator
         : FOONATHAN_EBO(
@@ -157,8 +156,7 @@ namespace foonathan
                                                           alignment);
             }
 
-            void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) noexcept
+            void deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 if (get_segregatable().use_allocate_node(size, alignment))
                     segregatable_traits::deallocate_node(get_segregatable_allocator(), ptr, size,
@@ -368,7 +366,7 @@ namespace foonathan
             };
         } // namespace detail
 
-        /// Creates multiple nested \ref binary_segreagator.
+        /// Creates multiple nested \ref binary_segregator.
         /// If you pass one type, it must be a \concept{concept_segregatable,Segregatable}.
         /// Then the result is a \ref binary_segregator with that `Segregatable` and \ref null_allocator as fallback.
         /// If you pass two types, the first one must be a `Segregatable`,
@@ -378,7 +376,7 @@ namespace foonathan
         /// the result is `binary_segregator<Head, segregator<Tail...>>`.
         /// \note It will result in an allocator that tries each `Segregatable` in the order specified
         /// using the last parameter as final fallback.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class... Allocators>
         FOONATHAN_ALIAS_TEMPLATE(segregator,
                                  typename detail::make_segregator_t<Allocators...>::type);
@@ -422,13 +420,13 @@ namespace foonathan
         }
         /// @}
 
-        /// The type of the final fallback \concept{concept_rawallocator,RawAllocator].
+        /// The type of the final fallback \concept{concept_rawallocator,RawAllocator}.
         /// \relates segregator
         template <class Segregator>
         using fallback_allocator_type = typename detail::fallback_type<Segregator>::type;
 
         /// @{
-        /// \returns The final fallback \concept{concept_rawallocator,RawAllocator].
+        /// \returns The final fallback \concept{concept_rawallocator,RawAllocator}.
         /// \relates segregator
         template <class Segregator, class Fallback>
         auto get_fallback_allocator(binary_segregator<Segregator, Fallback>& s)
@@ -444,7 +442,7 @@ namespace foonathan
             return detail::fallback_type<binary_segregator<Segregator, Fallback>>::get(s);
         }
         /// @}
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_SEGREGATOR_HPP_INCLUDED

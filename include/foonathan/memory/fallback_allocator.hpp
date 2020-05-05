@@ -22,7 +22,7 @@ namespace foonathan
         /// it uses `Fallback`.
         /// \requires `Default` must be a composable \concept{concept_rawallocator,RawAllocator},
         /// `Fallback` must be a \concept{concept_rawallocator,RawAllocator}.
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         template <class Default, class Fallback>
         class fallback_allocator
         : FOONATHAN_EBO(detail::ebo_storage<0, typename allocator_traits<Default>::allocator_type>),
@@ -82,8 +82,7 @@ namespace foonathan
                 return ptr;
             }
 
-            void deallocate_node(void* ptr, std::size_t size,
-                                 std::size_t alignment) noexcept
+            void deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 auto res = default_composable_traits::try_deallocate_node(get_default_allocator(),
                                                                           ptr, size, alignment);
@@ -132,8 +131,7 @@ namespace foonathan
             }
 
             FOONATHAN_ENABLE_IF(fallback_composable::value)
-            bool try_deallocate_node(void* ptr, std::size_t size,
-                                     std::size_t alignment) noexcept
+            bool try_deallocate_node(void* ptr, std::size_t size, std::size_t alignment) noexcept
             {
                 auto res = default_composable_traits::try_deallocate_node(get_default_allocator(),
                                                                           ptr, size, alignment);
@@ -208,7 +206,7 @@ namespace foonathan
             }
             /// @}
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_FALLBACK_ALLOCATOR_HPP_INCLUDED

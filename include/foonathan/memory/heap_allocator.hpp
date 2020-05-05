@@ -29,7 +29,7 @@ namespace foonathan
         /// It shall return a \c nullptr if no memory is available.
         /// It must be thread safe.
         /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::malloc is used as fallback.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         void* heap_alloc(std::size_t size) noexcept;
 
         /// Deallocates heap memory.
@@ -40,7 +40,7 @@ namespace foonathan
         /// The pointer will not be zero.
         /// It must be thread safe.
         /// \defaultbe On a hosted implementation this function uses OS specific facilities, \c std::free is used as fallback.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         void heap_dealloc(void* ptr, std::size_t size) noexcept;
 
         namespace detail
@@ -69,7 +69,7 @@ namespace foonathan
         /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory from the heap.
         /// It uses the two functions \ref heap_alloc and \ref heap_dealloc for the allocation,
         /// which default to \c std::malloc and \c std::free.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         using heap_allocator =
             FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::heap_allocator_impl>);
 
@@ -77,7 +77,7 @@ namespace foonathan
         extern template class detail::lowlevel_allocator<detail::heap_allocator_impl>;
         extern template class allocator_traits<heap_allocator>;
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_HEAP_ALLOCATOR_HPP_INCLUDED

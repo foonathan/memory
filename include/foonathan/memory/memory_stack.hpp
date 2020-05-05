@@ -35,14 +35,12 @@ namespace foonathan
                 const char* end;
 
                 stack_marker(std::size_t i, const detail::fixed_memory_stack& s,
-                             const char* e) noexcept : index(i),
-                                                                 top(s.top()),
-                                                                 end(e)
+                             const char* e) noexcept
+                : index(i), top(s.top()), end(e)
                 {
                 }
 
-                friend bool operator==(const stack_marker& lhs,
-                                       const stack_marker& rhs) noexcept
+                friend bool operator==(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     if (lhs.index != rhs.index)
                         return false;
@@ -52,14 +50,12 @@ namespace foonathan
                     return lhs.top == rhs.top;
                 }
 
-                friend bool operator!=(const stack_marker& lhs,
-                                       const stack_marker& rhs) noexcept
+                friend bool operator!=(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     return !(rhs == lhs);
                 }
 
-                friend bool operator<(const stack_marker& lhs,
-                                      const stack_marker& rhs) noexcept
+                friend bool operator<(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     if (lhs.index != rhs.index)
                         return lhs.index < rhs.index;
@@ -69,20 +65,17 @@ namespace foonathan
                     return lhs.top < rhs.top;
                 }
 
-                friend bool operator>(const stack_marker& lhs,
-                                      const stack_marker& rhs) noexcept
+                friend bool operator>(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     return rhs < lhs;
                 }
 
-                friend bool operator<=(const stack_marker& lhs,
-                                       const stack_marker& rhs) noexcept
+                friend bool operator<=(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     return !(rhs < lhs);
                 }
 
-                friend bool operator>=(const stack_marker& lhs,
-                                       const stack_marker& rhs) noexcept
+                friend bool operator>=(const stack_marker& lhs, const stack_marker& rhs) noexcept
                 {
                     return !(lhs < rhs);
                 }
@@ -102,10 +95,10 @@ namespace foonathan
         /// and saves a marker to the current top.
         /// Allocation simply moves this marker by the appropriate number of bytes and returns the pointer at the old marker position,
         /// deallocation is not directly supported, only setting the marker to a previously queried position.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class BlockOrRawAllocator = default_allocator>
         class memory_stack
-            : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_stack_leak_handler>)
+        : FOONATHAN_EBO(detail::default_leak_checker<detail::memory_stack_leak_handler>)
         {
         public:
             using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
@@ -268,7 +261,7 @@ namespace foonathan
         /// A `Stack` is anything that provides a `marker`, a `top()` function returning a `marker`
         /// and an `unwind()` function to unwind to a `marker`,
         /// like a \ref foonathan::memory::memory_stack
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class Stack = memory_stack<>>
         class memory_stack_raii_unwind
         {
@@ -278,23 +271,21 @@ namespace foonathan
 
             /// \effects Same as `memory_stack_raii_unwind(stack, stack.top())`.
             explicit memory_stack_raii_unwind(stack_type& stack) noexcept
-                : memory_stack_raii_unwind(stack, stack.top())
+            : memory_stack_raii_unwind(stack, stack.top())
             {
             }
 
             /// \effects Creates the unwinder by giving it the stack and the marker.
             /// \requires The stack must live longer than this object.
             memory_stack_raii_unwind(stack_type& stack, marker_type marker) noexcept
-                : marker_(marker),
-                  stack_(&stack)
+            : marker_(marker), stack_(&stack)
             {
             }
 
             /// \effects Move constructs the unwinder by taking the saved position from `other`.
             /// `other.will_unwind()` will return `false` after it.
             memory_stack_raii_unwind(memory_stack_raii_unwind&& other) noexcept
-                : marker_(other.marker_),
-                  stack_(other.stack_)
+            : marker_(other.marker_), stack_(other.stack_)
             {
                 other.stack_ = nullptr;
             }
@@ -373,7 +364,7 @@ namespace foonathan
         /// Specialization of the \ref allocator_traits for \ref memory_stack classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref memory_stack::allocate() and this \c allocate_node().
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class BlockAllocator>
         class allocator_traits<memory_stack<BlockAllocator>>
         {
@@ -435,7 +426,7 @@ namespace foonathan
         };
 
         /// Specialization of the \ref composable_allocator_traits for \ref memory_stack classes.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <class BlockAllocator>
         class composable_allocator_traits<memory_stack<BlockAllocator>>
         {
@@ -451,8 +442,7 @@ namespace foonathan
 
             /// \returns The result of \ref memory_stack::try_allocate().
             static void* try_allocate_array(allocator_type& state, std::size_t count,
-                                            std::size_t size,
-                                            std::size_t alignment) noexcept
+                                            std::size_t size, std::size_t alignment) noexcept
             {
                 return state.try_allocate(count * size, alignment);
             }
@@ -467,8 +457,7 @@ namespace foonathan
             }
 
             static bool try_deallocate_array(allocator_type& state, void* ptr, std::size_t count,
-                                             std::size_t size,
-                                             std::size_t alignment) noexcept
+                                             std::size_t size, std::size_t alignment) noexcept
             {
                 return try_deallocate_node(state, ptr, count * size, alignment);
             }
@@ -479,7 +468,7 @@ namespace foonathan
         extern template class allocator_traits<memory_stack<>>;
         extern template class composable_allocator_traits<memory_stack<>>;
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_MEMORY_STACK_HPP_INCLUDED

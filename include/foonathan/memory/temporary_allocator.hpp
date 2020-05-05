@@ -58,15 +58,11 @@ namespace foonathan
             {
             public:
                 // doesn't add into list
-                temporary_stack_list_node() noexcept : in_use_(true)
-                {
-                }
+                temporary_stack_list_node() noexcept : in_use_(true) {}
 
                 temporary_stack_list_node(int) noexcept;
 
-                ~temporary_stack_list_node() noexcept
-                {
-                }
+                ~temporary_stack_list_node() noexcept {}
 
             private:
                 temporary_stack_list_node* next_ = nullptr;
@@ -85,24 +81,18 @@ namespace foonathan
             class temporary_stack_list_node
             {
             protected:
-                temporary_stack_list_node() noexcept
-                {
-                }
+                temporary_stack_list_node() noexcept {}
 
-                temporary_stack_list_node(int) noexcept
-                {
-                }
+                temporary_stack_list_node(int) noexcept {}
 
-                ~temporary_stack_list_node() noexcept
-                {
-                }
+                ~temporary_stack_list_node() noexcept {}
             };
 #endif
         } // namespace detail
 
         /// A wrapper around the \ref memory_stack that is used by the \ref temporary_allocator.
         /// There should be at least one per-thread.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         class temporary_stack : FOONATHAN_EBO(detail::temporary_stack_list_node)
         {
         public:
@@ -162,9 +152,11 @@ namespace foonathan
             detail::temporary_stack_impl stack_;
             temporary_allocator*         top_;
 
+#if !defined(DOXYGEN)
             friend temporary_allocator;
             friend memory_stack_raii_unwind<temporary_stack>;
             friend detail::temporary_stack_list;
+#endif
         };
 
         /// Manually takes care of the lifetime of the per-thread \ref temporary_stack.
@@ -186,17 +178,13 @@ namespace foonathan
 
             static const struct defer_create_t
             {
-                defer_create_t() noexcept
-                {
-                }
+                defer_create_t() noexcept {}
             } defer_create;
 
             /// \effects Does not create the per-thread stack.
             /// It will be created by the first call to \ref get_temporary_stack() in the current thread.
             /// \note If `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE == 0`, this function has no effect.
-            temporary_stack_initializer(defer_create_t) noexcept
-            {
-            }
+            temporary_stack_initializer(defer_create_t) noexcept {}
 
             /// \effects Creates the per-thread stack with the given default size if it wasn't already created.
             /// \requires `initial_size` must not be `0` if `FOONATHAN_MEMORY_TEMPORARY_STACK_MODE != 0`.
@@ -228,7 +216,7 @@ namespace foonathan
         /// This avoids the stack overflow error and is portable,
         /// with a similar speed.
         /// All allocations done in the scope of the allocator object are automatically freed when the object is destroyed.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         class temporary_allocator
         {
         public:
@@ -280,7 +268,7 @@ namespace foonathan
         /// Specialization of the \ref allocator_traits for \ref temporary_allocator classes.
         /// \note It is not allowed to mix calls through the specialization and through the member functions,
         /// i.e. \ref temporary_allocator::allocate() and this \c allocate_node().
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         template <>
         class allocator_traits<temporary_allocator>
         {
@@ -341,7 +329,7 @@ namespace foonathan
                 return std::size_t(-1);
             }
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_TEMPORARY_ALLOCATOR_HPP_INCLUDED

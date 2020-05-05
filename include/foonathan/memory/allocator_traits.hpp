@@ -55,7 +55,7 @@ namespace foonathan
         /// It checks the existence of a custom \c construct(), \c destroy() function, if provided,
         /// it cannot be used since it would not be called.<br>
         /// Specialize it for custom \c Allocator types to override this check.
-        /// \ingroup memory core
+        /// \ingroup core
         template <class Allocator>
         struct allocator_is_raw_allocator
         : FOONATHAN_EBO(detail::check_standard_allocator<Allocator>::valid)
@@ -63,7 +63,7 @@ namespace foonathan
         };
 
         /// Specialization of \ref allocator_is_raw_allocator that allows \c std::allocator again.
-        /// \ingroup memory core
+        /// \ingroup core
         template <typename T>
         struct allocator_is_raw_allocator<std::allocator<T>> : std::true_type
         {
@@ -287,7 +287,7 @@ namespace foonathan
         /// The default specialization of the allocator_traits for a \concept{concept_rawallocator,RawAllocator}.
         /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
         /// Any specialization must provide the same interface.
-        /// \ingroup memory core
+        /// \ingroup core
         template <class Allocator>
         class allocator_traits
         {
@@ -411,7 +411,7 @@ namespace foonathan
 
         /// Traits that check whether a type models concept \concept{concept_rawallocator,RawAllocator}.<br>
         /// It must either provide the necessary functions for the default traits specialization or has specialized it.
-        /// \ingroup memory core
+        /// \ingroup core
         template <typename T>
         struct is_raw_allocator
         : detail::is_raw_allocator<T,
@@ -495,7 +495,7 @@ namespace foonathan
         /// The default specialization of the composable_allocator_traits for a \concept{concept_composableallocator,ComposableAllocator}.
         /// See the last link for the requirements on types that do not specialize this class and the interface documentation.
         /// Any specialization must provide the same interface.
-        /// \ingroup memory core
+        /// \ingroup core
         template <class Allocator>
         class composable_allocator_traits
         {
@@ -512,8 +512,7 @@ namespace foonathan
             }
 
             static void* try_allocate_array(allocator_type& state, std::size_t count,
-                                            std::size_t size,
-                                            std::size_t alignment) noexcept
+                                            std::size_t size, std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");
@@ -531,8 +530,7 @@ namespace foonathan
             }
 
             static bool try_deallocate_array(allocator_type& state, void* array, std::size_t count,
-                                             std::size_t size,
-                                             std::size_t alignment) noexcept
+                                             std::size_t size, std::size_t alignment) noexcept
             {
                 static_assert(is_raw_allocator<Allocator>::value,
                               "ComposableAllocator must be RawAllocator");
@@ -591,15 +589,15 @@ namespace foonathan
         } // namespace detail
 
         /// Traits that check whether a type models concept \concept{concept_rawallocator,ComposableAllocator}.<br>
-        /// It must be a \concept[concept_rawallocator,RawAllocator} and either provide the necessary functions for the default traits specialization or has specialized it.
-        /// \ingroup memory core
+        /// It must be a \concept{concept_rawallocator,RawAllocator} and either provide the necessary functions for the default traits specialization or has specialized it.
+        /// \ingroup core
         template <typename T>
         struct is_composable_allocator
         : detail::is_composable_allocator<T, decltype(detail::composable_alloc_uses_default_traits(
                                                  std::declval<T&>()))>
         {
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED

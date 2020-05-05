@@ -37,7 +37,7 @@ namespace foonathan
 {
     namespace memory
     {
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         /// @{
 
         /// Alias template for an STL container that uses a certain
@@ -199,7 +199,7 @@ namespace foonathan
         /// \copydoc vector
         template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(priority_queue, std::priority_queue<T, deque<T, RawAllocator>>);
-        /// \copydoc vector_scoped_alloc_alloc
+        /// \copydoc vector_scoped_alloc
         template <typename T, class RawAllocator>
         FOONATHAN_ALIAS_TEMPLATE(priority_queue_scoped_alloc,
                                  std::priority_queue<T, deque_scoped_alloc<T, RawAllocator>>);
@@ -214,7 +214,7 @@ namespace foonathan
         /// @{
         /// Convenience function to create a container adapter using a certain
         /// \concept{concept_rawallocator,RawAllocator}. \returns An empty adapter with an
-        /// implementation container using a reference to a given allocator. \ingroup memory adapter
+        /// implementation container using a reference to a given allocator. \ingroup adapter
         template <typename T, class RawAllocator, class Container = deque<T, RawAllocator>>
         std::stack<T, Container> make_stack(RawAllocator& allocator)
         {
@@ -272,7 +272,7 @@ namespace foonathan
 #endif
 
 #else
-        /// \ingroup memory adapter
+        /// \ingroup adapter
         /// @{
 
         /// Contains the node size of a node based STL container with a specific type.

@@ -57,7 +57,7 @@ namespace foonathan
 
         /// A stateless \concept{concept_rawallocator,RawAllocator} that allocates memory using <tt>std::malloc()</tt>.
         /// It throws \ref out_of_memory when the allocation fails.
-        /// \ingroup memory allocator
+        /// \ingroup allocator
         using malloc_allocator =
             FOONATHAN_IMPL_DEFINED(detail::lowlevel_allocator<detail::malloc_allocator_impl>);
 
@@ -65,7 +65,7 @@ namespace foonathan
         extern template class detail::lowlevel_allocator<detail::malloc_allocator_impl>;
         extern template class allocator_traits<malloc_allocator>;
 #endif
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 #endif //FOONATHAN_MEMORY_MALLOC_ALLOCATOR_HPP_INCLUDED
