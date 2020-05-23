@@ -64,7 +64,7 @@ void foonathan::memory::virtual_memory_decommit(void*       memory,
     auto result = VirtualFree(memory, no_pages * virtual_memory_page_size, MEM_DECOMMIT);
     FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot decommit memory");
 }
-#elif defined(__unix__) || defined(__APPLE__) // POSIX systems
+#elif defined(__unix__) || defined(__APPLE__) || defined(__VXWORKS__) // POSIX systems
 #include <sys/mman.h>
 #include <unistd.h>
 
