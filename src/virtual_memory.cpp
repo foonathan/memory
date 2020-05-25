@@ -37,7 +37,7 @@ const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
 void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) noexcept
 {
     auto pages =
-        VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
+        VirtualAllocFromApp(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
     return pages;
 }
 
@@ -51,7 +51,7 @@ void* foonathan::memory::virtual_memory_commit(void*       memory,
                                                std::size_t no_pages) noexcept
 {
     auto region =
-        VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
+        VirtualAllocFromApp(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
     if (!region)
         return nullptr;
     FOONATHAN_MEMORY_ASSERT(region == memory);
