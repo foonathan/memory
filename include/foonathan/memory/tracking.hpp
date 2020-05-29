@@ -18,18 +18,14 @@ namespace foonathan
     {
         namespace detail
         {
-            template <class Tracker, class BlockAllocator>
-            class deeply_tracked_block_allocator;
-
-            template <class Tracker, class BlockAllocator>
-            void set_tracker(deeply_tracked_block_allocator<Tracker, BlockAllocator>& alloc,
-                             Tracker*                                                 t) noexcept
-            {
-                alloc.tracker_ = t;
-            }
-
             template <class Allocator, class Tracker>
-            void set_tracker(Allocator&, Tracker*)
+            auto set_tracker(int, Allocator& allocator, Tracker* tracker) noexcept
+                -> decltype(allocator.get_allocator().set_tracker(tracker))
+            {
+                return allocator.get_allocator().set_tracker(tracker);
+            }
+            template <class Allocator, class Tracker>
+            void set_tracker(short, Allocator&, Tracker*) noexcept
             {
             }
 
@@ -64,10 +60,13 @@ namespace foonathan
                     return BlockAllocator::next_block_size();
                 }
 
+                void set_tracker(Tracker* tracker) noexcept
+                {
+                    tracker_ = tracker;
+                }
+
             private:
                 Tracker* tracker_;
-
-                friend void set_tracker<>(deeply_tracked_block_allocator&, Tracker*) noexcept;
             };
         } // namespace detail
 
@@ -194,7 +193,7 @@ namespace foonathan
             tracked_allocator(tracker t, allocator_type&& allocator) noexcept
             : tracker(detail::move(t)), allocator_type(detail::move(allocator))
             {
-                detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
+                detail::set_tracker(0, get_allocator(), &get_tracker());
             }
             /// @}
 
@@ -202,8 +201,7 @@ namespace foonathan
             /// \note This will never call the <tt>Tracker::on_allocator_shrinking()</tt> function.
             ~tracked_allocator() noexcept
             {
-                detail::set_tracker(get_allocator().get_allocator(),
-                                    static_cast<tracker*>(nullptr));
+                detail::set_tracker(0, get_allocator(), static_cast<tracker*>(nullptr));
             }
 
             /// @{
@@ -211,14 +209,14 @@ namespace foonathan
             tracked_allocator(tracked_allocator&& other) noexcept
             : tracker(detail::move(other)), allocator_type(detail::move(other))
             {
-                detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
+                detail::set_tracker(0, get_allocator(), &get_tracker());
             }
 
             tracked_allocator& operator=(tracked_allocator&& other) noexcept
             {
                 tracker::       operator=(detail::move(other));
                 allocator_type::operator=(detail::move(other));
-                detail::set_tracker(get_allocator().get_allocator(), &get_tracker());
+                detail::set_tracker(0, get_allocator(), &get_tracker());
                 return *this;
             }
             /// @}

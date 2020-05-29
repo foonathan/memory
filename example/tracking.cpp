@@ -3,7 +3,7 @@
 // found in the top-level directory of this distribution.
 
 // this example shows how to track allocations
-// see http://foonathan.github.io/doc/memory/md_doc_adapters_storage.html for further details
+// see https://foonathan.net/memory/md_doc_adapters_storage.html for further details
 
 #include <iostream>
 
@@ -39,33 +39,50 @@ int main()
             std::clog << this << " node deallocated: " << ptr << " \n";
         }
 
-        void on_array_deallocation(void* ptr, std::size_t, std::size_t,
-                                   std::size_t) noexcept
+        void on_array_deallocation(void* ptr, std::size_t, std::size_t, std::size_t) noexcept
         {
             std::clog << this << " array deallocated: " << ptr << " \n";
         }
     };
 
-    // create a tracked memory_pool to see what kind of allocations are made
-    // this can also take an already existing allocator
-    auto tracked_pool =
-        memory::make_tracked_allocator(tracker{},
-                                       memory::memory_pool<>(memory::set_node_size<int>::value,
-                                                             4_KiB));
+    {
+        // create a tracked default allocator
+        auto tracked_allocator =
+            memory::make_tracked_allocator(tracker{}, memory::default_allocator{});
 
-    // use the allocator as usual
-    // decltype(tracked_pool) can be used below, too
-    memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>>
-        set(std::less<int>(), tracked_pool);
+        // use the allocator as usual
+        // decltype(tracked_allocator) can be used below, too
+        memory::vector<int, memory::tracked_allocator<tracker, memory::default_allocator>>
+            vec({1, 2, 3, 4}, tracked_allocator);
 
-    set.insert(1);
-    set.insert(2);
-    set.insert(3);
-    set.insert(1);
+        std::clog << "vec: ";
+        for (auto i : vec)
+            std::clog << i << ' ';
+        std::clog << '\n';
+    }
 
-    for (auto i : set)
-        std::clog << i << ' ';
-    std::clog << '\n';
+    {
+        // create a tracked memory_pool to see what kind of allocations are made
+        auto tracked_pool =
+            memory::make_tracked_allocator(tracker{},
+                                           memory::memory_pool<>(memory::set_node_size<int>::value,
+                                                                 4_KiB));
 
-    set.erase(2);
+        // use the allocator as usual
+        // decltype(tracked_pool) can be used below, too
+        memory::set<int, memory::tracked_allocator<tracker, memory::memory_pool<>>>
+            set(std::less<int>(), tracked_pool);
+
+        set.insert(1);
+        set.insert(2);
+        set.insert(3);
+        set.insert(1);
+
+        std::clog << "set: ";
+        for (auto i : set)
+            std::clog << i << ' ';
+        std::clog << '\n';
+
+        set.erase(2);
+    }
 }
