@@ -77,11 +77,23 @@ set(src
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 # generate container_node_sizes.hpp
+# don't run it while cross-compiling and CMAKE_CROSSCOMPILING_EMULATOR is not defined
 if(FOONATHAN_MEMORY_BUILD_TOOLS)
+  if(NOT CMAKE_CROSSCOMPILING)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+            COMMAND $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+            DEPENDS foonathan_memory_node_size_debugger
+            VERBATIM)
+  elseif(DEFINED CMAKE_CROSSCOMPILING_EMULATOR)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             DEPENDS foonathan_memory_node_size_debugger
             VERBATIM)
+  else()
+    message(WARNING "cross-compiling, but emulator is not defined, "
+                    "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
+    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
+  endif()
 else()
     message(WARNING "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
     file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
