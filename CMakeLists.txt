@@ -18,7 +18,7 @@ set(FOONATHAN_MEMORY_VERSION "${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMO
 set(CMAKE_DEBUG_POSTFIX "-dbg")
 
 # installation destinations
-if(UNIX)
+if(UNIX OR VXWORKS)
     include(GNUInstallDirs)
 
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/foonathan_memory")
