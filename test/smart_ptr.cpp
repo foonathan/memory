@@ -36,12 +36,18 @@ TEST_CASE("allocate_shared", "[adapter]")
         dummy_allocator::size = 0;
         auto ptr              = allocate_shared<int>(dummy_allocator{}, 42);
         REQUIRE(*ptr == 42);
+#if !defined(FOONATHAN_MEMORY_NO_NODE_SIZE)
         REQUIRE((dummy_allocator::size <= allocate_shared_node_size<int, dummy_allocator>::value));
+#endif
     }
     SECTION("stateful")
     {
+#if defined(FOONATHAN_MEMORY_NO_NODE_SIZE)
+        memory_pool<> pool(128, 1024); // hope that's enough
+#else
         memory_pool<> pool(allocate_shared_node_size<int, memory_pool<>>::value, 1024);
-        auto          ptr = allocate_shared<int>(pool, 42);
+#endif
+        auto ptr = allocate_shared<int>(pool, 42);
         REQUIRE(*ptr == 42);
     }
 }

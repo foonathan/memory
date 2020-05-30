@@ -12,5 +12,8 @@ endmacro()
 _foonathan_add_example(allocator_storage)
 _foonathan_add_example(joint_allocation)
 _foonathan_add_example(taking_allocators)
+
+if(NOT FOONATHAN_MEMORY_NO_NODE_SIZE)
 _foonathan_add_example(tracking)
 _foonathan_add_example(using_allocators)
+endif()

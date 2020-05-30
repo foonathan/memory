@@ -93,10 +93,12 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
     message(WARNING "cross-compiling, but emulator is not defined, "
                     "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
     file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
+    set(FOONATHAN_MEMORY_NO_NODE_SIZE 1 PARENT_SCOPE)
   endif()
 else()
     message(WARNING "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
     file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
+    set(FOONATHAN_MEMORY_NO_NODE_SIZE 1 PARENT_SCOPE)
 endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
