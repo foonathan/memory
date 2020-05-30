@@ -13,18 +13,33 @@
 #include "config.hpp"
 #include "allocator_traits.hpp"
 
-#if defined(__has_include) && __has_include(<memory_resource>) && defined(__cpp_lib_memory_resource)
+#if defined(__has_include) && __has_include(<memory_resource>)
 
 #include <memory_resource>
-namespace foonathan_memory_pmr = std::pmr;
 
 #elif defined(__has_include) && __has_include(<experimental/memory_resource>)
 
+#if !defined(__GNUC__) || __cplusplus >= 201402L
+// The experimental/memory_resource header lacks a check for C++14 on older GCC,
+// so we have to do it for them.
 #include <experimental/memory_resource>
+#endif
+
+#endif
+
+#if defined(__cpp_lib_memory_resource)
+
+// We use std::pmr::memory_resource.
+namespace foonathan_memory_pmr = std::pmr;
+
+#elif defined(__cpp_lib_experimental_memory_resources)
+
+// We use std::experimental::pmr::memory_resource.
 namespace foonathan_memory_pmr = std::experimental::pmr;
 
 #else
 
+// We use our own implementation.
 namespace foonathan_memory_pmr
 {
     // see N3916 for documentation
