@@ -19,7 +19,6 @@ void detail::virtual_memory_allocator_leak_handler::operator()(std::ptrdiff_t am
 
 #if defined(_WIN32)
 #include <windows.h>
-#include <winapifamily.h>
 
 namespace
 {
@@ -38,7 +37,7 @@ const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
 void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) noexcept
 {
     auto pages =
-    #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+    #if (_MSC_VER <= 1900)
         VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
     #else
         VirtualAllocFromApp(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
@@ -56,7 +55,7 @@ void* foonathan::memory::virtual_memory_commit(void*       memory,
                                                std::size_t no_pages) noexcept
 {
     auto region =
-    #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+    #if (_MSC_VER <= 1900)
         VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
     #else
         VirtualAllocFromApp(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
