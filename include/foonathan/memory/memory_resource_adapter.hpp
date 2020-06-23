@@ -15,7 +15,11 @@
 
 #if defined(__has_include) && __has_include(<memory_resource>)
 
+#if !defined(__GNUC__) || __cplusplus >= 201703L
+// The experimental/memory_resource header lacks a check for C++17 on older GCC,
+// so we have to do it for them.
 #include <memory_resource>
+#endif
 
 #elif defined(__has_include) && __has_include(<experimental/memory_resource>)
 
