@@ -11,7 +11,7 @@ target_include_directories(foonathan_memory_profiling PRIVATE
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
     file(DOWNLOAD
-         https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
+         https://raw.githubusercontent.com/catchorg/Catch2/2e61d38c7c3078e600c331257b5bebfb81aaa685/single_include/catch2/catch.hpp
          ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp
          STATUS status
          LOG log)
