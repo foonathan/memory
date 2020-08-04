@@ -89,6 +89,26 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
             COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             DEPENDS foonathan_memory_node_size_debugger
             VERBATIM)
+  elseif(QNX)
+    # currently this process was only tested on Linux and Windows. Linux matched the QNX generated header file but Windows did not
+    # Mac still needs to be tested. If passed the test then could be added here as well.
+    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+      execute_process(COMMAND g++ -DVERSION="${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}.${FOONATHAN_MEMORY_VERSION_PATCH}" -o ${PROJECT_SOURCE_DIR}/tool/nodesize_dbg ${PROJECT_SOURCE_DIR}/tool/node_size_debugger.cpp )
+      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+              COMMAND ${PROJECT_SOURCE_DIR}/tool/nodesize_dbg --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+    elseif(EXISTS "${PROJECT_SOURCE_DIR}/tool/container_node_sizes_impl.hpp")
+      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
+              COMMAND cp ${PROJECT_SOURCE_DIR}/tool/container_node_sizes_impl.hpp ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp )
+    else()
+      message(FATAL_ERROR "\nCannot generate container_node_sizes_impl.hpp on ${CMAKE_HOST_SYSTEM_NAME}.\n"
+                            "Please manually generate the header file container_node_sizes_impl.hpp by doing the following:\n"
+                            "- Build nodesize_dbg from source:\n"
+                            "	${PROJECT_SOURCE_DIR}/tool/node_size_debugger.cpp \n"
+                            "- Transfer file to QNX target and execute:\n"
+                            "	nodesize_dbg --code > container_node_sizes_impl.hpp \n"
+                            "- Transfer generated header file back to: \n"
+                            "	${PROJECT_SOURCE_DIR}/tool and REBUILD")
+    endif()
   else()
     message(WARNING "cross-compiling, but emulator is not defined, "
                     "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
