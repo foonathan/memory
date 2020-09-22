@@ -29,10 +29,6 @@ if(UNIX OR VXWORKS)
 
     set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory/cmake")
     set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/foonathan_memory")
-
-    set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR "bin") # for the nodesize_dbg, just ignore version and the like
-    set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory") # header filestree
-
 elseif(WIN32)
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory")
     set(FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR   "bin")
