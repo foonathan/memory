@@ -92,11 +92,12 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
   elseif(QNX)
     # currently this process was only tested on Linux and Windows. Linux matched the QNX generated header file but Windows did not
     # Mac still needs to be tested. If passed the test then could be added here as well.
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    if( CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7")
       execute_process(COMMAND g++ -DVERSION="${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}.${FOONATHAN_MEMORY_VERSION_PATCH}" -o ${PROJECT_SOURCE_DIR}/tool/nodesize_dbg ${PROJECT_SOURCE_DIR}/tool/node_size_debugger.cpp )
       add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
               COMMAND ${PROJECT_SOURCE_DIR}/tool/nodesize_dbg --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
     elseif(EXISTS "${PROJECT_SOURCE_DIR}/tool/container_node_sizes_impl.hpp")
+      message("-- Using manually generated file: tool/container_node_sizes_impl.hpp")
       add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
               COMMAND cp ${PROJECT_SOURCE_DIR}/tool/container_node_sizes_impl.hpp ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp )
     else()
