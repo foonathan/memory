@@ -89,7 +89,7 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
             COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
             DEPENDS foonathan_memory_node_size_debugger
             VERBATIM)
-  elseif(QNX)
+    elseif(QNX OR QNXNTO)
     # currently this process was only tested on Linux and Windows. Linux matched the QNX generated header file but Windows did not
     # Mac still needs to be tested. If passed the test then could be added here as well.
     if( CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7")
