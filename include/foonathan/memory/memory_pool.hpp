@@ -61,8 +61,8 @@ namespace foonathan
             /// \returns The minimum block size required for certain number of \concept{concept_node,node}.
             /// \requires \c node_size must be a valid \concept{concept_node,node size}
             /// and \c number_of_nodes must be a non-zero value.
-            static constexpr std::size_t min_block_size(std::size_t node_size,
-                                                        std::size_t number_of_nodes)
+            static const std::size_t min_block_size(std::size_t node_size,
+                                                    std::size_t number_of_nodes) noexcept
             {
                 size_t per_node_size = node_size;
                 // Ensure at least min_node_size bytes per node
