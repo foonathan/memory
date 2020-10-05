@@ -125,7 +125,12 @@ namespace foonathan
                 using inserted_mb = memory_block;
 
                 // how much an inserted block is smaller
-                static const std::size_t implementation_offset;
+                static constexpr std::size_t implementation_offset() noexcept
+                {
+                    // node size rounded up to the next multiple of max_alignment.
+                    return (sizeof(node) / max_alignment + (sizeof(node) % max_alignment != 0))
+                           * max_alignment;
+                }
 
                 // pushes a memory block
                 void push(allocated_mb block) noexcept;
@@ -141,7 +146,7 @@ namespace foonathan
                 {
                     FOONATHAN_MEMORY_ASSERT(head_);
                     auto mem = static_cast<void*>(head_);
-                    return {static_cast<char*>(mem) + node::offset, head_->usable_size};
+                    return {static_cast<char*>(mem) + implementation_offset(), head_->usable_size};
                 }
 
                 bool empty() const noexcept
@@ -161,10 +166,6 @@ namespace foonathan
                     std::size_t usable_size;
 
                     node(node* p, std::size_t size) noexcept : prev(p), usable_size(size) {}
-
-                    static const std::size_t div_alignment;
-                    static const std::size_t mod_offset;
-                    static const std::size_t offset;
                 };
 
                 node* head_;
@@ -407,7 +408,7 @@ namespace foonathan
             {
                 return this->cache_empty() ?
                            allocator_type::next_block_size()
-                               - detail::memory_block_stack::implementation_offset :
+                               - detail::memory_block_stack::implementation_offset() :
                            this->cached_block_size();
             }
 

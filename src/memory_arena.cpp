@@ -11,18 +11,10 @@
 using namespace foonathan::memory;
 using namespace detail;
 
-const std::size_t memory_block_stack::node::div_alignment =
-    sizeof(memory_block_stack::node) / max_alignment;
-const std::size_t memory_block_stack::node::mod_offset =
-    sizeof(memory_block_stack::node) % max_alignment != 0u;
-const std::size_t memory_block_stack::node::offset = (div_alignment + mod_offset) * max_alignment;
-
-const std::size_t memory_block_stack::implementation_offset = memory_block_stack::node::offset;
-
 void memory_block_stack::push(allocated_mb block) noexcept
 {
     FOONATHAN_MEMORY_ASSERT(is_aligned(block.memory, max_alignment));
-    auto next = ::new (block.memory) node(head_, block.size - node::offset);
+    auto next = ::new (block.memory) node(head_, block.size - implementation_offset());
     head_     = next;
 }
 
@@ -31,7 +23,7 @@ memory_block_stack::allocated_mb memory_block_stack::pop() noexcept
     FOONATHAN_MEMORY_ASSERT(head_);
     auto to_pop = head_;
     head_       = head_->prev;
-    return {to_pop, to_pop->usable_size + node::offset};
+    return {to_pop, to_pop->usable_size + implementation_offset()};
 }
 
 void memory_block_stack::steal_top(memory_block_stack& other) noexcept
