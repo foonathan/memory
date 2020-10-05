@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 #define FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 
+// Inform that foonathan::memory::memory_pool::min_block_size API is available
+#define FOONATHAN_MEMORY_MEMORY_POOL_HAS_MIN_BLOCK_SIZE
+
 /// \file
 /// Class \ref foonathan::memory::memory_pool and its \ref foonathan::memory::allocator_traits specialization.
 
