@@ -5,6 +5,9 @@
 #ifndef FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 #define FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 
+// Inform that foonathan::memory::memory_pool::min_block_size API is available
+#define FOONATHAN_MEMORY_MEMORY_POOL_HAS_MIN_BLOCK_SIZE
+
 /// \file
 /// Class \ref foonathan::memory::memory_pool and its \ref foonathan::memory::allocator_traits specialization.
 
@@ -54,6 +57,18 @@ namespace foonathan
 
             static constexpr std::size_t min_node_size =
                 FOONATHAN_IMPL_DEFINED(free_list::min_element_size);
+
+            /// \returns The minimum block size required for certain number of \concept{concept_node,node}.
+            /// \requires \c node_size must be a valid \concept{concept_node,node size}
+            /// and \c number_of_nodes must be a non-zero value.
+            static constexpr std::size_t min_block_size(std::size_t node_size,
+                                                        std::size_t number_of_nodes) noexcept
+            {
+                return detail::memory_block_stack::implementation_offset()
+                       + number_of_nodes
+                             * (((node_size > min_node_size) ? node_size : min_node_size)
+                                + (detail::debug_fence_size ? 2 * detail::max_alignment : 0));
+            }
 
             /// \effects Creates it by specifying the size each \concept{concept_node,node} will have,
             /// the initial block size for the arena and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
