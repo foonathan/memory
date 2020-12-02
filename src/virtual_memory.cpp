@@ -30,18 +30,19 @@ namespace
         GetSystemInfo(&info);
         return std::size_t(info.dwPageSize);
     }
-}
+} // namespace
 
 const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
 
 void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) noexcept
 {
     auto pages =
-    #if (_MSC_VER <= 1900)
+#if (_MSC_VER <= 1900)
         VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
-    #else
-        VirtualAllocFromApp(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
-    #endif
+#else
+        VirtualAllocFromApp(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE,
+                            PAGE_READWRITE);
+#endif
     return pages;
 }
 
@@ -51,28 +52,28 @@ void foonathan::memory::virtual_memory_release(void* pages, std::size_t) noexcep
     FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot release pages");
 }
 
-void* foonathan::memory::virtual_memory_commit(void*       memory,
-                                               std::size_t no_pages) noexcept
+void* foonathan::memory::virtual_memory_commit(void* memory, std::size_t no_pages) noexcept
 {
     auto region =
-    #if (_MSC_VER <= 1900)
+#if (_MSC_VER <= 1900)
         VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
-    #else
-        VirtualAllocFromApp(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
-    #endif
+#else
+        VirtualAllocFromApp(memory, no_pages * virtual_memory_page_size, MEM_COMMIT,
+                            PAGE_READWRITE);
+#endif
     if (!region)
         return nullptr;
     FOONATHAN_MEMORY_ASSERT(region == memory);
     return region;
 }
 
-void foonathan::memory::virtual_memory_decommit(void*       memory,
-                                                std::size_t no_pages) noexcept
+void foonathan::memory::virtual_memory_decommit(void* memory, std::size_t no_pages) noexcept
 {
     auto result = VirtualFree(memory, no_pages * virtual_memory_page_size, MEM_DECOMMIT);
     FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot decommit memory");
 }
-#elif defined(__unix__) || defined(__APPLE__) || defined(__VXWORKS__) // POSIX systems
+#elif defined(__unix__) || defined(__APPLE__) || defined(__VXWORKS__)                              \
+    || defined(__QNXNTO__) // POSIX systems
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -102,8 +103,7 @@ void foonathan::memory::virtual_memory_release(void* pages, std::size_t no_pages
     (void)result;
 }
 
-void* foonathan::memory::virtual_memory_commit(void*       memory,
-                                               std::size_t no_pages) noexcept
+void* foonathan::memory::virtual_memory_commit(void* memory, std::size_t no_pages) noexcept
 {
     auto size   = no_pages * virtual_memory_page_size;
     auto result = mprotect(memory, size, PROT_WRITE | PROT_READ);
@@ -120,8 +120,7 @@ void* foonathan::memory::virtual_memory_commit(void*       memory,
     return memory;
 }
 
-void foonathan::memory::virtual_memory_decommit(void*       memory,
-                                                std::size_t no_pages) noexcept
+void foonathan::memory::virtual_memory_decommit(void* memory, std::size_t no_pages) noexcept
 {
     auto size = no_pages * virtual_memory_page_size;
 // advise that the memory won't be needed anymore
@@ -150,7 +149,7 @@ namespace
 
         return div + (rest != 0u) + (detail::debug_fence_size ? 2u : 1u);
     }
-}
+} // namespace
 
 void* virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
 {
@@ -165,8 +164,7 @@ void* virtual_memory_allocator::allocate_node(std::size_t size, std::size_t)
     return detail::debug_fill_new(pages, size, virtual_memory_page_size);
 }
 
-void virtual_memory_allocator::deallocate_node(void* node, std::size_t size,
-                                               std::size_t) noexcept
+void virtual_memory_allocator::deallocate_node(void* node, std::size_t size, std::size_t) noexcept
 {
     auto pages = detail::debug_fill_free(node, size, virtual_memory_page_size);
 
