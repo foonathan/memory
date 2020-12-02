@@ -21,17 +21,18 @@ TEST_CASE("memory_pool", "[pool]")
     using pool_type = memory_pool<node_pool, allocator_reference<test_allocator>>;
     test_allocator alloc;
     {
-        pool_type pool(4, 100, alloc);
+        pool_type pool(4, pool_type::min_block_size(4, 25), alloc);
         REQUIRE(pool.node_size() >= 4u);
-        REQUIRE(pool.capacity_left() <= 100u);
-        REQUIRE(pool.next_capacity() >= 100u);
+        REQUIRE(pool.capacity_left() >= 25 * 4u);
+        REQUIRE(pool.next_capacity() >= 25 * 4u);
         REQUIRE(alloc.no_allocated() == 1u);
 
         SECTION("normal alloc/dealloc")
         {
             std::vector<void*> ptrs;
             auto               capacity = pool.capacity_left();
-            for (std::size_t i = 0u; i != capacity / pool.node_size(); ++i)
+            REQUIRE(capacity / 4 >= 25);
+            for (std::size_t i = 0u; i != 25; ++i)
                 ptrs.push_back(pool.allocate_node());
             REQUIRE(pool.capacity_left() == 0u);
             REQUIRE(alloc.no_allocated() == 1u);

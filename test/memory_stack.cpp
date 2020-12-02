@@ -13,10 +13,12 @@ using namespace foonathan::memory;
 
 TEST_CASE("memory_stack", "[stack]")
 {
-    test_allocator                                    alloc;
-    memory_stack<allocator_reference<test_allocator>> stack(100, alloc);
+    test_allocator alloc;
+
+    using stack_type = memory_stack<allocator_reference<test_allocator>>;
+    stack_type stack(stack_type::min_block_size(100), alloc);
     REQUIRE(alloc.no_allocated() == 1u);
-    REQUIRE(stack.capacity_left() <= 100);
+    REQUIRE(stack.capacity_left() == 100);
     auto capacity = stack.capacity_left();
 
     SECTION("empty unwind")

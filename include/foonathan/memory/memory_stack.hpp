@@ -8,6 +8,9 @@
 /// \file
 /// Class \ref foonathan::memory::memory_stack and its \ref foonathan::memory::allocator_traits specialization.
 
+// Inform that foonathan::memory::memory_stack::min_block_size API is available
+#define FOONATHAN_MEMORY_MEMORY_STACK_HAS_MIN_BLOCK_SIZE
+
 #include <cstdint>
 #include <type_traits>
 
@@ -102,6 +105,17 @@ namespace foonathan
         {
         public:
             using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
+
+            /// \returns The minimum block size required for a stack containing the given amount of memory.
+            /// If a stack is created with the result of `min_block_size(n)`, the resulting capacity will be exactly `n`.
+            /// \requires `byte_size` must be a positive number.
+            /// \note Due to debug fence sizes, the actual amount of usable memory can vary.
+            /// However, this is impossible to compute without knowing the exact allocation pattern before,
+            /// so this is just a rough estimate.
+            static constexpr std::size_t min_block_size(std::size_t byte_size) noexcept
+            {
+                return detail::memory_block_stack::implementation_offset() + byte_size;
+            }
 
             /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
             /// It will allocate the first block and sets the top to its beginning.
