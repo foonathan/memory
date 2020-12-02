@@ -219,16 +219,26 @@ In particular thanks to the individual supporters:
 
 And big thanks to the contributors as well:
 
+* @asobhy-qnx
 * @bfierz
 * @nicolastagliani
 * @cho3
+* @j-carl
 * @myd7349
 * @moazzamak
 * @maksqwe
 * @kaidokert
 * @gabyx
-* @MiguelCompany
+* @maksqwe
 * @Manu343726
+* @MiguelCompany
+* @moazzamak
+* @myd7349
+* @quattrinili
+* @razr
+* @seanyen
+* @wtsnyder
+* @zhouchengming1
 
 [EASTL]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html
 [CMake]: www.cmake.org

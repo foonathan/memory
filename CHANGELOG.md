@@ -1,5 +1,7 @@
 # Upcoming Changes
 
+# 0.7
+
 BREAKING: Removed the use of the compatibility library to automatically generate macros and workaround for older compilers.
 The important compatibility workarounds like the `__builtin_clz` extension are still used, but workarounds for missing C++11 library features have been removed.
 In particular, the library now requires compiler support for `noexcept`, `constexpr`, `alignof` and `thread_local`.
@@ -11,9 +13,18 @@ BREAKING: Remove `Mutex` support from `allocator_reference` and consequently fro
 Embedding the `Mutex` with the reference was *fundamentally* broken and unusable to ensure thread safety.
 Use a reference to a `thread_safe_allocator` instead, which actually guarantees thread safety.
 
+## Allocator
+
+Add ability to query the minimal block size required by a `memory_pool` or `memory_stack` that should contain the given memory.
+Due to internal data structures and debug fences this is more than the naive memory request, so it can be computed now.
+
 ## Bugfixes
 
-* more CMake improvements
+* more CMake improvements for cross-compiling, among others
+* bugfixes to support UWP (#80), VxWorks (#81) and QNX (#85, #88, among others)
+* better support missing container node size (#59, #72, among others)
+* fix alignment issues in debug mode
+* fix tracking for allocators without block allocators
 
 ---
 
