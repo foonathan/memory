@@ -134,6 +134,10 @@ set_target_properties(foonathan_memory PROPERTIES
                                        OUTPUT_NAME "foonathan_memory-${FOONATHAN_MEMORY_VERSION}"
                                        POSITION_INDEPENDENT_CODE ON)
 
+if(NEED_LIBRARY_FOR_CXX_ATOMIC)
+	target_link_libraries(foonathan_memory PRIVATE -latomic)
+endif()
+
 install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
         RUNTIME       DESTINATION ${FOONATHAN_MEMORY_RUNTIME_INSTALL_DIR}
         LIBRARY       DESTINATION ${FOONATHAN_MEMORY_LIBRARY_INSTALL_DIR}

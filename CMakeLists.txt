@@ -44,6 +44,7 @@ else()
 endif()
 
 include(cmake/configuration.cmake)
+include(cmake/atomic.cmake)
 
 # subdirectories
 add_subdirectory(src)
