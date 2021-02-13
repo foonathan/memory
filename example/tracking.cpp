@@ -3,7 +3,7 @@
 // found in the top-level directory of this distribution.
 
 // this example shows how to track allocations
-// see https://foonathan.net/memory/md_doc_adapters_storage.html for further details
+// see https://memory.foonathan.net/md_doc_adapters_storage.html for further details
 
 #include <iostream>
 

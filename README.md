@@ -178,13 +178,13 @@ To use an installed library:
 
 5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
   
-See https://foonathan.net/memory/md_doc_installation.html for a detailed guide.
+See https://memory.foonathan.net/md_doc_installation.html for a detailed guide.
 
 ## Documentation
 
-Full documentation can be found at https://foonathan.net/memory.
+Full documentation can be found at https://memory.foonathan.net/.
 
-A tutorial is also available at https://foonathan.net/memory/md_doc_tutorial.html.
+A tutorial is also available at https://memory.foonathan.net/md_doc_tutorial.html.
 
 ## RawAllocator
 
@@ -208,7 +208,7 @@ struct raw_allocator
 ```
 
 A `RawAllocator` only needs to be moveable, all `Allocator` classes are `RawAllocators` too.
-Classes not providing the interface can specialize the `allocator_traits`, read more about [writing allocators here](https://foonathan.net/memory/md_doc_writing_allocators.html) or about the technical details of the [concept here](https://foonathan.net/memory/md_doc_concepts.html).
+Classes not providing the interface can specialize the `allocator_traits`, read more about [writing allocators here](https://memory.foonathan.net/md_doc_writing_allocators.html) or about the technical details of the [concept here](https://memory.foonathan.net/md_doc_concepts.html).
 
 ## Acknowledgements
 
