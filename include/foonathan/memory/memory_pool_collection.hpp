@@ -180,12 +180,24 @@ namespace foonathan
                 auto mem = pool.empty() ? nullptr : pool.allocate(count * node_size);
                 if (!mem)
                 {
-                    // use stack for allocation
-                    detail::check_allocation_size<bad_array_size>(
-                        count * node_size, [&] { return next_capacity() - pool.alignment() + 1; },
-                        info());
-                    mem = reserve_memory(pool, count * node_size).memory;
-                    FOONATHAN_MEMORY_ASSERT(mem);
+                    // reserve more memory
+                    auto block = reserve_memory(pool, def_capacity());
+                    pool.insert(block.memory, block.size);
+
+                    mem = pool.allocate(count * node_size);
+                    if (!mem)
+                    {
+                        // reserve more then the default capacity if that didn't work either
+                        detail::check_allocation_size<bad_array_size>(
+                            count * node_size,
+                            [&] { return next_capacity() - pool.alignment() + 1; }, info());
+
+                        block = reserve_memory(pool, count * node_size);
+                        pool.insert(block.memory, block.size);
+
+                        mem = pool.allocate(count * node_size);
+                        FOONATHAN_MEMORY_ASSERT(mem);
+                    }
                 }
 
                 return mem;

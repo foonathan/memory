@@ -22,13 +22,11 @@ namespace foonathan
             class fixed_memory_stack
             {
             public:
-                fixed_memory_stack() noexcept : fixed_memory_stack(nullptr)
-                {
-                }
+                fixed_memory_stack() noexcept : fixed_memory_stack(nullptr) {}
 
                 // gives it the current pointer, the end pointer must be maintained seperataly
                 explicit fixed_memory_stack(void* memory) noexcept
-                    : cur_(static_cast<char*>(memory))
+                : cur_(static_cast<char*>(memory))
                 {
                 }
 
@@ -88,8 +86,7 @@ namespace foonathan
                 // same as allocate() but does not check the size
                 // note: pass it the align OFFSET, not the alignment
                 void* allocate_unchecked(std::size_t size, std::size_t align_offset,
-                                         std::size_t fence_size = debug_fence_size)
-                    noexcept
+                                         std::size_t fence_size = debug_fence_size) noexcept
                 {
                     bump(fence_size, debug_magic::fence_memory);
                     bump(align_offset, debug_magic::alignment_memory);
@@ -117,7 +114,7 @@ namespace foonathan
                 char* cur_;
             };
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_MEMORY_STACK_HPP_INCLUDED
