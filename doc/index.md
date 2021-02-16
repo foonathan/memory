@@ -178,7 +178,7 @@ The use an installed library:
 
 5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` and activate C++11 to link to the library.
 
-See http://foonathan.github.io/doc/memory/md_doc_installation.html for a detailed guide.
+See https://memory.foonathan.net/md_doc_installation.html for a detailed guide.
 
 ## About this documentation
 

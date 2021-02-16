@@ -3,7 +3,7 @@
 // found in the top-level directory of this distribution.
 
 // this examples shows the basic usage of RawAllocator classes with containers and smart pointers
-// see http://foonathan.github.io/doc/memory/md_doc_external_usage.html for more details
+// see https://memory.foonathan.net/md_doc_external_usage.html for more details
 
 #include <algorithm>
 #include <iostream>

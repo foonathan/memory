@@ -4,7 +4,7 @@
 
 // this example provides two implementation of a deep_copy_ptr that performs a copy when copying the pointer
 // the first version takes an Allocator the second a RawAllocator
-// see http://foonathan.github.io/doc/memory/md_doc_internal_usage.html for a step-by-step walkthrough
+// see https://memory.foonathan.net/md_doc_internal_usage.html for a step-by-step walkthrough
 // I know the class is pretty dumb and not that great designed (copy performs deep copy, move invalidates), but that's not that the point
 
 #include <cassert>
@@ -44,8 +44,8 @@ namespace using_std_allocator
         {
         }
 
-        deep_copy_ptr(deep_copy_ptr&& other) noexcept : allocator_type(std::move(other)),
-                                                        ptr_(other.ptr_)
+        deep_copy_ptr(deep_copy_ptr&& other) noexcept
+        : allocator_type(std::move(other)), ptr_(other.ptr_)
         {
             other.ptr_ = nullptr;
         }
@@ -163,7 +163,7 @@ namespace using_std_allocator
 
         typename traits::pointer ptr_;
     };
-}
+} // namespace using_std_allocator
 
 namespace using_raw_allocator
 {
@@ -171,8 +171,8 @@ namespace using_raw_allocator
               class RawAllocator =
                   memory::default_allocator> // default allocator type, usually heap_allocator
     class deep_copy_ptr
-        : memory::
-              allocator_reference<RawAllocator> // store the allocator by reference to allow sharing and copying
+    : memory::allocator_reference<
+          RawAllocator> // store the allocator by reference to allow sharing and copying
     // for stateless allocators like default_allocator, it does not store an actual reference
     // and can take a temporary, for stateful, the allocator must outlive the reference
     {
@@ -192,12 +192,10 @@ namespace using_raw_allocator
         {
         }
 
-        deep_copy_ptr(const deep_copy_ptr& other) : allocator_ref(other), ptr_(create(*other))
-        {
-        }
+        deep_copy_ptr(const deep_copy_ptr& other) : allocator_ref(other), ptr_(create(*other)) {}
 
-        deep_copy_ptr(deep_copy_ptr&& other) noexcept : allocator_ref(std::move(other)),
-                                                        ptr_(other.ptr_)
+        deep_copy_ptr(deep_copy_ptr&& other) noexcept
+        : allocator_ref(std::move(other)), ptr_(other.ptr_)
         {
             other.ptr_ = nullptr;
         }
@@ -285,7 +283,7 @@ namespace using_raw_allocator
 
         T* ptr_;
     };
-}
+} // namespace using_raw_allocator
 
 // simple usage functions
 
