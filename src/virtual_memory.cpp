@@ -37,7 +37,7 @@ const std::size_t foonathan::memory::virtual_memory_page_size = get_page_size();
 void* foonathan::memory::virtual_memory_reserve(std::size_t no_pages) noexcept
 {
     auto pages =
-#if (_MSC_VER <= 1900)
+#if (_MSC_VER <= 1900) || WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         VirtualAlloc(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE, PAGE_READWRITE);
 #else
         VirtualAllocFromApp(nullptr, no_pages * virtual_memory_page_size, MEM_RESERVE,
@@ -55,7 +55,7 @@ void foonathan::memory::virtual_memory_release(void* pages, std::size_t) noexcep
 void* foonathan::memory::virtual_memory_commit(void* memory, std::size_t no_pages) noexcept
 {
     auto region =
-#if (_MSC_VER <= 1900)
+#if (_MSC_VER <= 1900) || WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         VirtualAlloc(memory, no_pages * virtual_memory_page_size, MEM_COMMIT, PAGE_READWRITE);
 #else
         VirtualAllocFromApp(memory, no_pages * virtual_memory_page_size, MEM_COMMIT,
