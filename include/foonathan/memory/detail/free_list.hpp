@@ -201,7 +201,7 @@ namespace foonathan
 
             void swap(ordered_free_memory_list& a, ordered_free_memory_list& b) noexcept;
 
-#if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECk
+#if FOONATHAN_MEMORY_DEBUG_DOUBLE_DEALLOC_CHECK
             // use ordered version to allow pointer check
             using node_free_memory_list  = ordered_free_memory_list;
             using array_free_memory_list = ordered_free_memory_list;
