@@ -101,7 +101,7 @@ if(FOONATHAN_MEMORY_BUILD_TOOLS)
                             "	${PROJECT_SOURCE_DIR}/tool/node_size_debugger.cpp \n"
                             "- Transfer nodesize_dbg to QNX target and execute:\n"
                             "	nodesize_dbg --code container_node_sizes_impl.hpp \n"
-                            "- Transfer generated header file back to your development system \n" 
+                            "- Transfer generated header file back to your development system \n"
                             "- Set FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL to the path of the pre-generated file and pass it to cmake as an argument\n")
     endif()
   else()
@@ -135,7 +135,7 @@ set_target_properties(foonathan_memory PROPERTIES
                                        POSITION_INDEPENDENT_CODE ON)
 
 if(NEED_LIBRARY_FOR_CXX_ATOMIC)
-	target_link_libraries(foonathan_memory PRIVATE -latomic)
+    target_link_libraries(foonathan_memory PRIVATE -latomic)
 endif()
 
 install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
@@ -151,7 +151,7 @@ write_basic_package_version_file(${version_file}
                                  VERSION ${FOONATHAN_MEMORY_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)
 install(FILES ${header}                                   DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory)
 install(FILES ${detail_header}                            DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)
