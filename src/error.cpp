@@ -60,7 +60,7 @@ namespace
 #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr,
                      "[%s] Allocator %s (at %p) received invalid size/alignment %zu, "
-                     "max supported is %zu",
+                     "max supported is %zu\n",
                      FOONATHAN_MEMORY_LOG_PREFIX, info.name, info.allocator, passed, supported);
 #endif
     }
