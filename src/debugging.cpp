@@ -86,7 +86,7 @@ namespace
 #if FOONATHAN_HOSTED_IMPLEMENTATION
         std::fprintf(stderr,
                      "[%s] Buffer overflow at address %p detected, corresponding memory "
-                     "block %p has only size %zu.",
+                     "block %p has only size %zu.\n",
                      FOONATHAN_MEMORY_LOG_PREFIX, ptr, memory, node_size);
 #endif
         (void)memory;
