@@ -247,7 +247,7 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, max_alignment));
     debug_fill_internal(mem, size, false);
 
-    auto actual_size      = node_size_ + 2 * fence_size();
+    auto actual_size      = actual_node_size(node_size_);
     auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
     auto align_buffer     = align_offset(total_chunk_size, alignof(chunk));
 
@@ -294,7 +294,7 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
 
 std::size_t small_free_memory_list::usable_size(std::size_t size) const noexcept
 {
-    auto actual_size      = node_size_ + 2 * fence_size();
+    auto actual_size      = actual_node_size(node_size_);
     auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
     auto no_chunks        = size / total_chunk_size;
     auto remainder        = size % total_chunk_size;
@@ -311,9 +311,9 @@ void* small_free_memory_list::allocate() noexcept
 
     --capacity_;
 
-    auto mem = chunk->allocate(node_size_ + 2 * fence_size());
+    auto mem = chunk->allocate(actual_node_size(node_size_));
     FOONATHAN_MEMORY_ASSERT(mem);
-    return detail::debug_fill_new(mem, node_size_, fence_size());
+    return detail::debug_fill_new(mem, node_size_, fence_size(node_size_));
 }
 
 void small_free_memory_list::deallocate(void* mem) noexcept
@@ -321,8 +321,8 @@ void small_free_memory_list::deallocate(void* mem) noexcept
     auto info =
         allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
 
-    auto actual_size = node_size_ + 2 * fence_size();
-    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
+    auto actual_size = actual_node_size(node_size_);
+    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size(node_size_)));
 
     auto chunk     = find_chunk_impl(node);
     dealloc_chunk_ = chunk;
@@ -345,12 +345,6 @@ void small_free_memory_list::deallocate(void* mem) noexcept
 std::size_t small_free_memory_list::alignment() const noexcept
 {
     return alignment_for(node_size_);
-}
-
-std::size_t small_free_memory_list::fence_size() const noexcept
-{
-    // node size is fence size
-    return debug_fence_size ? node_size_ : 0u;
 }
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) noexcept
@@ -382,7 +376,7 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) noexcept
 chunk* small_free_memory_list::find_chunk_impl(unsigned char* node, chunk_base* first,
                                                chunk_base* last) noexcept
 {
-    auto actual_size = node_size_ + 2 * fence_size();
+    auto actual_size = actual_node_size(node_size_);
 
     do
     {
@@ -399,7 +393,7 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char* node, chunk_base* 
 
 chunk* small_free_memory_list::find_chunk_impl(unsigned char* node) noexcept
 {
-    auto actual_size = node_size_ + 2 * fence_size();
+    auto actual_size = actual_node_size(node_size_);
 
     if (auto c = from_chunk(dealloc_chunk_, node, actual_size))
         return c;

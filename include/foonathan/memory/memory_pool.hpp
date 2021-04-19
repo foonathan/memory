@@ -55,8 +55,9 @@ namespace foonathan
             using allocator_type = make_block_allocator_t<BlockOrRawAllocator>;
             using pool_type      = PoolType;
 
+            // actual minimum node size, including any debug fence additions.
             static constexpr std::size_t min_node_size =
-                FOONATHAN_IMPL_DEFINED(free_list::min_element_size);
+                FOONATHAN_IMPL_DEFINED(free_list::actual_node_size(free_list::min_element_size));
 
             /// \returns The minimum block size required for certain number of \concept{concept_node,node}.
             /// \requires \c node_size must be a valid \concept{concept_node,node size}
@@ -65,9 +66,7 @@ namespace foonathan
                                                         std::size_t number_of_nodes) noexcept
             {
                 return detail::memory_block_stack::implementation_offset()
-                       + number_of_nodes
-                             * (((node_size > min_node_size) ? node_size : min_node_size)
-                                + (detail::debug_fence_size ? 2 * detail::max_alignment : 0));
+                       + number_of_nodes * free_list::actual_node_size(node_size);
             }
 
             /// \effects Creates it by specifying the size each \concept{concept_node,node} will have,

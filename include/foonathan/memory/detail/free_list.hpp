@@ -10,6 +10,7 @@
 
 #include "align.hpp"
 #include "utility.hpp"
+#include "debug_helpers.hpp"
 #include "../config.hpp"
 
 namespace foonathan
@@ -28,6 +29,11 @@ namespace foonathan
                 static constexpr auto min_element_size = sizeof(char*);
                 // alignment
                 static constexpr auto min_element_alignment = alignof(char*);
+
+                static constexpr std::size_t actual_node_size(std::size_t node_size) noexcept
+                {
+                    return adjusted_node_size(node_size) + 2 * fence_size();
+                }
 
                 //=== constructor ===//
                 free_memory_list(std::size_t node_size) noexcept;
@@ -92,7 +98,16 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
+
+                static constexpr std::size_t adjusted_node_size(std::size_t requested_size) noexcept
+                {
+                    return requested_size > min_element_size ? requested_size : min_element_size;
+                }
+                static constexpr std::size_t fence_size() noexcept
+                {
+                    return detail::debug_fence_size ? max_alignment : 0u;
+                }
+
                 void        insert_impl(void* mem, std::size_t size) noexcept;
 
                 char*       first_;
@@ -111,6 +126,11 @@ namespace foonathan
                 static constexpr auto min_element_size = sizeof(char*);
                 // alignment
                 static constexpr auto min_element_alignment = alignof(char*);
+
+                static constexpr std::size_t actual_node_size(std::size_t node_size) noexcept
+                {
+                    return adjusted_node_size(node_size) + 2 * fence_size(adjusted_node_size(node_size));
+                }
 
                 //=== constructor ===//
                 ordered_free_memory_list(std::size_t node_size) noexcept;
@@ -186,7 +206,14 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
+                static constexpr std::size_t adjusted_node_size(std::size_t requested_size) noexcept
+                {
+                    return requested_size > min_element_size ? requested_size : min_element_size;
+                }
+                static constexpr std::size_t fence_size(std::size_t node_size) noexcept
+                {
+                    return detail::debug_fence_size ? node_size : 0u;
+                }
 
                 // returns previous pointer
                 char* insert_impl(void* mem, std::size_t size) noexcept;

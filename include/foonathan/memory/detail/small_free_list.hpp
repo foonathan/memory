@@ -9,6 +9,7 @@
 
 #include "../config.hpp"
 #include "utility.hpp"
+#include "debug_helpers.hpp"
 
 namespace foonathan
 {
@@ -46,6 +47,11 @@ namespace foonathan
                 static constexpr std::size_t min_element_size = 1;
                 // alignment
                 static constexpr std::size_t min_element_alignment = 1;
+
+                static constexpr std::size_t actual_node_size(std::size_t node_size) noexcept
+                {
+                    return adjusted_node_size(node_size) + 2 * fence_size(adjusted_node_size(node_size));
+                }
 
                 //=== constructor ===//
                 small_free_memory_list(std::size_t node_size) noexcept;
@@ -127,7 +133,16 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
+
+                static constexpr std::size_t adjusted_node_size(std::size_t requested_size) noexcept
+                {
+                    // mainly here for consistency with other free_list implementaions; min_element_size=1 makes it a no-op.
+                    return requested_size;
+                }
+                static constexpr std::size_t fence_size(std::size_t node_size) noexcept
+                {
+                    return detail::debug_fence_size ? node_size : 0u;
+                }
 
                 chunk* find_chunk_impl(std::size_t n = 1) noexcept;
                 chunk* find_chunk_impl(unsigned char* node, chunk_base* first,
