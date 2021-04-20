@@ -33,8 +33,7 @@ namespace foonathan
                 free_memory_list(std::size_t node_size) noexcept;
 
                 // calls other constructor plus insert
-                free_memory_list(std::size_t node_size, void* mem,
-                                 std::size_t size) noexcept;
+                free_memory_list(std::size_t node_size, void* mem, std::size_t size) noexcept;
 
                 free_memory_list(free_memory_list&& other) noexcept;
                 ~free_memory_list() noexcept = default;
@@ -92,8 +91,7 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
-                void        insert_impl(void* mem, std::size_t size) noexcept;
+                void insert_impl(void* mem, std::size_t size) noexcept;
 
                 char*       first_;
                 std::size_t node_size_, capacity_;
@@ -126,16 +124,14 @@ namespace foonathan
 
                 ~ordered_free_memory_list() noexcept = default;
 
-                ordered_free_memory_list& operator=(ordered_free_memory_list&& other)
-                    noexcept
+                ordered_free_memory_list& operator=(ordered_free_memory_list&& other) noexcept
                 {
                     ordered_free_memory_list tmp(detail::move(other));
                     swap(*this, tmp);
                     return *this;
                 }
 
-                friend void swap(ordered_free_memory_list& a,
-                                 ordered_free_memory_list& b) noexcept;
+                friend void swap(ordered_free_memory_list& a, ordered_free_memory_list& b) noexcept;
 
                 //=== insert/allocation/deallocation ===//
                 // inserts a new memory block, by splitting it up and setting the links
@@ -186,8 +182,6 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
-
                 // returns previous pointer
                 char* insert_impl(void* mem, std::size_t size) noexcept;
 
@@ -210,7 +204,7 @@ namespace foonathan
             using array_free_memory_list = ordered_free_memory_list;
 #endif
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED

@@ -27,9 +27,7 @@ namespace foonathan
 
                 chunk_base() noexcept = default;
 
-                chunk_base(unsigned char no) noexcept : capacity(no), no_nodes(no)
-                {
-                }
+                chunk_base(unsigned char no) noexcept : capacity(no), no_nodes(no) {}
             };
 
             struct chunk;
@@ -51,8 +49,7 @@ namespace foonathan
                 small_free_memory_list(std::size_t node_size) noexcept;
 
                 // does not own memory!
-                small_free_memory_list(std::size_t node_size, void* mem,
-                                       std::size_t size) noexcept;
+                small_free_memory_list(std::size_t node_size, void* mem, std::size_t size) noexcept;
 
                 small_free_memory_list(small_free_memory_list&& other) noexcept;
 
@@ -65,8 +62,7 @@ namespace foonathan
                     return *this;
                 }
 
-                friend void swap(small_free_memory_list& a,
-                                 small_free_memory_list& b) noexcept;
+                friend void swap(small_free_memory_list& a, small_free_memory_list& b) noexcept;
 
                 //=== insert/alloc/dealloc ===//
                 // inserts new memory of given size into the free list
@@ -127,8 +123,6 @@ namespace foonathan
                 }
 
             private:
-                std::size_t fence_size() const noexcept;
-
                 chunk* find_chunk_impl(std::size_t n = 1) noexcept;
                 chunk* find_chunk_impl(unsigned char* node, chunk_base* first,
                                        chunk_base* last) noexcept;
@@ -142,7 +136,7 @@ namespace foonathan
             // for some reason, this is required in order to define it
             void swap(small_free_memory_list& a, small_free_memory_list& b) noexcept;
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_SMALL_FREE_LIST_HPP_INCLUDED

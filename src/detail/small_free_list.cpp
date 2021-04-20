@@ -162,10 +162,7 @@ constexpr std::size_t small_free_memory_list::min_element_size;
 constexpr std::size_t small_free_memory_list::min_element_alignment;
 
 small_free_memory_list::small_free_memory_list(std::size_t node_size) noexcept
-: node_size_(node_size),
-  capacity_(0u),
-  alloc_chunk_(&base_),
-  dealloc_chunk_(&base_)
+: node_size_(node_size), capacity_(0u), alloc_chunk_(&base_), dealloc_chunk_(&base_)
 {
 }
 
@@ -201,8 +198,7 @@ small_free_memory_list::small_free_memory_list(small_free_memory_list&& other) n
     }
 }
 
-void foonathan::memory::detail::swap(small_free_memory_list& a,
-                                     small_free_memory_list& b) noexcept
+void foonathan::memory::detail::swap(small_free_memory_list& a, small_free_memory_list& b) noexcept
 {
     auto b_next = b.base_.next;
     auto b_prev = b.base_.prev;
@@ -247,8 +243,7 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, max_alignment));
     debug_fill_internal(mem, size, false);
 
-    auto actual_size      = node_size_ + 2 * fence_size();
-    auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
+    auto total_chunk_size = chunk::memory_offset + node_size_ * chunk::max_nodes;
     auto align_buffer     = align_offset(total_chunk_size, alignof(chunk));
 
     auto no_chunks = size / (total_chunk_size + align_buffer);
@@ -263,7 +258,7 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     auto prev = static_cast<chunk_base*>(nullptr);
     for (auto i = std::size_t(0); i != no_chunks; ++i)
     {
-        auto c = construct_chunk(total_chunk_size, actual_size);
+        auto c = construct_chunk(total_chunk_size, node_size_);
 
         c->prev = prev;
         if (prev)
@@ -275,9 +270,9 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     }
 
     auto new_nodes = no_chunks * chunk::max_nodes;
-    if (remainder >= chunk::memory_offset + actual_size) // at least one node
+    if (remainder >= chunk::memory_offset + node_size_) // at least one node
     {
-        auto c = construct_chunk(remainder, actual_size);
+        auto c = construct_chunk(remainder, node_size_);
 
         c->prev = prev;
         if (prev)
@@ -294,12 +289,11 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
 
 std::size_t small_free_memory_list::usable_size(std::size_t size) const noexcept
 {
-    auto actual_size      = node_size_ + 2 * fence_size();
-    auto total_chunk_size = chunk::memory_offset + actual_size * chunk::max_nodes;
+    auto total_chunk_size = chunk::memory_offset + node_size_ * chunk::max_nodes;
     auto no_chunks        = size / total_chunk_size;
     auto remainder        = size % total_chunk_size;
 
-    return no_chunks * chunk::max_nodes * actual_size
+    return no_chunks * chunk::max_nodes * node_size_
            + (remainder > chunk::memory_offset ? remainder - chunk::memory_offset : 0u);
 }
 
@@ -311,9 +305,9 @@ void* small_free_memory_list::allocate() noexcept
 
     --capacity_;
 
-    auto mem = chunk->allocate(node_size_ + 2 * fence_size());
+    auto mem = chunk->allocate(node_size_);
     FOONATHAN_MEMORY_ASSERT(mem);
-    return detail::debug_fill_new(mem, node_size_, fence_size());
+    return detail::debug_fill_new(mem, node_size_, 0);
 }
 
 void small_free_memory_list::deallocate(void* mem) noexcept
@@ -321,8 +315,7 @@ void small_free_memory_list::deallocate(void* mem) noexcept
     auto info =
         allocator_info(FOONATHAN_MEMORY_LOG_PREFIX "::detail::small_free_memory_list", this);
 
-    auto actual_size = node_size_ + 2 * fence_size();
-    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, fence_size()));
+    auto node = static_cast<unsigned char*>(detail::debug_fill_free(mem, node_size_, 0));
 
     auto chunk     = find_chunk_impl(node);
     dealloc_chunk_ = chunk;
@@ -331,11 +324,11 @@ void small_free_memory_list::deallocate(void* mem) noexcept
 
     auto offset = node - chunk->list_memory();
     // memory is not at the right position
-    debug_check_pointer([&] { return offset % actual_size == 0u; }, info, mem);
+    debug_check_pointer([&] { return offset % node_size_ == 0u; }, info, mem);
     // double-free
-    debug_check_double_dealloc([&] { return !chunk->contains(node, actual_size); }, info, mem);
+    debug_check_double_dealloc([&] { return !chunk->contains(node, node_size_); }, info, mem);
 
-    auto index = offset / actual_size;
+    auto index = offset / node_size_;
     FOONATHAN_MEMORY_ASSERT(index < chunk->no_nodes);
     chunk->deallocate(node, static_cast<unsigned char>(index));
 
@@ -345,12 +338,6 @@ void small_free_memory_list::deallocate(void* mem) noexcept
 std::size_t small_free_memory_list::alignment() const noexcept
 {
     return alignment_for(node_size_);
-}
-
-std::size_t small_free_memory_list::fence_size() const noexcept
-{
-    // node size is fence size
-    return debug_fence_size ? node_size_ : 0u;
 }
 
 chunk* small_free_memory_list::find_chunk_impl(std::size_t n) noexcept
@@ -382,13 +369,11 @@ chunk* small_free_memory_list::find_chunk_impl(std::size_t n) noexcept
 chunk* small_free_memory_list::find_chunk_impl(unsigned char* node, chunk_base* first,
                                                chunk_base* last) noexcept
 {
-    auto actual_size = node_size_ + 2 * fence_size();
-
     do
     {
-        if (auto c = from_chunk(first, node, actual_size))
+        if (auto c = from_chunk(first, node, node_size_))
             return c;
-        else if ((c = from_chunk(last, node, actual_size)) != nullptr)
+        else if ((c = from_chunk(last, node, node_size_)) != nullptr)
             return c;
 
         first = first->next;
@@ -399,11 +384,9 @@ chunk* small_free_memory_list::find_chunk_impl(unsigned char* node, chunk_base* 
 
 chunk* small_free_memory_list::find_chunk_impl(unsigned char* node) noexcept
 {
-    auto actual_size = node_size_ + 2 * fence_size();
-
-    if (auto c = from_chunk(dealloc_chunk_, node, actual_size))
+    if (auto c = from_chunk(dealloc_chunk_, node, node_size_))
         return c;
-    else if ((c = from_chunk(alloc_chunk_, node, actual_size)) != nullptr)
+    else if ((c = from_chunk(alloc_chunk_, node, node_size_)) != nullptr)
         return c;
     else if (less(dealloc_chunk_, node))
     {
