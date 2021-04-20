@@ -29,6 +29,14 @@ namespace foonathan
                 // alignment
                 static constexpr auto min_element_alignment = alignof(char*);
 
+                // minimal size of the block that needs to be inserted
+                static constexpr std::size_t min_block_size(std::size_t node_size,
+                                                            std::size_t number_of_nodes)
+                {
+                    return (node_size < min_element_size ? min_element_size : node_size)
+                           * number_of_nodes;
+                }
+
                 //=== constructor ===//
                 free_memory_list(std::size_t node_size) noexcept;
 
@@ -53,7 +61,8 @@ namespace foonathan
                 // i.e. how many memory will be actually inserted and usable on a call to insert()
                 std::size_t usable_size(std::size_t size) const noexcept
                 {
-                    return size;
+                    // Round down to next multiple of node size.
+                    return (size / node_size_) * node_size_;
                 }
 
                 // returns a single block from the list
@@ -110,6 +119,14 @@ namespace foonathan
                 // alignment
                 static constexpr auto min_element_alignment = alignof(char*);
 
+                // minimal size of the block that needs to be inserted
+                static constexpr std::size_t min_block_size(std::size_t node_size,
+                                                            std::size_t number_of_nodes)
+                {
+                    return (node_size < min_element_size ? min_element_size : node_size)
+                           * number_of_nodes;
+                }
+
                 //=== constructor ===//
                 ordered_free_memory_list(std::size_t node_size) noexcept;
 
@@ -144,7 +161,8 @@ namespace foonathan
                 // i.e. how many memory will be actually inserted and usable on a call to insert()
                 std::size_t usable_size(std::size_t size) const noexcept
                 {
-                    return size;
+                    // Round down to next multiple of node size.
+                    return (size / node_size_) * node_size_;
                 }
 
                 // returns a single block from the list

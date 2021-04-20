@@ -6,9 +6,11 @@
 #define FOONATHAN_MEMORY_DETAIL_SMALL_FREE_LIST_HPP_INCLUDED
 
 #include <cstddef>
+#include <climits>
 
 #include "../config.hpp"
 #include "utility.hpp"
+#include "align.hpp"
 
 namespace foonathan
 {
@@ -30,6 +32,12 @@ namespace foonathan
                 chunk_base(unsigned char no) noexcept : capacity(no), no_nodes(no) {}
             };
 
+            constexpr std::size_t chunk_memory_offset =
+                sizeof(chunk_base) % detail::max_alignment == 0 ?
+                    sizeof(chunk_base) :
+                    (sizeof(chunk_base) / detail::max_alignment + 1) * detail::max_alignment;
+            constexpr std::size_t chunk_max_nodes = UCHAR_MAX;
+
             struct chunk;
 
             // the same as free_memory_list but optimized for small node sizes
@@ -39,11 +47,25 @@ namespace foonathan
             // node_size is increased via two times fence size and fence is put in front and after
             class small_free_memory_list
             {
+                static constexpr std::size_t chunk_count(std::size_t number_of_nodes)
+                {
+                    return number_of_nodes / chunk_max_nodes
+                           + (number_of_nodes % chunk_max_nodes == 0 ? 0 : 1);
+                }
+
             public:
                 // minimum element size
                 static constexpr std::size_t min_element_size = 1;
                 // alignment
                 static constexpr std::size_t min_element_alignment = 1;
+
+                // minimal size of the block that needs to be inserted
+                static constexpr std::size_t min_block_size(std::size_t node_size,
+                                                            std::size_t number_of_nodes)
+                {
+                    return chunk_count(node_size)
+                           * (chunk_memory_offset + chunk_max_nodes * node_size);
+                }
 
                 //=== constructor ===//
                 small_free_memory_list(std::size_t node_size) noexcept;

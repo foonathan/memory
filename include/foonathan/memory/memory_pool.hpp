@@ -65,9 +65,7 @@ namespace foonathan
                                                         std::size_t number_of_nodes) noexcept
             {
                 return detail::memory_block_stack::implementation_offset()
-                       + number_of_nodes
-                             * (((node_size > min_node_size) ? node_size : min_node_size)
-                                + (detail::debug_fence_size ? 2 * detail::max_alignment : 0));
+                       + free_list::min_block_size(node_size, number_of_nodes);
             }
 
             /// \effects Creates it by specifying the size each \concept{concept_node,node} will have,

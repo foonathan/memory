@@ -4,10 +4,8 @@
 
 #include "detail/small_free_list.hpp"
 
-#include <limits>
 #include <new>
 
-#include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
 #include "detail/assert.hpp"
 #include "error.hpp"
@@ -19,14 +17,13 @@ using namespace detail;
 
 struct foonathan::memory::detail::chunk : chunk_base
 {
-    static const std::size_t memory_offset;
-    static const std::size_t max_nodes;
-
     // gives it the size of the memory block it is created in and the size of a node
     chunk(std::size_t total_memory, std::size_t node_size) noexcept
-    : chunk_base(static_cast<unsigned char>((total_memory - memory_offset) / node_size))
+    : chunk_base(static_cast<unsigned char>((total_memory - chunk_memory_offset) / node_size))
     {
-        FOONATHAN_MEMORY_ASSERT((total_memory - memory_offset) / node_size <= max_nodes);
+        static_assert(sizeof(chunk) == sizeof(chunk_base), "chunk must not have members");
+        FOONATHAN_MEMORY_ASSERT((total_memory - chunk_memory_offset) / node_size
+                                <= chunk_max_nodes);
         FOONATHAN_MEMORY_ASSERT(capacity > 0);
         auto p = list_memory();
         for (unsigned char i = 0u; i != no_nodes; p += node_size)
@@ -37,7 +34,7 @@ struct foonathan::memory::detail::chunk : chunk_base
     unsigned char* list_memory() noexcept
     {
         auto mem = static_cast<void*>(this);
-        return static_cast<unsigned char*>(mem) + memory_offset;
+        return static_cast<unsigned char*>(mem) + chunk_memory_offset;
     }
 
     // returns the nth node
@@ -91,12 +88,6 @@ struct foonathan::memory::detail::chunk : chunk_base
     }
 };
 
-const std::size_t chunk::memory_offset =
-    sizeof(chunk) % detail::max_alignment == 0 ?
-        sizeof(chunk) :
-        (sizeof(chunk) / detail::max_alignment + 1) * detail::max_alignment;
-const std::size_t chunk::max_nodes = std::numeric_limits<unsigned char>::max();
-
 namespace
 {
     // converts a chunk_base to a chunk (if it is one)
@@ -108,7 +99,7 @@ namespace
     // same as above but also requires a certain size
     chunk* make_chunk(chunk_base* c, std::size_t size_needed) noexcept
     {
-        FOONATHAN_MEMORY_ASSERT(size_needed <= std::numeric_limits<unsigned char>::max());
+        FOONATHAN_MEMORY_ASSERT(size_needed <= chunk_max_nodes);
         return c->capacity >= size_needed ? make_chunk(c) : nullptr;
     }
 
@@ -243,7 +234,7 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     FOONATHAN_MEMORY_ASSERT(is_aligned(mem, max_alignment));
     debug_fill_internal(mem, size, false);
 
-    auto total_chunk_size = chunk::memory_offset + node_size_ * chunk::max_nodes;
+    auto total_chunk_size = chunk_memory_offset + node_size_ * chunk_max_nodes;
     auto align_buffer     = align_offset(total_chunk_size, alignof(chunk));
 
     auto no_chunks = size / (total_chunk_size + align_buffer);
@@ -269,8 +260,8 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
         memory += align_buffer;
     }
 
-    auto new_nodes = no_chunks * chunk::max_nodes;
-    if (remainder >= chunk::memory_offset + node_size_) // at least one node
+    auto new_nodes = no_chunks * chunk_max_nodes;
+    if (remainder >= chunk_memory_offset + node_size_) // at least one node
     {
         auto c = construct_chunk(remainder, node_size_);
 
@@ -289,12 +280,12 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
 
 std::size_t small_free_memory_list::usable_size(std::size_t size) const noexcept
 {
-    auto total_chunk_size = chunk::memory_offset + node_size_ * chunk::max_nodes;
+    auto total_chunk_size = chunk_memory_offset + node_size_ * chunk_max_nodes;
     auto no_chunks        = size / total_chunk_size;
     auto remainder        = size % total_chunk_size;
 
-    return no_chunks * chunk::max_nodes * node_size_
-           + (remainder > chunk::memory_offset ? remainder - chunk::memory_offset : 0u);
+    return no_chunks * chunk_max_nodes * node_size_
+           + (remainder > chunk_memory_offset ? remainder - chunk_memory_offset : 0u);
 }
 
 void* small_free_memory_list::allocate() noexcept
