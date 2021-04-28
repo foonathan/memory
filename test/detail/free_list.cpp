@@ -21,22 +21,67 @@ void use_list_node(FreeList& list)
 {
     std::vector<void*> ptrs;
     auto               capacity = list.capacity();
-    for (std::size_t i = 0u; i != capacity; ++i)
+
+    // allocate and deallocate in reverse order
     {
-        auto ptr = list.allocate();
-        REQUIRE(ptr);
-        REQUIRE(is_aligned(ptr, list.alignment()));
-        ptrs.push_back(ptr);
+        for (std::size_t i = 0u; i != capacity; ++i)
+        {
+            auto ptr = list.allocate();
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
+        REQUIRE(list.capacity() == 0u);
+        REQUIRE(list.empty());
+
+        std::reverse(ptrs.begin(), ptrs.end());
+
+        for (auto p : ptrs)
+            list.deallocate(p);
+        REQUIRE(list.capacity() == capacity);
+        REQUIRE(!list.empty());
+        ptrs.clear();
     }
-    REQUIRE(list.capacity() == 0u);
-    REQUIRE(list.empty());
 
-    std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
+    // allocate and deallocate in same order
+    {
+        for (std::size_t i = 0u; i != capacity; ++i)
+        {
+            auto ptr = list.allocate();
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
+        REQUIRE(list.capacity() == 0u);
+        REQUIRE(list.empty());
 
-    for (auto p : ptrs)
-        list.deallocate(p);
-    REQUIRE(list.capacity() == capacity);
-    REQUIRE(!list.empty());
+        for (auto p : ptrs)
+            list.deallocate(p);
+        REQUIRE(list.capacity() == capacity);
+        REQUIRE(!list.empty());
+        ptrs.clear();
+    }
+
+    // allocate and deallocate in random order
+    {
+        for (std::size_t i = 0u; i != capacity; ++i)
+        {
+            auto ptr = list.allocate();
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
+        REQUIRE(list.capacity() == 0u);
+        REQUIRE(list.empty());
+
+        std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
+
+        for (auto p : ptrs)
+            list.deallocate(p);
+        REQUIRE(list.capacity() == capacity);
+        REQUIRE(!list.empty());
+        ptrs.clear();
+    }
 }
 
 template <class FreeList>
@@ -137,33 +182,64 @@ TEST_CASE("free_memory_list", "[detail][pool]")
 
 void use_list_array(ordered_free_memory_list& list)
 {
-    // just hoping to catch segfaults
+    std::vector<void*> ptrs;
+    auto               capacity = list.capacity();
+    // We would need capacity / 3 nodes, but the memory might not be contiguous.
+    auto number_of_allocations = capacity / 6;
 
-    auto array = list.allocate(3 * list.node_size());
-    REQUIRE(array);
-    REQUIRE(is_aligned(array, list.alignment()));
-    auto array2 = list.allocate(2 * 3);
-    REQUIRE(array2);
-    REQUIRE(is_aligned(array2, list.alignment()));
-    auto node = list.allocate();
-    REQUIRE(node);
-    REQUIRE(is_aligned(node, list.alignment()));
+    // allocate and deallocate in reverse order
+    {
+        for (std::size_t i = 0u; i != number_of_allocations; ++i)
+        {
+            auto ptr = list.allocate(3 * list.node_size());
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
 
-    list.deallocate(array2, 2 * 3);
-    list.deallocate(node);
+        std::reverse(ptrs.begin(), ptrs.end());
 
-    array2 = list.allocate(4 * 10);
-    REQUIRE(array2);
-    REQUIRE(is_aligned(array2, list.alignment()));
+        for (auto p : ptrs)
+            list.deallocate(p, 3 * list.node_size());
+        REQUIRE(list.capacity() == capacity);
+        ptrs.clear();
+    }
 
-    list.deallocate(array, 3 * list.node_size());
+    // allocate and deallocate in same order
+    {
+        for (std::size_t i = 0u; i != number_of_allocations; ++i)
+        {
+            auto ptr = list.allocate(3 * list.node_size());
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
 
-    node = list.allocate();
-    REQUIRE(node);
-    REQUIRE(is_aligned(node, list.alignment()));
-    list.deallocate(node);
+        for (auto p : ptrs)
+            list.deallocate(p, 3 * list.node_size());
+        REQUIRE(list.capacity() == capacity);
+        REQUIRE(!list.empty());
+        ptrs.clear();
+    }
 
-    list.deallocate(array2, 4 * 10);
+    // allocate and deallocate in random order
+    {
+        for (std::size_t i = 0u; i != number_of_allocations; ++i)
+        {
+            auto ptr = list.allocate(3 * list.node_size());
+            REQUIRE(ptr);
+            REQUIRE(is_aligned(ptr, list.alignment()));
+            ptrs.push_back(ptr);
+        }
+
+        std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{});
+
+        for (auto p : ptrs)
+            list.deallocate(p, 3 * list.node_size());
+        REQUIRE(list.capacity() == capacity);
+        REQUIRE(!list.empty());
+        ptrs.clear();
+    }
 }
 
 TEST_CASE("ordered_free_memory_list", "[detail][pool]")

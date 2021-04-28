@@ -443,6 +443,12 @@ void* ordered_free_memory_list::allocate() noexcept
         last_dealloc_ = next;
         FOONATHAN_MEMORY_ASSERT(last_dealloc_prev_ == prev);
     }
+    else if (node == last_dealloc_prev_)
+    {
+        // now the previous node is the node before ours
+        last_dealloc_prev_ = prev;
+        FOONATHAN_MEMORY_ASSERT(last_dealloc_ == next);
+    }
 
     return detail::debug_fill_new(node, node_size_, 0);
 }
@@ -463,10 +469,17 @@ void* ordered_free_memory_list::allocate(std::size_t n) noexcept
     capacity_ -= i.size(node_size_);
 
     // if last_dealloc_ points into the array being removed
-    if (less_equal(i.first, last_dealloc_) && less_equal(last_dealloc_, i.last))
+    if ((less_equal(i.first, last_dealloc_) && less_equal(last_dealloc_, i.last)))
     {
         // move last_dealloc just outside range
         last_dealloc_      = i.next;
+        last_dealloc_prev_ = i.prev;
+    }
+    // if the previous deallocation is the last element of the array
+    else if (last_dealloc_prev_ == i.last)
+    {
+        // it is now the last element before the array
+        FOONATHAN_MEMORY_ASSERT(last_dealloc_ == i.next);
         last_dealloc_prev_ = i.prev;
     }
 
