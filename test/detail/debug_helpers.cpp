@@ -4,14 +4,14 @@
 
 #include "detail/debug_helpers.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "debugging.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::debug_fill", "[detail][core]")
+TEST_CASE("detail::debug_fill")
 {
     debug_magic array[10];
     for (auto& el : array)
@@ -27,7 +27,7 @@ TEST_CASE("detail::debug_fill", "[detail][core]")
 #endif
 }
 
-TEST_CASE("detail::debug_is_filled", "[detail][core]")
+TEST_CASE("detail::debug_is_filled")
 {
     debug_magic array[10];
     for (auto& el : array)
@@ -45,7 +45,7 @@ TEST_CASE("detail::debug_is_filled", "[detail][core]")
 #endif
 }
 
-TEST_CASE("detail::debug_fill_new/free", "[detail][core]")
+TEST_CASE("detail::debug_fill_new/free")
 {
     debug_magic array[10];
 

@@ -4,14 +4,14 @@
 
 #include "memory_arena.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "static_allocator.hpp"
 
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::memory_block_stack", "[detail][arena]")
+TEST_CASE("detail::memory_block_stack")
 {
     memory_block_stack stack;
     REQUIRE(stack.empty());
@@ -26,13 +26,13 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
     REQUIRE(top.size <= 1024);
     REQUIRE(is_aligned(top.memory, max_alignment));
 
-    SECTION("pop")
+    SUBCASE("pop")
     {
         auto block = stack.pop();
         REQUIRE(block.size == 1024);
         REQUIRE(block.memory == static_cast<void*>(&memory));
     }
-    SECTION("steal_top")
+    SUBCASE("steal_top")
     {
         memory_block_stack other;
 
@@ -51,7 +51,7 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
     stack.push({&b, 1024});
     stack.push({&c, 1024});
 
-    SECTION("multiple pop")
+    SUBCASE("multiple pop")
     {
         auto block = stack.pop();
         REQUIRE(block.memory == static_cast<void*>(&c));
@@ -62,7 +62,7 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
         block = stack.pop();
         REQUIRE(block.memory == static_cast<void*>(&memory));
     }
-    SECTION("multiple steal_from")
+    SUBCASE("multiple steal_from")
     {
         memory_block_stack other;
 
@@ -82,7 +82,7 @@ TEST_CASE("detail::memory_block_stack", "[detail][arena]")
         block = other.pop();
         REQUIRE(block.memory == static_cast<void*>(&c));
     }
-    SECTION("move")
+    SUBCASE("move")
     {
         memory_block_stack other = detail::move(stack);
         REQUIRE(stack.empty());
@@ -131,10 +131,10 @@ struct test_block_allocator
     }
 };
 
-TEST_CASE("memory_arena w/ caching", "[arena]")
+TEST_CASE("memory_arena w/ caching")
 {
     using arena_type = memory_arena<test_block_allocator<10>>;
-    SECTION("basic")
+    SUBCASE("basic")
     {
         arena_type arena(1024);
         REQUIRE(arena.get_allocator().i == 0u);
@@ -177,7 +177,7 @@ TEST_CASE("memory_arena w/ caching", "[arena]")
         REQUIRE(arena.size() == 1u);
         REQUIRE(arena.capacity() == 1u);
     }
-    SECTION("small arena")
+    SUBCASE("small arena")
     {
         arena_type small_arena(arena_type::min_block_size(1));
         REQUIRE(small_arena.get_allocator().i == 0u);
@@ -191,10 +191,10 @@ TEST_CASE("memory_arena w/ caching", "[arena]")
     }
 }
 
-TEST_CASE("memory_arena w/o caching", "[arena]")
+TEST_CASE("memory_arena w/o caching")
 {
     using arena_type = memory_arena<test_block_allocator<10>, false>;
-    SECTION("normal")
+    SUBCASE("normal")
     {
         arena_type arena(1024);
         REQUIRE(arena.get_allocator().i == 0u);
@@ -232,7 +232,7 @@ TEST_CASE("memory_arena w/o caching", "[arena]")
         REQUIRE(arena.size() == 1u);
         REQUIRE(arena.capacity() == 1u);
     }
-    SECTION("small arena")
+    SUBCASE("small arena")
     {
         arena_type small_arena(arena_type::min_block_size(1));
         REQUIRE(small_arena.get_allocator().i == 0u);
@@ -257,7 +257,7 @@ static_assert(std::is_same<growing_block_allocator<>,
 template <class RawAlloc>
 using block_wrapper = growing_block_allocator<RawAlloc>;
 
-TEST_CASE("make_block_allocator", "[arena]")
+TEST_CASE("make_block_allocator")
 {
     growing_block_allocator<heap_allocator> a1 = make_block_allocator<heap_allocator>(1024);
     REQUIRE(a1.next_block_size() == 1024);

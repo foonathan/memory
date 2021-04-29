@@ -4,13 +4,13 @@
 
 #include "segregator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
 
-TEST_CASE("threshold_segregatable", "[adapter]")
+TEST_CASE("threshold_segregatable")
 {
     using segregatable = threshold_segregatable<test_allocator>;
     segregatable s(8u);
@@ -28,7 +28,7 @@ TEST_CASE("threshold_segregatable", "[adapter]")
     REQUIRE(!s.use_allocate_array(1u, 9u, 1u));
 }
 
-TEST_CASE("binary_segregator", "[adapter]")
+TEST_CASE("binary_segregator")
 {
     using segregatable = threshold_segregatable<test_allocator>;
     using segregator   = binary_segregator<segregatable, test_allocator>;
@@ -82,7 +82,7 @@ TEST_CASE("binary_segregator", "[adapter]")
     REQUIRE(s.get_fallback_allocator().no_deallocated() == 2u);
 }
 
-TEST_CASE("segregator", "[adapter]")
+TEST_CASE("segregator")
 {
     using segregatable = threshold_segregatable<test_allocator>;
     using segregator_0 = segregator<segregatable>;

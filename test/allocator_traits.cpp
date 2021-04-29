@@ -4,7 +4,7 @@
 
 #include "allocator_traits.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include <type_traits>
 
@@ -25,9 +25,7 @@ struct std_allocator_construct
     using value_type = T;
     using pointer    = T;
 
-    void construct(pointer, T)
-    {
-    }
+    void construct(pointer, T) {}
 };
 
 static_assert(!allocator_is_raw_allocator<std_allocator_construct<int>>::value, "");
@@ -45,8 +43,8 @@ namespace foonathan
         struct allocator_traits<raw_allocator_specialized>
         {
         };
-    }
-} // namespace foonathan::memory
+    } // namespace memory
+} // namespace foonathan
 
 static_assert(is_raw_allocator<raw_allocator_specialized>::value, "");
 
@@ -151,7 +149,7 @@ void test_max_getter(const Allocator& alloc, std::size_t alignment, std::size_t 
     REQUIRE(i == array);
 }
 
-TEST_CASE("allocator_traits", "[core]")
+TEST_CASE("allocator_traits")
 {
     struct min_raw_allocator
     {
@@ -191,7 +189,7 @@ TEST_CASE("allocator_traits", "[core]")
 
     static_assert(is_raw_allocator<standard_allocator>::value, "");
 
-    SECTION("node")
+    SUBCASE("node")
     {
         // minimum interface works
         min_raw_allocator min;
@@ -219,7 +217,7 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(!both.alloc);
         REQUIRE(!both.dealloc);
     }
-    SECTION("array")
+    SUBCASE("array")
     {
         // minimum interface works
         min_raw_allocator min;
@@ -292,7 +290,7 @@ TEST_CASE("allocator_traits", "[core]")
         REQUIRE(!array4.alloc);
         REQUIRE(!array4.dealloc);
     }
-    SECTION("max getter")
+    SUBCASE("max getter")
     {
         min_raw_allocator min;
         test_max_getter(min, detail::max_alignment, std::size_t(-1), std::size_t(-1));
@@ -366,9 +364,7 @@ TEST_CASE("composable_allocator_traits")
             return nullptr;
         }
 
-        void deallocate_node(void*, std::size_t, std::size_t) noexcept
-        {
-        }
+        void deallocate_node(void*, std::size_t, std::size_t) noexcept {}
 
         void* try_allocate_node(std::size_t, std::size_t)
         {
@@ -384,14 +380,14 @@ TEST_CASE("composable_allocator_traits")
     };
     static_assert(is_composable_allocator<min_composable_allocator>::value, "");
 
-    SECTION("node")
+    SUBCASE("node")
     {
         min_composable_allocator alloc;
         test_try_node(alloc);
         REQUIRE(alloc.alloc_node);
         REQUIRE(alloc.dealloc_node);
     }
-    SECTION("array")
+    SUBCASE("array")
     {
         min_composable_allocator min;
         test_try_array(min);
@@ -408,8 +404,7 @@ TEST_CASE("composable_allocator_traits")
                 return nullptr;
             }
 
-            bool try_deallocate_array(void*, std::size_t, std::size_t,
-                                      std::size_t) noexcept
+            bool try_deallocate_array(void*, std::size_t, std::size_t, std::size_t) noexcept
             {
                 dealloc_array = true;
                 return true;

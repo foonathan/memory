@@ -4,12 +4,12 @@
 
 #include "detail/align.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::align_offset", "[detail][core]")
+TEST_CASE("detail::align_offset")
 {
     auto ptr = reinterpret_cast<void*>(0);
     REQUIRE(align_offset(ptr, 1) == 0u);
@@ -27,7 +27,7 @@ TEST_CASE("detail::align_offset", "[detail][core]")
     REQUIRE(align_offset(ptr, 16) == 15u);
 }
 
-TEST_CASE("detail::is_aligned", "[detail][core]")
+TEST_CASE("detail::is_aligned")
 {
     auto ptr = reinterpret_cast<void*>(0);
     REQUIRE(is_aligned(ptr, 1));
@@ -50,7 +50,7 @@ TEST_CASE("detail::is_aligned", "[detail][core]")
     REQUIRE(!is_aligned(ptr, 16));
 }
 
-TEST_CASE("detail::alignment_for", "[detail][core]")
+TEST_CASE("detail::alignment_for")
 {
     static_assert(max_alignment >= 8, "test case not working");
     REQUIRE(alignment_for(1) == 1);

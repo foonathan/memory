@@ -4,7 +4,7 @@
 
 #include "aligned_allocator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "detail/align.hpp"
 #include "allocator_storage.hpp"
@@ -12,7 +12,7 @@
 
 using namespace foonathan::memory;
 
-TEST_CASE("aligned_allocator", "[adapter]")
+TEST_CASE("aligned_allocator")
 {
     using allocator_t = aligned_allocator<allocator_reference<memory_stack<>>>;
 

@@ -9,21 +9,11 @@ target_link_libraries(foonathan_memory_profiling foonathan_memory)
 target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
-    file(DOWNLOAD
-         https://raw.githubusercontent.com/catchorg/Catch2/2e61d38c7c3078e600c331257b5bebfb81aaa685/single_include/catch2/catch.hpp
-         ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp
-         STATUS status
-         LOG log)
-
-    list(GET status 0 status_code)
-    list(GET status 1 status_string)
-
-    if(NOT status_code EQUAL 0)
-        message(FATAL_ERROR "error downloading catch: ${status_string}"
-                            "${log}")
-    endif()
-endif()
+# Fetch doctest.
+message(STATUS "Fetching doctest")
+include(FetchContent)
+FetchContent_Declare(doctest URL https://github.com/onqtam/doctest/archive/2.4.5.zip)
+FetchContent_MakeAvailable(doctest)
 
 set(tests
     test_allocator.hpp
@@ -49,9 +39,9 @@ set(tests
     smart_ptr.cpp)
 
 add_executable(foonathan_memory_test ${tests})
-target_link_libraries(foonathan_memory_test foonathan_memory)
+target_link_libraries(foonathan_memory_test PRIVATE foonathan_memory doctest::doctest)
 target_include_directories(foonathan_memory_test PRIVATE
-                            ${CMAKE_CURRENT_BINARY_DIR}
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
 add_test(NAME test COMMAND foonathan_memory_test)
+

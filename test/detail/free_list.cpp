@@ -6,7 +6,7 @@
 #include "detail/small_free_list.hpp"
 
 #include <algorithm>
-#include <catch.hpp>
+#include <doctest/doctest.h>
 #include <random>
 #include <vector>
 
@@ -146,28 +146,28 @@ void check_move(FreeList& list)
     list.deallocate(ptr);
 }
 
-TEST_CASE("free_memory_list", "[detail][pool]")
+TEST_CASE("free_memory_list")
 {
     free_memory_list list(4);
     REQUIRE(list.empty());
     REQUIRE(list.node_size() >= 4);
     REQUIRE(list.capacity() == 0u);
 
-    SECTION("normal insert")
+    SUBCASE("normal insert")
     {
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
-    SECTION("uneven insert")
+    SUBCASE("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
 
         check_move(list);
     }
-    SECTION("multiple insert")
+    SUBCASE("multiple insert")
     {
         static_allocator_storage<1024> a;
         static_allocator_storage<100>  b;
@@ -242,14 +242,14 @@ void use_list_array(ordered_free_memory_list& list)
     }
 }
 
-TEST_CASE("ordered_free_memory_list", "[detail][pool]")
+TEST_CASE("ordered_free_memory_list")
 {
     ordered_free_memory_list list(4);
     REQUIRE(list.empty());
     REQUIRE(list.node_size() >= 4);
     REQUIRE(list.capacity() == 0u);
 
-    SECTION("normal insert")
+    SUBCASE("normal insert")
     {
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
@@ -257,7 +257,7 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
 
         check_move(list);
     }
-    SECTION("uneven insert")
+    SUBCASE("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
@@ -265,7 +265,7 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
 
         check_move(list);
     }
-    SECTION("multiple insert")
+    SUBCASE("multiple insert")
     {
         static_allocator_storage<1024> a;
         static_allocator_storage<100>  b;
@@ -281,35 +281,35 @@ TEST_CASE("ordered_free_memory_list", "[detail][pool]")
     }
 }
 
-TEST_CASE("small_free_memory_list", "[detail][pool]")
+TEST_CASE("small_free_memory_list")
 {
     small_free_memory_list list(4);
     REQUIRE(list.empty());
     REQUIRE(list.node_size() == 4);
     REQUIRE(list.capacity() == 0u);
 
-    SECTION("normal insert")
+    SUBCASE("normal insert")
     {
         static_allocator_storage<1024> memory;
         check_list(list, &memory, 1024);
 
         check_move(list);
     }
-    SECTION("uneven insert")
+    SUBCASE("uneven insert")
     {
         static_allocator_storage<1023> memory; // not dividable
         check_list(list, &memory, 1023);
 
         check_move(list);
     }
-    SECTION("big insert")
+    SUBCASE("big insert")
     {
         static_allocator_storage<4096> memory; // should use multiple chunks
         check_list(list, &memory, 4096);
 
         check_move(list);
     }
-    SECTION("multiple insert")
+    SUBCASE("multiple insert")
     {
         static_allocator_storage<1024> a;
         static_allocator_storage<100>  b;

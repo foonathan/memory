@@ -4,16 +4,16 @@
 
 #include "iteration_allocator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "allocator_storage.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
 
-TEST_CASE("iteration_allocator", "[stack]")
+TEST_CASE("iteration_allocator")
 {
-    SECTION("basic")
+    SUBCASE("basic")
     {
         test_allocator                                              alloc;
         iteration_allocator<2, allocator_reference<test_allocator>> iter_alloc(100, alloc);
@@ -46,7 +46,7 @@ TEST_CASE("iteration_allocator", "[stack]")
         REQUIRE(iter_alloc.cur_iteration() == 1u);
         REQUIRE(iter_alloc.capacity_left() == 50);
     }
-    SECTION("overaligned")
+    SUBCASE("overaligned")
     {
         test_allocator                                              alloc;
         iteration_allocator<1, allocator_reference<test_allocator>> iter_alloc(100, alloc);

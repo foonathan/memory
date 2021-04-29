@@ -4,14 +4,14 @@
 
 #include "fallback_allocator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "allocator_storage.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
 
-TEST_CASE("fallback_allocator", "[adapter]")
+TEST_CASE("fallback_allocator")
 {
     struct test_compositioning : test_allocator
     {

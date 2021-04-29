@@ -4,7 +4,7 @@
 
 #include "detail/memory_stack.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "detail/align.hpp"
 #include "detail/debug_helpers.hpp"
@@ -14,12 +14,12 @@
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
+TEST_CASE("detail::fixed_memory_stack")
 {
     fixed_memory_stack stack;
     REQUIRE(stack.top() == nullptr);
 
-    SECTION("allocate")
+    SUBCASE("allocate")
     {
         static_allocator_storage<1024> memory;
         stack    = fixed_memory_stack{&memory};
@@ -27,7 +27,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
 
         REQUIRE(stack.top() == reinterpret_cast<char*>(&memory));
 
-        SECTION("alignment for allocate")
+        SUBCASE("alignment for allocate")
         {
             auto ptr = stack.allocate(end, 13, 1u);
             REQUIRE(ptr);
@@ -45,7 +45,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
             REQUIRE(ptr);
             REQUIRE(is_aligned(ptr, 2 * max_alignment));
         }
-        SECTION("allocate/unwind")
+        SUBCASE("allocate/unwind")
         {
             REQUIRE(stack.allocate(end, 10u, 1u));
             auto diff = std::size_t(stack.top() - reinterpret_cast<char*>(&memory));
@@ -63,7 +63,7 @@ TEST_CASE("detail::fixed_memory_stack", "[detail][stack]")
             REQUIRE(stack.top() == top);
         }
     }
-    SECTION("move")
+    SUBCASE("move")
     {
         static_allocator_storage<1024> memory;
         auto                           end = reinterpret_cast<char*>(&memory) + 1024;

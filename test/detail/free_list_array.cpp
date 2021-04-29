@@ -4,7 +4,7 @@
 
 #include "detail/free_list_array.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "detail/free_list.hpp"
 #include "detail/small_free_list.hpp"
@@ -13,7 +13,7 @@
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::log2_access_policy", "[detail][pool]")
+TEST_CASE("detail::log2_access_policy")
 {
     using ap = detail::log2_access_policy;
     REQUIRE(ap::index_from_size(1) == 0u);
@@ -31,11 +31,11 @@ TEST_CASE("detail::log2_access_policy", "[detail][pool]")
     REQUIRE(ap::size_from_index(3) == 8u);
 }
 
-TEST_CASE("detail::free_list_array", "[detail][pool]")
+TEST_CASE("detail::free_list_array")
 {
     static_allocator_storage<1024> memory;
     detail::fixed_memory_stack     stack(&memory);
-    SECTION("power of two max size, small list")
+    SUBCASE("power of two max size, small list")
     {
         using array =
             detail::free_list_array<detail::small_free_memory_list, detail::log2_access_policy>;
@@ -51,7 +51,7 @@ TEST_CASE("detail::free_list_array", "[detail][pool]")
         REQUIRE(arr.get(9u).node_size() == 16u);
         REQUIRE(arr.get(16u).node_size() == 16u);
     }
-    SECTION("non power of two max size, small list")
+    SUBCASE("non power of two max size, small list")
     {
         using array =
             detail::free_list_array<detail::small_free_memory_list, detail::log2_access_policy>;
@@ -67,7 +67,7 @@ TEST_CASE("detail::free_list_array", "[detail][pool]")
         REQUIRE(arr.get(9u).node_size() == 16u);
         REQUIRE(arr.get(15u).node_size() == 16u);
     }
-    SECTION("non power of two max size, normal list")
+    SUBCASE("non power of two max size, normal list")
     {
         using array = detail::free_list_array<detail::free_memory_list, detail::log2_access_policy>;
         array arr(stack, stack.top() + 1024, 15);

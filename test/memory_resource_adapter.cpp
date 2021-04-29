@@ -4,7 +4,7 @@
 
 #include "memory_resource_adapter.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 #include <new>
 
 #include "allocator_storage.hpp"
@@ -46,7 +46,7 @@ struct pmr_test_allocator
     }
 };
 
-TEST_CASE("memory_resource_adapter", "[adapter]")
+TEST_CASE("memory_resource_adapter")
 {
     auto max_node = pmr_test_allocator{}.max_node_size();
 

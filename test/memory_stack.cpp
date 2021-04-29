@@ -4,14 +4,14 @@
 
 #include "memory_stack.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "allocator_storage.hpp"
 #include "test_allocator.hpp"
 
 using namespace foonathan::memory;
 
-TEST_CASE("memory_stack", "[stack]")
+TEST_CASE("memory_stack")
 {
     test_allocator alloc;
 
@@ -21,7 +21,7 @@ TEST_CASE("memory_stack", "[stack]")
     REQUIRE(stack.capacity_left() == 100);
     auto capacity = stack.capacity_left();
 
-    SECTION("empty unwind")
+    SUBCASE("empty unwind")
     {
         auto m = stack.top();
         stack.unwind(m);
@@ -29,7 +29,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }
-    SECTION("normal allocation/unwind")
+    SUBCASE("normal allocation/unwind")
     {
         stack.allocate(10, 1);
         REQUIRE(stack.capacity_left() == capacity - 10 - 2 * detail::debug_fence_size);
@@ -46,7 +46,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }
-    SECTION("multiple block allocation/unwind")
+    SUBCASE("multiple block allocation/unwind")
     {
         // note: tests are mostly hoping not to get a segfault
 
@@ -76,7 +76,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         REQUIRE(alloc.no_deallocated() == 1u);
     }
-    SECTION("move")
+    SUBCASE("move")
     {
         auto other = detail::move(stack);
         auto m     = other.top();
@@ -90,7 +90,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(alloc.no_allocated() == 1u);
         stack.unwind(m);
     }
-    SECTION("marker comparision")
+    SUBCASE("marker comparision")
     {
         auto m1 = stack.top();
         auto m2 = stack.top();
@@ -103,7 +103,7 @@ TEST_CASE("memory_stack", "[stack]")
         stack.unwind(m2);
         REQUIRE(stack.top() == m2);
     }
-    SECTION("unwinder")
+    SUBCASE("unwinder")
     {
         auto m = stack.top();
         {
@@ -141,7 +141,7 @@ TEST_CASE("memory_stack", "[stack]")
         REQUIRE(unwind2.get_marker() == m);
         REQUIRE(!unwind.will_unwind());
     }
-    SECTION("overaligned")
+    SUBCASE("overaligned")
     {
         auto align = 2 * detail::max_alignment;
         auto mem   = stack.allocate(align, align);

@@ -4,12 +4,12 @@
 
 #include "detail/ilog2.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("detail::ilog2()", "[detail][core]")
+TEST_CASE("detail::ilog2()")
 {
     // Check everything up to 2^16.
     for (std::size_t i = 0; i != 16; ++i)
@@ -34,7 +34,7 @@ TEST_CASE("detail::ilog2()", "[detail][core]")
     CHECK(ilog2((std::uint64_t(1) << 63) + 2063) == 63);
 }
 
-TEST_CASE("detail::ilog2_ceil()", "[detail][core]")
+TEST_CASE("detail::ilog2_ceil()")
 {
     // Check everything up to 2^16.
     for (std::size_t i = 0; i != 16; ++i)

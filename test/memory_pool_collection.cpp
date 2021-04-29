@@ -5,7 +5,7 @@
 #include "memory_pool_collection.hpp"
 
 #include <algorithm>
-#include <catch.hpp>
+#include <doctest/doctest.h>
 #include <random>
 #include <vector>
 
@@ -15,7 +15,7 @@
 using namespace foonathan::memory;
 using namespace detail;
 
-TEST_CASE("memory_pool_collection", "[pool]")
+TEST_CASE("memory_pool_collection")
 {
     using pools =
         memory_pool_collection<node_pool, identity_buckets, allocator_reference<test_allocator>>;
@@ -31,7 +31,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
         for (auto i = 0u; i != max_size; ++i)
             REQUIRE(pool.pool_capacity_left(i) == 0u);
 
-        SECTION("normal alloc/dealloc")
+        SUBCASE("normal alloc/dealloc")
         {
             std::vector<void*> a, b;
             for (auto i = 0u; i != 5u; ++i)
@@ -51,12 +51,12 @@ TEST_CASE("memory_pool_collection", "[pool]")
             for (auto ptr : b)
                 pool.deallocate_node(ptr, 5);
         }
-        SECTION("single array alloc")
+        SUBCASE("single array alloc")
         {
             auto memory = pool.allocate_array(4, 4);
             pool.deallocate_array(memory, 4, 4);
         }
-        SECTION("array alloc/dealloc")
+        SUBCASE("array alloc/dealloc")
         {
             std::vector<void*> a, b;
             for (auto i = 0u; i != 5u; ++i)
@@ -76,7 +76,7 @@ TEST_CASE("memory_pool_collection", "[pool]")
             for (auto ptr : b)
                 pool.deallocate_array(ptr, 5, 5);
         }
-        SECTION("multiple block alloc/dealloc")
+        SUBCASE("multiple block alloc/dealloc")
         {
             std::vector<void*> a, b;
             for (auto i = 0u; i != 1000u; ++i)

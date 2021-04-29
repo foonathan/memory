@@ -4,7 +4,7 @@
 
 #include "smart_ptr.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "container.hpp"
 #include "memory_pool.hpp"
@@ -29,9 +29,9 @@ struct dummy_allocator
 
 std::size_t dummy_allocator::size = 0;
 
-TEST_CASE("allocate_shared", "[adapter]")
+TEST_CASE("allocate_shared")
 {
-    SECTION("stateless")
+    SUBCASE("stateless")
     {
         dummy_allocator::size = 0;
         auto ptr              = allocate_shared<int>(dummy_allocator{}, 42);
@@ -40,7 +40,7 @@ TEST_CASE("allocate_shared", "[adapter]")
         REQUIRE((dummy_allocator::size <= allocate_shared_node_size<int, dummy_allocator>::value));
 #endif
     }
-    SECTION("stateful")
+    SUBCASE("stateful")
     {
 #if defined(FOONATHAN_MEMORY_NO_NODE_SIZE)
         memory_pool<> pool(128, 1024); // hope that's enough

@@ -5,7 +5,7 @@
 #include "memory_pool.hpp"
 
 #include <algorithm>
-#include <catch.hpp>
+#include <doctest/doctest.h>
 #include <random>
 #include <vector>
 
@@ -16,7 +16,7 @@ using namespace foonathan::memory;
 
 // don't test actual node allocationg, but the connection between arena and the implementation
 // so only  test for memory_pool<node_pool>
-TEST_CASE("memory_pool", "[pool]")
+TEST_CASE("memory_pool")
 {
     using pool_type = memory_pool<node_pool, allocator_reference<test_allocator>>;
     test_allocator alloc;
@@ -27,7 +27,7 @@ TEST_CASE("memory_pool", "[pool]")
         REQUIRE(pool.next_capacity() >= 25 * 4u);
         REQUIRE(alloc.no_allocated() == 1u);
 
-        SECTION("normal alloc/dealloc")
+        SUBCASE("normal alloc/dealloc")
         {
             std::vector<void*> ptrs;
             auto               capacity = pool.capacity_left();
@@ -43,7 +43,7 @@ TEST_CASE("memory_pool", "[pool]")
                 pool.deallocate_node(ptr);
             REQUIRE(pool.capacity_left() == capacity);
         }
-        SECTION("multiple block alloc/dealloc")
+        SUBCASE("multiple block alloc/dealloc")
         {
             std::vector<void*> ptrs;
             auto               capacity = pool.capacity_left();
@@ -80,7 +80,7 @@ TEST_CASE("memory_pool", "[pool]")
 
 TEST_CASE("memory_pool::min_block_size()")
 {
-    SECTION("node_pool, small")
+    SUBCASE("node_pool, small")
     {
         auto                   min_size = memory_pool<node_pool>::min_block_size(1, 1);
         memory_pool<node_pool> pool(1, min_size);
@@ -94,7 +94,7 @@ TEST_CASE("memory_pool::min_block_size()")
         ptr = pool.allocate_node();
         CHECK(ptr);
     }
-    SECTION("node_pool, big")
+    SUBCASE("node_pool, big")
     {
         auto                   min_size = memory_pool<node_pool>::min_block_size(16, 1);
         memory_pool<node_pool> pool(16, min_size);
@@ -108,7 +108,7 @@ TEST_CASE("memory_pool::min_block_size()")
         ptr = pool.allocate_node();
         CHECK(ptr);
     }
-    SECTION("array_pool, small")
+    SUBCASE("array_pool, small")
     {
         auto                    min_size = memory_pool<array_pool>::min_block_size(1, 1);
         memory_pool<array_pool> pool(1, min_size);
@@ -122,7 +122,7 @@ TEST_CASE("memory_pool::min_block_size()")
         ptr = pool.allocate_node();
         CHECK(ptr);
     }
-    SECTION("array_pool, big")
+    SUBCASE("array_pool, big")
     {
         auto                    min_size = memory_pool<array_pool>::min_block_size(16, 1);
         memory_pool<array_pool> pool(16, min_size);
@@ -136,7 +136,7 @@ TEST_CASE("memory_pool::min_block_size()")
         ptr = pool.allocate_node();
         CHECK(ptr);
     }
-    SECTION("small_node_pool, small")
+    SUBCASE("small_node_pool, small")
     {
         auto                         min_size = memory_pool<small_node_pool>::min_block_size(1, 1);
         memory_pool<small_node_pool> pool(1, min_size);
@@ -150,7 +150,7 @@ TEST_CASE("memory_pool::min_block_size()")
         ptr = pool.allocate_node();
         CHECK(ptr);
     }
-    SECTION("small_node_pool, big")
+    SUBCASE("small_node_pool, big")
     {
         auto                         min_size = memory_pool<small_node_pool>::min_block_size(16, 1);
         memory_pool<small_node_pool> pool(16, min_size);

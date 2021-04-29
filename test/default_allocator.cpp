@@ -6,7 +6,8 @@
 
 #include "default_allocator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
+#include <vector>
 
 #include "detail/align.hpp"
 
@@ -40,25 +41,25 @@ void check_default_allocator(Allocator& alloc, std::size_t def_alignment = detai
         alloc.deallocate_node(nodes[i], i, 1);
 }
 
-TEST_CASE("heap_allocator", "[default_allocator]")
+TEST_CASE("heap_allocator")
 {
     heap_allocator alloc;
     check_default_allocator(alloc);
 }
 
-TEST_CASE("new_allocator", "[default_allocator]")
+TEST_CASE("new_allocator")
 {
     new_allocator alloc;
     check_default_allocator(alloc);
 }
 
-TEST_CASE("malloc_allocator", "[default_allocator]")
+TEST_CASE("malloc_allocator")
 {
     malloc_allocator alloc;
     check_default_allocator(alloc);
 }
 
-TEST_CASE("static_allocator", "[default_allocator]")
+TEST_CASE("static_allocator")
 {
     static_allocator_storage<1024> storage;
     static_allocator               alloc(storage);
@@ -67,7 +68,7 @@ TEST_CASE("static_allocator", "[default_allocator]")
     check_default_allocator(alloc, 1);
 }
 
-TEST_CASE("virtual_memory_allocator", "[default_allocator]")
+TEST_CASE("virtual_memory_allocator")
 {
     virtual_memory_allocator alloc;
     check_default_allocator(alloc, virtual_memory_page_size);

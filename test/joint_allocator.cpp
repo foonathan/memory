@@ -4,7 +4,7 @@
 
 #include "joint_allocator.hpp"
 
-#include <catch.hpp>
+#include <doctest/doctest.h>
 
 #include "container.hpp"
 #include "test_allocator.hpp"
@@ -30,7 +30,7 @@ void verify_null(const joint_ptr<T, RawAllocator>& ptr, const RawAllocator& allo
     REQUIRE(&ptr.get_allocator() == &alloc);
 }
 
-TEST_CASE("joint_ptr", "[allocator]")
+TEST_CASE("joint_ptr")
 {
     struct joint_test : joint_type<joint_test>
     {
@@ -43,7 +43,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
     test_allocator alloc;
 
-    SECTION("allocator constructor")
+    SUBCASE("allocator constructor")
     {
         joint_ptr<joint_test, test_allocator> ptr(alloc);
         verify_null(ptr, alloc);
@@ -51,7 +51,7 @@ TEST_CASE("joint_ptr", "[allocator]")
         REQUIRE(alloc.no_allocated() == 0u);
         REQUIRE(alloc.no_deallocated() == 0u);
     }
-    SECTION("creation constructor")
+    SUBCASE("creation constructor")
     {
         joint_ptr<joint_test, test_allocator> ptr(alloc, joint_size(10u), 5);
         verify(ptr, alloc, 5);
@@ -61,7 +61,7 @@ TEST_CASE("joint_ptr", "[allocator]")
         REQUIRE(alloc.last_allocated().alignment == alignof(joint_test));
         REQUIRE(alloc.no_deallocated() == 0u);
     }
-    SECTION("move constructor")
+    SUBCASE("move constructor")
     {
         auto ptr1 = allocate_joint<joint_test>(alloc, joint_size(10u), 5);
         verify(ptr1, alloc, 5);
@@ -75,7 +75,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
         REQUIRE(alloc.no_allocated() == 1u);
     }
-    SECTION("move assignment")
+    SUBCASE("move assignment")
     {
         joint_ptr<joint_test, test_allocator> ptr1(alloc);
         verify_null(ptr1, alloc);
@@ -94,7 +94,7 @@ TEST_CASE("joint_ptr", "[allocator]")
         verify_null(ptr2, alloc);
         REQUIRE(alloc.no_allocated() == 0u);
     }
-    SECTION("swap")
+    SUBCASE("swap")
     {
         joint_ptr<joint_test, test_allocator> ptr1(alloc);
         verify_null(ptr1, alloc);
@@ -108,7 +108,7 @@ TEST_CASE("joint_ptr", "[allocator]")
 
         REQUIRE(alloc.no_allocated() == 1u);
     }
-    SECTION("reset")
+    SUBCASE("reset")
     {
         joint_ptr<joint_test, test_allocator> ptr1(alloc);
         verify_null(ptr1, alloc);
@@ -123,7 +123,7 @@ TEST_CASE("joint_ptr", "[allocator]")
         verify_null(ptr2, alloc);
         REQUIRE(alloc.no_allocated() == 0u);
     }
-    SECTION("compare")
+    SUBCASE("compare")
     {
         joint_ptr<joint_test, test_allocator> ptr1(alloc);
         verify_null(ptr1, alloc);
@@ -151,7 +151,7 @@ TEST_CASE("joint_ptr", "[allocator]")
         REQUIRE_FALSE(ptr2 != ptr2.get());
         REQUIRE_FALSE(ptr2.get() != ptr2);
     }
-    SECTION("clone")
+    SUBCASE("clone")
     {
         auto ptr1 = allocate_joint<joint_test>(alloc, joint_size(10u), 5);
         verify(ptr1, alloc, 5);
@@ -173,7 +173,7 @@ TEST_CASE("joint_ptr", "[allocator]")
     REQUIRE(alloc.no_allocated() == 0u);
 }
 
-TEST_CASE("joint_allocator", "[allocator]")
+TEST_CASE("joint_allocator")
 {
     struct joint_test : joint_type<joint_test>
     {
@@ -220,7 +220,7 @@ void verify(const joint_array<T>& array, std::size_t size)
     }
 }
 
-TEST_CASE("joint_array", "[allocator]")
+TEST_CASE("joint_array")
 {
     struct joint_test : joint_type<joint_test>
     {
@@ -233,21 +233,21 @@ TEST_CASE("joint_array", "[allocator]")
     auto           ptr = allocate_joint<joint_test>(alloc, joint_size(20 * sizeof(int)), 5);
     verify(ptr, alloc, 5);
 
-    SECTION("size constructor")
+    SUBCASE("size constructor")
     {
         joint_array<int> arr(5, *ptr);
         verify(arr, 5);
         for (auto el : arr)
             REQUIRE(el == 0);
     }
-    SECTION("size value constructor")
+    SUBCASE("size value constructor")
     {
         joint_array<int> arr(5, 1, *ptr);
         verify(arr, 5);
         for (auto el : arr)
             REQUIRE(el == 1);
     }
-    SECTION("ilist constructor")
+    SUBCASE("ilist constructor")
     {
         joint_array<int> arr({1, 2, 3}, *ptr);
         verify(arr, 3);
@@ -255,7 +255,7 @@ TEST_CASE("joint_array", "[allocator]")
         REQUIRE(arr[1] == 2);
         REQUIRE(arr[2] == 3);
     }
-    SECTION("iterator constructor")
+    SUBCASE("iterator constructor")
     {
         int              input[] = {1, 2, 3};
         joint_array<int> arr(std::begin(input), std::end(input), *ptr);
@@ -264,7 +264,7 @@ TEST_CASE("joint_array", "[allocator]")
         REQUIRE(arr[1] == 2);
         REQUIRE(arr[2] == 3);
     }
-    SECTION("copy/move constructor")
+    SUBCASE("copy/move constructor")
     {
         joint_array<int> arr1({1, 2, 3}, *ptr);
         verify(arr1, 3);
