@@ -74,7 +74,7 @@ namespace foonathan
             /// It will allocate an initial memory block with given size from the \concept{concept_blockallocator,BlockAllocator}
             /// and puts it onto the free list.
             /// \requires \c node_size must be a valid \concept{concept_node,node size}
-            /// and \c block_size must be a non-zero value.
+            /// and \c block_size must be at least \c min_block_size(node_size, 1).
             template <typename... Args>
             memory_pool(std::size_t node_size, std::size_t block_size, Args&&... args)
             : arena_(block_size, detail::forward<Args>(args)...), free_list_(node_size)

@@ -63,6 +63,18 @@ TEST_CASE("memory_pool", "[pool]")
             REQUIRE(alloc.no_allocated() == 2u);
         }
     }
+    {
+        pool_type pool(16, pool_type::min_block_size(16, 1), alloc);
+        REQUIRE(pool.node_size() == 16u);
+        REQUIRE(pool.capacity_left() == 16u);
+        REQUIRE(pool.next_capacity() >= 16u);
+        REQUIRE(alloc.no_allocated() == 1u);
+
+        auto ptr = pool.allocate_node();
+        REQUIRE(ptr);
+
+        pool.deallocate_node(ptr);
+    }
     REQUIRE(alloc.no_allocated() == 0u);
 }
 

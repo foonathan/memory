@@ -119,6 +119,7 @@ namespace foonathan
 
             /// \effects Creates it with a given initial block size and and other constructor arguments for the \concept{concept_blockallocator,BlockAllocator}.
             /// It will allocate the first block and sets the top to its beginning.
+            /// \requires \c block_size must be at least \c min_block_size(1).
             template <typename... Args>
             explicit memory_stack(std::size_t block_size, Args&&... args)
             : arena_(block_size, detail::forward<Args>(args)...),
