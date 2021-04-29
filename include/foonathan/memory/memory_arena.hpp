@@ -285,14 +285,23 @@ namespace foonathan
             using allocator_type = BlockAllocator;
             using is_cached      = std::integral_constant<bool, Cached>;
 
+            /// \returns The minimum block size required for an arena containing the given amount of memory.
+            /// If an arena is created with the result of `min_block_size(n)`, the resulting capacity will be exactly `n`.
+            /// \requires `byte_size` must be a positive number.
+            static constexpr std::size_t min_block_size(std::size_t byte_size) noexcept
+            {
+                return detail::memory_block_stack::implementation_offset() + byte_size;
+            }
+
             /// \effects Creates it by giving it the size and other arguments for the \concept{concept_blockallocator,BlockAllocator}.
             /// It forwards these arguments to its constructor.
-            /// \requires \c block_size must be greater than \c 0 and other requirements depending on the \concept{concept_blockallocator,BlockAllocator}.
+            /// \requires \c block_size must be greater than \c min_block_size(0) and other requirements depending on the \concept{concept_blockallocator,BlockAllocator}.
             /// \throws Anything thrown by the constructor of the \c BlockAllocator.
             template <typename... Args>
             explicit memory_arena(std::size_t block_size, Args&&... args)
             : allocator_type(block_size, detail::forward<Args>(args)...)
             {
+                FOONATHAN_MEMORY_ASSERT(block_size > min_block_size(0));
             }
 
             /// \effects Deallocates all memory blocks that where requested back to the \concept{concept_blockallocator,BlockAllocator}.

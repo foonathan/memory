@@ -13,6 +13,7 @@ using namespace detail;
 
 void memory_block_stack::push(allocated_mb block) noexcept
 {
+    FOONATHAN_MEMORY_ASSERT(block.size >= sizeof(node));
     FOONATHAN_MEMORY_ASSERT(is_aligned(block.memory, max_alignment));
     auto next = ::new (block.memory) node(head_, block.size - implementation_offset());
     head_     = next;
