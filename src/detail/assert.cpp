@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -25,8 +25,7 @@ void detail::handle_failed_assert(const char* msg, const char* file, int line,
     std::abort();
 }
 
-void detail::handle_warning(const char* msg, const char* file, int line,
-                            const char* fnc) noexcept
+void detail::handle_warning(const char* msg, const char* file, int line, const char* fnc) noexcept
 {
 #if FOONATHAN_HOSTED_IMPLEMENTATION
     std::fprintf(stderr, "[%s] Warning triggered in function %s (%s:%d): %s.\n",

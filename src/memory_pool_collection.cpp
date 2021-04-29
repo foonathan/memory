@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -22,30 +22,30 @@ template class foonathan::memory::memory_pool_collection<node_pool, log2_buckets
 template class foonathan::memory::memory_pool_collection<array_pool, log2_buckets>;
 template class foonathan::memory::memory_pool_collection<small_node_pool, log2_buckets>;
 
-template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool,
-                                                                          identity_buckets>>;
-template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool,
-                                                                          identity_buckets>>;
-template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool,
-                                                                          identity_buckets>>;
+template class foonathan::memory::allocator_traits<
+    memory_pool_collection<node_pool, identity_buckets>>;
+template class foonathan::memory::allocator_traits<
+    memory_pool_collection<array_pool, identity_buckets>>;
+template class foonathan::memory::allocator_traits<
+    memory_pool_collection<small_node_pool, identity_buckets>>;
 
 template class foonathan::memory::allocator_traits<memory_pool_collection<node_pool, log2_buckets>>;
-template class foonathan::memory::allocator_traits<memory_pool_collection<array_pool,
-                                                                          log2_buckets>>;
-template class foonathan::memory::allocator_traits<memory_pool_collection<small_node_pool,
-                                                                          log2_buckets>>;
+template class foonathan::memory::allocator_traits<
+    memory_pool_collection<array_pool, log2_buckets>>;
+template class foonathan::memory::allocator_traits<
+    memory_pool_collection<small_node_pool, log2_buckets>>;
 
-template class foonathan::memory::
-    composable_allocator_traits<memory_pool_collection<node_pool, identity_buckets>>;
-template class foonathan::memory::
-    composable_allocator_traits<memory_pool_collection<array_pool, identity_buckets>>;
-template class foonathan::memory::
-    composable_allocator_traits<memory_pool_collection<small_node_pool, identity_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<node_pool, identity_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<array_pool, identity_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<small_node_pool, identity_buckets>>;
 
-template class foonathan::memory::composable_allocator_traits<memory_pool_collection<node_pool,
-                                                                                     log2_buckets>>;
-template class foonathan::memory::composable_allocator_traits<memory_pool_collection<array_pool,
-                                                                                     log2_buckets>>;
-template class foonathan::memory::
-    composable_allocator_traits<memory_pool_collection<small_node_pool, log2_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<node_pool, log2_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<array_pool, log2_buckets>>;
+template class foonathan::memory::composable_allocator_traits<
+    memory_pool_collection<small_node_pool, log2_buckets>>;
 #endif

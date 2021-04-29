@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -39,15 +39,9 @@ namespace foonathan
             public:
                 using is_stateful = std::false_type;
 
-                lowlevel_allocator() noexcept
-                {
-                }
-                lowlevel_allocator(lowlevel_allocator&&) noexcept
-                {
-                }
-                ~lowlevel_allocator() noexcept
-                {
-                }
+                lowlevel_allocator() noexcept {}
+                lowlevel_allocator(lowlevel_allocator&&) noexcept {}
+                ~lowlevel_allocator() noexcept {}
 
                 lowlevel_allocator& operator=(lowlevel_allocator&&) noexcept
                 {
@@ -67,8 +61,7 @@ namespace foonathan
                     return debug_fill_new(memory, size, max_alignment);
                 }
 
-                void deallocate_node(void* node, std::size_t size,
-                                     std::size_t alignment) noexcept
+                void deallocate_node(void* node, std::size_t size, std::size_t alignment) noexcept
                 {
                     auto actual_size = size + (debug_fence_size ? 2 * max_alignment : 0u);
 
@@ -87,7 +80,7 @@ namespace foonathan
 #define FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(functor, var_name)                              \
     FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(lowlevel_allocator_leak_handler<functor>, var_name)
         } // namespace detail
-    }
-} // namespace foonathan::memory
+    }     // namespace memory
+} // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED

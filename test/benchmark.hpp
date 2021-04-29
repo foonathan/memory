@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -45,9 +45,7 @@ struct single
 {
     std::size_t count;
 
-    single(std::size_t c) : count(c)
-    {
-    }
+    single(std::size_t c) : count(c) {}
 
     template <class RawAllocator>
     std::size_t operator()(RawAllocator& alloc, std::size_t size)
@@ -89,9 +87,7 @@ struct basic_bulk
     order_func  func;
     std::size_t count;
 
-    basic_bulk(order_func f, std::size_t c) : func(f), count(c)
-    {
-    }
+    basic_bulk(order_func f, std::size_t c) : func(f), count(c) {}
 
     template <class RawAllocator>
     std::size_t operator()(RawAllocator& alloc, std::size_t node_size)
@@ -138,9 +134,7 @@ struct basic_bulk
 
 struct bulk : basic_bulk
 {
-    bulk(std::size_t c) : basic_bulk([](std::vector<void*>&) {}, c)
-    {
-    }
+    bulk(std::size_t c) : basic_bulk([](std::vector<void*>&) {}, c) {}
 
     static const char* name()
     {

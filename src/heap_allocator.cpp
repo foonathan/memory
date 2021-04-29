@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
@@ -24,7 +24,7 @@ namespace
     {
         return _HEAP_MAXREQ;
     }
-}
+} // namespace
 
 void* foonathan::memory::heap_alloc(std::size_t size) noexcept
 {
@@ -56,7 +56,7 @@ namespace
     {
         return std::allocator_traits<std::allocator<char>>::max_size({});
     }
-}
+} // namespace
 #else
 // no implementation for heap_alloc/heap_dealloc
 
@@ -66,7 +66,7 @@ namespace
     {
         return std::size_t(-1);
     }
-}
+} // namespace
 #endif
 
 allocator_info detail::heap_allocator_impl::info() noexcept
