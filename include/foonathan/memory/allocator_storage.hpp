@@ -744,6 +744,14 @@ namespace foonathan
                 alloc.clone(&storage_);
             }
 
+            /// \effects Creates it from the internal base class for the type-erasure.
+            /// Has the same effect as if the actual stored allocator were passed to the other constructor overloads.
+            /// \note This constructor is used internally to avoid double-nesting.
+            reference_storage(FOONATHAN_IMPL_DEFINED(base_allocator) & alloc) noexcept
+            : reference_storage(static_cast<const base_allocator&>(alloc))
+            {
+            }
+
             /// @{
             /// \effects Copies the \c reference_storage object.
             /// It only copies the pointer to the allocator.
