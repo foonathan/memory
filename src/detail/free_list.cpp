@@ -31,8 +31,8 @@ namespace
             // last is inclusive, so add actual_size to it
             // note: cannot use next, might not be directly after
             auto end = last + node_size;
-            FOONATHAN_MEMORY_ASSERT((end - first) % node_size == 0u);
-            return (end - first) / node_size;
+            FOONATHAN_MEMORY_ASSERT(static_cast<std::size_t>(end - first) % node_size == 0u);
+            return static_cast<std::size_t>(end - first) / node_size;
         }
     };
 
@@ -288,8 +288,9 @@ namespace
             else if (less(cur_backward, memory))
                 // the next position is the previous backwards pointer
                 return {cur_backward, prev_backward};
-            debug_check_double_dealloc(
-                [&] { return cur_forward != memory && cur_backward != memory; }, info, memory);
+            debug_check_double_dealloc([&]
+                                       { return cur_forward != memory && cur_backward != memory; },
+                                       info, memory);
             xor_list_iter_next(cur_forward, prev_forward);
             xor_list_iter_next(cur_backward, prev_backward);
         } while (less(prev_forward, prev_backward));

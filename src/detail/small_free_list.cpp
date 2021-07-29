@@ -241,7 +241,8 @@ void small_free_memory_list::insert(void* mem, std::size_t size) noexcept
     auto remainder = size % (total_chunk_size + align_buffer);
 
     auto memory          = static_cast<char*>(mem);
-    auto construct_chunk = [&](std::size_t total_memory, std::size_t node_size) {
+    auto construct_chunk = [&](std::size_t total_memory, std::size_t node_size)
+    {
         FOONATHAN_MEMORY_ASSERT(align_offset(memory, alignof(chunk)) == 0);
         return ::new (static_cast<void*>(memory)) chunk(total_memory, node_size);
     };
@@ -313,7 +314,7 @@ void small_free_memory_list::deallocate(void* mem) noexcept
     // memory was never allocated from list
     detail::debug_check_pointer([&] { return chunk != nullptr; }, info, mem);
 
-    auto offset = node - chunk->list_memory();
+    auto offset = static_cast<std::size_t>(node - chunk->list_memory());
     // memory is not at the right position
     debug_check_pointer([&] { return offset % node_size_ == 0u; }, info, mem);
     // double-free

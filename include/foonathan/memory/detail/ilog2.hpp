@@ -27,7 +27,7 @@ namespace foonathan
             {
 #if defined(__GNUC__)
                 unsigned long long value = x;
-                return sizeof(value) * CHAR_BIT - __builtin_clzll(value);
+                return sizeof(value) * CHAR_BIT - static_cast<unsigned>(__builtin_clzll(value));
 #else
                 // Adapted from https://stackoverflow.com/a/40943402
                 std::size_t clz = 64;

@@ -473,7 +473,7 @@ namespace foonathan
                 auto memory =
                     traits::allocate_array(get_allocator(), block_size_, 1, detail::max_alignment);
                 memory_block block(memory, block_size_);
-                block_size_ = std::size_t(block_size_ * growth_factor());
+                block_size_ = grow_block_size(block_size_);
                 return block;
             }
 
@@ -503,6 +503,11 @@ namespace foonathan
             {
                 static constexpr auto factor = float(Num) / Den;
                 return factor;
+            }
+
+            static std::size_t grow_block_size(std::size_t block_size) noexcept
+            {
+                return block_size * Num / Den;
             }
 
         private:

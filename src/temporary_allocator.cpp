@@ -46,8 +46,7 @@ memory_block detail::temporary_block_allocator::allocate_block()
     auto memory = temporary_impl_allocator_traits::allocate_array(alloc, block_size_, 1,
                                                                   detail::max_alignment);
     auto block  = memory_block(memory, block_size_);
-    block_size_ = std::size_t(block_size_
-                              * growing_block_allocator<temporary_impl_allocator>::growth_factor());
+    block_size_ = growing_block_allocator<temporary_impl_allocator>::grow_block_size(block_size_);
     return block;
 }
 

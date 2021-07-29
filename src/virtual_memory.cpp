@@ -82,7 +82,8 @@ const std::size_t foonathan::memory::virtual_memory_page_size = PAGESIZE;
 #elif defined(PAGE_SIZE)
 const std::size_t foonathan::memory::virtual_memory_page_size = PAGE_SIZE;
 #else
-const std::size_t foonathan::memory::virtual_memory_page_size = sysconf(_SC_PAGESIZE);
+const std::size_t foonathan::memory::virtual_memory_page_size =
+    static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
 #endif
 
 #ifndef MAP_ANONYMOUS
@@ -205,7 +206,7 @@ virtual_block_allocator::virtual_block_allocator(std::size_t block_size, std::si
 
 virtual_block_allocator::~virtual_block_allocator() noexcept
 {
-    virtual_memory_release(cur_, (end_ - cur_) / virtual_memory_page_size);
+    virtual_memory_release(cur_, static_cast<std::size_t>(end_ - cur_) / virtual_memory_page_size);
 }
 
 memory_block virtual_block_allocator::allocate_block()
@@ -221,9 +222,9 @@ memory_block virtual_block_allocator::allocate_block()
 
 void virtual_block_allocator::deallocate_block(memory_block block) noexcept
 {
-    detail::
-        debug_check_pointer([&] { return static_cast<char*>(block.memory) == cur_ - block_size_; },
-                            info(), block.memory);
+    detail::debug_check_pointer([&]
+                                { return static_cast<char*>(block.memory) == cur_ - block_size_; },
+                                info(), block.memory);
     cur_ -= block_size_;
     virtual_memory_decommit(cur_, block_size_);
 }

@@ -130,6 +130,18 @@ if(NOT MSVC)
 target_compile_features(foonathan_memory PUBLIC cxx_constexpr)
 endif()
 
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+        target_compile_options(foonathan_memory PRIVATE /WX /W3 /D _CRT_SECURE_NO_WARNINGS)
+    else()
+        target_compile_options(foonathan_memory PRIVATE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
+    endif()
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    target_compile_options(foonathan_memory PRIVATE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
+elseif(MSVC)
+    target_compile_options(foonathan_memory PRIVATE /WX /W3 /D _CRT_SECURE_NO_WARNINGS)
+endif()
+
 set_target_properties(foonathan_memory PROPERTIES
                                        OUTPUT_NAME "foonathan_memory-${FOONATHAN_MEMORY_VERSION}"
                                        POSITION_INDEPENDENT_CODE ON)
