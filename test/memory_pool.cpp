@@ -78,91 +78,50 @@ TEST_CASE("memory_pool")
     REQUIRE(alloc.no_allocated() == 0u);
 }
 
+namespace
+{
+    template <typename PoolType>
+    void use_min_block_size(std::size_t node_size, std::size_t number_of_nodes)
+    {
+        auto min_size = memory_pool<PoolType>::min_block_size(node_size, number_of_nodes);
+        memory_pool<PoolType> pool(node_size, min_size);
+        CHECK(pool.capacity_left() >= node_size * number_of_nodes);
+
+        // First allocations should not require realloc.
+        for (auto i = 0u; i != number_of_nodes; ++i)
+        {
+            auto ptr = pool.try_allocate_node();
+            CHECK(ptr);
+        }
+
+        // Further allocation might require it, but should still succeed then.
+        auto ptr = pool.allocate_node();
+        CHECK(ptr);
+    }
+} // namespace
+
 TEST_CASE("memory_pool::min_block_size()")
 {
-    SUBCASE("node_pool, small")
+    SUBCASE("node_pool")
     {
-        auto                   min_size = memory_pool<node_pool>::min_block_size(1, 1);
-        memory_pool<node_pool> pool(1, min_size);
-        CHECK(pool.capacity_left() >= 1);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
+        use_min_block_size<node_pool>(1, 1);
+        use_min_block_size<node_pool>(16, 1);
+        use_min_block_size<node_pool>(1, 1000);
+        use_min_block_size<node_pool>(16, 1000);
     }
-    SUBCASE("node_pool, big")
+    SUBCASE("array_pool")
     {
-        auto                   min_size = memory_pool<node_pool>::min_block_size(16, 1);
-        memory_pool<node_pool> pool(16, min_size);
-        CHECK(pool.capacity_left() >= 16);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
+        use_min_block_size<array_pool>(1, 1);
+        use_min_block_size<array_pool>(16, 1);
+        use_min_block_size<array_pool>(1, 1000);
+        use_min_block_size<array_pool>(16, 1000);
     }
-    SUBCASE("array_pool, small")
+    SUBCASE("small_node_pool")
     {
-        auto                    min_size = memory_pool<array_pool>::min_block_size(1, 1);
-        memory_pool<array_pool> pool(1, min_size);
-        CHECK(pool.capacity_left() >= 1);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
-    }
-    SUBCASE("array_pool, big")
-    {
-        auto                    min_size = memory_pool<array_pool>::min_block_size(16, 1);
-        memory_pool<array_pool> pool(16, min_size);
-        CHECK(pool.capacity_left() >= 16);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
-    }
-    SUBCASE("small_node_pool, small")
-    {
-        auto                         min_size = memory_pool<small_node_pool>::min_block_size(1, 1);
-        memory_pool<small_node_pool> pool(1, min_size);
-        CHECK(pool.capacity_left() >= 1);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
-    }
-    SUBCASE("small_node_pool, big")
-    {
-        auto                         min_size = memory_pool<small_node_pool>::min_block_size(16, 1);
-        memory_pool<small_node_pool> pool(16, min_size);
-        CHECK(pool.capacity_left() >= 16);
-
-        // First allocation should not require realloc.
-        auto ptr = pool.try_allocate_node();
-        CHECK(ptr);
-
-        // Second allocation might require it, but should still succeed then.
-        ptr = pool.allocate_node();
-        CHECK(ptr);
+        use_min_block_size<small_node_pool>(1, 1);
+        use_min_block_size<small_node_pool>(16, 1);
+        use_min_block_size<small_node_pool>(1, 1000);
+        use_min_block_size<small_node_pool>(16, 1000);
     }
 }
 

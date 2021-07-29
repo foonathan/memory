@@ -63,7 +63,7 @@ namespace foonathan
                 static constexpr std::size_t min_block_size(std::size_t node_size,
                                                             std::size_t number_of_nodes)
                 {
-                    return chunk_count(node_size)
+                    return chunk_count(number_of_nodes)
                            * (chunk_memory_offset + chunk_max_nodes * node_size);
                 }
 
