@@ -88,31 +88,6 @@ jobs:
     - name: Create Build Environment
       run: cmake -E make_directory build
 
-    - name: Configure and build
-      uses: lukka/run-cmake@main
-      with:
-       cmakeGenerator: 'Ninja'
-       cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
-       cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-       useVcpkgToolchainFile: true
-       buildDirectory: 'build/'
-    - name: Test
-      working-directory: build/
-      run: ctest -C Debug --output-on-failure
-
-  windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [Debug, Release]
-
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Create Build Environment
-      run: cmake -E make_directory build
-
     - name: Configure
       shell: bash
       working-directory: build/
