@@ -108,7 +108,7 @@ void* foonathan::memory::virtual_memory_commit(void* memory, std::size_t no_page
 {
     auto size   = no_pages * virtual_memory_page_size;
     auto result = mprotect(memory, size, PROT_WRITE | PROT_READ);
-    if (result != 0u)
+    if (result != 0)
         return nullptr;
 
 // advise that the memory will be needed
