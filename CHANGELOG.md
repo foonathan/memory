@@ -1,5 +1,16 @@
 # Upcoming Changes
 
+# 0.7-1
+
+Just bugfixes:
+
+* CMake: automatically link libatomic on platforms where that is necessary (#95)
+* catch small block sizes of `memory_pool` (#113)
+* fix buffer overflow in `memory_pool_collection`'s array allocation (#99)
+* fix compatibility with Windows UWP (#102)
+* fix computation of `memory_pool::min_block_size` (#110)
+* fix debug assertion in free lists (#111)
+
 # 0.7
 
 BREAKING: Removed the use of the compatibility library to automatically generate macros and workaround for older compilers.
