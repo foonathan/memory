@@ -61,6 +61,8 @@ namespace foonathan
             /// \returns The minimum block size required for certain number of \concept{concept_node,node}.
             /// \requires \c node_size must be a valid \concept{concept_node,node size}
             /// and \c number_of_nodes must be a non-zero value.
+            /// \note MSVC's implementation of \c std::list for example is never empty and always allocates proxy nodes.
+            /// To get enough memory for \c N elements of a list, \c number_of_nodes needs to include the proxy count in addition to \c N.
             static constexpr std::size_t min_block_size(std::size_t node_size,
                                                         std::size_t number_of_nodes) noexcept
             {
