@@ -11,7 +11,7 @@
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(build_examples_tests 1)
 else()
-    set(build_examples_test 0)
+    set(build_examples_tests 0)
 endif()
 set(build_tools 1)
 
