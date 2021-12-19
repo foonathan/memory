@@ -51,9 +51,9 @@ jobs:
       fail-fast: false
       matrix:
         xcode:
-            - '10'
             - '11'
             - '12'
+            - '13'
 
     runs-on: macos-latest
 

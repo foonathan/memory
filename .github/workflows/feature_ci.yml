@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        xcode: ['10', '12']
+        xcode: ['11', '13']
 
     runs-on: macos-latest
 
