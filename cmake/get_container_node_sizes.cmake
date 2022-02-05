@@ -4,6 +4,14 @@
 # is being processed.
 set(_THIS_MODULE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
+set(_DEBUG_GET_CONTAINER_NODE_SIZES OFF)
+
+function(_gcns_debug_message)
+    if(_DEBUG_GET_CONTAINER_NODE_SIZES)
+	message(${ARGV})
+    endif()
+endfunction()
+
 # This function will return the alignment of the C++ type specified in
 # 'type', the result will be in 'result_var'.
 function(get_alignof_type type result_var)
@@ -45,7 +53,7 @@ function(unique_aligned_types result_types result_alignments)
     set(all_types char bool short int long "long long" float double "long double")
     foreach(type IN LISTS all_types )
 	get_alignof_type("${type}" alignment)
-	message("Alignment of '${type}' is '${alignment}'")
+	_gcns_debug_message("Alignment of '${type}' is '${alignment}'")
 
 	if(NOT ${alignment} IN_LIST alignments)
 	    list(APPEND alignments ${alignment})
@@ -125,6 +133,7 @@ endfunction()
 # that can be used to calculate the node size of a container holding
 # the specified type.
 function(get_container_node_sizes outfile)
+    message(STATUS "Getting container node sizes")
 
     # Build up the file contents in the variable NODE_SIZE_CONTENTS,
     # as requested in container_node_sizes_impl.hpp.in
@@ -132,7 +141,7 @@ function(get_container_node_sizes outfile)
 
     # Get the set of uniquely aligned types to work with
     unique_aligned_types(types alignments)
-    message("=> alignments |${alignments}| types |${types}|")
+    _gcns_debug_message("=> alignments |${alignments}| types |${types}|")
 
     set(container_types
 	forward_list list
@@ -144,7 +153,7 @@ function(get_container_node_sizes outfile)
     foreach(container IN LISTS container_types)
 	string(TOUPPER "${container}_container" container_macro_name)
 	get_node_sizes_of("${container_macro_name}" "${types}" alignments node_sizes)
-	message("node size of |${container_macro_name}| holding types |${types}| : alignments |${alignments}| node sizes |${node_sizes}|")
+	_gcns_debug_message("node size of |${container_macro_name}| holding types |${types}| : alignments |${alignments}| node sizes |${node_sizes}|")
 
 	# Generate the contents for this container type
 	string(APPEND NODE_SIZE_CONTENTS "\
@@ -190,5 +199,3 @@ struct ${container}_node_size
     # The only variable that will be substituted is NODE_SIZE_CONTENTS
     configure_file("${_THIS_MODULE_DIR}/container_node_sizes_impl.hpp.in" ${outfile})
 endfunction()
-
-get_container_node_sizes("${CMAKE_CURRENT_BINARY_DIR}/cmake_container_node_sizes_impl.hpp")

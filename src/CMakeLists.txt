@@ -77,44 +77,7 @@ set(src
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
 # generate container_node_sizes.hpp
-# don't run it while cross-compiling and CMAKE_CROSSCOMPILING_EMULATOR is not defined
-if(FOONATHAN_MEMORY_BUILD_TOOLS)
-  if(NOT CMAKE_CROSSCOMPILING)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            COMMAND $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            DEPENDS foonathan_memory_node_size_debugger
-            VERBATIM)
-  elseif(DEFINED CMAKE_CROSSCOMPILING_EMULATOR)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:foonathan_memory_node_size_debugger> --code ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            DEPENDS foonathan_memory_node_size_debugger
-            VERBATIM)
-  elseif(QNX OR QNXNTO)
-    if(EXISTS "${FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL}")
-      message("-- Using the pre-generated file: ${FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL}")
-      add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp
-            COMMAND cp ${FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL} ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp )
-    else()
-      message(FATAL_ERROR "\nError: Cannot find pre-generated file container_node_sizes_impl.hpp\n"
-                            "Please pre-generate the header file container_node_sizes_impl.hpp by following the steps below:\n"
-                            "- Build nodesize_dbg from source:\n"
-                            "	${PROJECT_SOURCE_DIR}/tool/node_size_debugger.cpp \n"
-                            "- Transfer nodesize_dbg to QNX target and execute:\n"
-                            "	nodesize_dbg --code container_node_sizes_impl.hpp \n"
-                            "- Transfer generated header file back to your development system \n"
-                            "- Set FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL to the path of the pre-generated file and pass it to cmake as an argument\n")
-    endif()
-  else()
-    message(WARNING "cross-compiling, but emulator is not defined, "
-                    "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
-    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
-    set(FOONATHAN_MEMORY_NO_NODE_SIZE 1 PARENT_SCOPE)
-  endif()
-else()
-    message(WARNING "cannot generate container_node_sizes_impl.hpp, node size information will be unavailable")
-    file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp "#define FOONATHAN_MEMORY_NO_NODE_SIZE")
-    set(FOONATHAN_MEMORY_NO_NODE_SIZE 1 PARENT_SCOPE)
-endif()
+get_container_node_sizes(${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
