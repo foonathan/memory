@@ -8,7 +8,7 @@ set(_DEBUG_GET_CONTAINER_NODE_SIZES OFF)
 
 function(_gcns_debug_message)
     if(_DEBUG_GET_CONTAINER_NODE_SIZES)
-	message(${ARGV})
+	message("${ARGV}")
     endif()
 endfunction()
 
@@ -80,53 +80,47 @@ endfunction()
 # 'nodesize_result_var' will contain the list of node sizes, one entry
 # for each alignment/type
 function(get_node_sizes_of container types align_result_var nodesize_result_var)
-    # The argument 'types' is a CMake list, which is semicolon separated.  Convert it to a comma separated list.
-    set(comma_types )
+    set(alignments )
+    set(node_sizes )
+
     foreach(type IN LISTS types)
-	if(comma_types)
-	    string(APPEND comma_types ",${type}")
-	else()
-	    set(comma_types "${type}")
+
+	# We expect this to fail - the purpose of this is to generate
+	# a compile error on a generated type
+	# "node_size_of<type_size,node_size,is_node_size>" that is the
+	# alignment of the specified type.
+	execute_process(
+	    COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -c ${_THIS_MODULE_DIR}/get_node_size.cpp -o /dev/null
+	        "-D${container}=1"
+		"-DTEST_TYPE=${type}"
+	    RESULT_VARIABLE nodesize_result
+	    OUTPUT_VARIABLE nodesize_output
+	    ERROR_VARIABLE nodesize_output
+	    )
+
+	if(NOT nodesize_output)
+	    message(FATAL_ERROR "Unable to determine node size of C++ container ${container} holding type ${type} - no error text matching node_size_of<##, ##, true> in compiler output |${nodesize_output}|")
 	endif()
-    endforeach()
 
-    # We expect this to fail - the purpose of this is to generate a
-    # compile error on a generated type "node_size_of<type_size,node_size,is_node_size>" that is
-    # the alignment of the specified type.
-    execute_process(
-	COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -c ${_THIS_MODULE_DIR}/get_node_size.cpp -o /dev/null
-	    "-D${container}=1"
-	    "-DTEST_TYPES=${comma_types}"
-	RESULT_VARIABLE nodesize_result
-	OUTPUT_VARIABLE nodesize_output
-	ERROR_VARIABLE nodesize_output
-	)
+	# Find the instance of node_size_of<##, ##, true> in the
+	# compiler error output - the first number is the alignment,
+	# and the second is the node size.
+	string(REGEX MATCH "node_size_of<[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*true[ ]*>" node_size_of_match ${nodesize_output})
 
-    if(NOT nodesize_output)
-	message(FATAL_ERROR "nodesize_output is empty")
-    endif()
-
-    # Gather all node_size_of<..., ##> in the compiler error output
-    string(REGEX MATCHALL "node_size_of<[ ]*[0-9]+[ ]*,[ ]*[0-9]+[ ]*,[ ]*true[ ]*>" node_size_of_matches ${nodesize_output})
-
-    if(node_size_of_matches)
-	set(alignments )
-	set(node_sizes )
-
-	foreach(node_size IN LISTS node_size_of_matches)
+	if(node_size_of_match)
 	    # Extract the alignment and node size
-	    string(REGEX MATCH "([0-9]+)[ ]*,[ ]*([0-9]+)" match_result ${node_size})
-	    if(match_result AND NOT ${CMAKE_MATCH_1} IN_LIST alignments)
+	    if(NOT ${CMAKE_MATCH_1} IN_LIST alignments)
 		list(APPEND alignments ${CMAKE_MATCH_1})
 		list(APPEND node_sizes ${CMAKE_MATCH_2})
 	    endif()
-	endforeach()
+	else()
+	    message(FATAL_ERROR "Unable to determine node size of C++ container ${container} holding type ${type} - no error text matching node_size_of<##, ##, true> in compiler output |${nodesize_output}|")
+	endif()
+    endforeach()
 
-	set(${align_result_var} ${alignments} PARENT_SCOPE)
-	set(${nodesize_result_var} ${node_sizes} PARENT_SCOPE)
-    else()
-	message(FATAL_ERROR "Unable to determine node size of C++ container ${container} holding types ${types} - no error text matching node_size_of<##, ##, true> in compiler output |${nodesize_output}|")
-    endif()
+    # Return output to caller
+    set(${align_result_var} ${alignments} PARENT_SCOPE)
+    set(${nodesize_result_var} ${node_sizes} PARENT_SCOPE)
 endfunction()
 
 # This will write the container node sizes to an output header file

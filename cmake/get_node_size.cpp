@@ -201,6 +201,7 @@ int test_container()
 }
 #endif // SHARED_PTR_STATEFUL_CONTAINER
 
+#ifdef TEST_TYPES
 template<typename... Types>
 int test_all(std::tuple<Types...>)
 {
@@ -209,3 +210,8 @@ int test_all(std::tuple<Types...>)
 }
 
 int foo = test_all(std::tuple<TEST_TYPES>());
+#endif
+
+#ifdef TEST_TYPE
+int foo = test_container<TEST_TYPE>();
+#endif
