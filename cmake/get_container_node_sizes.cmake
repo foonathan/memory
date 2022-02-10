@@ -21,15 +21,15 @@ function(get_alignof_type type result_var)
     # type.
     #
     # See the contents of get_align_of.cpp for more details.
-    execute_process(
-	COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -c ${_THIS_MODULE_DIR}/get_align_of.cpp -o /dev/null "-DTEST_TYPE=${type}"
-	RESULT_VARIABLE align_result
+    try_compile(align_result ${CMAKE_CURRENT_BINARY_DIR} ${_THIS_MODULE_DIR}/get_align_of.cpp
+	COMPILE_DEFINITIONS "-DTEST_TYPE=${type}"
 	OUTPUT_VARIABLE align_output
-	ERROR_VARIABLE align_output
+	CXX_STANDARD 11
+	CXX_STANDARD_REQUIRED TRUE
 	)
 
     # Look for the align_of<..., ##> in the compiler error output
-    string(REGEX MATCH "align_of<.*,[ ]*([0-9]+)>" align_of_matched ${align_output})
+    string(REGEX MATCH "align_of<.*,[ ]*([0-9]+)[ul ]*>" align_of_matched ${align_output})
 
     if(align_of_matched)
 	set(${result_var} ${CMAKE_MATCH_1} PARENT_SCOPE)
@@ -89,13 +89,11 @@ function(get_node_sizes_of container types align_result_var nodesize_result_var)
 	# a compile error on a generated type
 	# "node_size_of<type_size,node_size,is_node_size>" that is the
 	# alignment of the specified type.
-	execute_process(
-	    COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -c ${_THIS_MODULE_DIR}/get_node_size.cpp -o /dev/null
-	        "-D${container}=1"
-		"-DTEST_TYPE=${type}"
-	    RESULT_VARIABLE nodesize_result
+	try_compile(nodesize_result ${CMAKE_CURRENT_BINARY_DIR} ${_THIS_MODULE_DIR}/get_node_size.cpp
+	    COMPILE_DEFINITIONS "-D${container}=1" "-DTEST_TYPE=${type}"
 	    OUTPUT_VARIABLE nodesize_output
-	    ERROR_VARIABLE nodesize_output
+	    CXX_STANDARD 11
+	    CXX_STANDARD_REQUIRED TRUE
 	    )
 
 	if(NOT nodesize_output)
@@ -105,7 +103,7 @@ function(get_node_sizes_of container types align_result_var nodesize_result_var)
 	# Find the instance of node_size_of<##, ##, true> in the
 	# compiler error output - the first number is the alignment,
 	# and the second is the node size.
-	string(REGEX MATCH "node_size_of<[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*true[ ]*>" node_size_of_match ${nodesize_output})
+	string(REGEX MATCH "node_size_of<[ ]*([0-9]+)[ul ]*,[ ]*([0-9]+)[ul ]*,[ ]*true[ ]*>" node_size_of_match ${nodesize_output})
 
 	if(node_size_of_match)
 	    # Extract the alignment and node size
