@@ -71,5 +71,5 @@ TEST_CASE("static_allocator")
 TEST_CASE("virtual_memory_allocator")
 {
     virtual_memory_allocator alloc;
-    check_default_allocator(alloc, virtual_memory_page_size);
+    check_default_allocator(alloc, get_virtual_memory_page_size());
 }
