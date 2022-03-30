@@ -38,6 +38,7 @@ namespace foonathan
         /// All virtual memory allocations must be multiple of this size.
         /// It is usually 4KiB.
         /// \ingroup allocator
+        /// \deprecated use \ref get_virtual_memory_page_size instead.
         extern const std::size_t virtual_memory_page_size;
 
         /// \returns the page size of the virtual memory.
