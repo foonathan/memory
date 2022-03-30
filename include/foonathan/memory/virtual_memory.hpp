@@ -40,6 +40,12 @@ namespace foonathan
         /// \ingroup allocator
         extern const std::size_t virtual_memory_page_size;
 
+        /// \returns the page size of the virtual memory.
+        /// All virtual memory allocations must be multiple of this size.
+        /// It is usually 4KiB.
+        /// \ingroup allocator
+        std::size_t get_virtual_memory_page_size() noexcept;
+
         /// Reserves virtual memory.
         /// \effects Reserves the given number of pages.
         /// Each page is \ref virtual_memory_page_size big.
