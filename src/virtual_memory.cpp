@@ -141,6 +141,11 @@ void foonathan::memory::virtual_memory_decommit(void* memory, std::size_t no_pag
 #warning "virtual memory functions not available on your platform, define your own"
 #endif
 
+std::size_t foonathan::memory::get_virtual_memory_page_size() noexcept
+{
+    return virtual_memory_page_size;
+}
+
 namespace
 {
     std::size_t calc_no_pages(std::size_t size) noexcept
