@@ -1,5 +1,14 @@
 # Upcoming Changes
 
+# 0.7-2
+
+Deprecate `virtual_memory_page_size`; use `get_virtual_memory_page_size()` instead. (#132)
+
+CMake improvements:
+
+* Generate container node sizes using CMake, which makes cross-compiling easier (#129)
+* Set `CMAKE_RUNTIME_OUTPUT_DIRECTORY` properly to support shared libraries (#132)
+
 # 0.7-1
 
 Just bugfixes:

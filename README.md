@@ -179,7 +179,7 @@ To use an installed library:
 4. Call `find_package(foonathan_memory major.minor REQUIRED)` to find the library.
 
 5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
-  
+
 See https://memory.foonathan.net/md_doc_installation.html for a detailed guide.
 
 ## Documentation
