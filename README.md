@@ -182,6 +182,18 @@ To use an installed library:
 
 See https://memory.foonathan.net/md_doc_installation.html for a detailed guide.
 
+## Building foonathan-memory - Using vcpkg
+
+You can download and install foonathan-memory using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    ./vcpkg install foonathan-memory
+
+The foonathan-memory port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 ## Documentation
 
 Full documentation can be found at https://memory.foonathan.net/.
