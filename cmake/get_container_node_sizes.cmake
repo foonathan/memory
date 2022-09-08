@@ -4,7 +4,9 @@
 # is being processed.
 set(_THIS_MODULE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-set(_DEBUG_GET_CONTAINER_NODE_SIZES OFF)
+if(NOT DEFINED _DEBUG_GET_CONTAINER_NODE_SIZES)
+    set(_DEBUG_GET_CONTAINER_NODE_SIZES OFF)
+endif()
 
 function(_gcns_debug_message)
     if(_DEBUG_GET_CONTAINER_NODE_SIZES)
@@ -50,7 +52,7 @@ function(unique_aligned_types result_types result_alignments)
     set(alignments )
     set(types )
 
-    set(all_types char bool short int long "long long" float double "long double")
+    set(all_types char bool short int long LONG_LONG float double LONG_DOUBLE)
     foreach(type IN LISTS all_types )
 	get_alignof_type("${type}" alignment)
 	_gcns_debug_message("Alignment of '${type}' is '${alignment}'")
