@@ -9,4 +9,8 @@ struct align_of
 template<typename T>
 using get_align_of = align_of<T, alignof(T)>;
 
+// Workaround for environments that have issues passing in type names with spaces
+using LONG_LONG = long long;
+using LONG_DOUBLE = long double;
+
 get_align_of<TEST_TYPE> dummy;

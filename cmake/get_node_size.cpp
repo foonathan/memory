@@ -53,7 +53,7 @@ template<typename T, typename State = empty_state, bool SubtractTSize = true, ty
 struct debug_allocator :
     public node_size_of<alignof(InitialType),
 			sizeof(T) - (SubtractTSize ? sizeof(InitialType) : 0),
-			!is_same<InitialType,T>::value>,
+			!is_same<InitialType,T>::value && (sizeof(InitialType) != sizeof(T))>,
     private State
 {
     template<typename U>
@@ -200,6 +200,10 @@ int test_container()
     return 0;
 }
 #endif // SHARED_PTR_STATEFUL_CONTAINER
+
+// Workaround for environments that have issues passing in type names with spaces
+using LONG_LONG = long long;
+using LONG_DOUBLE = long double;
 
 #ifdef TEST_TYPES
 template<typename... Types>
