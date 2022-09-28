@@ -216,9 +216,8 @@ temporary_stack& foonathan::memory::get_temporary_stack(std::size_t initial_size
 
 namespace
 {
-    FOONATHAN_THREAD_LOCAL alignas(
-        temporary_stack) char temporary_stack_storage[sizeof(temporary_stack)];
-    FOONATHAN_THREAD_LOCAL bool is_created = false;
+    thread_local alignas(temporary_stack) char temporary_stack_storage[sizeof(temporary_stack)];
+    thread_local bool is_created = false;
 
     temporary_stack& get() noexcept
     {
