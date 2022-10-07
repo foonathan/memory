@@ -61,13 +61,7 @@ option(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
         "whether or not the size of the allocation will be checked" ON)
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "<memory_resource>" CACHE STRING
-    "the header of the memory_resource class used")
-set(FOONATHAN_MEMORY_MEMORY_RESOURCE std::memory_resource CACHE STRING
-    "the memory_resource class used")
 option(FOONATHAN_MEMORY_EXTERN_TEMPLATE
     "whether or not common template instantiations are already provided by the library" ON)
 set(FOONATHAN_MEMORY_TEMPORARY_STACK_MODE 2 CACHE STRING
      "set to 0 to disable the per-thread stack completely, to 1 to disable the nitfy counter and to 2 to enable everything")
-set(FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL container_node_sizes_impl.hpp CACHE FILEPATH
-     "the path of the header that defines the node sizes and alignments if pre-generated.")

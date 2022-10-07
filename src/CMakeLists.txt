@@ -76,8 +76,10 @@ set(src
 # configure config file
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
-# generate container_node_sizes.hpp
-get_container_node_sizes(${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+# generate container_node_sizes.hpp if necessary
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+    get_container_node_sizes(${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory

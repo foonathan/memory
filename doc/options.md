@@ -12,8 +12,6 @@ You can create as many build types as you want.
 
 There are the following variables available to configure it:
 
-* `COMP_HAS_*`: specifies compatibility options, that is, whether a certain C++ feature is available under your compiler. They are automatically detected by CMake, so there is usually no need to change them.
-
 * `FOONATHAN_MEMORY_BUILD_EXAMPLES/_TESTS`: whether or not to build examples or tests. If this is `OFF` their CMake scripts are not even included. It is `ON` for standalone builds and `OFF` if used in `add_subdirectory()`.
 * `FOONATHAN_MEMORY_BUILD_TOOLS`: whether or not build the tools. Unlike the other two options, this is always `ON`.
 
