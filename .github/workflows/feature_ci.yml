@@ -45,7 +45,7 @@ jobs:
         xcode: ['11', '13']
         sharedlibs: [OFF, ON]
 
-    runs-on: macos-latest
+    runs-on: macos-11
 
     steps:
     - uses: actions/checkout@v2
