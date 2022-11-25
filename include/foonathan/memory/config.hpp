@@ -43,6 +43,11 @@
 #endif
 #endif
 
+// SFINAE workaround for MSVC 19.33
+#ifndef FOONATHAN_SFINAE_WORKAROUND
+#define FOONATHAN_SFINAE_WORKAROUND 1
+#endif
+
 // log prefix
 #define FOONATHAN_MEMORY_LOG_PREFIX "foonathan::memory"
 
