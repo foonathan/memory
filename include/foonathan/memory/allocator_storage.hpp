@@ -126,7 +126,7 @@ namespace foonathan
                 FOONATHAN_REQUIRES(
                     (!std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value))>
             allocator_storage(Alloc&& alloc,
-                              FOONATHAN_SFINAE(new storage_policy(std::declval<Alloc&&>())))
+                              FOONATHAN_SFINAE(new storage_policy(std::declval<Alloc>())))
             : storage_policy(detail::forward<Alloc>(alloc))
             {
             }
