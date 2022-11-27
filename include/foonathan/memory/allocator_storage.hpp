@@ -126,11 +126,7 @@ namespace foonathan
                 FOONATHAN_REQUIRES(
                     (!std::is_base_of<allocator_storage, typename std::decay<Alloc>::type>::value))>
             allocator_storage(Alloc&& alloc,
-#if FOONATHAN_SFINAE_WORKAROUND
                               FOONATHAN_SFINAE(new storage_policy(std::declval<Alloc&&>())))
-#else
-                              FOONATHAN_SFINAE(new storage_policy(detail::forward<Alloc>(alloc))))
-#endif
             : storage_policy(detail::forward<Alloc>(alloc))
             {
             }
@@ -141,11 +137,7 @@ namespace foonathan
             /// otherwise this constructor does not participate in overload resolution.
             template <class OtherPolicy>
             allocator_storage(const allocator_storage<OtherPolicy, Mutex>& other,
-#if FOONATHAN_SFINAE_WORKAROUND
                               FOONATHAN_SFINAE(new storage_policy(std::declval<const allocator_storage<OtherPolicy, Mutex>&>().get_allocator())))
-#else
-                              FOONATHAN_SFINAE(new storage_policy(other.get_allocator())))
-#endif
             : storage_policy(other.get_allocator())
             {
             }

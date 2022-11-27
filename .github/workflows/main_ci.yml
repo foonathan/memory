@@ -2,7 +2,7 @@ name: Main CI
 
 on:
   push:
-    branches: [main, bugfix/fix-issue-145-compile-on-msvc-2022]
+    branches: [main]
 
 jobs:
   linux:
@@ -83,7 +83,7 @@ jobs:
         sharedlibs: [OFF, ON]
         std: [14, 17, 20]
 
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
@@ -92,7 +92,7 @@ jobs:
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -DCMAKE_CXX_STANDARD=${{matrix.std}}  -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -DCMAKE_CXX_STANDARD=${{matrix.std}} -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
     - name: Build
       working-directory: build/
       run: cmake --build . --config ${{matrix.build_type}}
