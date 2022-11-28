@@ -134,7 +134,7 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(alloc))) noexcept
+            std_allocator(RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(std::declval<RawAlloc&>()))) noexcept
             : alloc_reference(alloc)
             {
             }
@@ -149,7 +149,7 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(const RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(alloc))) noexcept
+            std_allocator(const RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(std::declval<const RawAlloc&>()))) noexcept
             : alloc_reference(alloc)
             {
             }

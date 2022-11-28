@@ -81,8 +81,9 @@ jobs:
       matrix:
         build_type: [Debug, Release]
         sharedlibs: [OFF, ON]
+        std: [14, 17, 20]
 
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
@@ -91,7 +92,7 @@ jobs:
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -DCMAKE_CXX_STANDARD=${{matrix.std}} -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
     - name: Build
       working-directory: build/
       run: cmake --build . --config ${{matrix.build_type}}
