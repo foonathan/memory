@@ -4,7 +4,7 @@
 
 # root CMakeLists.txt, specifies option and interface library
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 project(FOONATHAN_MEMORY)
 
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
