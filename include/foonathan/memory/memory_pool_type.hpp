@@ -28,7 +28,7 @@ namespace foonathan
         };
 
         /// Tag type defining a memory pool optimized for arrays.
-        /// It keeps the nodes oredered inside the free list and searches the list for an appropriate memory block.
+        /// It keeps the nodes ordered inside the free list and searches the list for an appropriate memory block.
         /// Array allocations are still pretty slow, if the array gets big enough it can get slower than \c new.
         /// Node allocations are still fast, unless there is deallocation in random order.
         /// \note Use this tag type only if you really need to have a memory pool!
