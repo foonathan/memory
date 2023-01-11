@@ -275,8 +275,9 @@ namespace foonathan
         /// @{
 
         /// Contains the node size of a node based STL container with a specific type.
-        /// These classes are auto-generated and only available if the tools are build and without
-        /// cross-compiling.
+        ///
+        /// This trait is auto-generated and may not be available depending on the build configuration,
+        /// especially when doing cross compilation.
         template <typename T>
         struct forward_list_node_size : std::integral_constant<std::size_t, implementation_defined>
         {
@@ -313,25 +314,30 @@ namespace foonathan
         {
         };
 
-        /// \copydoc forward_list_node_size
+        /// Contains the node size of a node based STL container with a specific type.
+        ///
+        /// This trait is auto-generated and may not be available depending on the build configuration,
+        /// especially when doing cross compilation.
+        ///
+        /// \notes `T` is always the `value_type` of the container, e.g. `std::pair<const Key, Value>`.
         template <typename T>
         struct map_node_size : std::integral_constant<std::size_t, implementation_defined>
         {
         };
 
-        /// \copydoc forward_list_node_size
+        /// \copydoc map_node_size
         template <typename T>
         struct multimap_node_size : std::integral_constant<std::size_t, implementation_defined>
         {
         };
 
-        /// \copydoc forward_list_node_size
+        /// \copydoc map_node_size
         template <typename T>
         struct unordered_map_node_size : std::integral_constant<std::size_t, implementation_defined>
         {
         };
 
-        /// \copydoc forward_list_node_size
+        /// \copydoc map_node_size
         template <typename T>
         struct unordered_multimap_node_size
         : std::integral_constant<std::size_t, implementation_defined>
