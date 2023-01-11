@@ -1,5 +1,20 @@
 # Upcoming Changes
 
+# 0.7-3
+
+CMake improvements:
+
+* Increase the CMake minimum required version to 3.14 to reflect reality. (#147)
+* Fixes to container node size generation using CMake on MacOS. (#138)
+* Don't regenerate container node sizes when they already exist.
+
+Bugfixes:
+
+* Workaround a compiler bug in MSVC. (#146)
+* Fix broken multi-threading configuration. (#142)
+* Check initial block size for `memory_pool_collection` properly. (#148)
+* Fix bug in `memory_block_stack::owns()`. (#151)
+
 # 0.7-2
 
 Deprecate `virtual_memory_page_size`; use `get_virtual_memory_page_size()` instead. (#132)
