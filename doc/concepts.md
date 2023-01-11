@@ -160,6 +160,7 @@ i.e. allocate memory through the traits and deallocate through the member functi
 It is completely allowed that those functions do completely different things.
 
 ### Composable RawAllocator
+<a name="concept_composableallocator"></a>
 
 A RawAllocator can be *composable*.
 Access to the composable (de)allocation functions is only done through the [composable_allocator_traits].
@@ -363,7 +364,7 @@ Expression|Semantics
 
 *Note*: Those tracking functions are also called after a succesful composable (de)allocation function.
 
-A *deep tracker* also tracks a [BlockAllocator](#concept_block_allocator) of another allocator
+A *deep tracker* also tracks a [BlockAllocator](#concept_blockallocator) of another allocator
 and thus allows monitoring the often more expensive big allocations done by it.
 Such a `Tracker` must provide the following additional functions:
 

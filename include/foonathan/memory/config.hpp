@@ -139,7 +139,7 @@
 /// Set to `1` to disable automatic lifetime managment of the per-thread stack,
 /// requires managing it through the \ref foonathan::memory::temporary_stack_initializer.
 /// Set to `0` to disable the per-thread stack completely.
-/// \ref get_temporary_stack() will abort the program upon call.
+/// \ref foonathan::memory::get_temporary_stack() will abort the program upon call.
 /// \ingroup allocator
 #define FOONATHAN_MEMORY_TEMPORARY_STACK_MODE 2
 #endif
