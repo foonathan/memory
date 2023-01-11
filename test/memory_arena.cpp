@@ -21,9 +21,13 @@ TEST_CASE("detail::memory_block_stack")
     REQUIRE(!stack.empty());
 
     auto top = stack.top();
-    REQUIRE(top.memory >= static_cast<void*>(&memory));
-    REQUIRE(top.size <= 1024);
+    REQUIRE(top.memory
+            == reinterpret_cast<char*>(&memory) + memory_block_stack::implementation_offset());
+    REQUIRE(top.size == 1024 - memory_block_stack::implementation_offset());
     REQUIRE(is_aligned(top.memory, max_alignment));
+    REQUIRE(!stack.owns(&memory));
+    REQUIRE(stack.owns(top.memory));
+    REQUIRE(stack.owns(static_cast<char*>(top.memory) + top.size - 1));
 
     SUBCASE("pop")
     {
@@ -49,6 +53,19 @@ TEST_CASE("detail::memory_block_stack")
     stack.push({&a, 1024});
     stack.push({&b, 1024});
     stack.push({&c, 1024});
+
+    REQUIRE(!stack.owns(&a));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&a) + memory_block_stack::implementation_offset()));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&a) + 1024
+                       - memory_block_stack::implementation_offset() - 1));
+    REQUIRE(!stack.owns(&b));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&b) + memory_block_stack::implementation_offset()));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&b) + 1024
+                       - memory_block_stack::implementation_offset() - 1));
+    REQUIRE(!stack.owns(&c));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&c) + memory_block_stack::implementation_offset()));
+    REQUIRE(stack.owns(reinterpret_cast<char*>(&c) + 1024
+                       - memory_block_stack::implementation_offset() - 1));
 
     SUBCASE("multiple pop")
     {

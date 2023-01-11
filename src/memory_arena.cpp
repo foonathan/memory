@@ -41,7 +41,7 @@ bool memory_block_stack::owns(const void* ptr) const noexcept
     auto address = static_cast<const char*>(ptr);
     for (auto cur = head_; cur; cur = cur->prev)
     {
-        auto mem = static_cast<char*>(static_cast<void*>(cur));
+        auto mem = static_cast<char*>(static_cast<void*>(cur)) + implementation_offset();
         if (address >= mem && address < mem + cur->usable_size)
             return true;
     }
