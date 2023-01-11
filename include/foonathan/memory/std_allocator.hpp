@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_STD_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_STD_ALLOCATOR_HPP_INCLUDED
@@ -134,7 +133,8 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(std::declval<RawAlloc&>()))) noexcept
+            std_allocator(RawAlloc& alloc,
+                          FOONATHAN_SFINAE(alloc_reference(std::declval<RawAlloc&>()))) noexcept
             : alloc_reference(alloc)
             {
             }
@@ -149,7 +149,8 @@ namespace foonathan
                 // MSVC seems to ignore access rights in decltype SFINAE below
                 // use this to prevent this constructor being chosen instead of move/copy for types inheriting from it
                 FOONATHAN_REQUIRES((!std::is_base_of<std_allocator, RawAlloc>::value))>
-            std_allocator(const RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(std::declval<const RawAlloc&>()))) noexcept
+            std_allocator(const RawAlloc& alloc, FOONATHAN_SFINAE(alloc_reference(
+                                                     std::declval<const RawAlloc&>()))) noexcept
             : alloc_reference(alloc)
             {
             }

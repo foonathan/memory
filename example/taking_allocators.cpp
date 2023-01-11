@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 // this example provides two implementation of a deep_copy_ptr that performs a copy when copying the pointer
 // the first version takes an Allocator the second a RawAllocator
@@ -65,7 +64,7 @@ namespace using_std_allocator
                 destroy();
 
                 Allocator::operator=(std::move(alloc));
-                ptr_               = ptr;
+                ptr_ = ptr;
             }
             else
             {
@@ -83,8 +82,8 @@ namespace using_std_allocator
                 && static_cast<allocator_type&>(*this) != other)
             {
                 allocator_type::operator=(std::move(other));
-                ptr_                    = other.ptr_;
-                other.ptr_              = nullptr;
+                ptr_       = other.ptr_;
+                other.ptr_ = nullptr;
             }
             else if (static_cast<allocator_type&>(*this) == other)
             {

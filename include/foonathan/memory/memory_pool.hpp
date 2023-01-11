@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
 #define FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
@@ -103,8 +102,8 @@ namespace foonathan
             memory_pool& operator=(memory_pool&& other) noexcept
             {
                 leak_checker::operator=(detail::move(other));
-                arena_                = detail::move(other.arena_);
-                free_list_            = detail::move(other.free_list_);
+                arena_     = detail::move(other.arena_);
+                free_list_ = detail::move(other.free_list_);
                 return *this;
             }
             /// @}

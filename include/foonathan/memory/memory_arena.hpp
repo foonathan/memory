@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED
 #define FOONATHAN_MEMORY_MEMORY_ARENA_HPP_INCLUDED
@@ -548,7 +547,7 @@ namespace foonathan
                 if (block_size_)
                 {
                     auto         mem = traits::allocate_array(get_allocator(), block_size_, 1,
-                                                      detail::max_alignment);
+                                                              detail::max_alignment);
                     memory_block block(mem, block_size_);
                     block_size_ = 0u;
                     return block;

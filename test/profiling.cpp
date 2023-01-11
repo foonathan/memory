@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 // Profiling code to check performance of allocators.
 
@@ -40,15 +39,12 @@ void benchmark_node(std::initializer_list<std::size_t> counts,
             auto heap_alloc = [&] { return heap_allocator{}; };
             auto new_alloc  = [&] { return new_allocator{}; };
 
-            auto small_alloc = [&] {
-                return memory_pool<small_node_pool>(size, count * size + 1024);
-            };
-            auto node_alloc = [&] {
-                return memory_pool<node_pool>(size, count * std::max(size, sizeof(char*)) + 1024);
-            };
-            auto array_alloc = [&] {
-                return memory_pool<array_pool>(size, count * std::max(size, sizeof(char*)) + 1024);
-            };
+            auto small_alloc = [&]
+            { return memory_pool<small_node_pool>(size, count * size + 1024); };
+            auto node_alloc = [&]
+            { return memory_pool<node_pool>(size, count * std::max(size, sizeof(char*)) + 1024); };
+            auto array_alloc = [&]
+            { return memory_pool<array_pool>(size, count * std::max(size, sizeof(char*)) + 1024); };
 
             auto stack_alloc = [&] { return memory_stack<>(count * size); };
 

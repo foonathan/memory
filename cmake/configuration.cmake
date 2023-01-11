@@ -1,6 +1,5 @@
-# Copyright (C) 2015-2016 Jonathan Müller <jonathanmueller.dev@gmail.com>
-# This file is subject to the license terms in the LICENSE file
-# found in the top-level directory of this distribution.
+# Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+# SPDX-License-Identifier: Zlib
 
 # defines configuration options
 # note: only include it in memory's top-level CMakeLists.txt, after compatibility.cmake

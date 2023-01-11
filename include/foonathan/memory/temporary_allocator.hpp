@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_TEMPORARY_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_TEMPORARY_ALLOCATOR_HPP_INCLUDED
@@ -195,7 +194,7 @@ namespace foonathan
             /// \effects Destroys the per-thread stack if it isn't already destroyed.
             ~temporary_stack_initializer() noexcept;
 
-            temporary_stack_initializer(temporary_stack_initializer&&) = delete;
+            temporary_stack_initializer(temporary_stack_initializer&&)            = delete;
             temporary_stack_initializer& operator=(temporary_stack_initializer&&) = delete;
         };
 
@@ -229,7 +228,7 @@ namespace foonathan
 
             ~temporary_allocator() noexcept;
 
-            temporary_allocator(temporary_allocator&&) = delete;
+            temporary_allocator(temporary_allocator&&)            = delete;
             temporary_allocator& operator=(temporary_allocator&&) = delete;
 
             /// \effects Allocates memory from the internal \ref memory_stack by forwarding to it.

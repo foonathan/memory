@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
 #define FOONATHAN_MEMORY_ITERATION_ALLOCATOR_HPP_INCLUDED
@@ -77,8 +76,8 @@ namespace foonathan
             iteration_allocator& operator=(iteration_allocator&& other) noexcept
             {
                 allocator_type::operator=(detail::move(other));
-                block_                  = other.block_;
-                cur_                    = other.cur_;
+                block_ = other.block_;
+                cur_   = other.cur_;
 
                 for (auto i = 0u; i != N; ++i)
                     stacks_[i] = detail::move(other.stacks_[i]);

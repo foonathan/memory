@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED
 #define FOONATHAN_MEMORY_ALLOCATOR_TRAITS_HPP_INCLUDED
@@ -375,12 +374,12 @@ namespace foonathan
 
             template <typename T>
             struct has_invalid_alloc_function
-            : std::is_same<decltype(
-                               traits_detail::allocate_node(traits_detail::full_concept{},
-                                                            std::declval<typename allocator_traits<
-                                                                T>::allocator_type&>(),
-                                                            0, 0)),
-                           traits_detail::error>
+            : std::is_same<
+                  decltype(traits_detail::allocate_node(traits_detail::full_concept{},
+                                                        std::declval<typename allocator_traits<
+                                                            T>::allocator_type&>(),
+                                                        0, 0)),
+                  traits_detail::error>
             {
             };
 
@@ -564,13 +563,12 @@ namespace foonathan
 
             template <typename T>
             struct has_invalid_try_dealloc_function
-            : std::is_same<
-                  decltype(
-                      traits_detail::try_deallocate_node(traits_detail::full_concept{},
-                                                         std::declval<typename allocator_traits<
-                                                             T>::allocator_type&>(),
-                                                         nullptr, 0, 0)),
-                  traits_detail::error>
+            : std::is_same<decltype(traits_detail::
+                                        try_deallocate_node(traits_detail::full_concept{},
+                                                            std::declval<typename allocator_traits<
+                                                                T>::allocator_type&>(),
+                                                            nullptr, 0, 0)),
+                           traits_detail::error>
             {
             };
 

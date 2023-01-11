@@ -1,6 +1,5 @@
-// Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-// This file is subject to the license terms in the LICENSE file
-// found in the top-level directory of this distribution.
+// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_TEST_BENCHMARK_HPP_INCLUDED
 #define FOONATHAN_MEMORY_TEST_BENCHMARK_HPP_INCLUDED
@@ -51,27 +50,32 @@ struct single
     std::size_t operator()(RawAllocator& alloc, std::size_t size)
     {
         using namespace foonathan::memory;
-        return measure([&]() {
-            for (std::size_t i = 0u; i != count; ++i)
+        return measure(
+            [&]()
             {
-                volatile auto ptr = allocator_traits<RawAllocator>::allocate_node(alloc, size, 1);
-                allocator_traits<RawAllocator>::deallocate_node(alloc, ptr, size, 1);
-            }
-        });
+                for (std::size_t i = 0u; i != count; ++i)
+                {
+                    volatile auto ptr =
+                        allocator_traits<RawAllocator>::allocate_node(alloc, size, 1);
+                    allocator_traits<RawAllocator>::deallocate_node(alloc, ptr, size, 1);
+                }
+            });
     }
 
     template <class RawAllocator>
     std::size_t operator()(RawAllocator& alloc, std::size_t array_size, std::size_t node_size)
     {
-        return measure([&]() {
-            for (std::size_t i = 0u; i != count; ++i)
+        return measure(
+            [&]()
             {
-                auto ptr =
-                    allocator_traits<RawAllocator>::allocate_array(alloc, array_size, node_size, 1);
-                allocator_traits<RawAllocator>::deallocate_array(alloc, ptr, array_size, node_size,
-                                                                 1);
-            }
-        });
+                for (std::size_t i = 0u; i != count; ++i)
+                {
+                    auto ptr = allocator_traits<RawAllocator>::allocate_array(alloc, array_size,
+                                                                              node_size, 1);
+                    allocator_traits<RawAllocator>::deallocate_array(alloc, ptr, array_size,
+                                                                     node_size, 1);
+                }
+            });
     }
 
     static const char* name()
@@ -97,15 +101,20 @@ struct basic_bulk
         std::vector<void*> ptrs;
         ptrs.reserve(count);
 
-        auto alloc_t = measure([&]() {
-            for (std::size_t i = 0u; i != count; ++i)
-                ptrs.push_back(allocator_traits<RawAllocator>::allocate_node(alloc, node_size, 1));
-        });
+        auto alloc_t = measure(
+            [&]()
+            {
+                for (std::size_t i = 0u; i != count; ++i)
+                    ptrs.push_back(
+                        allocator_traits<RawAllocator>::allocate_node(alloc, node_size, 1));
+            });
         func(ptrs);
-        auto dealloc_t = measure([&]() {
-            for (auto ptr : ptrs)
-                allocator_traits<RawAllocator>::deallocate_node(alloc, ptr, node_size, 1);
-        });
+        auto dealloc_t = measure(
+            [&]()
+            {
+                for (auto ptr : ptrs)
+                    allocator_traits<RawAllocator>::deallocate_node(alloc, ptr, node_size, 1);
+            });
         return alloc_t + dealloc_t;
     }
 
@@ -117,17 +126,21 @@ struct basic_bulk
         std::vector<void*> ptrs;
         ptrs.reserve(count);
 
-        auto alloc_t = measure([&]() {
-            for (std::size_t i = 0u; i != count; ++i)
-                ptrs.push_back(allocator_traits<RawAllocator>::allocate_array(alloc, array_size,
-                                                                              node_size, 1));
-        });
+        auto alloc_t = measure(
+            [&]()
+            {
+                for (std::size_t i = 0u; i != count; ++i)
+                    ptrs.push_back(allocator_traits<RawAllocator>::allocate_array(alloc, array_size,
+                                                                                  node_size, 1));
+            });
         func(ptrs);
-        auto dealloc_t = measure([&]() {
-            for (auto ptr : ptrs)
-                allocator_traits<RawAllocator>::deallocate_array(alloc, ptr, array_size, node_size,
-                                                                 1);
-        });
+        auto dealloc_t = measure(
+            [&]()
+            {
+                for (auto ptr : ptrs)
+                    allocator_traits<RawAllocator>::deallocate_array(alloc, ptr, array_size,
+                                                                     node_size, 1);
+            });
         return alloc_t + dealloc_t;
     }
 };
@@ -158,8 +171,8 @@ struct bulk_reversed : basic_bulk
 struct butterfly : basic_bulk
 {
     butterfly(std::size_t c)
-    : basic_bulk([](std::vector<void*>&
-                        ptrs) { std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{}); },
+    : basic_bulk([](std::vector<void*>& ptrs)
+                 { std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{}); },
                  c)
     {
     }
