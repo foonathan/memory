@@ -126,6 +126,11 @@ namespace foonathan
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = BaseType;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deallocator must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_polymorphic_deallocator() noexcept = default;
+
             /// \effects Creates it from a deallocator for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
@@ -153,7 +158,7 @@ namespace foonathan
             }
 
         private:
-            std::size_t derived_size_, derived_alignment_;
+            std::size_t derived_size_ = 0, derived_alignment_ = 0;
         };
 
         /// Similar to \ref allocator_deallocator but calls the destructors of the object.
@@ -266,6 +271,11 @@ namespace foonathan
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = BaseType;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deleter must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_polymorphic_deleter() noexcept = default;
+
             /// \effects Creates it from a deleter for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
@@ -296,8 +306,8 @@ namespace foonathan
             }
 
         private:
-            unsigned short derived_size_,
-                derived_alignment_; // use unsigned short here to save space
+            unsigned short derived_size_      = 0,
+                           derived_alignment_ = 0; // use unsigned short here to save space
         };
     } // namespace memory
 } // namespace foonathan
