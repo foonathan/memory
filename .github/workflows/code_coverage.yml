@@ -7,21 +7,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Create Build Environment
-      run: cmake -E make_directory build
+      - uses: actions/checkout@v2
+      - name: Create Build Environment
+        run: cmake -E make_directory build
 
-    - name: Configure
-      working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-    - name: Build
-      working-directory: build/
-      run: cmake --build . --config Debug
-    - name: Test
-      working-directory: build/
-      run: ctest -C Debug --output-on-failure
+      - name: Configure
+        run: cmake $GITHUB_WORKSPACE -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+      - name: Build
+        run: cmake --build build --config Debug
+      - name: Test
+        working-directory: build/
+        run: ctest -C Debug --output-on-failure
 
-    - name: Collect code coverage
-      working-directory: build/
-      run: bash <(curl -s https://codecov.io/bash)
-
+      - name: Collect code coverage
+        working-directory: build/
+        run: bash <(curl -s https://codecov.io/bash)
