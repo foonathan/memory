@@ -44,3 +44,6 @@ target_include_directories(foonathan_memory_test PRIVATE
 
 add_test(NAME test COMMAND foonathan_memory_test)
 
+if(QNX)
+    install(TARGETS foonathan_memory_test DESTINATION bin/)
+endif()
