@@ -4,14 +4,6 @@
 # builds tools
 
 add_executable(foonathan_memory_node_size_debugger test_types.hpp node_size_debugger.hpp node_size_debugger.cpp)
-if (CMAKE_CROSSCOMPILING)
-    # statically link when cross compiling so emulator doesn't need library paths
-    if (MSVC)
-        set_target_properties(foonathan_memory_node_size_debugger PROPERTIES LINK_FLAGS "/WHOLEARCHIVE")
-    else()
-        set_target_properties(foonathan_memory_node_size_debugger PROPERTIES LINK_FLAGS "-static")
-    endif()
-endif()
 if (MSVC)
     target_compile_options(foonathan_memory_node_size_debugger PRIVATE "/bigobj")
 endif()
