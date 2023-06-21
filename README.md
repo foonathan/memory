@@ -238,10 +238,7 @@ And big thanks to the contributors as well:
 * @j-carl
 * @kaidokert
 * @maksqwe
-* @maksqwe
 * @moazzamak
-* @moazzamak
-* @myd7349
 * @myd7349
 * @nicolastagliani
 * @quattrinili
