@@ -324,7 +324,7 @@ namespace foonathan
 
             std::size_t def_capacity() const noexcept
             {
-                return arena_.next_block_size() / pools_.size();
+                return arena_.current_block().size / pools_.size();
             }
 
             detail::fixed_memory_stack allocate_block()
