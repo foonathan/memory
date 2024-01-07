@@ -137,6 +137,8 @@ namespace foonathan
             explicit virtual_block_allocator(std::size_t block_size, std::size_t no_blocks);
 
             /// \effects Releases the reserved virtual memory.
+            /// \requires All previously \ref allocate_block() committed blocks must be decommitted via
+            /// \ref deallocate_block(), otherwise the blocks that have not been deallocated are leaked.
             ~virtual_block_allocator() noexcept;
 
             /// @{
