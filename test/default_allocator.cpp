@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "detail/align.hpp"
+#include "memory_arena.hpp"
 
 using namespace foonathan::memory;
 
@@ -71,4 +72,16 @@ TEST_CASE("virtual_memory_allocator")
 {
     virtual_memory_allocator alloc;
     check_default_allocator(alloc, get_virtual_memory_page_size());
+}
+
+TEST_CASE("virtual_block_allocator")
+{
+    auto const              page_size = get_virtual_memory_page_size();
+    constexpr std::size_t   no_blocks{8u};
+
+    virtual_block_allocator alloc{page_size, no_blocks};
+    auto                    block = alloc.allocate_block();
+    REQUIRE(block.memory != nullptr);
+    REQUIRE(block.size == page_size);
+    alloc.deallocate_block(block);
 }
