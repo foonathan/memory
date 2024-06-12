@@ -44,7 +44,7 @@ namespace foonathan
 
 #elif !defined(FOONATHAN_MEMORY_ASSERT)
 #define FOONATHAN_MEMORY_ASSERT(Expr)
-#define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
+#define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg) (void)(Expr) //unused var
 #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
 #define FOONATHAN_MEMORY_WARNING(Msg)
 #endif
