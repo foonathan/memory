@@ -15,7 +15,7 @@ using namespace foonathan::memory;
 
 // *very* simple test case to ensure proper alignment and might catch some segfaults
 template <class Allocator>
-void check_default_allocator(Allocator& alloc, std::size_t def_alignment = detail::max_alignment)
+void check_default_allocator(Allocator& alloc, std::size_t def_alignment = alignof(void*))
 {
     auto ptr = alloc.allocate_node(1, 1);
     REQUIRE(detail::is_aligned(ptr, def_alignment));
@@ -76,8 +76,8 @@ TEST_CASE("virtual_memory_allocator")
 
 TEST_CASE("virtual_block_allocator")
 {
-    auto const              page_size = get_virtual_memory_page_size();
-    constexpr std::size_t   no_blocks{8u};
+    auto const            page_size = get_virtual_memory_page_size();
+    constexpr std::size_t no_blocks{8u};
 
     virtual_block_allocator alloc{page_size, no_blocks};
     auto                    block = alloc.allocate_block();
