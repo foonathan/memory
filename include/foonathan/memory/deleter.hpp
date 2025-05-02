@@ -24,9 +24,6 @@ namespace foonathan
         template <typename Type, class RawAllocator>
         class allocator_deallocator : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
-            static_assert(!std::is_abstract<Type>::value,
-                          "use allocator_polymorphic_deallocator for storing base classes");
-
         public:
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = Type;
@@ -48,6 +45,8 @@ namespace foonathan
             /// \requires The deallocator must not have been created by the default constructor.
             void operator()(value_type* pointer) noexcept
             {
+                static_assert(!std::is_abstract<value_type>::value,
+                              "use allocator_polymorphic_deallocator for storing base classes");
                 this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
             }
 
@@ -68,8 +67,6 @@ namespace foonathan
         class allocator_deallocator<Type[], RawAllocator>
         : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
-            static_assert(!std::is_abstract<Type>::value, "must not create polymorphic arrays");
-
         public:
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = Type;
@@ -93,6 +90,8 @@ namespace foonathan
             /// \requires The deallocator must not have been created by the default constructor.
             void operator()(value_type* pointer) noexcept
             {
+                static_assert(!std::is_abstract<value_type>::value,
+                              "must not create polymorphic arrays");
                 this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
             }
 
@@ -127,6 +126,11 @@ namespace foonathan
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = BaseType;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deallocator must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_polymorphic_deallocator() noexcept = default;
+
             /// \effects Creates it from a deallocator for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
@@ -154,7 +158,7 @@ namespace foonathan
             }
 
         private:
-            std::size_t derived_size_, derived_alignment_;
+            std::size_t derived_size_ = 0, derived_alignment_ = 0;
         };
 
         /// Similar to \ref allocator_deallocator but calls the destructors of the object.
@@ -163,9 +167,6 @@ namespace foonathan
         template <typename Type, class RawAllocator>
         class allocator_deleter : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
-            static_assert(!std::is_abstract<Type>::value,
-                          "use allocator_polymorphic_deleter for storing base classes");
-
         public:
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = Type;
@@ -188,6 +189,8 @@ namespace foonathan
             /// \requires The deleter must not have been created by the default constructor.
             void operator()(value_type* pointer) noexcept
             {
+                static_assert(!std::is_abstract<value_type>::value,
+                              "use allocator_polymorphic_deleter for storing base classes");
                 pointer->~value_type();
                 this->deallocate_node(pointer, sizeof(value_type), alignof(value_type));
             }
@@ -208,8 +211,6 @@ namespace foonathan
         class allocator_deleter<Type[], RawAllocator>
         : FOONATHAN_EBO(allocator_reference<RawAllocator>)
         {
-            static_assert(!std::is_abstract<Type>::value, "must not create polymorphic arrays");
-
         public:
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = Type;
@@ -232,6 +233,8 @@ namespace foonathan
             /// \requires The deleter must not have been created by the default constructor.
             void operator()(value_type* pointer) noexcept
             {
+                static_assert(!std::is_abstract<value_type>::value,
+                              "must not create polymorphic arrays");
                 for (auto cur = pointer; cur != pointer + size_; ++cur)
                     cur->~value_type();
                 this->deallocate_array(pointer, size_, sizeof(value_type), alignof(value_type));
@@ -268,6 +271,11 @@ namespace foonathan
             using allocator_type = typename allocator_reference<RawAllocator>::allocator_type;
             using value_type     = BaseType;
 
+            /// \effects Creates it without any associated allocator.
+            /// The deleter must not be used if that is the case.
+            /// \notes This functions is useful if you have want to create an empty smart pointer without giving it an allocator.
+            allocator_polymorphic_deleter() noexcept = default;
+
             /// \effects Creates it from a deleter for a derived type.
             /// It will deallocate the memory as if done by the derived type.
             template <typename T, FOONATHAN_REQUIRES((std::is_base_of<BaseType, T>::value))>
@@ -298,10 +306,11 @@ namespace foonathan
             }
 
         private:
-            unsigned short derived_size_,
-                derived_alignment_; // use unsigned short here to save space
+            unsigned short derived_size_      = 0,
+                           derived_alignment_ = 0; // use unsigned short here to save space
         };
     } // namespace memory
 } // namespace foonathan
 
-#endif //FOONATHAN_MEMORY_DELETER_HPP_INCLUDED
+#endif // FOONATHAN_MEMORY_DELETER_HPP_INCLUDED
+

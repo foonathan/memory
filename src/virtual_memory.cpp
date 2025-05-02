@@ -49,6 +49,7 @@ void foonathan::memory::virtual_memory_release(void* pages, std::size_t) noexcep
 {
     auto result = VirtualFree(pages, 0u, MEM_RELEASE);
     FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot release pages");
+    (void)result;
 }
 
 void* foonathan::memory::virtual_memory_commit(void* memory, std::size_t no_pages) noexcept
@@ -70,6 +71,7 @@ void foonathan::memory::virtual_memory_decommit(void* memory, std::size_t no_pag
 {
     auto result = VirtualFree(memory, no_pages * virtual_memory_page_size, MEM_DECOMMIT);
     FOONATHAN_MEMORY_ASSERT_MSG(result, "cannot decommit memory");
+    (void)result;
 }
 #elif defined(__unix__) || defined(__APPLE__) || defined(__VXWORKS__)                              \
     || defined(__QNXNTO__) // POSIX systems
@@ -230,7 +232,7 @@ void virtual_block_allocator::deallocate_block(memory_block block) noexcept
                                 { return static_cast<char*>(block.memory) == cur_ - block_size_; },
                                 info(), block.memory);
     cur_ -= block_size_;
-    virtual_memory_decommit(cur_, block_size_);
+    virtual_memory_decommit(cur_, block_size_ / virtual_memory_page_size);
 }
 
 allocator_info virtual_block_allocator::info() noexcept

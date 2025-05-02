@@ -60,30 +60,10 @@ void detail::temporary_block_allocator::deallocate_block(memory_block block)
 // lifetime managment through the nifty counter and the list
 // note: I could have used a simple `thread_local` variable for the temporary stack
 // but this could lead to issues with destruction order
-// and more importantly I have to support platforms that can't handle non-trivial thread local's
 // hence I need to dynamically allocate the stack's and store them in a container
 // on program exit the container is iterated and all stack's are properly destroyed
-// if a thread exit can be detected, the dynamic memory of the stack is already released,
+// if a thread exit is detected, the dynamic memory of the stack is already released,
 // but not the stack itself destroyed
-
-#if !defined(__MINGW64__)
-
-// only use the thread exit detector if we have thread local and are not running on MinGW due to a bug
-// see: https://sourceforge.net/p/mingw-w64/bugs/527/
-#define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 1
-
-#else
-#define FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR 0
-
-#if defined(_MSC_VER)
-#pragma message(                                                                                   \
-    "thread_local doesn't support destructors, need to use the temporary_stack_initializer to ensure proper cleanup of the temporary memory")
-#else
-#warning                                                                                           \
-    "thread_local doesn't support destructors, need to use the temporary_stack_initializer to ensure proper cleanup of the temporary memory"
-#endif
-
-#endif
 
 static class detail::temporary_stack_list
 {
@@ -151,8 +131,6 @@ namespace
     thread_local std::size_t      nifty_counter;
     thread_local temporary_stack* temp_stack = nullptr;
 
-#if FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR
-    // don't use this on a bug
     thread_local struct thread_exit_detector_t
     {
         ~thread_exit_detector_t() noexcept
@@ -166,7 +144,6 @@ namespace
                 temporary_stack_list_obj.clear(*temp_stack);
         }
     } thread_exit_detector;
-#endif
 } // namespace
 
 detail::temporary_stack_list_node::temporary_stack_list_node(int) noexcept : in_use_(true)
@@ -174,9 +151,7 @@ detail::temporary_stack_list_node::temporary_stack_list_node(int) noexcept : in_
     next_ = temporary_stack_list_obj.first.load();
     while (!temporary_stack_list_obj.first.compare_exchange_weak(next_, this))
         ;
-#if FOONATHAN_MEMORY_THREAD_EXIT_DETECTOR
     (void)&thread_exit_detector; // ODR-use it, so it will be created
-#endif
 }
 
 detail::temporary_allocator_dtor_t::temporary_allocator_dtor_t() noexcept

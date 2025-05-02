@@ -2,7 +2,7 @@ name: Main CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/*]
 
 jobs:
   linux:
@@ -10,53 +10,56 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          # List: https://github.com/conan-io/conan-docker-tools
-          - gcc10
-          - gcc9
-          - gcc8
-          - gcc7
-          - gcc6
-          - gcc5
-          - clang10
-          - clang9
-          - clang8
-          - clang7
-          - clang60
-          - clang50
-          - clang40
+          - "gcc:7"
+          - "gcc:8"
+          - "gcc:9"
+          - "gcc:10"
+          - "gcc:11"
+          - "gcc:12"
+          - "gcc:13"
+          - "gcc:14"
+          - "clang:6"
+          - "clang:7"
+          - "clang:8"
+          - "clang:9"
+          - "clang:10"
+          - "clang:11"
+          - "clang:12"
+          - "clang:13"
+          - "clang:14"
+          - "clang:15"
+          - "clang:16"
+          - "clang:17"
+          - "clang:18"
         build_type: [Debug, Release]
-        sharedlibs: [OFF, ON]
 
     runs-on: ubuntu-latest
     container:
-      image: conanio/${{matrix.image}}
-      options: --user root
+      image: ghcr.io/foonathan/${{matrix.image}}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Create Build Environment
       run: cmake -E make_directory build
+
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
     - name: Build
       working-directory: build/
-      run: cmake --build . --config ${{matrix.build_type}}
+      run: cmake --build .
     - name: Test
       working-directory: build/
-      run: ctest -C ${{matrix.build_type}} --output-on-failure
+      run: ctest --output-on-failure
 
   macos:
     strategy:
       fail-fast: false
       matrix:
-        xcode:
-            - '11'
-            - '12'
-            - '13'
-        sharedlibs: [OFF, ON]
+        xcode: ['15', '16']
+        build_type: [Debug, Release]
 
-    runs-on: macos-11
+    runs-on: macos-14
 
     steps:
     - uses: actions/checkout@v2
@@ -65,9 +68,12 @@ jobs:
         xcode-version: ${{matrix.xcode}}
     - name: Create Build Environment
       run: cmake -E make_directory build
+    - name: Install ninja
+      run: brew install ninja
+
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
     - name: Build
       working-directory: build/
       run: cmake --build .
@@ -79,9 +85,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        toolset: ['v142', 'v143', 'ClangCL']
         build_type: [Debug, Release]
-        sharedlibs: [OFF, ON]
-        std: [14, 17, 20]
+        arch: [Win32, x64]
 
     runs-on: windows-2022
 
@@ -89,13 +95,14 @@ jobs:
     - uses: actions/checkout@v2
     - name: Create Build Environment
       run: cmake -E make_directory build
+
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -DCMAKE_CXX_STANDARD=${{matrix.std}} -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -T ${{matrix.toolset}} -A ${{matrix.arch}}
     - name: Build
       working-directory: build/
-      run: cmake --build . --config ${{matrix.build_type}}
+      run: cmake --build . --config ${{matrix.build_type}} -j 2
     - name: Test
       working-directory: build/
       run: ctest -C ${{matrix.build_type}} --output-on-failure

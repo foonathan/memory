@@ -2,7 +2,7 @@ name: Feature CI
 
 on:
   push:
-    branches-ignore: ['main']
+    branches-ignore: ['main', 'fix/*']
   pull_request:
 
 jobs:
@@ -10,42 +10,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image:
-          # List: https://github.com/conan-io/conan-docker-tools
-          - gcc10
-          - gcc5
-          - clang10
-          - clang40
-        sharedlibs: [OFF, ON]
+        image: ["gcc:7", "gcc:14", "clang:6", "clang:18"]
 
     runs-on: ubuntu-latest
     container:
-      image: conanio/${{matrix.image}}
-      options: --user root
+      image: ghcr.io/foonathan/${{matrix.image}}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Create Build Environment
       run: cmake -E make_directory build
 
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug
     - name: Build
       working-directory: build/
-      run: cmake --build . --config Debug
+      run: cmake --build .
     - name: Test
       working-directory: build/
-      run: ctest -C Debug --output-on-failure
+      run: ctest --output-on-failure
 
   macos:
     strategy:
       fail-fast: false
       matrix:
-        xcode: ['11', '13']
-        sharedlibs: [OFF, ON]
+        xcode: ['15', '16']
 
-    runs-on: macos-11
+    runs-on: macos-14
 
     steps:
     - uses: actions/checkout@v2
@@ -54,10 +46,12 @@ jobs:
         xcode-version: ${{matrix.xcode}}
     - name: Create Build Environment
       run: cmake -E make_directory build
+    - name: Install ninja
+      run: brew install ninja
 
     - name: Configure
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake -GNinja $GITHUB_WORKSPACE
     - name: Build
       working-directory: build/
       run: cmake --build .
@@ -69,21 +63,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sharedlibs: [OFF, ON]
+        arch: [Win32, x64]
 
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v2
     - name: Create Build Environment
       run: cmake -E make_directory build
+
     - name: Configure
       shell: bash
       working-directory: build/
-      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 16 2019" -DBUILD_SHARED_LIBS=${{matrix.sharedlibs}}
+      run: cmake $GITHUB_WORKSPACE -G"Visual Studio 17 2022" -A ${{matrix.arch}}
     - name: Build
       working-directory: build/
-      run: cmake --build . --config Debug
+      run: cmake --build . --config Debug -j 2
     - name: Test
       working-directory: build/
       run: ctest -C Debug --output-on-failure
