@@ -35,7 +35,7 @@
 
 // hosted implementation
 #ifndef FOONATHAN_HOSTED_IMPLEMENTATION
-#if !_MSC_VER && !__STDC_HOSTED__
+#if !defined(_MSC_VER) && !defined(__STDC_HOSTED__)
 #define FOONATHAN_HOSTED_IMPLEMENTATION 0
 #else
 #define FOONATHAN_HOSTED_IMPLEMENTATION 1
