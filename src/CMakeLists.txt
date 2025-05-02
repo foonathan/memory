@@ -87,9 +87,9 @@ target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN
                                             PRIVATE ${header_path}) # for source files
 target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY=1
-                            FOONATHAN_MEMORY_VERSION_MAJOR=${FOONATHAN_MEMORY_VERSION_MAJOR}
-                            FOONATHAN_MEMORY_VERSION_MINOR=${FOONATHAN_MEMORY_VERSION_MINOR}
-                            FOONATHAN_MEMORY_VERSION_PATCH=${FOONATHAN_MEMORY_VERSION_PATCH})
+                            FOONATHAN_MEMORY_VERSION_MAJOR=$CACHE{FOONATHAN_MEMORY_VERSION_MAJOR}
+                            FOONATHAN_MEMORY_VERSION_MINOR=$CACHE{FOONATHAN_MEMORY_VERSION_MINOR}
+                            FOONATHAN_MEMORY_VERSION_PATCH=$CACHE{FOONATHAN_MEMORY_VERSION_PATCH})
 if(NOT MSVC)
 target_compile_features(foonathan_memory PUBLIC cxx_constexpr)
 endif()
@@ -107,7 +107,7 @@ elseif(MSVC)
 endif()
 
 set_target_properties(foonathan_memory PROPERTIES
-                                       OUTPUT_NAME "foonathan_memory-${FOONATHAN_MEMORY_VERSION}"
+                                       OUTPUT_NAME "foonathan_memory-$CACHE{FOONATHAN_MEMORY_VERSION}"
                                        POSITION_INDEPENDENT_CODE ON)
 
 if(NEED_LIBRARY_FOR_CXX_ATOMIC)
@@ -124,7 +124,7 @@ install(TARGETS foonathan_memory EXPORT foonathan_memoryTargets
 include(CMakePackageConfigHelpers)
 set(version_file "${CMAKE_CURRENT_BINARY_DIR}/cmake/foonathan_memory-config-version.cmake")
 write_basic_package_version_file(${version_file}
-                                 VERSION ${FOONATHAN_MEMORY_VERSION}
+                                 VERSION $CACHE{FOONATHAN_MEMORY_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/)
