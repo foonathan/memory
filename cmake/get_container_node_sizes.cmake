@@ -181,7 +181,7 @@ namespace detail
 template <typename T>
 struct ${container}_node_size
 : std::integral_constant<std::size_t,
-       detail::${container}_node_size<alignof(T)>::value + sizeof(T)>
+    detail::round_up_to_multiple_of_alignment(detail::${container}_node_size<alignof(T)>::value + sizeof(T), alignof(void*))>
 {};
 ")
     endforeach()

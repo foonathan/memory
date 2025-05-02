@@ -21,6 +21,13 @@ namespace foonathan
                 return alignment && (alignment & (alignment - 1)) == 0u;
             }
 
+            constexpr std::size_t round_up_to_multiple_of_alignment(std::size_t size,
+                                                                    std::size_t alignment) noexcept
+            {
+                FOONATHAN_MEMORY_ASSERT(is_valid_alignment(alignment));
+                return (size + alignment - 1) & ~(alignment - 1);
+            }
+
             // returns the offset needed to align ptr for given alignment
             // alignment must be valid
             inline std::size_t align_offset(std::uintptr_t address, std::size_t alignment) noexcept
@@ -45,7 +52,7 @@ namespace foonathan
             // returns the minimum alignment required for a node of given size
             std::size_t alignment_for(std::size_t size) noexcept;
         } // namespace detail
-    }     // namespace memory
+    } // namespace memory
 } // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_ALIGN_HPP_INCLUDED

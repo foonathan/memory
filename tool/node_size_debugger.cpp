@@ -91,8 +91,9 @@ struct code_serializer
         out << "} // namespace detail" << newline << newline << "template <typename T>" << newline
             << "struct " << struct_name(result.container_name) << newline
             << ": std::integral_constant<std::size_t," << newline
-            << "       detail::" << struct_name(result.container_name) << '<' << alignment
-            << ">::value + sizeof(T)>" << newline << "{};" << newline << newline;
+            << "       detail::round_up_to_multiple_of_alignment(detail::"
+            << struct_name(result.container_name) << '<' << alignment
+            << ">::value + sizeof(T), alignof(void*))>" << newline << "{};" << newline << newline;
     }
 
     void suffix() const

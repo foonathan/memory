@@ -8,6 +8,21 @@
 using namespace foonathan::memory;
 using namespace detail;
 
+TEST_CASE("detail::round_up_to_multiple_of_alignment")
+{
+    REQUIRE(round_up_to_multiple_of_alignment(0, 1) == 0);
+    REQUIRE(round_up_to_multiple_of_alignment(1, 1) == 1);
+    REQUIRE(round_up_to_multiple_of_alignment(2, 1) == 2);
+    REQUIRE(round_up_to_multiple_of_alignment(3, 1) == 3);
+    REQUIRE(round_up_to_multiple_of_alignment(4, 1) == 4);
+
+    REQUIRE(round_up_to_multiple_of_alignment(0, 2) == 0);
+    REQUIRE(round_up_to_multiple_of_alignment(1, 2) == 2);
+    REQUIRE(round_up_to_multiple_of_alignment(2, 2) == 2);
+    REQUIRE(round_up_to_multiple_of_alignment(3, 2) == 4);
+    REQUIRE(round_up_to_multiple_of_alignment(4, 2) == 4);
+}
+
 TEST_CASE("detail::align_offset")
 {
     auto ptr = reinterpret_cast<void*>(0);
