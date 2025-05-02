@@ -11,7 +11,7 @@ target_include_directories(foonathan_memory_profiling PRIVATE
 # Fetch doctest.
 message(STATUS "Fetching doctest")
 include(FetchContent)
-FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.9.zip)
+FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.12.zip)
 FetchContent_MakeAvailable(doctest)
 
 set(tests
