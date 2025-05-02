@@ -1,5 +1,29 @@
 # Upcoming Changes
 
+# 0.7-4
+
+CMake Improvements:
+
+* Fix deprecation warnings, update doctest, and CI. (#188)
+* Remove static linking for cross compilation. (#162, #164)
+* Fix include paths, cache variables. (#165, #190)
+* Assume `thread_local` is supported. (#167)
+
+Bugfixes:
+
+* Support `fixed_block_allocator` in `memory_pool_collection`. (#173)
+* Fix `virtual_block_allocator` deallocation. (#175)
+* Fix `std::shared_ptr` node size alignment mismatch. (#171)
+* Fix unit tests on android. (#176)
+* Don't use undefined preprocessor macros. (#186)
+* Fix unused variable warnings. (#183, #184, #189)
+
+Improvements:
+
+* Allow incomplete types in `allocator_deallocator`. (#153)
+* Give `allocator_polymorphic_deallocator/deleter` a default constructor. (#155)
+* Expose `memory_pool::owns`. (#174)
+
 # 0.7-3
 
 CMake improvements:
