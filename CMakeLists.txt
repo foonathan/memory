@@ -4,6 +4,10 @@
 # root CMakeLists.txt, specifies option and interface library
 
 cmake_minimum_required(VERSION 3.14)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 project(FOONATHAN_MEMORY)
 
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
