@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_TEST_BENCHMARK_HPP_INCLUDED
@@ -172,8 +172,7 @@ struct butterfly : basic_bulk
 {
     butterfly(std::size_t c)
     : basic_bulk([](std::vector<void*>& ptrs)
-                 { std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{}); },
-                 c)
+                 { std::shuffle(ptrs.begin(), ptrs.end(), std::mt19937{}); }, c)
     {
     }
 

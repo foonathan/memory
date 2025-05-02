@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_MEMORY_POOL_COLLECTION_HPP_INCLUDED
@@ -125,8 +125,8 @@ namespace foonathan
             /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed or a \ref bad_node_size exception if the node size is too big.
             void* allocate_node(std::size_t node_size)
             {
-                detail::check_allocation_size<bad_node_size>(
-                    node_size, [&] { return max_node_size(); }, info());
+                detail::check_allocation_size<
+                    bad_node_size>(node_size, [&] { return max_node_size(); }, info());
                 auto& pool = pools_.get(node_size);
                 if (pool.empty())
                 {
@@ -169,8 +169,8 @@ namespace foonathan
             /// \c node_size must be valid \concept{concept_node,node size}.
             void* allocate_array(std::size_t count, std::size_t node_size)
             {
-                detail::check_allocation_size<bad_node_size>(
-                    node_size, [&] { return max_node_size(); }, info());
+                detail::check_allocation_size<
+                    bad_node_size>(node_size, [&] { return max_node_size(); }, info());
 
                 auto& pool = pools_.get(node_size);
 

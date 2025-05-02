@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED
@@ -221,7 +221,7 @@ namespace foonathan
             using array_free_memory_list = ordered_free_memory_list;
 #endif
         } // namespace detail
-    }     // namespace memory
+    } // namespace memory
 } // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAILL_FREE_LIST_HPP_INCLUDED

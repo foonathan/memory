@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #include "detail/small_free_list.hpp"

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #include "memory_resource_adapter.hpp"
@@ -24,7 +24,7 @@ struct pmr_test_allocator
     void* allocate_array(std::size_t n, std::size_t size, std::size_t)
     {
         array_allocated += n * size;
-        return ::operator new(n* size);
+        return ::operator new(n * size);
     }
 
     void deallocate_node(void* p, std::size_t size, std::size_t)

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED
@@ -79,7 +79,7 @@ namespace foonathan
 #define FOONATHAN_MEMORY_LL_ALLOCATOR_LEAK_CHECKER(functor, var_name)                              \
     FOONATHAN_MEMORY_GLOBAL_LEAK_CHECKER(lowlevel_allocator_leak_handler<functor>, var_name)
         } // namespace detail
-    }     // namespace memory
+    } // namespace memory
 } // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_LOWLEVEL_ALLOCATOR_HPP_INCLUDED

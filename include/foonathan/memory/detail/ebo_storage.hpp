@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_DETAIL_EBO_STORAGE_HPP_INCLUDED
@@ -35,7 +35,7 @@ namespace foonathan
                 }
             };
         } // namespace detail
-    }     // namespace memory
+    } // namespace memory
 } // namespace foonathan
 
 #endif // FOONATHAN_MEMORY_DETAIL_EBO_STORAGE_HPP_INCLUDED

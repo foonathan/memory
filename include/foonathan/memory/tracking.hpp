@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_TRACKING_HPP_INCLUDED
@@ -213,7 +213,7 @@ namespace foonathan
 
             tracked_allocator& operator=(tracked_allocator&& other) noexcept
             {
-                tracker::       operator=(detail::move(other));
+                tracker::operator=(detail::move(other));
                 allocator_type::operator=(detail::move(other));
                 detail::set_tracker(0, get_allocator(), &get_tracker());
                 return *this;

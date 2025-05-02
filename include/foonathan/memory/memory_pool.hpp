@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_MEMORY_POOL_HPP_INCLUDED
@@ -222,11 +222,12 @@ namespace foonathan
                 return arena_.get_allocator();
             }
 
-             /// \returns If `ptr` is in memory owned by the underlying arena.
-             bool owns(const void* ptr) const noexcept
-             {
-		return arena_.owns(ptr);
-             }
+            /// \returns If `ptr` is in memory owned by the underlying arena.
+            bool owns(const void* ptr) const noexcept
+            {
+                return arena_.owns(ptr);
+            }
+
         private:
             allocator_info info() const noexcept
             {
@@ -301,8 +302,8 @@ namespace foonathan
             {
                 detail::check_allocation_size<bad_node_size>(size, max_node_size(state),
                                                              state.info());
-                detail::check_allocation_size<bad_alignment>(
-                    alignment, [&] { return max_alignment(state); }, state.info());
+                detail::check_allocation_size<
+                    bad_alignment>(alignment, [&] { return max_alignment(state); }, state.info());
                 auto mem = state.allocate_node();
                 state.on_allocate(size);
                 return mem;
@@ -319,8 +320,8 @@ namespace foonathan
             {
                 detail::check_allocation_size<bad_node_size>(size, max_node_size(state),
                                                              state.info());
-                detail::check_allocation_size<bad_alignment>(
-                    alignment, [&] { return max_alignment(state); }, state.info());
+                detail::check_allocation_size<
+                    bad_alignment>(alignment, [&] { return max_alignment(state); }, state.info());
                 detail::check_allocation_size<bad_array_size>(count * size, max_array_size(state),
                                                               state.info());
                 auto mem = state.allocate_array(count, size);

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_DETAIL_ILOG2_HPP_INCLUDED
@@ -62,7 +62,7 @@ namespace foonathan
                 return ilog2_base(x) - std::size_t(is_power_of_two(x));
             }
         } // namespace detail
-    }     // namespace memory
+    } // namespace memory
 } // namespace foonathan
 
 #endif

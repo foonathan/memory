@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+// Copyright (C) 2015-2025 Jonathan Müller and foonathan/memory contributors
 // SPDX-License-Identifier: Zlib
 
 #ifndef FOONATHAN_MEMORY_ALLOCATOR_STORAGE_HPP_INCLUDED
@@ -156,7 +156,7 @@ namespace foonathan
 
             allocator_storage& operator=(allocator_storage&& other) noexcept
             {
-                storage_policy::                                 operator=(detail::move(other));
+                storage_policy::operator=(detail::move(other));
                 detail::mutex_storage<detail::mutex_for<typename StoragePolicy::allocator_type,
                                                         Mutex>>::operator=(detail::move(other));
                 return *this;
@@ -803,9 +803,9 @@ namespace foonathan
                 using traits     = allocator_traits<RawAllocator>;
                 using composable = is_composable_allocator<typename traits::allocator_type>;
                 using storage    = detail::reference_storage_impl<
-                    typename allocator_traits<RawAllocator>::allocator_type,
-                    decltype(detail::reference_type(typename allocator_traits<
-                                                        RawAllocator>::is_stateful{},
+                       typename allocator_traits<RawAllocator>::allocator_type,
+                       decltype(detail::reference_type(typename allocator_traits<
+                                                           RawAllocator>::is_stateful{},
                                                        is_shared_allocator<RawAllocator>{}))>;
 
             public:
