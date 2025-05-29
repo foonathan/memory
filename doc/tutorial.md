@@ -1,4 +1,4 @@
-# Tutorial
+# Tutorial {#md_doc_tutorial}
 
 ## Installation and Setup
 

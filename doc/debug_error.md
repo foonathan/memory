@@ -1,4 +1,4 @@
-# Debugging options and error handling
+# Debugging options and error handling {#md_doc_debug_error}
 
 ## Error handling
 

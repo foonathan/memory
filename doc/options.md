@@ -1,4 +1,4 @@
-# CMake options for configuring the library
+# CMake options for configuring the library {#md_doc_options}
 
 When installing the library, each build type (`-DCMAKE_BUILD_TYPE=XXX`) allows a separate configuration.
 The configuration doesn't affect your targets, you can link to any configuration (your compiler might complain though, if you link your debug target to a library compiled in release mode or vice-versa).

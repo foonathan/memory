@@ -1,4 +1,4 @@
-# Writing own RawAllocator classes
+# Writing own RawAllocator classes {#md_doc_writing_allocators}
 
 There are, in general, three different ways and one special case to write a [RawAllocator] class.
 See the link for the exact requirements and behavior for each function.

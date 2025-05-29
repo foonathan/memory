@@ -1,4 +1,4 @@
-# Using RawAllocators in STL containers, smart pointers, etc.
+# Using RawAllocators in STL containers, smart pointers, etc. {#md_doc_external_usage}
 
 ## 1. Using Containers with RawAllocators
 

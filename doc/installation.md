@@ -1,4 +1,4 @@
-# Installation
+# Installation {#md_doc_installation}
 
 This library can either be used [CMake]'s `add_subdirectory()` command or installed globally.
 

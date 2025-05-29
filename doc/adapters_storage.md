@@ -1,4 +1,4 @@
-# Allocator adapters and storage classes
+# Allocator adapters and storage classes {#md_doc_adapters_storage}
 
 In addition to the various allocator classes, it also provides a couple of adapters and storage classes for [RawAllocator] instances.
 

@@ -1,4 +1,4 @@
-# Writing classes using a RawAllocator
+# Writing classes using a RawAllocator {#md_doc_internal_usage}
 
 Compared to the requirements an `AllocatorAwareContainer` has to fulfill,
 it is very easy to use a `RawAllocator` in a container.
