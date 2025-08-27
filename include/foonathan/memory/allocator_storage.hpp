@@ -313,6 +313,20 @@ namespace foonathan
             {
                 return StoragePolicy::is_composable();
             }
+
+            /// @{
+            /// \effects Explicitly unlocks the \c Mutex.
+            /// \returns the result of force_unlock() on \c Mutex.
+            /// \note Only available if \c Mutex supports force_unlock().
+            /// \note Calling this function can be dangerous, but may be
+            /// necessary in certain situations (like forcing an allocator
+            /// to be unlocked in an atfork child handler).
+            template <typename M = actual_mutex>
+            auto force_unlock() noexcept -> decltype(std::declval<M&>()->force_unlock())
+            {
+                return static_cast<actual_mutex&>(*this)->force_unlock();
+            }
+            /// @}
         };
 
         /// Tag type that enables type-erasure in \ref reference_storage.

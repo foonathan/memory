@@ -33,6 +33,7 @@ namespace foonathan
             }
 
             void unlock() noexcept {}
+            void force_unlock() noexcept {}
         };
 
         /// Specifies whether or not a \concept{concept_rawallocator,RawAllocator} is thread safe as-is.
@@ -79,6 +80,11 @@ namespace foonathan
                     mutex_.unlock();
                 }
 
+                Mutex * operator->() const noexcept
+                {
+                    return std::addressof(mutex_);
+                }
+
             protected:
                 ~mutex_storage() noexcept = default;
 
@@ -94,6 +100,12 @@ namespace foonathan
 
                 void lock() const noexcept {}
                 void unlock() const noexcept {}
+                void force_unlock() const noexcept {}
+
+                mutex_storage const * operator->() const noexcept
+                {
+                    return this;
+                }
 
             protected:
                 ~mutex_storage() noexcept = default;
