@@ -201,7 +201,7 @@ namespace foonathan
                 return fallback_traits::max_array_size(get_fallback_allocator());
             }
 
-            std::size_t max_alignemnt() const
+            std::size_t max_alignment() const
             {
                 return fallback_traits::max_alignment(get_fallback_allocator());
             }

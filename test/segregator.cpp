@@ -170,3 +170,19 @@ TEST_CASE("segregator")
     REQUIRE(get_fallback_allocator(s).no_allocated() == 1u);
     s.deallocate_node(ptr, 17, 1);
 }
+
+TEST_CASE("binary_segregator max_alignment")
+{
+    struct allocator : test_allocator
+    {
+        std::size_t max_alignment() const noexcept
+        {
+            return std::size_t(4 * 1024);
+        }
+    };
+    using segregatable = threshold_segregatable<allocator>;
+    using segregator   = binary_segregator<segregatable, allocator>;
+
+    segregator s(threshold(8u, allocator{}));
+    REQUIRE(allocator_traits<segregator>::max_alignment(s) == 4 * 1024u);
+}
