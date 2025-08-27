@@ -33,12 +33,14 @@ namespace foonathan
                                                  virtual_memory_allocator_leak_checker)
         } // namespace detail
 
+#if defined(FOONATHAN_MEMORY_ALLOW_VIRTUAL_MEMORY_PAGE_SIZE)
         /// The page size of the virtual memory.
         /// All virtual memory allocations must be multiple of this size.
         /// It is usually 4KiB.
         /// \ingroup allocator
         /// \deprecated use \ref get_virtual_memory_page_size instead.
         extern const std::size_t virtual_memory_page_size;
+#endif
 
         /// \returns the page size of the virtual memory.
         /// All virtual memory allocations must be multiple of this size.
@@ -48,7 +50,7 @@ namespace foonathan
 
         /// Reserves virtual memory.
         /// \effects Reserves the given number of pages.
-        /// Each page is \ref virtual_memory_page_size big.
+        /// Each page is \ref get_virtual_memory_page_size big.
         /// \returns The address of the first reserved page,
         /// or \c nullptr in case of error.
         /// \note The memory may not be used, it must first be commited.
@@ -111,7 +113,7 @@ namespace foonathan
             /// \returns The maximum node size by returning the maximum value.
             std::size_t max_node_size() const noexcept;
 
-            /// \returns The maximum alignment which is the same as the \ref virtual_memory_page_size.
+            /// \returns The maximum alignment which is the same as the \ref get_virtual_memory_page_size.
             std::size_t max_alignment() const noexcept;
         };
 
@@ -131,7 +133,7 @@ namespace foonathan
         public:
             /// \effects Creates it giving it the block size and the total number of blocks it can allocate.
             /// It reserves enough virtual memory for <tt>block_size * no_blocks</tt>.
-            /// \requires \c block_size must be non-zero and a multiple of the \ref virtual_memory_page_size.
+            /// \requires \c block_size must be non-zero and a multiple of the \ref get_virtual_memory_page_size.
             /// \c no_blocks must be bigger than \c 1.
             /// \throws \ref out_of_memory if it cannot reserve the virtual memory.
             explicit virtual_block_allocator(std::size_t block_size, std::size_t no_blocks);

@@ -64,3 +64,5 @@ option(FOONATHAN_MEMORY_EXTERN_TEMPLATE
     "whether or not common template instantiations are already provided by the library" ON)
 set(FOONATHAN_MEMORY_TEMPORARY_STACK_MODE 2 CACHE STRING
      "set to 0 to disable the per-thread stack completely, to 1 to disable the nitfy counter and to 2 to enable everything")
+ set(FOONATHAN_MEMORY_ALLOW_VIRTUAL_MEMORY_PAGE_SIZE OFF CACHE BOOL
+    "enable to provide the deprecated variable foonathan::memory::virtual_memory_page_size")

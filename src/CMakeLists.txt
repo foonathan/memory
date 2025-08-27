@@ -90,6 +90,11 @@ target_compile_definitions(foonathan_memory PUBLIC
                             FOONATHAN_MEMORY_VERSION_MAJOR=$CACHE{FOONATHAN_MEMORY_VERSION_MAJOR}
                             FOONATHAN_MEMORY_VERSION_MINOR=$CACHE{FOONATHAN_MEMORY_VERSION_MINOR}
                             FOONATHAN_MEMORY_VERSION_PATCH=$CACHE{FOONATHAN_MEMORY_VERSION_PATCH})
+if(FOONATHAN_MEMORY_ALLOW_VIRTUAL_MEMORY_PAGE_SIZE)
+    target_compile_definitions(foonathan_memory PUBLIC
+        FOONATHAN_MEMORY_ALLOW_VIRTUAL_MEMORY_PAGE_SIZE=1)
+endif()
+
 if(NOT MSVC)
 target_compile_features(foonathan_memory PUBLIC cxx_constexpr)
 endif()

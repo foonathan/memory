@@ -35,7 +35,8 @@ set(tests
     memory_resource_adapter.cpp
     memory_stack.cpp
     segregator.cpp
-    smart_ptr.cpp)
+    smart_ptr.cpp
+    virtual_memory.cpp)
 
 add_executable(foonathan_memory_test ${tests})
 target_link_libraries(foonathan_memory_test PRIVATE foonathan_memory doctest::doctest)
