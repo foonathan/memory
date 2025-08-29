@@ -125,8 +125,8 @@ namespace foonathan
             /// \throws Anything thrown by the \concept{concept_blockallocator,BlockAllocator} if a growth is needed or a \ref bad_node_size exception if the node size is too big.
             void* allocate_node(std::size_t node_size)
             {
-                detail::check_allocation_size<
-                    bad_node_size>(node_size, [&] { return max_node_size(); }, info());
+                detail::check_allocation_size<bad_node_size>(
+                    node_size, [&] { return max_node_size(); }, info());
                 auto& pool = pools_.get(node_size);
                 if (pool.empty())
                 {
@@ -169,8 +169,8 @@ namespace foonathan
             /// \c node_size must be valid \concept{concept_node,node size}.
             void* allocate_array(std::size_t count, std::size_t node_size)
             {
-                detail::check_allocation_size<
-                    bad_node_size>(node_size, [&] { return max_node_size(); }, info());
+                detail::check_allocation_size<bad_node_size>(
+                    node_size, [&] { return max_node_size(); }, info());
 
                 auto& pool = pools_.get(node_size);
 
@@ -425,8 +425,10 @@ namespace foonathan
                                        std::size_t alignment)
             {
                 // node already checked
+                auto const aligned_size =
+                    detail::round_up_to_multiple_of_alignment(size, alignment);
                 detail::check_allocation_size<bad_alignment>(
-                    alignment, [&] { return detail::alignment_for(size); }, state.info());
+                    aligned_size, [&] { return state.max_node_size(); }, state.info());
                 auto mem = state.allocate_node(size);
                 state.on_allocate(size);
                 return mem;
@@ -439,8 +441,10 @@ namespace foonathan
                                         std::size_t alignment)
             {
                 // node and array already checked
+                auto const aligned_size =
+                    detail::round_up_to_multiple_of_alignment(size, alignment);
                 detail::check_allocation_size<bad_alignment>(
-                    alignment, [&] { return detail::alignment_for(size); }, state.info());
+                    aligned_size, [&] { return state.max_node_size(); }, state.info());
                 auto mem = state.allocate_array(count, size);
                 state.on_allocate(count * size);
                 return mem;

@@ -50,6 +50,25 @@ TEST_CASE("memory_pool_collection")
             for (auto ptr : b)
                 pool.deallocate_node(ptr, 5);
         }
+        SUBCASE("normal alloc/dealloc with traits")
+        {
+            std::vector<void*> a, b;
+            for (auto i = 0u; i != 5u; ++i)
+            {
+                a.push_back(allocator_traits<pools>::allocate_node(pool, 1, 8u));
+                b.push_back(allocator_traits<pools>::allocate_node(pool, 5, 8u));
+            }
+            REQUIRE(alloc.no_allocated() == 1u);
+            REQUIRE(pool.capacity_left() <= 4000u);
+
+            std::shuffle(a.begin(), a.end(), std::mt19937{});
+            std::shuffle(b.begin(), b.end(), std::mt19937{});
+
+            for (auto ptr : a)
+                allocator_traits<pools>::deallocate_node(pool, ptr, 1, 8);
+            for (auto ptr : b)
+                allocator_traits<pools>::deallocate_node(pool, ptr, 5, 8u);
+        }
         SUBCASE("single array alloc")
         {
             auto memory = pool.allocate_array(4, 4);
@@ -74,6 +93,22 @@ TEST_CASE("memory_pool_collection")
                 REQUIRE(pool.try_deallocate_array(ptr, 4, 4));
             for (auto ptr : b)
                 pool.deallocate_array(ptr, 5, 5);
+        }
+        SUBCASE("array alloc/dealloc with traits")
+        {
+            std::vector<void*> a;
+            for (auto i = 0u; i != 5u; ++i)
+            {
+                a.push_back(allocator_traits<pools>::allocate_array(pool, 5, 5, 8u));
+                REQUIRE(a.back());
+            }
+            REQUIRE(alloc.no_allocated() == 1u);
+            REQUIRE(pool.capacity_left() <= 4000u);
+
+            std::shuffle(a.begin(), a.end(), std::mt19937{});
+
+            for (auto ptr : a)
+                allocator_traits<pools>::deallocate_array(pool, ptr, 5, 5, 8u);
         }
         SUBCASE("multiple block alloc/dealloc")
         {
