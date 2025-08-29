@@ -25,6 +25,21 @@ TEST_CASE("threshold_segregatable")
     REQUIRE(s.use_allocate_array(2u, 4u, 1u));
     REQUIRE(!s.use_allocate_array(2u, 8u, 1u));
     REQUIRE(!s.use_allocate_array(1u, 9u, 1u));
+    REQUIRE(s.use_allocate_array(1u, 1u, 64u));
+
+    s = segregatable(8u, ThresholdAlignment::AllocatorMax);
+    REQUIRE(s.use_allocate_node(1u, 1u));
+    REQUIRE(s.use_allocate_node(8u, 1u));
+    REQUIRE(!s.use_allocate_node(8u, 100u));
+    REQUIRE(!s.use_allocate_node(9u, 1u));
+    REQUIRE(!s.use_allocate_node(9u, 100u));
+
+    REQUIRE(s.use_allocate_array(1u, 1u, 1u));
+    REQUIRE(s.use_allocate_array(1u, 8u, 1u));
+    REQUIRE(s.use_allocate_array(2u, 4u, 1u));
+    REQUIRE(!s.use_allocate_array(2u, 8u, 1u));
+    REQUIRE(!s.use_allocate_array(1u, 9u, 1u));
+    REQUIRE(!s.use_allocate_array(1u, 1u, 64u));
 }
 
 TEST_CASE("binary_segregator")

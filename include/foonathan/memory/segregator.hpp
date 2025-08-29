@@ -17,6 +17,12 @@ namespace foonathan
 {
     namespace memory
     {
+        enum class ThresholdAlignment : std::size_t
+        {
+            None,        // No alignment limit
+            AllocatorMax // Use allocator's max_alignment
+        };
+
         /// A \concept{concept_segregatable,Segregatable} that allocates until a maximum size.
         /// \ingroup adapter
         template <class RawAllocator>
@@ -29,24 +35,39 @@ namespace foonathan
             /// and the allocator it uses.
             explicit threshold_segregatable(std::size_t    max_size,
                                             allocator_type alloc = allocator_type())
-            : allocator_type(detail::move(alloc)), max_size_(max_size)
+            : allocator_type(detail::move(alloc)),
+              max_size_(max_size),
+              max_alignment_(static_cast<std::size_t>(-1))
+            {
+            }
+
+            /// \effects Creates it by passing the maximum size and alignment it will allocate,
+            /// and the allocator it uses.
+            explicit threshold_segregatable(std::size_t max_size, ThresholdAlignment alignment,
+                                            allocator_type alloc = allocator_type())
+            : allocator_type(detail::move(alloc)),
+              max_size_(max_size),
+              max_alignment_(alignment == ThresholdAlignment::AllocatorMax ?
+                                 allocator_traits<allocator_type>::max_alignment(get_allocator()) :
+                                 static_cast<std::size_t>(-1))
             {
             }
 
             /// \returns `true` if `size` is less then or equal to the maximum size,
             /// `false` otherwise.
             /// \note A return value of `true` means that the allocator will be used for the allocation.
-            bool use_allocate_node(std::size_t size, std::size_t) noexcept
+            bool use_allocate_node(std::size_t size, std::size_t alignment) noexcept
             {
-                return size <= max_size_;
+                return size <= max_size_ && alignment <= max_alignment_;
             }
 
             /// \returns `true` if `count * size` is less then or equal to the maximum size,
             /// `false` otherwise.
             /// \note A return value of `true` means that the allocator will be used for the allocation.
-            bool use_allocate_array(std::size_t count, std::size_t size, std::size_t) noexcept
+            bool use_allocate_array(std::size_t count, std::size_t size,
+                                    std::size_t alignment) noexcept
             {
-                return count * size <= max_size_;
+                return count * size <= max_size_ && alignment <= max_alignment_;
             }
 
             /// @{
@@ -64,6 +85,7 @@ namespace foonathan
 
         private:
             std::size_t max_size_;
+            std::size_t max_alignment_;
         };
 
         /// \returns A \ref threshold_segregatable with the same parameter.
@@ -73,6 +95,16 @@ namespace foonathan
         {
             return threshold_segregatable<
                 typename std::decay<RawAllocator>::type>(max_size,
+                                                         std::forward<RawAllocator>(alloc));
+        }
+
+        /// \returns A \ref threshold_segregatable with the same parameter.
+        template <class RawAllocator>
+        threshold_segregatable<typename std::decay<RawAllocator>::type> threshold(
+            std::size_t max_size, ThresholdAlignment alignment, RawAllocator&& alloc)
+        {
+            return threshold_segregatable<
+                typename std::decay<RawAllocator>::type>(max_size, alignment,
                                                          std::forward<RawAllocator>(alloc));
         }
 
