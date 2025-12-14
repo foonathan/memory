@@ -8,11 +8,15 @@ target_link_libraries(foonathan_memory_profiling foonathan_memory)
 target_include_directories(foonathan_memory_profiling PRIVATE
                             ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory)
 
-# Fetch doctest.
-message(STATUS "Fetching doctest")
-include(FetchContent)
-FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.12.zip)
-FetchContent_MakeAvailable(doctest)
+if(FOONATHAN_MEMORY_USE_SYSTEM_DOCTEST)
+    find_package(doctest REQUIRED)
+else()
+    # Fetch doctest.
+    message(STATUS "Fetching doctest")
+    include(FetchContent)
+    FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.12.zip)
+    FetchContent_MakeAvailable(doctest)
+endif()
 
 set(tests
     test_allocator.hpp

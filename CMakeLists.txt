@@ -30,7 +30,7 @@ if(UNIX OR VXWORKS)
     set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
     set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
 
-    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory/cmake")
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/foonathan_memory")
     set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/foonathan_memory")
 elseif(WIN32)
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include")
@@ -50,6 +50,8 @@ endif()
 include(cmake/configuration.cmake)
 include(cmake/atomic.cmake)
 include(cmake/get_container_node_sizes.cmake)
+
+option(FOONATHAN_MEMORY_USE_SYSTEM_DOCTEST "Use the system doctest library" OFF)
 
 # subdirectories
 add_subdirectory(src)

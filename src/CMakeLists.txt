@@ -107,7 +107,8 @@ elseif(MSVC)
 endif()
 
 set_target_properties(foonathan_memory PROPERTIES
-                                       OUTPUT_NAME "foonathan_memory-$CACHE{FOONATHAN_MEMORY_VERSION}"
+                                       VERSION ${FOONATHAN_MEMORY_VERSION}
+                                       SOVERSION ${FOONATHAN_MEMORY_VERSION_MAJOR}
                                        POSITION_INDEPENDENT_CODE ON)
 
 if(NEED_LIBRARY_FOR_CXX_ATOMIC)
