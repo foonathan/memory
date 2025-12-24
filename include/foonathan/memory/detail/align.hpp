@@ -24,8 +24,9 @@ namespace foonathan
             constexpr std::size_t round_up_to_multiple_of_alignment(std::size_t size,
                                                                     std::size_t alignment) noexcept
             {
-                FOONATHAN_MEMORY_ASSERT(is_valid_alignment(alignment));
-                return (size + alignment - 1) & ~(alignment - 1);
+                return FOONATHAN_MEMORY_ASSERT_RETURN(
+                    is_valid_alignment(alignment),
+                    (size + alignment - 1) & ~(alignment - 1));
             }
 
             // returns the offset needed to align ptr for given alignment

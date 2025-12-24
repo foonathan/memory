@@ -37,6 +37,12 @@ namespace foonathan
                                                        __FILE__, __LINE__, __func__),              \
                           true))
 
+#define FOONATHAN_MEMORY_ASSERT_RETURN(Expr, Ret)                                                  \
+    ((Expr) ? (Ret)                                                                                \
+            : (detail::handle_failed_assert("Assertion \"" #Expr "\" failed", __FILE__,            \
+                                            __LINE__, "some constexpr"),                           \
+               (Ret)))
+
 #define FOONATHAN_MEMORY_UNREACHABLE(Msg)                                                          \
     detail::handle_failed_assert("Unreachable code reached: " Msg, __FILE__, __LINE__, __func__)
 
@@ -45,6 +51,7 @@ namespace foonathan
 #elif !defined(FOONATHAN_MEMORY_ASSERT)
 #define FOONATHAN_MEMORY_ASSERT(Expr)
 #define FOONATHAN_MEMORY_ASSERT_MSG(Expr, Msg)
+#define FOONATHAN_MEMORY_ASSERT_RETURN(Expr, Ret) (Ret)
 #define FOONATHAN_MEMORY_UNREACHABLE(Msg) std::abort()
 #define FOONATHAN_MEMORY_WARNING(Msg)
 #endif
