@@ -119,7 +119,7 @@ namespace foonathan
 #if FOONATHAN_HOSTED_IMPLEMENTATION
                 return std::less<void*>()(a, b);
 #else
-                return to_int(a) < to_int(b);
+                return to_int(static_cast<char*>(a)) < to_int(static_cast<char*>(b));
 #endif
             }
 
@@ -133,7 +133,7 @@ namespace foonathan
 #if FOONATHAN_HOSTED_IMPLEMENTATION
                 return std::greater<void*>()(a, b);
 #else
-                return to_int(a) < to_int(b);
+                return to_int(static_cast<char*>(a)) > to_int(static_cast<char*>(b));
 #endif
             }
 

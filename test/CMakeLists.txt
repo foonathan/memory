@@ -44,3 +44,17 @@ target_include_directories(foonathan_memory_test PRIVATE
 
 add_test(NAME test COMMAND foonathan_memory_test)
 
+# Compile each implementation separately so inline comparisons cannot be resolved
+# to the hosted implementation in foonathan_memory.
+foreach(hosted 0 1)
+    set(target foonathan_memory_pointer_comparisons_${hosted})
+    add_executable(${target} test.cpp detail/free_list_utils.cpp)
+    target_link_libraries(${target} PRIVATE doctest::doctest)
+    target_include_directories(${target} PRIVATE
+        ${FOONATHAN_MEMORY_SOURCE_DIR}/src
+        ${FOONATHAN_MEMORY_SOURCE_DIR}/include/foonathan/memory
+        ${FOONATHAN_MEMORY_BINARY_DIR}/src)
+    target_compile_definitions(${target} PRIVATE FOONATHAN_HOSTED_IMPLEMENTATION=${hosted})
+    target_compile_features(${target} PRIVATE cxx_std_11)
+    add_test(NAME pointer_comparisons_${hosted} COMMAND ${target})
+endforeach()
